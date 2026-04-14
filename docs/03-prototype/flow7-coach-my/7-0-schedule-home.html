@@ -230,18 +230,28 @@
             </div>
             <div style="margin-top:6px;padding:8px 10px;background:#FFF7ED;border-radius:8px;">
               <div style="font-size:11px;color:#92400E;margin-bottom:4px;">수강생 희망 날짜</div>
-              <div style="font-size:13px;font-weight:600;color:#92400E;">4/17 (목) 10:00</div>
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div style="font-size:13px;font-weight:600;color:#92400E;">4/17 (목) 10:00</div>
+                <button onclick="confirmDesiredSchedule()" style="padding:5px 12px;border-radius:8px;border:none;background:var(--green);color:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">확정하기</button>
+              </div>
             </div>
             <div style="margin-top:6px;padding:10px;background:#F0FDFA;border-radius:8px;border:1px solid #D1FAE5;">
               <div style="font-size:11px;color:#065F46;margin-bottom:6px;">🤖 변경 가능한 날짜 (자동 추천)</div>
               <div style="display:flex;gap:6px;flex-wrap:wrap;">
-                <span style="padding:5px 10px;border-radius:8px;font-size:12px;font-weight:600;background:#D1FAE5;color:#065F46;cursor:pointer;">4/17 (목) 10:00</span>
-                <span style="padding:5px 10px;border-radius:8px;font-size:12px;font-weight:600;background:#D1FAE5;color:#065F46;cursor:pointer;">4/17 (목) 14:00</span>
-                <span style="padding:5px 10px;border-radius:8px;font-size:12px;font-weight:600;background:#D1FAE5;color:#065F46;cursor:pointer;">4/18 (금) 10:00</span>
+                <span class="rc-slot-tab" onclick="selectRcSlotTab(this)" style="padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;background:#D1FAE5;color:#065F46;cursor:pointer;border:2px solid transparent;transition:all 0.15s;">4/17 (목) 10:00</span>
+                <span class="rc-slot-tab" onclick="selectRcSlotTab(this)" style="padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;background:#D1FAE5;color:#065F46;cursor:pointer;border:2px solid transparent;transition:all 0.15s;">4/17 (목) 14:00</span>
+                <span class="rc-slot-tab" onclick="selectRcSlotTab(this)" style="padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;background:#D1FAE5;color:#065F46;cursor:pointer;border:2px solid transparent;transition:all 0.15s;">4/18 (금) 10:00</span>
               </div>
             </div>
-            <div style="margin-top:10px;">
-              <button onclick="proposeAll(this)" style="width:100%;height:40px;border-radius:999px;border:none;background:var(--green);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">모두 제안하기</button>
+            <div style="margin-top:10px;display:flex;gap:8px;">
+              <button class="btn-tab-selected" disabled onclick="proposeSelectedTab(this)" style="flex:1;height:40px;border-radius:999px;border:2px solid var(--gray-200);background:#fff;color:var(--gray-400);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.15s;">선택 제안하기</button>
+              <button onclick="proposeAll(this)" style="flex:1;height:40px;border-radius:999px;border:none;background:var(--green);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">모두 제안하기</button>
+            </div>
+            <div style="margin-top:8px;padding:10px;background:var(--gray-50);border-radius:10px;">
+              <div style="font-size:11px;font-weight:700;color:var(--navy);margin-bottom:4px;">💡 제안하기란?</div>
+              <div style="font-size:10px;color:var(--gray-500);line-height:1.7;">
+                선택한 날짜를 수강생에게 제안해요. 제안 시 해당 시간이 <strong>12시간 홀드</strong>되어 다른 변경 요청에서 추천되지 않아요. 수강생에게 알림톡이 발송되며, 미응답 시 자동 해제돼요.
+              </div>
             </div>
           </div>
 
@@ -907,8 +917,51 @@ function proposeAll(btnEl) {
   btnEl.disabled = true;
   btnEl.textContent = '제안 완료';
   btnEl.style.background = 'var(--gray-300)';
+  // 같은 카드의 선택 제안 버튼도 비활성화
+  const card = btnEl.closest('div[style*="border-left"]') || btnEl.parentElement;
+  const selBtn = card.querySelector('.btn-tab-selected');
+  if (selBtn) { selBtn.disabled = true; selBtn.textContent = '제안 완료'; selBtn.style.color = 'var(--gray-400)'; selBtn.style.borderColor = 'var(--gray-200)'; }
   const toast = document.getElementById('sent-toast');
-  toast.textContent = '일정이 제안되었습니다';
+  toast.textContent = '전체 일정이 제안되었습니다';
+  toast.style.display = 'block';
+  setTimeout(() => { toast.style.display = 'none'; }, 2000);
+}
+
+function selectRcSlotTab(el) {
+  const wasSelected = el.style.borderColor === 'var(--green)';
+  if (wasSelected) {
+    el.style.borderColor = 'transparent';
+    el.style.background = '#D1FAE5';
+  } else {
+    el.style.borderColor = 'var(--green)';
+    el.style.background = '#A7F3D0';
+  }
+  const card = el.closest('div[style*="border-left"]');
+  const selectedCount = card.querySelectorAll('.rc-slot-tab[style*="border-color: var(--green)"]').length;
+  const btn = card.querySelector('.btn-tab-selected');
+  if (selectedCount > 0) {
+    btn.disabled = false;
+    btn.style.color = 'var(--green)';
+    btn.style.borderColor = 'var(--green)';
+    btn.style.background = '#F0FDFA';
+    btn.textContent = '선택 제안 (' + selectedCount + ')';
+  } else {
+    btn.disabled = true;
+    btn.style.color = 'var(--gray-400)';
+    btn.style.borderColor = 'var(--gray-200)';
+    btn.style.background = '#fff';
+    btn.textContent = '선택 제안하기';
+  }
+}
+
+function proposeSelectedTab(btnEl) {
+  btnEl.disabled = true;
+  btnEl.textContent = '제안 완료';
+  btnEl.style.color = 'var(--gray-400)';
+  btnEl.style.borderColor = 'var(--gray-200)';
+  btnEl.style.background = '#fff';
+  const toast = document.getElementById('sent-toast');
+  toast.textContent = '선택한 일정이 제안되었습니다';
   toast.style.display = 'block';
   setTimeout(() => { toast.style.display = 'none'; }, 2000);
 }
