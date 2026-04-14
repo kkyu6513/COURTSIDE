@@ -564,6 +564,7 @@ function showLessonDetail(status) {
       statusMsg: '',
       originalSchedule: '4/14 (월) 16:00',
       desiredSchedule: '4/16 (수) 16:00',
+      desiredAvailable: true,
       recommendedSlots: ['4/16 (수) 16:00', '4/17 (목) 10:00', '4/18 (금) 10:00']
     },
     pending: {
@@ -697,7 +698,10 @@ function showLessonDetail(status) {
           </div>
           <div style="padding:8px 10px;background:#FFF7ED;border-radius:8px;">
             <div style="font-size:11px;color:#92400E;margin-bottom:4px;">수강생 희망 날짜</div>
-            <div style="font-size:13px;font-weight:600;color:#92400E;">${d.desiredSchedule}</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <div style="font-size:13px;font-weight:600;color:#92400E;">${d.desiredSchedule}</div>
+              ${d.desiredAvailable ? '<button onclick="confirmDesiredSchedule()" style="padding:5px 12px;border-radius:8px;border:none;background:var(--green);color:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">확정하기</button>' : ''}
+            </div>
           </div>
           <div style="padding:10px;background:#F0FDFA;border-radius:8px;border:1px solid #D1FAE5;">
             <div style="font-size:11px;color:#065F46;margin-bottom:6px;">🤖 변경 가능한 날짜 (자동 추천)</div>
@@ -907,6 +911,16 @@ function proposeAll(btnEl) {
   toast.textContent = '일정이 제안되었습니다';
   toast.style.display = 'block';
   setTimeout(() => { toast.style.display = 'none'; }, 2000);
+}
+
+function confirmDesiredSchedule() {
+  if (confirm('수강생 희망 날짜로 일정을 확정합니다.\n기존 일정은 해제되고 수강생에게 알림이 발송됩니다.')) {
+    closeLessonDetail();
+    const toast = document.getElementById('sent-toast');
+    toast.textContent = '희망 날짜로 변경이 확정되었습니다';
+    toast.style.display = 'block';
+    setTimeout(() => { toast.style.display = 'none'; }, 2000);
+  }
 }
 
 function selectRcSlot(el) {
