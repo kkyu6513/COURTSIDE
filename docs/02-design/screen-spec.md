@@ -950,12 +950,14 @@
 | 오늘 레슨 항목 | 클릭 | **레슨 상세 풀팝업** 오픈. 상단 ← 뒤로 버튼. 구성: 상태 배지 + 수강생 프로필 (이름/연령/성별/NTRP + 대화하기 버튼) + 수강생 선택 일정 (라디오 선택 — 대기 시) + 레슨 유형/형태/목표/결제 정보. **오늘 레슨 표시 상태**: 레슨 예정(📌 보라색) · 레슨완료(🏁 파란색). 확정 상태는 오늘 레슨 목록에 노출하지 않음. **상태별 하단**: [대기] 더보기(보류/거절) + 스케줄 확정하기 / [레슨 예정] 취소 + 레슨 완료 처리 / [레슨완료] 닫기 | |
 | 더보기 → 보류하기 | 클릭 | 사유 입력 팝업 (필수) → `PUT /api/bookings/:id/hold { reason }` → status=ON_HOLD + 수강생 BOOKING_ON_HOLD 알림톡 발송 (보류 사유 포함) | |
 | 더보기 → 거절하기 | 클릭 | 사유 입력 팝업 (필수) → `PUT /api/bookings/:id/reject { reason }` → status=REJECTED + 수강생 알림 | |
-| 스케줄 확정하기 | 클릭 | 라디오 선택된 일정으로 확정 → `PUT /api/bookings/:id/confirm { selectedScheduleId }` → status=CONFIRMED + 스케줄 블록 + 수강생 알림 | |
+| 스케줄 확정하기 | 클릭 | ① 확인 바텀시트 ("선택한 일정으로 확정합니다. 수강생에게 알림이 발송됩니다.") → ② `PUT /api/bookings/:id/confirm { selectedScheduleId }` → ③ status=CONFIRMED + 스케줄 블록 + 수강생 알림 → ④ 성공 토스트 "스케줄이 확정되었습니다" + 모달 닫기 | |
+| 레슨 완료 처리 | 클릭 | [레슨 예정] 상태에서 표시. ① 확인 바텀시트 ("레슨을 완료 처리합니다.") → ② `PUT /api/bookings/:id/complete` → ③ status=COMPLETED → ④ 성공 토스트 "레슨이 완료 처리되었습니다" + 모달 닫기 | |
+| 취소 (레슨 예정) | 클릭 | [레슨 예정] 상태에서 표시. ① 사유 입력 팝업 (필수) → ② `PUT /api/bookings/:id/cancel { reason }` → ③ status=CANCELLED + 스케줄 블록 해제 + 수강생 알림 → ④ 성공 토스트 "레슨이 취소되었습니다" + 모달 닫기 | |
 | 대기 중 신청 카드 | 클릭 | 신청 상세 (수락/거절) | → **7-3 수락거절** |
 | 전체보기 › | 클릭 | 신청 수신 목록 | → **7-2 신청수신** |
 | 탭: 오늘 레슨 / 변경 요청 | 클릭 | `switchTab()` — 탭 전환. 변경 요청 탭에 빨간 뱃지(건수) 표시 | |
 | **[변경 가능 카드]** | 표시 | `GET /api/bookings?role=coach&rescheduleStatus=PENDING` — 자동 추천 결과 슬롯 ≥ 1개인 건. 초록 보더 + "변경 가능" 배지. 카드 구성: 수강생명 + 레슨 정보 + 기존 일정(취소선) + 수강생 희망 날짜 + 자동 추천 가능 날짜 목록 (최대 5개 칩) | |
-| 모두 제안하기 | 클릭 | ① `POST /api/bookings/:id/reschedule/propose { slotIds }` → ② ScheduleHold 생성 (12시간 홀드) → ③ rescheduleStatus = PROPOSED → ④ 수강생 알림톡 (제안 날짜 목록) → ⑤ 카드 상태 "제안됨"으로 변경 | |
+| 모두 제안하기 | 클릭 | ① `POST /api/bookings/:id/reschedule/propose { slotIds }` → ② ScheduleHold 생성 (12시간 홀드) → ③ rescheduleStatus = PROPOSED → ④ 수강생 알림톡 (제안 날짜 목록) → ⑤ 성공 토스트 "일정이 제안되었습니다" + 카드 상태 "제안됨"으로 변경 | |
 | **[변경 불가 카드]** | 표시 | 자동 추천 결과 슬롯 = 0개인 건 (코치 가용 시간 없음 또는 다른 홀드로 슬롯 소진). 빨간 보더 + "변경 불가" 배지. 사유 메시지 표시 | |
 | 불가 알림 보내기 | 클릭 | ① 확인 모달 ("기존 일정으로 진행됩니다") → ② `PUT /api/bookings/:id/reschedule/reject { reason: "UNAVAILABLE" }` → ③ rescheduleStatus = REJECTED → ④ 수강생 알림 (기존 일정 유지) | |
 | **[제안됨 카드]** | 표시 | rescheduleStatus = PROPOSED인 건. 회색 보더 + "제안됨 · 응답 대기 중" 배지. 홀드 남은 시간 표시 (예: "남은 시간 8:32:15"). 수강생 응답 대기 상태 | |
