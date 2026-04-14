@@ -976,6 +976,7 @@
 - 오늘 레슨: `GET /api/bookings?role=coach&date=today&status=CONFIRMED,COMPLETED` [인증: 코치] — 확정(CONFIRMED) 건은 "레슨 예정"으로 표시, COMPLETED 건은 "레슨완료"로 표시. 오늘 레슨 목록에서 "확정" 배지는 노출하지 않음. **레슨 시간은 시작 시간만 표시** (종료 시간 미노출)
 - 변경 요청: `GET /api/bookings?role=coach&rescheduleStatus=PENDING,PROPOSED,COMPLETED&sort=rescheduleRequestedAt:ASC` [인증: 코치] — 먼저 요청한 수강생 순 정렬 (선입선출). 각 건에 자동 추천 결과 포함. COMPLETED는 당일까지만 반환
 - 대기 신청: `GET /api/bookings?role=coach&status=PENDING&limit=3` [인증: 코치]
+- 오늘 레슨 카드 표시 정보: 시작 시간 + 수강생명 + 레슨 내용 + **현재 회차(N/M회)** + 상태 배지
 - 이번 주 요약: 총 레슨 수 / 대기 신청 수 / 완료 수
 - 홀드 상태: `GET /api/schedule-holds?coachId=me` [인증: 코치] — 현재 활성 홀드 목록 (남은 시간 계산용)
 
