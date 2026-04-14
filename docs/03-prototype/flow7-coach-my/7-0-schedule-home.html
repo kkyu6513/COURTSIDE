@@ -665,8 +665,8 @@ function showLessonDetail(status) {
   const scheduleTitle = isSelectable ? '수강생 희망 일정 <span style="font-size:11px;color:var(--coral);font-weight:400;">(확정할 일정을 선택하세요)</span>' : isReschedule ? '변경 요청 일정' : isInProgress ? '진행중 레슨' : isUpcoming ? '오늘 레슨 일정' : '확정 일정';
 
   if (isReschedule) {
-    const slotsHtml = d.recommendedSlots.map(s =>
-      `<span style="padding:5px 10px;border-radius:8px;font-size:12px;font-weight:600;background:#D1FAE5;color:#065F46;">${s}</span>`
+    const slotsHtml = d.recommendedSlots.map((s, i) =>
+      `<span class="rc-slot" onclick="selectRcSlot(this)" style="padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;background:#D1FAE5;color:#065F46;cursor:pointer;border:2px solid transparent;transition:all 0.15s;">${s}</span>`
     ).join('');
     lesson.innerHTML = `
       <div style="display:flex;flex-direction:column;gap:10px;">
@@ -733,7 +733,10 @@ function showLessonDetail(status) {
 
   if (status === 'reschedule') {
     actions.innerHTML = `
-      <button onclick="proposeAllFromDetail(this)" style="width:100%;height:48px;border-radius:12px;border:none;background:var(--green);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">모두 제안하기</button>`;
+      <div style="display:flex;gap:10px;">
+        <button id="btn-propose-selected" onclick="proposeSelectedFromDetail(this)" disabled style="flex:1;height:48px;border-radius:12px;border:1.5px solid var(--gray-200);background:#fff;color:var(--gray-400);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">선택 제안하기</button>
+        <button onclick="proposeAllFromDetail(this)" style="flex:1;height:48px;border-radius:12px;border:none;background:var(--green);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">모두 제안하기</button>
+      </div>`;
   } else if (status === 'inprogress') {
     actions.innerHTML = `
       <button onclick="completeLesson()" style="width:100%;height:48px;border-radius:12px;border:none;background:var(--coral);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">레슨 완료 처리</button>`;
@@ -897,12 +900,41 @@ function proposeAll(btnEl) {
   setTimeout(() => { toast.style.display = 'none'; }, 2000);
 }
 
+function selectRcSlot(el) {
+  const all = document.querySelectorAll('.rc-slot');
+  const wasSelected = el.style.borderColor === 'var(--green)';
+  all.forEach(s => { s.style.borderColor = 'transparent'; s.style.background = '#D1FAE5'; });
+  const btn = document.getElementById('btn-propose-selected');
+  if (wasSelected) {
+    btn.disabled = true;
+    btn.style.color = 'var(--gray-400)';
+    btn.style.borderColor = 'var(--gray-200)';
+  } else {
+    el.style.borderColor = 'var(--green)';
+    el.style.background = '#A7F3D0';
+    btn.disabled = false;
+    btn.style.color = 'var(--green)';
+    btn.style.borderColor = 'var(--green)';
+  }
+}
+
+function proposeSelectedFromDetail(btnEl) {
+  btnEl.disabled = true;
+  btnEl.textContent = '제안 완료';
+  btnEl.style.color = 'var(--gray-400)';
+  btnEl.style.borderColor = 'var(--gray-200)';
+  const toast = document.getElementById('sent-toast');
+  toast.textContent = '선택한 일정이 제안되었습니다';
+  toast.style.display = 'block';
+  setTimeout(() => { toast.style.display = 'none'; closeLessonDetail(); }, 1500);
+}
+
 function proposeAllFromDetail(btnEl) {
   btnEl.disabled = true;
   btnEl.textContent = '제안 완료';
   btnEl.style.background = 'var(--gray-300)';
   const toast = document.getElementById('sent-toast');
-  toast.textContent = '일정이 제안되었습니다';
+  toast.textContent = '전체 일정이 제안되었습니다';
   toast.style.display = 'block';
   setTimeout(() => { toast.style.display = 'none'; closeLessonDetail(); }, 1500);
 }
