@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=375, initial-scale=1.0">
+<title>1-6b 코치 가입 완료 — COURTSIDE</title>
+<link rel="stylesheet" href="../common.css">
+</head>
+<body>
+
+<div class="device-wrap">
+  <div class="device-label"><span class="device-num">6b</span>코치 가입 완료</div>
+  <div class="device" style="position:relative;overflow:hidden;">
+    <div class="status-bar">
+      <span class="time">9:41</span>
+      <div class="status-icons"><span>📶</span><span>🔋</span></div>
+    </div>
+    <div class="screen screen-white" style="display:flex;flex-direction:column;padding-bottom:0;">
+
+      <!-- Step Indicator — 3/3 완료 -->
+      <div class="step-indicator">
+        <div class="step-dot done"></div>
+        <div class="step-dot done"></div>
+        <div class="step-dot done"></div>
+      </div>
+
+      <!-- Content -->
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 20px;">
+
+        <!-- Success Icon -->
+        <div style="width:96px;height:96px;border-radius:50%;background:linear-gradient(135deg,#F3E8FF,#DDD6FE);display:flex;align-items:center;justify-content:center;font-size:44px;margin-bottom:24px;animation:bounceIn 0.5s ease;">
+          🏅
+        </div>
+
+        <div style="font-size:24px;font-weight:800;color:var(--navy);text-align:center;line-height:1.4;">
+          코치 프로필 등록이<br>완료되었습니다!
+        </div>
+
+        <div style="font-size:14px;color:var(--gray-500);margin-top:12px;text-align:center;line-height:1.6;">
+          이제 수강생들이 코치님을 찾을 수 있어요.<br>
+          레슨 신청이 오면 알림으로 알려드릴게요!
+        </div>
+
+        <!-- 가입 정보 요약 -->
+        <div style="margin-top:28px;width:100%;background:var(--gray-50);border-radius:16px;padding:20px;">
+          <div style="font-size:14px;font-weight:600;color:var(--navy);margin-bottom:12px;">프로필 요약</div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+            <span style="font-size:13px;color:var(--gray-500);">역할</span>
+            <span style="font-size:13px;font-weight:600;color:var(--navy);">코치</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+            <span style="font-size:13px;color:var(--gray-500);">구독 플랜</span>
+            <span style="font-size:13px;font-weight:600;color:var(--purple);">월간 PRO</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;">
+            <span style="font-size:13px;color:var(--gray-500);">레슨 지역</span>
+            <span style="font-size:13px;font-weight:600;color:var(--navy);">서울특별시 강남구</span>
+          </div>
+          <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--gray-100);display:flex;align-items:center;gap:6px;">
+            <span style="font-size:14px;">💡</span>
+            <span style="font-size:12px;color:var(--gray-400);line-height:1.5;">프로필 정보는 <strong style="color:var(--green);">마이페이지 > 내 프로필 관리</strong>에서 언제든지 수정할 수 있어요</span>
+          </div>
+        </div>
+
+        <!-- 다음 단계 안내 -->
+        <div style="margin-top:16px;width:100%;background:#F0FDFA;border-radius:12px;padding:16px;border:1px solid #D1FAE5;">
+          <div style="font-size:13px;font-weight:600;color:var(--navy);margin-bottom:8px;">다음 단계 안내</div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+            <span style="font-size:14px;">📅</span>
+            <span style="font-size:12px;color:var(--gray-500);">스케줄을 등록하면 수강생이 가능한 시간을 확인할 수 있어요</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:14px;">📸</span>
+            <span style="font-size:12px;color:var(--gray-500);">소개 이미지를 추가하면 프로필이 더 매력적으로 보여요</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- CTA Buttons -->
+      <div style="padding:0 20px 48px;display:flex;flex-direction:row;gap:10px;">
+        <a href="../flow2-home/2-1-home.html" class="btn-secondary" style="flex:1;height:48px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:14px;text-decoration:none;">
+          🏠 홈으로
+        </a>
+        <button onclick="checkPlanAndGoSchedule()" class="btn-primary" style="flex:1;height:48px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:14px;">
+          📅 스케줄 등록
+        </button>
+      </div>
+
+    </div>
+
+    <!-- 유료 전환 유도 Alert (무료 플랜) — 디바이스 가로 100% -->
+    <div id="plan-alert-overlay" style="display:none;position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:50;" onclick="closePlanAlert()">
+      <div style="position:absolute;bottom:0;left:0;width:100%;background:#fff;border-radius:20px 20px 0 0;padding:24px 20px 48px;" onclick="event.stopPropagation()">
+        <div style="width:40px;height:4px;border-radius:2px;background:var(--gray-300);margin:0 auto 20px;"></div>
+        <div style="text-align:center;margin-bottom:16px;">
+          <div style="font-size:40px;margin-bottom:12px;">💎</div>
+          <div style="font-size:18px;font-weight:700;color:var(--navy);">PRO 플랜이 필요해요</div>
+          <div style="font-size:14px;color:var(--gray-500);margin-top:8px;line-height:1.6;">스케줄 등록은 월간/연간 PRO 회원만<br>이용할 수 있는 기능입니다</div>
+        </div>
+        <div style="display:flex;gap:10px;">
+          <button class="btn-secondary" style="flex:1;height:48px;font-size:14px;" onclick="closePlanAlert()">나중에</button>
+          <a href="1-5-coach-subscription.html" class="btn-primary" style="flex:1;height:48px;display:flex;align-items:center;justify-content:center;font-size:14px;text-decoration:none;">
+            💎 플랜 업그레이드
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/**
+ * 스케줄 등록 버튼 클릭 시 구독 플랜 체크
+ *
+ * 로직:
+ *   1. 현재 코치의 구독 플랜 확인 (GET /api/subscriptions/me)
+ *   2. plan = MONTHLY 또는 YEARLY → 스케줄 등록 화면 이동
+ *   3. plan = FREE → 유료 전환 유도 Alert 표시
+ *
+ * 프로토타입: currentPlan 변수로 시뮬레이션 (FREE / MONTHLY / YEARLY)
+ */
+let currentPlan = 'FREE'; // 시뮬레이션: 'FREE' | 'MONTHLY' | 'YEARLY'
+
+function checkPlanAndGoSchedule() {
+  if (currentPlan === 'MONTHLY' || currentPlan === 'YEARLY') {
+    window.location.href = '1-7-schedule-register.html';
+  } else {
+    // 무료 회원 → Alert 표시
+    document.getElementById('plan-alert-overlay').style.display = 'block';
+  }
+}
+
+function closePlanAlert() {
+  document.getElementById('plan-alert-overlay').style.display = 'none';
+}
+</script>
+
+
+<!-- 프로토타입 시뮬레이션: 플랜 전환 -->
+<div style="max-width:375px;margin:12px auto 0;display:flex;gap:6px;justify-content:center;">
+  <button onclick="currentPlan='FREE';this.style.background='var(--coral)';this.nextElementSibling.style.background='';this.nextElementSibling.nextElementSibling.style.background=''" style="padding:4px 10px;border-radius:8px;border:none;font-size:11px;font-weight:600;color:#fff;background:var(--coral);cursor:pointer;">무료(Alert)</button>
+  <button onclick="currentPlan='MONTHLY';this.style.background='var(--purple)';this.previousElementSibling.style.background='';this.nextElementSibling.style.background=''" style="padding:4px 10px;border-radius:8px;border:none;font-size:11px;font-weight:600;color:#fff;background:'';cursor:pointer;">월간PRO</button>
+  <button onclick="currentPlan='YEARLY';this.style.background='var(--orange)';this.previousElementSibling.style.background='';this.previousElementSibling.previousElementSibling.style.background=''" style="padding:4px 10px;border-radius:8px;border:none;font-size:11px;font-weight:600;color:#fff;background:'';cursor:pointer;">연간PRO</button>
+</div>
+
+<style>
+@keyframes bounceIn {
+  0% { transform: scale(0.3); opacity: 0; }
+  50% { transform: scale(1.1); }
+  70% { transform: scale(0.9); }
+  100% { transform: scale(1); opacity: 1; }
+}
+</style>
+<script src="../site-nav.js"></script>
+</body>
+</html>

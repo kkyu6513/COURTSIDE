@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=375, initial-scale=1.0"><title>7-9 통계 PRO — COURTSIDE</title><link rel="stylesheet" href="../common.css">
+<style>.stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:16px 20px;}.st-box{background:#fff;border-radius:14px;padding:16px;border:1px solid var(--gray-100);}.st-box .st-val{font-size:24px;font-weight:800;color:var(--navy);}.st-box .st-label{font-size:11px;color:var(--gray-500);font-weight:600;margin-top:4px;}.chart-section{background:#fff;border-radius:16px;margin:0 20px 16px;padding:20px;border:1px solid var(--gray-100);}.chart-title{font-size:14px;font-weight:700;color:var(--navy);margin-bottom:16px;}.bar-chart{display:flex;align-items:flex-end;justify-content:space-between;height:120px;gap:8px;padding:0 4px;}.bar-col{display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;}.bar{width:100%;border-radius:6px 6px 0 0;background:var(--green);min-height:4px;transition:height 0.3s;}.bar-label{font-size:10px;color:var(--gray-400);font-weight:600;}.metric-item{display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--gray-50);}.metric-item:last-child{border-bottom:none;}.metric-label{flex:1;font-size:14px;color:var(--navy);font-weight:500;}.metric-val{font-size:14px;font-weight:700;color:var(--navy);width:48px;text-align:right;}.metric-bar-wrap{flex:1;height:8px;background:var(--gray-100);border-radius:4px;overflow:hidden;}.metric-bar{height:100%;border-radius:4px;background:var(--green);}</style>
+</head>
+<body>
+<div class="device-wrap">
+  <div class="device-label"><span class="device-num">9</span>통계 PRO</div>
+  <div class="device">
+    <div class="status-bar"><span class="time">9:41</span><div class="status-icons"><span>📶</span><span>🔋</span></div></div>
+    <div class="top-nav"><a href="7-1-coach-mypage.html" class="back">‹</a><span class="title">통계</span><span class="badge badge-pro" style="position:absolute;right:20px;">PRO</span></div>
+    <div class="screen">
+      <!-- Stats Grid -->
+      <div class="stats-grid">
+        <div class="st-box"><div class="st-val" style="color:var(--green);">32</div><div class="st-label">완료 레슨</div></div>
+        <div class="st-box"><div class="st-val" style="color:var(--purple);">₩1.8M</div><div class="st-label">예상 수익</div></div>
+        <div class="st-box"><div class="st-val" style="color:var(--yellow);">4.9</div><div class="st-label">평균 평점</div></div>
+        <div class="st-box"><div class="st-val" style="color:var(--coral);">78%</div><div class="st-label">재예약률</div></div>
+      </div>
+      <!-- Weekly Bar Chart -->
+      <div class="chart-section">
+        <div class="chart-title">주간 레슨 현황</div>
+        <div class="bar-chart">
+          <div class="bar-col"><div class="bar" style="height:50%;"></div><div class="bar-label">월</div></div>
+          <div class="bar-col"><div class="bar" style="height:75%;"></div><div class="bar-label">화</div></div>
+          <div class="bar-col"><div class="bar" style="height:90%;"></div><div class="bar-label">수</div></div>
+          <div class="bar-col"><div class="bar" style="height:40%;"></div><div class="bar-label">목</div></div>
+          <div class="bar-col"><div class="bar" style="height:65%;"></div><div class="bar-label">금</div></div>
+          <div class="bar-col"><div class="bar" style="height:100%;"></div><div class="bar-label">토</div></div>
+          <div class="bar-col"><div class="bar" style="height:30%;"></div><div class="bar-label">일</div></div>
+        </div>
+      </div>
+      <!-- Conversion Metrics -->
+      <div class="chart-section">
+        <div class="chart-title">전환 지표</div>
+        <div class="metric-item">
+          <span class="metric-label">신청 수락률</span>
+          <div class="metric-bar-wrap"><div class="metric-bar" style="width:92%;"></div></div>
+          <span class="metric-val">92%</span>
+        </div>
+        <div class="metric-item">
+          <span class="metric-label">체험→정규 전환</span>
+          <div class="metric-bar-wrap"><div class="metric-bar" style="width:65%;background:var(--purple);"></div></div>
+          <span class="metric-val">65%</span>
+        </div>
+        <div class="metric-item">
+          <span class="metric-label">재예약률</span>
+          <div class="metric-bar-wrap"><div class="metric-bar" style="width:78%;background:var(--coral);"></div></div>
+          <span class="metric-val">78%</span>
+        </div>
+        <div class="metric-item">
+          <span class="metric-label">응답 시간 (평균)</span>
+          <div class="metric-bar-wrap"><div class="metric-bar" style="width:85%;background:var(--yellow);"></div></div>
+          <span class="metric-val">2.1h</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

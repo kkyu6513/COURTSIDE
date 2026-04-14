@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>코치 검증 심사 — COURTSIDE Admin</title>
+<link rel="stylesheet" href="../common-admin.css">
+</head>
+<body>
+<div class="admin-layout">
+
+  <nav class="admin-sidebar">
+    <div class="logo">🎾 COURTSIDE <span style="font-size:11px;opacity:0.5;font-weight:400;">Admin</span></div>
+    <div class="nav-group"><div class="nav-group-title">Overview</div><a href="9-1-dashboard.html" class="nav-link"><span class="icon">📊</span>대시보드</a></div>
+    <div class="nav-group"><div class="nav-group-title">관리</div>
+      <a href="9-2-users.html" class="nav-link"><span class="icon">👥</span>회원 관리</a>
+      <a href="9-3-coach-verify.html" class="nav-link active"><span class="icon">✅</span>코치 검증<span class="count">5</span></a>
+      <a href="9-4-banners.html" class="nav-link"><span class="icon">🖼️</span>배너 관리</a>
+      <a href="9-8-reports.html" class="nav-link"><span class="icon">🚨</span>신고 관리</a>
+      <a href="9-9-schedule-admin.html" class="nav-link"><span class="icon">📅</span>스케줄 관리</a>
+    </div>
+    <div class="nav-group"><div class="nav-group-title">설정</div>
+      <a href="9-5-subscription-plans.html" class="nav-link"><span class="icon">💎</span>구독 플랜</a>
+      <a href="9-6-code-manage.html" class="nav-link"><span class="icon">⚙️</span>코드 관리</a>
+      <a href="9-7-terms.html" class="nav-link"><span class="icon">📜</span>약관 관리</a>
+    </div>
+  </nav>
+
+  <main class="admin-main">
+    <div class="admin-header">
+      <div class="breadcrumb">관리 › 코치 검증 심사</div>
+      <h1>코치 검증 심사</h1>
+      <div class="subtitle">자격증 업로드 후 대기 중인 코치를 심사합니다</div>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-bottom:16px;">
+      <span class="chip active">대기 (5)</span>
+      <span class="chip">승인됨 (12)</span>
+      <span class="chip">반려됨 (3)</span>
+    </div>
+
+    <!-- 심사 테이블 -->
+    <div class="admin-card" style="padding:0;overflow:hidden;">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>코치</th>
+            <th>지역</th>
+            <th>전문 분야</th>
+            <th>경력</th>
+            <th>자격증</th>
+            <th>신청일</th>
+            <th>상태</th>
+            <th style="width:180px;">액션</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="font-weight:600;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--sky));display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">🏸</div>
+                한도윤
+              </div>
+            </td>
+            <td>강남구</td>
+            <td>포핸드, 서브</td>
+            <td>5년</td>
+            <td><span style="font-size:12px;color:var(--info);cursor:pointer;text-decoration:underline;">📄 생활체육지도사 2급</span></td>
+            <td style="color:var(--gray-500);">2026.04.08</td>
+            <td><span class="badge badge-pending">대기</span></td>
+            <td>
+              <div style="display:flex;gap:6px;">
+                <button class="btn-sm" style="background:var(--error);color:#fff;">반려</button>
+                <button class="btn-sm" style="background:var(--green);color:#fff;">승인</button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td style="font-weight:600;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--orange),var(--yellow));display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">🎾</div>
+                정하은
+              </div>
+            </td>
+            <td>마포구</td>
+            <td>입문지도</td>
+            <td>3년</td>
+            <td><span style="font-size:12px;color:var(--info);cursor:pointer;text-decoration:underline;">📄 KTA 코치 자격증</span></td>
+            <td style="color:var(--gray-500);">2026.04.07</td>
+            <td><span class="badge badge-pending">대기</span></td>
+            <td>
+              <div style="display:flex;gap:6px;">
+                <button class="btn-sm" style="background:var(--error);color:#fff;">반려</button>
+                <button class="btn-sm" style="background:var(--green);color:#fff;">승인</button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td style="font-weight:600;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--pink),var(--coral));display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">🏆</div>
+                오승민
+              </div>
+            </td>
+            <td>서초구</td>
+            <td>백핸드, 복식전략</td>
+            <td>7년</td>
+            <td><span style="font-size:12px;color:var(--info);cursor:pointer;text-decoration:underline;">📄 전문체육지도사</span></td>
+            <td style="color:var(--gray-500);">2026.04.06</td>
+            <td><span class="badge badge-pending">대기</span></td>
+            <td>
+              <div style="display:flex;gap:6px;">
+                <button class="btn-sm" style="background:var(--error);color:#fff;">반려</button>
+                <button class="btn-sm" style="background:var(--green);color:#fff;">승인</button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td style="font-weight:600;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--purple),#a78bfa);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">⭐</div>
+                김태영
+              </div>
+            </td>
+            <td>송파구</td>
+            <td>경기전략, 멘탈코칭</td>
+            <td>12년</td>
+            <td><span style="font-size:12px;color:var(--info);cursor:pointer;text-decoration:underline;">📄 대한테니스협회 자격</span></td>
+            <td style="color:var(--gray-500);">2026.04.05</td>
+            <td><span class="badge badge-pending">대기</span></td>
+            <td>
+              <div style="display:flex;gap:6px;">
+                <button class="btn-sm" style="background:var(--error);color:#fff;">반려</button>
+                <button class="btn-sm" style="background:var(--green);color:#fff;">승인</button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td style="font-weight:600;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--sky),var(--info));display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">🎯</div>
+                윤서준
+              </div>
+            </td>
+            <td>용산구</td>
+            <td>서브, 풋워크</td>
+            <td>4년</td>
+            <td><span style="font-size:12px;color:var(--info);cursor:pointer;text-decoration:underline;">📄 생활체육지도사 3급</span></td>
+            <td style="color:var(--gray-500);">2026.04.04</td>
+            <td><span class="badge badge-pending">대기</span></td>
+            <td>
+              <div style="display:flex;gap:6px;">
+                <button class="btn-sm" style="background:var(--error);color:#fff;">반려</button>
+                <button class="btn-sm" style="background:var(--green);color:#fff;">승인</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<script src="../site-nav.js"></script>
+</body>
+</html>

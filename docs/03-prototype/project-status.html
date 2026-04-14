@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>COURTSIDE — 작업 현황표</title>
+<style>
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --green:#2DD4BF; --green-d:#20b5a2; --navy:#1E3A5F; --purple:#7C5CBF; --coral:#FF6B6B;
+  --gray-50:#F5F5F7; --gray-100:#E5E7EB; --gray-300:#D1D5DB; --gray-400:#9CA3AF; --gray-500:#6B7280;
+  --success:#22C55E; --warning:#F59E0B; --error:#EF4444; --info:#3B82F6;
+}
+body { font-family:'Pretendard',-apple-system,sans-serif; background:var(--gray-50); color:var(--navy); margin:0; }
+.container { max-width:1200px; margin:0 auto; padding:24px; }
+h1 { font-size:28px; font-weight:900; margin-bottom:4px; }
+.subtitle { font-size:14px; color:var(--gray-500); margin-bottom:8px; }
+.update-time { font-size:12px; color:var(--gray-400); margin-bottom:20px; }
+
+/* Summary Cards */
+.summary-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:12px; margin-bottom:24px; }
+.summary-card { background:#fff; border-radius:16px; padding:20px; box-shadow:0 1px 4px rgba(0,0,0,0.06); text-align:center; }
+.summary-card .value { font-size:32px; font-weight:900; }
+.summary-card .label { font-size:13px; color:var(--gray-500); margin-top:4px; }
+
+/* Progress Bar */
+.progress-wrap { margin-bottom:24px; }
+.progress-label { display:flex; justify-content:space-between; margin-bottom:6px; font-size:13px; font-weight:600; }
+.progress-bar { height:12px; background:var(--gray-100); border-radius:6px; overflow:hidden; }
+.progress-fill { height:100%; border-radius:6px; transition:width 0.5s; }
+
+/* Tab Navigation */
+.tab-nav { display:flex; background:#fff; border-radius:16px; padding:6px; box-shadow:0 1px 4px rgba(0,0,0,0.06); margin-bottom:24px; gap:4px; position:sticky; top:0; z-index:50; }
+.tab-btn { flex:1; padding:12px 16px; border-radius:12px; border:none; background:transparent; font-size:14px; font-weight:700; color:var(--gray-400); cursor:pointer; font-family:inherit; transition:all 0.2s; display:flex; align-items:center; justify-content:center; gap:6px; }
+.tab-btn:hover { background:var(--gray-50); color:var(--navy); }
+.tab-btn.active { background:var(--navy); color:#fff; }
+.tab-btn .tab-icon { font-size:16px; }
+.tab-btn .tab-count { font-size:11px; padding:1px 6px; border-radius:8px; background:rgba(255,255,255,0.2); }
+.tab-btn.active .tab-count { background:rgba(255,255,255,0.2); }
+.tab-btn:not(.active) .tab-count { background:var(--gray-100); color:var(--gray-500); }
+
+/* Tab Content */
+.tab-content { display:none; }
+.tab-content.active { display:block; }
+
+/* Section */
+.section { margin-bottom:32px; }
+.section-title { font-size:18px; font-weight:800; margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+.section-badge { font-size:12px; font-weight:700; padding:3px 10px; border-radius:10px; }
+
+/* Table */
+.status-table { width:100%; border-collapse:collapse; background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 1px 4px rgba(0,0,0,0.06); }
+.status-table th { background:var(--gray-50); padding:10px 14px; text-align:left; font-size:12px; font-weight:700; color:var(--gray-500); border-bottom:2px solid var(--gray-100); }
+.status-table td { padding:10px 14px; font-size:13px; border-bottom:1px solid var(--gray-100); }
+.status-table tr:hover { background:var(--gray-50); }
+.status-table tr:last-child td { border-bottom:none; }
+
+/* Badges */
+.badge { display:inline-block; padding:2px 8px; border-radius:6px; font-size:11px; font-weight:700; }
+.badge-done { background:#D1FAE5; color:#065F46; }
+.badge-progress { background:#FEF3C7; color:#92400E; }
+.badge-todo { background:var(--gray-100); color:var(--gray-500); }
+
+/* Phase Card */
+.phase-card { background:#fff; border-radius:16px; padding:20px; box-shadow:0 1px 4px rgba(0,0,0,0.06); margin-bottom:16px; }
+.phase-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+.phase-title { font-size:16px; font-weight:800; }
+.phase-progress { font-size:14px; font-weight:700; }
+
+/* Legend */
+.legend { display:flex; gap:16px; margin-bottom:16px; font-size:12px; color:var(--gray-500); }
+.legend-dot { width:10px; height:10px; border-radius:50%; display:inline-block; margin-right:4px; vertical-align:middle; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- 헤더 -->
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+    <a href="javascript:history.back()" style="padding:8px 16px;border-radius:20px;background:var(--navy);color:#fff;font-size:13px;font-weight:600;text-decoration:none;">← 돌아가기</a>
+    <a href="flow2-home/2-1-home.html" style="padding:8px 16px;border-radius:20px;background:var(--green);color:#fff;font-size:13px;font-weight:600;text-decoration:none;">프로토타입 시작</a>
+  </div>
+  <h1>COURTSIDE 작업 현황표</h1>
+  <div class="subtitle">테니스 코치 매칭 O2O SaaS — 개발 진행 상황 대시보드</div>
+  <div class="update-time">최종 업데이트: 2026-04-13</div>
+
+  <!-- 현재 작업 중 (진행중 항목만 노출) -->
+  <div style="background:linear-gradient(135deg,#1E3A5F,#7C5CBF);border-radius:16px;padding:20px 24px;margin-bottom:24px;color:#fff;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:18px;">🔥</span>
+        <span style="font-size:16px;font-weight:800;">현재 작업 중</span>
+        <span style="padding:2px 8px;border-radius:8px;background:rgba(245,158,11,0.3);color:#FCD34D;font-size:11px;font-weight:700;">2건</span>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <a href="flow7-coach-my/7-0-schedule-home.html" style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:rgba(255,255,255,0.08);border-radius:12px;text-decoration:none;color:#fff;transition:background 0.15s;cursor:pointer;" onmouseenter="this.style.background='rgba(255,255,255,0.15)'" onmouseleave="this.style.background='rgba(255,255,255,0.08)'">
+        <div style="width:36px;height:36px;border-radius:10px;background:rgba(245,158,11,0.3);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">📅</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:14px;font-weight:700;">7-0 코치 스케줄 홈</div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:2px;">오늘 레슨 CONFIRMED+COMPLETED만 표시, 대기 건 하단 분리 완료</div>
+        </div>
+        <span style="font-size:18px;color:rgba(255,255,255,0.3);flex-shrink:0;">›</span>
+      </a>
+      <a href="flow7-coach-my/7-0-schedule-home.html" style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:rgba(255,255,255,0.08);border-radius:12px;text-decoration:none;color:#fff;transition:background 0.15s;cursor:pointer;" onmouseenter="this.style.background='rgba(255,255,255,0.15)'" onmouseleave="this.style.background='rgba(255,255,255,0.08)'">
+        <div style="width:36px;height:36px;border-radius:10px;background:rgba(245,158,11,0.3);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">📋</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:14px;font-weight:700;">레슨 상세 풀팝업</div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:2px;">상태별 UI 완료, 보류+거절 프로세스 완료, 스케줄 확정 플로우 완료</div>
+        </div>
+        <span style="font-size:18px;color:rgba(255,255,255,0.3);flex-shrink:0;">›</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- 전체 요약 (항상 노출) -->
+  <div class="summary-grid">
+    <div class="summary-card"><div class="value" style="color:var(--navy);">48</div><div class="label">전체 요구사항 (FR)</div></div>
+    <div class="summary-card"><div class="value" style="color:var(--purple);">51</div><div class="label">프로토타입 화면</div></div>
+    <div class="summary-card"><div class="value" style="color:var(--info);">37</div><div class="label">DB 테이블</div></div>
+    <div class="summary-card"><div class="value" style="color:var(--green);">18</div><div class="label">알림톡 템플릿</div></div>
+    <div class="summary-card"><div class="value" style="color:var(--warning);">6</div><div class="label">설계 문서</div></div>
+  </div>
+
+  <!-- 전체 진행률 (항상 노출) -->
+  <div class="progress-wrap">
+    <div class="progress-label"><span>전체 진행률</span><span style="color:var(--green);">Phase 1 완료 (기획 + 설계 + 프로토타입)</span></div>
+    <div class="progress-bar"><div class="progress-fill" style="width:30%;background:linear-gradient(90deg,var(--green),var(--info));"></div></div>
+    <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:var(--gray-400);">
+      <span>기획/설계/프로토타입 100%</span><span>프론트엔드 0%</span><span>백엔드 0%</span><span>테스트/배포 0%</span>
+    </div>
+  </div>
+
+  <!-- ═══════════ 탭 네비게이션 ═══════════ -->
+  <div class="tab-nav">
+    <button class="tab-btn active" onclick="switchStatusTab('phase1')">
+      <span class="tab-icon">📋</span> Phase 1 <span class="tab-count">100%</span>
+    </button>
+    <button class="tab-btn" onclick="switchStatusTab('phase2')">
+      <span class="tab-icon">🖥️</span> Phase 2 <span class="tab-count">0%</span>
+    </button>
+    <button class="tab-btn" onclick="switchStatusTab('phase3')">
+      <span class="tab-icon">⚙️</span> Phase 3 <span class="tab-count">0%</span>
+    </button>
+    <button class="tab-btn" onclick="switchStatusTab('phase4')">
+      <span class="tab-icon">🚀</span> Phase 4 <span class="tab-count">0%</span>
+    </button>
+  </div>
+
+  <!-- ═══════════ Phase 1: 기획 + 설계 + 프로토타입 ═══════════ -->
+  <div id="tab-phase1" class="tab-content active">
+
+    <div class="phase-card" style="border-left:4px solid var(--success);">
+      <div class="phase-header">
+        <div class="phase-title">Phase 1 — 기획 + 설계 + 프로토타입</div>
+        <div class="phase-progress" style="color:var(--success);">100%</div>
+      </div>
+      <div class="progress-bar" style="margin-bottom:12px;"><div class="progress-fill" style="width:100%;background:var(--success);"></div></div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;font-size:12px;">
+        <div><span class="badge badge-done">완료</span> 요구사항 정의서 (48 FR)</div>
+        <div><span class="badge badge-done">완료</span> 화면 설계서 (46 화면)</div>
+        <div><span class="badge badge-done">완료</span> DB 스키마 (37 테이블)</div>
+        <div><span class="badge badge-done">완료</span> 비즈니스 로직 (15 섹션)</div>
+        <div><span class="badge badge-done">완료</span> 알림톡 템플릿 (18종)</div>
+        <div><span class="badge badge-done">완료</span> 프로토타입 (51 HTML)</div>
+      </div>
+    </div>
+
+    <!-- 산출물 -->
+    <div class="section">
+      <div class="section-title">산출물 현황 <span class="section-badge" style="background:#DBEAFE;color:#1E40AF;">6개 문서</span></div>
+      <table class="status-table">
+        <thead><tr><th>문서</th><th>파일</th><th>내용</th><th>상태</th><th>수정</th></tr></thead>
+        <tbody>
+          <tr><td style="font-weight:700;">요구사항 정의서</td><td style="font-size:11px;color:var(--gray-400);">01-plan/features/tennis-coach-matching.plan.md</td><td>48개 FR</td><td><span class="badge badge-done">완료</span></td><td>4/13</td></tr>
+          <tr><td style="font-weight:700;">화면 설계서</td><td style="font-size:11px;color:var(--gray-400);">02-design/screen-spec.md</td><td>46개 화면 인터랙션</td><td><span class="badge badge-done">완료</span></td><td>4/13</td></tr>
+          <tr><td style="font-weight:700;">DB 스키마</td><td style="font-size:11px;color:var(--gray-400);">02-design/database-schema.md</td><td>37개 테이블 (v1.3)</td><td><span class="badge badge-done">완료</span></td><td>4/13</td></tr>
+          <tr><td style="font-weight:700;">비즈니스 로직</td><td style="font-size:11px;color:var(--gray-400);">02-design/business-logic.md</td><td>15개 섹션 (v1.1)</td><td><span class="badge badge-done">완료</span></td><td>4/13</td></tr>
+          <tr><td style="font-weight:700;">알림톡 템플릿</td><td style="font-size:11px;color:var(--gray-400);">02-design/alimtalk-templates.md</td><td>18개 템플릿</td><td><span class="badge badge-done">완료</span></td><td>4/13</td></tr>
+          <tr><td style="font-weight:700;">디자인 가이드</td><td style="font-size:11px;color:var(--gray-400);">02-design/design-guide.md</td><td>색상/타이포/컴포넌트</td><td><span class="badge badge-done">완료</span></td><td>4/10</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 프로토타입 화면 -->
+    <div class="section">
+      <div class="section-title">프로토타입 화면 현황 <span class="section-badge" style="background:#F3E8FF;color:var(--purple);">51개 HTML</span></div>
+      <div class="legend">
+        <span><span class="legend-dot" style="background:var(--success);"></span>완료</span>
+        <span><span class="legend-dot" style="background:var(--warning);"></span>진행중</span>
+        <span><span class="legend-dot" style="background:var(--gray-300);"></span>미착수</span>
+      </div>
+      <table class="status-table">
+        <thead><tr><th>Flow</th><th>화면</th><th>파일</th><th>상태</th><th>비고</th></tr></thead>
+        <tbody>
+          <tr style="background:#F0FDFA;"><td colspan="5" style="font-weight:800;font-size:13px;">Flow 1 — 온보딩 (11개)</td></tr>
+          <tr><td>1-1</td><td>스플래시</td><td style="font-size:11px;">1-1-splash.html</td><td><span class="badge badge-done">완료</span></td><td></td></tr>
+          <tr><td>1-2</td><td>로그인</td><td style="font-size:11px;">1-2-login.html</td><td><span class="badge badge-done">완료</span></td><td>카카오+네이버</td></tr>
+          <tr><td>1-2b</td><td>회원가입</td><td style="font-size:11px;">1-2b-signup.html</td><td><span class="badge badge-done">완료</span></td><td></td></tr>
+          <tr><td>1-3</td><td>역할 선택</td><td style="font-size:11px;">1-3-role-select.html</td><td><span class="badge badge-done">완료</span></td><td></td></tr>
+          <tr><td>1-4</td><td>학생 프로필</td><td style="font-size:11px;">1-4-student-profile.html</td><td><span class="badge badge-done">완료</span></td><td>17 시도+250 시군구</td></tr>
+          <tr><td>1-4b</td><td>가입 완료</td><td style="font-size:11px;">1-4b-signup-complete.html</td><td><span class="badge badge-done">완료</span></td><td></td></tr>
+          <tr><td>1-5</td><td>구독 플랜</td><td style="font-size:11px;">1-5-coach-subscription.html</td><td><span class="badge badge-done">완료</span></td><td></td></tr>
+          <tr><td>1-6</td><td>코치 프로필</td><td style="font-size:11px;">1-6-coach-profile.html</td><td><span class="badge badge-done">완료</span></td><td>11개 유효성검사</td></tr>
+          <tr><td>1-6b</td><td>코치 완료</td><td style="font-size:11px;">1-6b-coach-complete.html</td><td><span class="badge badge-done">완료</span></td><td></td></tr>
+          <tr><td>1-7</td><td>스케줄 등록</td><td style="font-size:11px;">1-7-schedule-register.html</td><td><span class="badge badge-done">완료</span></td><td>10분 슬롯</td></tr>
+          <tr><td>—</td><td>약관 상세</td><td style="font-size:11px;">terms-detail.html</td><td><span class="badge badge-done">완료</span></td><td>동적 URL</td></tr>
+
+          <tr style="background:#F0FDFA;"><td colspan="5" style="font-weight:800;font-size:13px;">Flow 2 — 홈/탐색 (4개)</td></tr>
+          <tr><td>2-1</td><td>홈</td><td style="font-size:11px;">2-1-home.html</td><td><span class="badge badge-done">완료</span></td><td>배너+4케이스</td></tr>
+          <tr><td>2-2</td><td>코치 목록</td><td style="font-size:11px;">2-2-coach-list.html</td><td><span class="badge badge-done">완료</span></td><td>3종 필터</td></tr>
+          <tr><td>2-3</td><td>코치 상세</td><td style="font-size:11px;">2-3-coach-detail.html</td><td><span class="badge badge-done">완료</span></td><td></td></tr>
+          <tr><td>2-3a</td><td>리뷰 목록</td><td style="font-size:11px;">2-3a-reviews.html</td><td><span class="badge badge-done">완료</span></td><td></td></tr>
+
+          <tr style="background:#F0FDFA;"><td colspan="5" style="font-weight:800;font-size:13px;">Flow 3 — 레슨 신청 (3개)</td></tr>
+          <tr><td>3-1</td><td>레슨 선택</td><td style="font-size:11px;">3-1-type-select.html</td><td><span class="badge badge-done">완료</span></td><td>통합</td></tr>
+          <tr><td>3-4</td><td>확인/제출</td><td style="font-size:11px;">3-4-confirm.html</td><td><span class="badge badge-done">완료</span></td><td></td></tr>
+          <tr><td>3-5</td><td>신청 완료</td><td style="font-size:11px;">3-5-complete.html</td><td><span class="badge badge-done">완료</span></td><td></td></tr>
+
+          <tr style="background:#F0FDFA;"><td colspan="5" style="font-weight:800;font-size:13px;">Flow 4 — 채팅 (2개)</td></tr>
+          <tr><td>4-1</td><td>채팅 목록</td><td style="font-size:11px;">4-1-chat-list.html</td><td><span class="badge badge-done">완료</span></td><td></td></tr>
+          <tr><td>4-2</td><td>1:1 채팅</td><td style="font-size:11px;">4-2-chat.html</td><td><span class="badge badge-done">완료</span></td><td>신고</td></tr>
+
+          <tr style="background:#F0FDFA;"><td colspan="5" style="font-weight:800;font-size:13px;">Flow 5 — 결제 (2개)</td></tr>
+          <tr><td>5-1</td><td>결제</td><td style="font-size:11px;">5-1-payment.html</td><td><span class="badge badge-done">완료</span></td><td>토스페이먼츠</td></tr>
+          <tr><td>5-2</td><td>결제 완료</td><td style="font-size:11px;">5-2-complete.html</td><td><span class="badge badge-done">완료</span></td><td></td></tr>
+
+          <tr style="background:#F0FDFA;"><td colspan="5" style="font-weight:800;font-size:13px;">Flow 6 — 수강생 마이 (7개)</td></tr>
+          <tr><td>6-1</td><td>비로그인</td><td style="font-size:11px;">6-1-guest.html</td><td><span class="badge badge-done">완료</span></td><td></td></tr>
+          <tr><td>6-2</td><td>마이페이지</td><td style="font-size:11px;">6-2-mypage.html</td><td><span class="badge badge-done">완료</span></td><td></td></tr>
+          <tr><td>6-3</td><td>프로필 수정</td><td style="font-size:11px;">6-3-profile-edit.html</td><td><span class="badge badge-done">완료</span></td><td></td></tr>
+          <tr><td>6-4</td><td>테니스 정보</td><td style="font-size:11px;">6-4-tennis-info.html</td><td><span class="badge badge-done">완료</span></td><td></td></tr>
+          <tr><td>6-5</td><td>신청 내역</td><td style="font-size:11px;">6-5-booking-list.html</td><td><span class="badge badge-done">완료</span></td><td></td></tr>
+          <tr><td>6-6</td><td>신청 상세</td><td style="font-size:11px;">6-6-booking-detail.html</td><td><span class="badge badge-done">완료</span></td><td></td></tr>
+          <tr><td>6-7</td><td>찜한 코치</td><td style="font-size:11px;">6-7-favorites.html</td><td><span class="badge badge-done">완료</span></td><td></td></tr>
+
+          <tr style="background:#F0FDFA;"><td colspan="5" style="font-weight:800;font-size:13px;">Flow 7 — 코치 마이 (10개)</td></tr>
+          <tr><td>7-0</td><td>스케줄 홈</td><td style="font-size:11px;">7-0-schedule-home.html</td><td><span class="badge badge-progress">진행중</span></td><td>탭UI+변경요청+풀팝업</td></tr>
+          <tr><td>7-1</td><td>코치 마이</td><td style="font-size:11px;">7-1-coach-mypage.html</td><td><span class="badge badge-done">완료</span></td><td></td></tr>
+          <tr><td>7-2</td><td>신청 수신</td><td style="font-size:11px;">7-2-booking-inbox.html</td><td><span class="badge badge-done">완료</span></td><td></td></tr>
+          <tr><td>7-3</td><td>수락/거절</td><td style="font-size:11px;">7-3-booking-action.html</td><td><span class="badge badge-done">완료</span></td><td></td></tr>
+          <tr><td>7-4</td><td>스케줄 관리</td><td style="font-size:11px;">7-4-schedule.html</td><td><span class="badge badge-done">완료</span></td><td></td></tr>
+          <tr><td>7-5</td><td>구독 관리</td><td style="font-size:11px;">7-5-subscription.html</td><td><span class="badge badge-done">완료</span></td><td></td></tr>
+          <tr><td>7-6</td><td>예약 현황</td><td style="font-size:11px;">7-6-bookings.html</td><td><span class="badge badge-done">완료</span></td><td></td></tr>
+          <tr><td>7-7</td><td>리뷰 현황</td><td style="font-size:11px;">7-7-reviews.html</td><td><span class="badge badge-done">완료</span></td><td></td></tr>
+          <tr><td>7-8</td><td>레슨 이력</td><td style="font-size:11px;">7-8-lesson-history.html</td><td><span class="badge badge-done">완료</span></td><td></td></tr>
+          <tr><td>7-9</td><td>통계</td><td style="font-size:11px;">7-9-stats.html</td><td><span class="badge badge-done">완료</span></td><td>PRO 전용</td></tr>
+
+          <tr style="background:#F0FDFA;"><td colspan="5" style="font-weight:800;font-size:13px;">Flow 8 — 리뷰/알림 (3개)</td></tr>
+          <tr><td>8-1</td><td>리뷰 작성</td><td style="font-size:11px;">8-1-review-write.html</td><td><span class="badge badge-done">완료</span></td><td></td></tr>
+          <tr><td>8-2</td><td>알림 목록</td><td style="font-size:11px;">8-2-notify-list.html</td><td><span class="badge badge-done">완료</span></td><td></td></tr>
+          <tr><td>8-3</td><td>알림 설정</td><td style="font-size:11px;">8-3-notify-settings.html</td><td><span class="badge badge-done">완료</span></td><td></td></tr>
+
+          <tr style="background:#F0FDFA;"><td colspan="5" style="font-weight:800;font-size:13px;">Flow 9 — 어드민 (9개, 데스크탑)</td></tr>
+          <tr><td>9-1</td><td>대시보드</td><td style="font-size:11px;">9-1-dashboard.html</td><td><span class="badge badge-done">완료</span></td><td></td></tr>
+          <tr><td>9-2</td><td>회원 관리</td><td style="font-size:11px;">9-2-users.html</td><td><span class="badge badge-done">완료</span></td><td></td></tr>
+          <tr><td>9-3</td><td>코치 검증</td><td style="font-size:11px;">9-3-coach-verify.html</td><td><span class="badge badge-done">완료</span></td><td></td></tr>
+          <tr><td>9-4</td><td>배너 관리</td><td style="font-size:11px;">9-4-banners.html</td><td><span class="badge badge-done">완료</span></td><td></td></tr>
+          <tr><td>9-5</td><td>구독 플랜</td><td style="font-size:11px;">9-5-subscription-plans.html</td><td><span class="badge badge-done">완료</span></td><td></td></tr>
+          <tr><td>9-6</td><td>코드 관리</td><td style="font-size:11px;">9-6-code-manage.html</td><td><span class="badge badge-done">완료</span></td><td>3탭</td></tr>
+          <tr><td>9-7</td><td>약관 관리</td><td style="font-size:11px;">9-7-terms.html</td><td><span class="badge badge-done">완료</span></td><td></td></tr>
+          <tr><td>9-8</td><td>신고 관리</td><td style="font-size:11px;">9-8-reports.html</td><td><span class="badge badge-done">완료</span></td><td></td></tr>
+          <tr><td>9-9</td><td>스케줄 관리</td><td style="font-size:11px;">9-9-schedule-admin.html</td><td><span class="badge badge-done">완료</span></td><td>4탭+정책설정</td></tr>
+
+          <tr style="background:#F0FDFA;"><td colspan="5" style="font-weight:800;font-size:13px;">공유 리소스 (4개)</td></tr>
+          <tr><td>—</td><td>공통 CSS (모바일)</td><td style="font-size:11px;">common.css</td><td><span class="badge badge-done">완료</span></td><td></td></tr>
+          <tr><td>—</td><td>공통 CSS (어드민)</td><td style="font-size:11px;">common-admin.css</td><td><span class="badge badge-done">완료</span></td><td></td></tr>
+          <tr><td>—</td><td>사이트 네비게이션</td><td style="font-size:11px;">site-nav.js</td><td><span class="badge badge-done">완료</span></td><td></td></tr>
+          <tr><td>—</td><td>타임 슬롯 코드</td><td style="font-size:11px;">time-slots.js</td><td><span class="badge badge-done">완료</span></td><td>T+HHMM</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══════════ Phase 2: 프론트엔드 ═══════════ -->
+  <div id="tab-phase2" class="tab-content">
+
+    <div class="phase-card" style="border-left:4px solid var(--gray-300);">
+      <div class="phase-header">
+        <div class="phase-title">Phase 2 — 프론트엔드 개발 (Next.js 14 App Router)</div>
+        <div class="phase-progress" style="color:var(--gray-400);">0%</div>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width:0%;"></div></div>
+      <div style="margin-top:12px;font-size:13px;color:var(--gray-500);">Tailwind CSS + TanStack Query + Zustand + Socket.io Client</div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">프론트엔드 작업 목록</div>
+      <table class="status-table">
+        <thead><tr><th>우선순위</th><th>영역</th><th>작업 내용</th><th>기반 문서</th><th>예상 화면</th><th>상태</th></tr></thead>
+        <tbody>
+          <tr><td style="font-weight:700;color:var(--error);">P0</td><td>프로젝트 셋업</td><td>Next.js 14 + Tailwind + TanStack Query + Zustand 초기 구성</td><td>—</td><td>—</td><td><span class="badge badge-todo">대기</span></td></tr>
+          <tr><td style="font-weight:700;color:var(--error);">P0</td><td>공통 컴포넌트</td><td>디자인 시스템 구축 (Button, Input, Badge, Modal, BottomSheet, TopNav, BottomNav)</td><td>design-guide.md, common.css</td><td>전체</td><td><span class="badge badge-todo">대기</span></td></tr>
+          <tr><td style="font-weight:700;color:var(--error);">P0</td><td>인증</td><td>카카오/네이버 소셜 로그인 + JWT + 역할 분기</td><td>FR-01, screen-spec 1-2</td><td>1-1 ~ 1-3</td><td><span class="badge badge-todo">대기</span></td></tr>
+          <tr><td style="font-weight:700;color:var(--error);">P0</td><td>홈</td><td>메인 홈 + 코치 목록 + 코치 상세 + 리뷰</td><td>FR-03~04, screen-spec 2-x</td><td>2-1 ~ 2-3a</td><td><span class="badge badge-todo">대기</span></td></tr>
+          <tr><td style="font-weight:700;color:var(--warning);">P1</td><td>온보딩</td><td>학생/코치 프로필 등록 + 구독 + 스케줄 등록</td><td>FR-01~02, screen-spec 1-4~1-7</td><td>1-4 ~ 1-7</td><td><span class="badge badge-todo">대기</span></td></tr>
+          <tr><td style="font-weight:700;color:var(--warning);">P1</td><td>레슨 신청</td><td>레슨 선택 + 확인 + 완료</td><td>FR-05, screen-spec 3-x</td><td>3-1 ~ 3-5</td><td><span class="badge badge-todo">대기</span></td></tr>
+          <tr><td style="font-weight:700;color:var(--warning);">P1</td><td>결제</td><td>토스페이먼츠 PG 연동</td><td>FR-07, screen-spec 5-x</td><td>5-1 ~ 5-2</td><td><span class="badge badge-todo">대기</span></td></tr>
+          <tr><td style="font-weight:700;color:var(--warning);">P1</td><td>채팅</td><td>Socket.io 실시간 채팅 + 차단/신고</td><td>FR-05a, screen-spec 4-x</td><td>4-1 ~ 4-2</td><td><span class="badge badge-todo">대기</span></td></tr>
+          <tr><td style="font-weight:700;">P2</td><td>수강생 마이</td><td>마이페이지 + 프로필 + 신청내역 + 찜</td><td>FR-12a, screen-spec 6-x</td><td>6-1 ~ 6-7</td><td><span class="badge badge-todo">대기</span></td></tr>
+          <tr><td style="font-weight:700;">P2</td><td>코치 마이</td><td>스케줄 홈 + 변경요청 + 홀드 + 마이페이지</td><td>FR-10~12b, screen-spec 7-x</td><td>7-0 ~ 7-9</td><td><span class="badge badge-todo">대기</span></td></tr>
+          <tr><td style="font-weight:700;">P2</td><td>리뷰/알림</td><td>리뷰 작성 + 알림 목록/설정</td><td>FR-06~09, screen-spec 8-x</td><td>8-1 ~ 8-3</td><td><span class="badge badge-todo">대기</span></td></tr>
+          <tr><td style="font-weight:700;">P3</td><td>어드민</td><td>관리자 대시보드 (9개 페이지, 데스크탑)</td><td>FR-14, screen-spec 9-x</td><td>9-1 ~ 9-9</td><td><span class="badge badge-todo">대기</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══════════ Phase 3: 백엔드 ═══════════ -->
+  <div id="tab-phase3" class="tab-content">
+
+    <div class="phase-card" style="border-left:4px solid var(--gray-300);">
+      <div class="phase-header">
+        <div class="phase-title">Phase 3 — 백엔드 개발 (NestJS + Prisma + PostgreSQL)</div>
+        <div class="phase-progress" style="color:var(--gray-400);">0%</div>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width:0%;"></div></div>
+      <div style="margin-top:12px;font-size:13px;color:var(--gray-500);">Redis + Socket.io Gateway + JWT + 카카오 알림톡 + 토스페이먼츠</div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">백엔드 작업 목록</div>
+      <table class="status-table">
+        <thead><tr><th>우선순위</th><th>영역</th><th>작업 내용</th><th>기반 문서</th><th>테이블</th><th>상태</th></tr></thead>
+        <tbody>
+          <tr><td style="font-weight:700;color:var(--error);">P0</td><td>프로젝트 셋업</td><td>NestJS + Prisma + PostgreSQL + Redis 초기 구성</td><td>DB 스키마</td><td>—</td><td><span class="badge badge-todo">대기</span></td></tr>
+          <tr><td style="font-weight:700;color:var(--error);">P0</td><td>DB 마이그레이션</td><td>Prisma 스키마 작성 + 마이그레이션</td><td>database-schema.md</td><td>37개 전체</td><td><span class="badge badge-todo">대기</span></td></tr>
+          <tr><td style="font-weight:700;color:var(--error);">P0</td><td>인증 API</td><td>소셜 로그인 + JWT + 역할 기반 Guard</td><td>business-logic 9장</td><td>User</td><td><span class="badge badge-todo">대기</span></td></tr>
+          <tr><td style="font-weight:700;color:var(--warning);">P1</td><td>코치/수강생 API</td><td>프로필 CRUD + 검색/필터 + 이미지 업로드</td><td>business-logic 1~2장</td><td>CoachProfile 외 7</td><td><span class="badge badge-todo">대기</span></td></tr>
+          <tr><td style="font-weight:700;color:var(--warning);">P1</td><td>예약 API</td><td>신청/수락/보류/거절/취소 상태 머신</td><td>business-logic 4장</td><td>Booking 외 3</td><td><span class="badge badge-todo">대기</span></td></tr>
+          <tr><td style="font-weight:700;color:var(--warning);">P1</td><td>결제 API</td><td>토스페이먼츠 연동 + 환불 처리</td><td>business-logic 4.1b</td><td>Payment</td><td><span class="badge badge-todo">대기</span></td></tr>
+          <tr><td style="font-weight:700;color:var(--warning);">P1</td><td>스케줄 API</td><td>등록/변경요청/홀드/자동추천/정책설정</td><td>business-logic 5장, 15장</td><td>Schedule, ScheduleHold 외</td><td><span class="badge badge-todo">대기</span></td></tr>
+          <tr><td style="font-weight:700;">P2</td><td>채팅 Gateway</td><td>Socket.io + 메시지 저장 + 차단/신고</td><td>DB ChatRoom/Message</td><td>ChatRoom 외 2</td><td><span class="badge badge-todo">대기</span></td></tr>
+          <tr><td style="font-weight:700;">P2</td><td>알림 서비스</td><td>카카오 알림톡 + 앱 내 알림 + 스케줄러</td><td>alimtalk-templates.md</td><td>Notification 외 1</td><td><span class="badge badge-todo">대기</span></td></tr>
+          <tr><td style="font-weight:700;">P2</td><td>구독 서비스</td><td>구독 플랜 + 갱신/만료 스케줄러</td><td>business-logic 3장</td><td>SubscriptionPlan 외 2</td><td><span class="badge badge-todo">대기</span></td></tr>
+          <tr><td style="font-weight:700;">P3</td><td>어드민 API</td><td>관리자 전용 (스케줄/신고/코드/약관/검증)</td><td>business-logic 14~15장</td><td>RescheduleActionLog 외</td><td><span class="badge badge-todo">대기</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══════════ Phase 4: 테스트 + 배포 ═══════════ -->
+  <div id="tab-phase4" class="tab-content">
+
+    <div class="phase-card" style="border-left:4px solid var(--gray-300);">
+      <div class="phase-header">
+        <div class="phase-title">Phase 4 — 테스트 + 배포 + 런칭</div>
+        <div class="phase-progress" style="color:var(--gray-400);">0%</div>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width:0%;"></div></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">테스트/배포 작업 목록</div>
+      <table class="status-table">
+        <thead><tr><th>우선순위</th><th>영역</th><th>작업 내용</th><th>상태</th></tr></thead>
+        <tbody>
+          <tr><td style="font-weight:700;color:var(--error);">P0</td><td>통합 테스트</td><td>프론트↔백엔드 API 통합 테스트 전 플로우</td><td><span class="badge badge-todo">대기</span></td></tr>
+          <tr><td style="font-weight:700;color:var(--error);">P0</td><td>결제 테스트</td><td>토스페이먼츠 테스트 환경 결제/환불 검증</td><td><span class="badge badge-todo">대기</span></td></tr>
+          <tr><td style="font-weight:700;color:var(--error);">P0</td><td>소셜 로그인 테스트</td><td>카카오/네이버 OAuth 플로우 검증</td><td><span class="badge badge-todo">대기</span></td></tr>
+          <tr><td style="font-weight:700;color:var(--warning);">P1</td><td>알림톡 테스트</td><td>카카오 비즈메시지 템플릿 검수 + 발송 테스트</td><td><span class="badge badge-todo">대기</span></td></tr>
+          <tr><td style="font-weight:700;color:var(--warning);">P1</td><td>채팅 테스트</td><td>Socket.io 실시간 메시지 안정성 검증</td><td><span class="badge badge-todo">대기</span></td></tr>
+          <tr><td style="font-weight:700;color:var(--warning);">P1</td><td>PWA 설정</td><td>manifest.json + Service Worker + 아이콘 + 오프라인 지원</td><td><span class="badge badge-todo">대기</span></td></tr>
+          <tr><td style="font-weight:700;">P2</td><td>성능 최적화</td><td>Lighthouse 90+ / 이미지 최적화 / 코드 스플리팅</td><td><span class="badge badge-todo">대기</span></td></tr>
+          <tr><td style="font-weight:700;">P2</td><td>SEO</td><td>메타태그 / OG 이미지 / sitemap</td><td><span class="badge badge-todo">대기</span></td></tr>
+          <tr><td style="font-weight:700;">P2</td><td>배포</td><td>Vercel (프론트) + AWS (백엔드) + 도메인 + SSL</td><td><span class="badge badge-todo">대기</span></td></tr>
+          <tr><td style="font-weight:700;">P3</td><td>모니터링</td><td>에러 트래킹 (Sentry) + 로그 + APM</td><td><span class="badge badge-todo">대기</span></td></tr>
+          <tr><td style="font-weight:700;">P3</td><td>런칭</td><td>베타 테스트 → 피드백 반영 → 정식 런칭</td><td><span class="badge badge-todo">대기</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 기술 스택 -->
+    <div class="section">
+      <div class="section-title">기술 스택 요약</div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;">
+        <div class="phase-card">
+          <div style="font-size:14px;font-weight:700;margin-bottom:8px;">Frontend</div>
+          <div style="font-size:13px;color:var(--gray-500);line-height:1.8;">Next.js 14 (App Router) / Tailwind CSS / TanStack Query / Zustand / Socket.io Client</div>
+        </div>
+        <div class="phase-card">
+          <div style="font-size:14px;font-weight:700;margin-bottom:8px;">Backend</div>
+          <div style="font-size:13px;color:var(--gray-500);line-height:1.8;">NestJS / Prisma ORM / PostgreSQL / Redis / Socket.io / JWT</div>
+        </div>
+        <div class="phase-card">
+          <div style="font-size:14px;font-weight:700;margin-bottom:8px;">외부 서비스</div>
+          <div style="font-size:13px;color:var(--gray-500);line-height:1.8;">토스페이먼츠 PG / 카카오 알림톡 (비즈메시지) / 카카오+네이버 소셜로그인</div>
+        </div>
+        <div class="phase-card">
+          <div style="font-size:14px;font-weight:700;margin-bottom:8px;">배포/인프라</div>
+          <div style="font-size:13px;color:var(--gray-500);line-height:1.8;">PWA (모바일 웹) / Vercel (프론트) / AWS (백엔드) — 미확정</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function switchStatusTab(tab) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  event.currentTarget.classList.add('active');
+}
+</script>
+</body>
+</html>

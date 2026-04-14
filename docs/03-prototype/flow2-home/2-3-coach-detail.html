@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=375, initial-scale=1.0">
+<title>2-3 코치 상세 — COURTSIDE</title>
+<link rel="stylesheet" href="../common.css">
+</head>
+<body>
+<div class="device-wrap">
+  <div class="device-label"><span class="device-num">9</span>코치 상세 프로필</div>
+  <div class="device" style="position:relative;overflow:hidden;">
+    <div class="status-bar"><span class="time">9:41</span><div class="status-icons"><span>📶</span><span>🔋</span></div></div>
+    <div class="top-nav">
+      <a class="back" href="2-2-coach-list.html">←</a>
+      <span class="title">코치 프로필</span>
+      <!-- 찜 버튼: 토글 (♡ ↔ ♥) -->
+      <span id="fav-btn" class="action" style="cursor:pointer;font-size:20px;" onclick="toggleFavorite()">♡</span>
+    </div>
+    <div class="screen screen-white" style="flex:1;overflow-y:auto;padding-bottom:0;">
+      <!-- Hero — CoachProfileImage 슬라이드 -->
+      <div style="height:180px;background:linear-gradient(135deg,var(--green),var(--sky));display:flex;align-items:center;justify-content:center;font-size:72px;position:relative;">
+        🏸
+        <div style="position:absolute;bottom:8px;right:12px;display:flex;gap:4px;">
+          <div style="width:6px;height:6px;border-radius:50%;background:#fff;"></div>
+          <div style="width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.4);"></div>
+          <div style="width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.4);"></div>
+        </div>
+      </div>
+
+      <!-- 코치 정보 -->
+      <div style="padding:20px;border-bottom:1px solid var(--gray-100);">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:22px;font-weight:800;color:var(--navy);">김민수</span>
+          <!--
+            PRO 배지: User.role = ADMIN인 경우에만 노출
+            일반 사용자(수강생/코치/비로그인)에게는 미표시
+            데이터: CoachSubscription → SubscriptionPlan.name
+          -->
+          <!-- <span class="badge" style="background:#f3e8ff;color:var(--purple);">PRO</span> → 관리자만 -->
+          <span class="badge" style="background:#D1FAE5;color:#065F46;">✓ 인증</span>
+        </div>
+        <div style="font-size:13px;color:var(--gray-500);margin-top:4px;">서울특별시 강남구 · 경력 10년 · 남성</div>
+        <!-- 별점 + 리뷰 개수: 클릭 시 리뷰 목록 화면 이동 -->
+        <a href="2-3a-reviews.html" style="display:flex;align-items:center;gap:4px;margin-top:8px;text-decoration:none;">
+          <span style="color:var(--yellow);font-size:16px;">★★★★★</span>
+          <span style="font-size:15px;font-weight:700;color:var(--navy);">4.9</span>
+          <span style="font-size:13px;color:var(--green);font-weight:600;">(리뷰 47개) ›</span>
+        </a>
+      </div>
+
+      <!-- 소개 -->
+      <div style="padding:20px;border-bottom:1px solid var(--gray-100);">
+        <div style="font-size:16px;font-weight:700;color:var(--navy);margin-bottom:8px;">소개</div>
+        <div style="font-size:14px;color:var(--gray-500);line-height:1.6;">안녕하세요! 10년 경력의 테니스 코치 김민수입니다. 기초부터 실전까지 체계적인 커리큘럼으로 지도합니다.</div>
+      </div>
+
+      <!-- 전문분야 -->
+      <div style="padding:20px;border-bottom:1px solid var(--gray-100);">
+        <div style="font-size:16px;font-weight:700;color:var(--navy);margin-bottom:8px;">전문 분야</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <span class="chip active">포핸드</span><span class="chip active">서브</span><span class="chip active">경기 전략</span>
+        </div>
+      </div>
+
+      <!--
+        레슨 가격 — CoachProfile.priceVisibility 기반 분기
+        PUBLIC: 가격 표시  |  PRIVATE: "가격 문의" + 문의하기 유도
+      -->
+      <div style="padding:20px;" id="price-section"></div>
+    </div>
+
+    <!-- Bottom Fixed -->
+    <div style="padding:12px 20px 32px;background:#fff;border-top:1px solid var(--gray-100);flex-shrink:0;display:flex;gap:10px;">
+      <a href="../flow4-chat/4-2-chat.html" class="btn-secondary" style="flex:1;display:block;text-align:center;text-decoration:none;line-height:48px;height:auto;">문의하기</a>
+      <a href="../flow3-booking/3-1-type-select.html" class="btn-primary" style="flex:2;display:block;text-align:center;text-decoration:none;line-height:52px;">레슨신청</a>
+    </div>
+
+    <!-- 토스트 -->
+    <div id="toast" style="display:none;position:absolute;bottom:100px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:12px 20px;border-radius:12px;font-size:13px;font-weight:600;white-space:nowrap;z-index:100;box-shadow:0 4px 16px rgba(0,0,0,0.2);"></div>
+  </div>
+</div>
+
+<script>
+/**
+ * 찜 버튼 토글
+ * - 비로그인: 로그인 유도 토스트
+ * - 로그인: POST /api/favorites/:coachId (찜 추가) 또는 DELETE (해제)
+ * - 이미 찜한 코치: 페이지 로드 시 ♥ 활성 표시 (GET /api/favorites 체크)
+ */
+let isFavorited = false; // 시뮬레이션 (실제: API에서 확인)
+
+function toggleFavorite() {
+  isFavorited = !isFavorited;
+  const btn = document.getElementById('fav-btn');
+  if (isFavorited) {
+    btn.textContent = '♥';
+    btn.style.color = 'var(--coral)';
+    showToast('찜한 코치에 추가했습니다');
+    // 실제: POST /api/favorites/:coachId
+  } else {
+    btn.textContent = '♡';
+    btn.style.color = 'var(--navy)';
+    showToast('찜한 코치에서 해제했습니다');
+    // 실제: DELETE /api/favorites/:coachId
+  }
+}
+
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.style.display = 'block';
+  setTimeout(() => { toast.style.display = 'none'; }, 2000);
+}
+
+/**
+ * 레슨 가격 — 공개/비공개 분기 렌더링
+ * 데이터: CoachProfile.priceVisibility (PUBLIC / PRIVATE)
+ *         CoachProfile.lessonPrice (공개 시 금액)
+ */
+let priceVisibility = 'PUBLIC'; // 시뮬레이션
+
+function renderPrice() {
+  const container = document.getElementById('price-section');
+
+  if (priceVisibility === 'PUBLIC') {
+    // Case A: 가격 공개
+    container.innerHTML =
+      '<div style="font-size:16px;font-weight:700;color:var(--navy);margin-bottom:8px;">레슨 가격</div>'
+      + '<div style="font-size:20px;font-weight:800;color:var(--green);">₩60,000<span style="font-size:13px;font-weight:500;color:var(--gray-500);"> /회</span></div>';
+  } else {
+    // Case B: 가격 비공개
+    container.innerHTML =
+      '<div style="font-size:16px;font-weight:700;color:var(--navy);margin-bottom:8px;">레슨 가격</div>'
+      + '<div style="background:var(--gray-50);border-radius:12px;padding:16px;text-align:center;">'
+      + '<div style="font-size:16px;font-weight:700;color:var(--navy);margin-bottom:4px;">가격 문의</div>'
+      + '<div style="font-size:13px;color:var(--gray-500);line-height:1.5;">레슨 가격은 코치에게 직접 문의해주세요</div>'
+      + '</div>';
+  }
+}
+
+renderPrice();
+</script>
+<!-- 시뮬레이션: 가격 공개/비공개 전환 -->
+<div style="position:fixed;top:50%;right:16px;transform:translateY(-50%);display:flex;flex-direction:column;gap:4px;z-index:200;">
+  <button onclick="priceVisibility='PUBLIC';renderPrice();this.style.background='var(--green)';this.nextElementSibling.style.background='#ccc'" style="padding:6px 10px;border-radius:8px;border:none;font-size:10px;font-weight:600;color:#fff;background:var(--green);cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.2);">가격공개</button>
+  <button onclick="priceVisibility='PRIVATE';renderPrice();this.style.background='var(--coral)';this.previousElementSibling.style.background='#ccc'" style="padding:6px 10px;border-radius:8px;border:none;font-size:10px;font-weight:600;color:#fff;background:#ccc;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.2);">가격비공개</button>
+</div>
+<script src="../site-nav.js"></script>
+</body>
+</html>

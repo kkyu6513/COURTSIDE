@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=375, initial-scale=1.0">
+<title>2-1 홈 — COURTSIDE</title>
+<link rel="stylesheet" href="../common.css">
+</head>
+<body>
+<div class="device-wrap">
+  <div class="device-label"><span class="device-num">7</span>홈 화면</div>
+  <div class="device" style="position:relative;overflow:hidden;">
+    <div class="status-bar"><span class="time">9:41</span><div class="status-icons"><span>📶</span><span>🔋</span></div></div>
+    <div class="screen">
+      <!-- 타이틀 바 -->
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px 0;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:20px;">🎾</span>
+          <span style="font-size:18px;font-weight:800;color:var(--navy);">COURTSIDE</span>
+        </div>
+        <a href="../flow6-student-my/6-7-favorites.html" style="position:relative;font-size:22px;text-decoration:none;cursor:pointer;">♡</a>
+      </div>
+
+      <!--
+        상단 배너 — 어드민 등록 데이터 (Banner 테이블)
+        API: GET /api/banners [공개] → isActive=true, displayOrder순
+        좌우 자동 롤링 (3초 간격) + 스와이프 수동 전환 + 인디케이터 dot
+      -->
+      <div style="margin:16px 20px 0;position:relative;overflow:hidden;border-radius:20px;height:140px;" id="banner-container">
+        <!-- 배너 슬라이드 트랙 -->
+        <div id="banner-track" style="display:flex;transition:transform 0.4s ease;height:100%;">
+          <!-- 배너 1 (어드민 등록) -->
+          <div style="min-width:100%;height:100%;background:linear-gradient(135deg,var(--purple),#a78bfa);padding:20px;display:flex;align-items:center;justify-content:space-between;color:#fff;cursor:pointer;" onclick="console.log('배너 클릭 → linkUrl 이동')">
+            <div><div style="font-size:16px;font-weight:700;line-height:1.4;">나에게 딱 맞는<br>테니스 코치 찾기</div><div style="font-size:12px;opacity:0.85;margin-top:4px;">가까운 코치를 만나보세요</div></div>
+            <div style="font-size:44px;">🎾</div>
+          </div>
+          <!-- 배너 2 (어드민 등록) -->
+          <div style="min-width:100%;height:100%;background:linear-gradient(135deg,var(--coral),#ff8787);padding:20px;display:flex;align-items:center;justify-content:space-between;color:#fff;cursor:pointer;">
+            <div><div style="font-size:16px;font-weight:700;line-height:1.4;">봄맞이 테니스<br>레슨 이벤트!</div><div style="font-size:12px;opacity:0.85;margin-top:4px;">첫 레슨 20% 할인</div></div>
+            <div style="font-size:44px;">🌸</div>
+          </div>
+          <!-- 배너 3 (어드민 등록) -->
+          <div style="min-width:100%;height:100%;background:linear-gradient(135deg,var(--green),#5eead4);padding:20px;display:flex;align-items:center;justify-content:space-between;color:#fff;cursor:pointer;">
+            <div><div style="font-size:16px;font-weight:700;line-height:1.4;">코치로 등록하고<br>수강생을 만나세요</div><div style="font-size:12px;opacity:0.85;margin-top:4px;">무료로 시작할 수 있어요</div></div>
+            <div style="font-size:44px;">🏅</div>
+          </div>
+        </div>
+        <!-- 인디케이터 dot -->
+        <div id="banner-dots" style="position:absolute;bottom:10px;left:50%;transform:translateX(-50%);display:flex;gap:6px;">
+          <div class="banner-dot" style="width:8px;height:8px;border-radius:50%;background:#fff;transition:opacity 0.3s;"></div>
+          <div class="banner-dot" style="width:8px;height:8px;border-radius:50%;background:#fff;opacity:0.4;transition:opacity 0.3s;"></div>
+          <div class="banner-dot" style="width:8px;height:8px;border-radius:50%;background:#fff;opacity:0.4;transition:opacity 0.3s;"></div>
+        </div>
+      </div>
+      <!-- Search Bar (클릭 시 검색 오버레이 열기) -->
+      <div style="padding:16px 20px 0;" onclick="openSearch()">
+        <div style="background:#fff;border-radius:14px;padding:12px 16px;display:flex;align-items:center;gap:10px;box-shadow:0 1px 6px rgba(0,0,0,0.06);cursor:pointer;">
+          <span style="font-size:18px;color:var(--gray-400);">🔍</span>
+          <span style="font-size:14px;color:var(--gray-400);flex:1;">지역, 코치명으로 검색</span>
+        </div>
+      </div>
+      <!--
+        우리동네 코치님 — 로그인 상태별 4가지 케이스
+        시뮬레이션: 하단 케이스 전환 버튼으로 확인
+        API: GET /api/coaches?sido={지역}&sigungu={지역}&limit=5&sort=rating [인증]
+      -->
+      <div id="local-coach-section"></div>
+      <!-- 핫한 코치님 -->
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:0 20px;margin:20px 0 12px;"><span style="font-size:17px;font-weight:700;color:var(--navy);">🔥 지금 핫한 코치님</span><span style="font-size:13px;color:var(--green);font-weight:600;">전체보기 ›</span></div>
+      <div style="overflow-x:auto;padding:0 20px 4px;display:flex;gap:12px;">
+        <a href="2-3-coach-detail.html" style="min-width:160px;background:#fff;border-radius:16px;padding:14px;box-shadow:0 2px 12px rgba(0,0,0,0.07);flex-shrink:0;text-decoration:none;">
+          <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--coral),var(--orange));display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:10px;">⭐</div>
+          <div style="font-size:14px;font-weight:700;color:var(--navy);">최지원</div>
+          <div style="font-size:11px;color:var(--gray-500);margin-top:2px;">서울특별시 송파구</div>
+          <div style="font-size:11px;color:var(--gray-400);margin-top:2px;">여성</div>
+        </a>
+        <a href="2-3-coach-detail.html" style="min-width:160px;background:#fff;border-radius:16px;padding:14px;box-shadow:0 2px 12px rgba(0,0,0,0.07);flex-shrink:0;text-decoration:none;">
+          <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--sky),var(--info));display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:10px;">🎯</div>
+          <div style="font-size:14px;font-weight:700;color:var(--navy);">한도윤</div>
+          <div style="font-size:11px;color:var(--gray-500);margin-top:2px;">서울특별시 용산구</div>
+          <div style="font-size:11px;color:var(--gray-400);margin-top:2px;">남성</div>
+        </a>
+        <a href="2-3-coach-detail.html" style="min-width:160px;background:#fff;border-radius:16px;padding:14px;box-shadow:0 2px 12px rgba(0,0,0,0.07);flex-shrink:0;text-decoration:none;">
+          <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--sky));display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:10px;">🏸</div>
+          <div style="font-size:14px;font-weight:700;color:var(--navy);">김민수</div>
+          <div style="font-size:11px;color:var(--gray-500);margin-top:2px;">서울특별시 강남구</div>
+          <div style="font-size:11px;color:var(--gray-400);margin-top:2px;">남성</div>
+        </a>
+      </div>
+      <!-- 신규등록 -->
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:0 20px;margin:20px 0 12px;"><span style="font-size:17px;font-weight:700;color:var(--navy);">✨ 신규등록 코치님</span><span style="font-size:13px;color:var(--green);font-weight:600;">전체보기 ›</span></div>
+      <div style="overflow-x:auto;padding:0 20px 4px;display:flex;gap:12px;">
+        <a href="2-3-coach-detail.html" style="min-width:160px;background:#fff;border-radius:16px;padding:14px;box-shadow:0 2px 12px rgba(0,0,0,0.07);flex-shrink:0;text-decoration:none;">
+          <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#D1FAE5,var(--green));display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:10px;">🆕</div>
+          <div style="font-size:14px;font-weight:700;color:var(--navy);">정하은</div>
+          <div style="font-size:11px;color:var(--gray-500);margin-top:2px;">서울특별시 강서구</div>
+          <div style="font-size:11px;color:var(--gray-400);margin-top:2px;">여성</div>
+        </a>
+        <a href="2-3-coach-detail.html" style="min-width:160px;background:#fff;border-radius:16px;padding:14px;box-shadow:0 2px 12px rgba(0,0,0,0.07);flex-shrink:0;text-decoration:none;">
+          <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#DBEAFE,var(--sky));display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:10px;">🌱</div>
+          <div style="font-size:14px;font-weight:700;color:var(--navy);">오승민</div>
+          <div style="font-size:11px;color:var(--gray-500);margin-top:2px;">서울특별시 관악구</div>
+          <div style="font-size:11px;color:var(--gray-400);margin-top:2px;">남성</div>
+        </a>
+      </div>
+      <!-- 코치 등록 유도 배너 (비로그인 상태에서만 노출, 클릭 시 구독 플랜 화면) -->
+      <div style="padding:20px 20px 20px;">
+        <a id="coach-recruit-banner" href="../flow1-onboarding/1-5-coach-subscription.html" style="display:block;background:linear-gradient(135deg,var(--green),#5eead4);border-radius:20px;padding:20px;color:#fff;text-decoration:none;cursor:pointer;">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div><div style="font-size:16px;font-weight:700;line-height:1.4;">코치로 등록하고<br>수강생을 만나세요</div><div style="font-size:12px;opacity:0.85;margin-top:4px;">무료로 시작할 수 있어요</div></div>
+            <div style="font-size:44px;">🏅</div>
+          </div>
+        </a>
+      </div>
+    </div>
+    <div class="bottom-nav">
+      <a href="2-1-home.html" class="nav-item active" style="text-decoration:none;"><span class="icon">🏠</span>홈</a>
+      <a href="../flow4-chat/4-1-chat-list.html" class="nav-item" style="text-decoration:none;"><span class="icon">💬</span>메시지</a>
+      <a href="2-2-coach-list.html" class="nav-item" style="text-decoration:none;"><span class="icon">🔍</span>검색</a>
+      <a href="../flow6-student-my/6-2-mypage.html" class="nav-item" style="text-decoration:none;"><span class="icon">👤</span>마이</a>
+    </div>
+
+    <!--
+      검색 바텀시트 — 지역 + 성별 조회 조건 + 코치명 검색 + 검색하기 버튼
+      API: GET /api/coaches?sido=&sigungu=&gender=&keyword= [공개]
+    -->
+    <div id="search-overlay" style="display:none;position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);z-index:60;" onclick="closeSearch()">
+      <div id="search-sheet" style="position:absolute;bottom:0;left:0;width:100%;background:#fff;border-radius:20px 20px 0 0;display:flex;flex-direction:column;transform:translateY(100%);transition:transform 0.3s ease;" onclick="event.stopPropagation()">
+
+        <!-- 핸들 -->
+        <div style="width:40px;height:4px;border-radius:2px;background:var(--gray-300);margin:12px auto 0;"></div>
+
+        <!-- 헤더 -->
+        <div style="padding:16px 20px 0;display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:18px;font-weight:700;color:var(--navy);">코치 검색</span>
+          <span style="font-size:14px;color:var(--gray-400);cursor:pointer;" onclick="closeSearch()">✕</span>
+        </div>
+
+        <!-- 조회 조건 -->
+        <div style="padding:20px;display:flex;flex-direction:column;gap:20px;">
+
+          <!-- 코치명 검색 -->
+          <div>
+            <label style="font-size:13px;font-weight:600;color:var(--navy);display:block;margin-bottom:6px;">코치명</label>
+            <div style="display:flex;align-items:center;background:var(--gray-50);border-radius:10px;padding:10px 14px;gap:8px;border:1px solid var(--gray-100);">
+              <span style="font-size:16px;color:var(--gray-400);">🔍</span>
+              <input id="search-input" type="text" placeholder="코치명으로 검색" style="border:none;outline:none;background:transparent;font-size:14px;color:var(--navy);font-family:inherit;flex:1;width:0;" />
+            </div>
+          </div>
+
+          <!-- 지역 선택 -->
+          <div>
+            <label style="font-size:13px;font-weight:600;color:var(--navy);display:block;margin-bottom:6px;">지역</label>
+            <div style="display:flex;gap:8px;">
+              <select id="search-sido" class="input-field" style="flex:1;" onchange="updateSearchSigungu()">
+                <option value="">시·도 전체</option>
+                <option value="서울특별시">서울특별시</option>
+                <option value="부산광역시">부산광역시</option>
+                <option value="대구광역시">대구광역시</option>
+                <option value="인천광역시">인천광역시</option>
+                <option value="광주광역시">광주광역시</option>
+                <option value="대전광역시">대전광역시</option>
+                <option value="울산광역시">울산광역시</option>
+                <option value="세종특별자치시">세종특별자치시</option>
+                <option value="경기도">경기도</option>
+                <option value="강원특별자치도">강원특별자치도</option>
+                <option value="충청북도">충청북도</option>
+                <option value="충청남도">충청남도</option>
+                <option value="전북특별자치도">전북특별자치도</option>
+                <option value="전라남도">전라남도</option>
+                <option value="경상북도">경상북도</option>
+                <option value="경상남도">경상남도</option>
+                <option value="제주특별자치도">제주특별자치도</option>
+              </select>
+              <select id="search-sigungu" class="input-field" style="flex:1;">
+                <option value="">시·군·구 전체</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- 성별 선택 -->
+          <div>
+            <label style="font-size:13px;font-weight:600;color:var(--navy);display:block;margin-bottom:6px;">성별</label>
+            <div style="display:flex;gap:8px;">
+              <span class="chip active" onclick="selectSearchGender(this,'')">전체</span>
+              <span class="chip" onclick="selectSearchGender(this,'MALE')">남성</span>
+              <span class="chip" onclick="selectSearchGender(this,'FEMALE')">여성</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- 검색 버튼 -->
+        <div style="padding:0 20px 36px;">
+          <a href="2-2-coach-list.html" class="btn-primary" style="display:block;text-align:center;text-decoration:none;line-height:52px;" onclick="doSearch()">검색하기</a>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- 프로토타입 시뮬레이션: 우리동네 코치님 케이스 전환 (우측 고정) -->
+<div style="position:fixed;top:50%;right:16px;transform:translateY(-50%);display:flex;flex-direction:column;gap:4px;z-index:200;">
+  <button onclick="localCoachCase='A';renderLocalCoach();document.querySelectorAll('.case-btn').forEach(b=>b.style.background='#ccc');this.style.background='var(--coral)'" class="case-btn" style="padding:6px 10px;border-radius:8px;border:none;font-size:10px;font-weight:600;color:#fff;background:#ccc;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.2);">A.비로그인</button>
+  <button onclick="localCoachCase='B';renderLocalCoach();document.querySelectorAll('.case-btn').forEach(b=>b.style.background='#ccc');this.style.background='var(--orange)'" class="case-btn" style="padding:6px 10px;border-radius:8px;border:none;font-size:10px;font-weight:600;color:#fff;background:#ccc;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.2);">B.지역미설정</button>
+  <button onclick="localCoachCase='C';renderLocalCoach();document.querySelectorAll('.case-btn').forEach(b=>b.style.background='#ccc');this.style.background='var(--green)'" class="case-btn" style="padding:6px 10px;border-radius:8px;border:none;font-size:10px;font-weight:600;color:#fff;background:var(--green);cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.2);">C.코치있음</button>
+  <button onclick="localCoachCase='D';renderLocalCoach();document.querySelectorAll('.case-btn').forEach(b=>b.style.background='#ccc');this.style.background='var(--purple)'" class="case-btn" style="padding:6px 10px;border-radius:8px;border:none;font-size:10px;font-weight:600;color:#fff;background:#ccc;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.2);">D.코치없음</button>
+</div>
+
+<script>
+/**
+ * ═══════════════════════════════════════════════════
+ * 검색 오버레이
+ * ═══════════════════════════════════════════════════
+ * - 검색바 클릭 → 바텀시트 열기
+ * - 조건: 코치명 + 지역(시도/시군구) + 성별
+ * - 검색하기 → 코치 목록 페이지 이동 (조건 파라미터)
+ * - API: GET /api/coaches?keyword=&sido=&sigungu=&gender= [공개]
+ */
+
+/**
+ * ═══════════════════════════════════════════════════
+ * 우리동네 코치님 — 로그인 상태별 4가지 케이스
+ * ═══════════════════════════════════════════════════
+ *
+ * Case A: 비로그인 → 로그인 유도 안내
+ * Case B: 로그인 수강생 + 지역 미설정 → 지역 설정 유도
+ * Case C: 로그인 수강생 + 지역 설정 + 코치 있음 → 코치 카드 목록
+ * Case D: 로그인 수강생 + 지역 설정 + 코치 없음 → 빈 상태 안내
+ */
+
+let localCoachCase = 'C'; // 시뮬레이션 기본값
+
+const localCoachData = [
+  { name: '김민수', areaSido: '서울특별시', areaSigungu: '강남구', gender: '남성', bg: 'linear-gradient(135deg,var(--green),var(--sky))', emoji: '🏸' },
+  { name: '이서연', areaSido: '서울특별시', areaSigungu: '강남구', gender: '여성', bg: 'linear-gradient(135deg,var(--orange),var(--yellow))', emoji: '🎾' },
+  { name: '박준호', areaSido: '서울특별시', areaSigungu: '강남구', gender: '남성', bg: 'linear-gradient(135deg,var(--pink),var(--coral))', emoji: '🏆' },
+  { name: '최지원', areaSido: '서울특별시', areaSigungu: '강남구', gender: '여성', bg: 'linear-gradient(135deg,var(--coral),var(--orange))', emoji: '⭐' },
+  { name: '한도윤', areaSido: '서울특별시', areaSigungu: '강남구', gender: '남성', bg: 'linear-gradient(135deg,var(--sky),var(--info))', emoji: '🎯' },
+];
+
+function renderLocalCoach() {
+  const container = document.getElementById('local-coach-section');
+  let html = '';
+
+  if (localCoachCase === 'A') {
+    // Case A: 비로그인
+    html = '<div style="margin:16px 20px 0;padding:20px;background:#F0FDFA;border-radius:16px;border:1px solid #D1FAE5;text-align:center;">'
+      + '<div style="font-size:28px;margin-bottom:10px;">👋</div>'
+      + '<div style="font-size:15px;font-weight:700;color:var(--navy);margin-bottom:4px;">로그인하면 내 지역 코치를 추천해드려요</div>'
+      + '<div style="font-size:13px;color:var(--gray-500);line-height:1.5;">가까운 코치를 찾고, 레슨 신청과 채팅을 이용해보세요</div>'
+      + '<a href="../flow1-onboarding/1-2-login.html" style="display:inline-block;margin-top:14px;padding:10px 24px;border-radius:999px;background:var(--green);color:#fff;font-size:14px;font-weight:600;text-decoration:none;">로그인하기</a>'
+      + '</div>';
+
+  } else if (localCoachCase === 'B') {
+    // Case B: 로그인 + 지역 미설정
+    html = '<div style="display:flex;justify-content:space-between;align-items:center;padding:0 20px;margin:20px 0 12px;"><span style="font-size:17px;font-weight:700;color:var(--navy);">우리동네 코치님</span></div>'
+      + '<div style="margin:0 20px;padding:20px;background:var(--gray-50);border-radius:16px;text-align:center;">'
+      + '<div style="font-size:28px;margin-bottom:10px;">📍</div>'
+      + '<div style="font-size:14px;font-weight:600;color:var(--navy);margin-bottom:4px;">레슨 희망 지역을 설정해주세요</div>'
+      + '<div style="font-size:13px;color:var(--gray-500);line-height:1.5;">지역을 설정하면 가까운 코치를 추천해드려요</div>'
+      + '<a href="../flow6-student-my/6-4-tennis-info.html" style="display:inline-block;margin-top:14px;padding:10px 24px;border-radius:999px;background:var(--green);color:#fff;font-size:14px;font-weight:600;text-decoration:none;">지역 설정하기</a>'
+      + '</div>';
+
+  } else if (localCoachCase === 'C') {
+    // Case C: 로그인 + 지역 설정 + 코치 있음
+    html = '<div style="display:flex;justify-content:space-between;align-items:center;padding:0 20px;margin:20px 0 12px;">'
+      + '<span style="font-size:17px;font-weight:700;color:var(--navy);">우리동네 코치님 <span style="font-size:13px;font-weight:500;color:var(--gray-400);">강남구</span></span>'
+      + '<a href="2-2-coach-list.html" style="font-size:13px;color:var(--green);font-weight:600;text-decoration:none;">전체보기 ›</a></div>'
+      + '<div style="overflow-x:auto;padding:0 20px 4px;display:flex;gap:12px;">';
+
+    localCoachData.forEach(c => {
+      html += '<a href="2-3-coach-detail.html" style="min-width:160px;background:#fff;border-radius:16px;padding:14px;box-shadow:0 2px 12px rgba(0,0,0,0.07);flex-shrink:0;text-decoration:none;">'
+        + '<div style="width:52px;height:52px;border-radius:50%;background:' + c.bg + ';display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:10px;">' + c.emoji + '</div>'
+        + '<div style="font-size:14px;font-weight:700;color:var(--navy);">' + c.name + '</div>'
+        + '<div style="font-size:11px;color:var(--gray-500);margin-top:2px;">' + c.areaSido + ' ' + c.areaSigungu + '</div>'
+        + '<div style="font-size:11px;color:var(--gray-400);margin-top:2px;">' + c.gender + '</div>'
+        + '</a>';
+    });
+    html += '</div>';
+
+  } else if (localCoachCase === 'D') {
+    // Case D: 로그인 + 지역 설정 + 코치 없음
+    html = '<div style="display:flex;justify-content:space-between;align-items:center;padding:0 20px;margin:20px 0 12px;"><span style="font-size:17px;font-weight:700;color:var(--navy);">우리동네 코치님 <span style="font-size:13px;font-weight:500;color:var(--gray-400);">양평군</span></span></div>'
+      + '<div style="margin:0 20px;padding:24px;background:var(--gray-50);border-radius:16px;text-align:center;">'
+      + '<div style="font-size:28px;margin-bottom:10px;">🔍</div>'
+      + '<div style="font-size:14px;font-weight:600;color:var(--navy);margin-bottom:4px;">아직 우리 동네에 등록된 코치가 없어요</div>'
+      + '<div style="font-size:13px;color:var(--gray-500);line-height:1.5;">다른 지역의 코치를 둘러보세요</div>'
+      + '<a href="2-2-coach-list.html" style="display:inline-block;margin-top:14px;padding:10px 24px;border-radius:999px;background:var(--green);color:#fff;font-size:14px;font-weight:600;text-decoration:none;">다른 지역 코치 보기</a>'
+      + '</div>';
+  }
+
+  container.innerHTML = html;
+}
+
+renderLocalCoach();
+
+let searchGender = '';
+
+function openSearch() {
+  const overlay = document.getElementById('search-overlay');
+  const sheet = document.getElementById('search-sheet');
+  overlay.style.display = 'block';
+  // 다음 프레임에서 애니메이션 시작
+  requestAnimationFrame(() => {
+    sheet.style.transform = 'translateY(0)';
+  });
+  setTimeout(() => document.getElementById('search-input').focus(), 300);
+  stopAutoPlay();
+}
+
+function closeSearch() {
+  const sheet = document.getElementById('search-sheet');
+  sheet.style.transform = 'translateY(100%)';
+  setTimeout(() => {
+    document.getElementById('search-overlay').style.display = 'none';
+  }, 300);
+  startAutoPlay();
+}
+
+function selectSearchGender(el, gender) {
+  searchGender = gender;
+  el.parentElement.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function updateSearchSigungu() {
+  const sido = document.getElementById('search-sido').value;
+  const sigungu = document.getElementById('search-sigungu');
+  sigungu.innerHTML = '<option value="">시·군·구 전체</option>';
+  const regionData = {
+    "서울특별시": ["강남구","강동구","강북구","강서구","관악구","광진구","구로구","금천구","노원구","도봉구","동대문구","동작구","마포구","서대문구","서초구","성동구","성북구","송파구","양천구","영등포구","용산구","은평구","종로구","중구","중랑구"],
+    "부산광역시": ["강서구","금정구","기장군","남구","동구","동래구","부산진구","북구","사상구","사하구","서구","수영구","연제구","영도구","중구","해운대구"],
+    "대구광역시": ["남구","달서구","달성군","동구","북구","서구","수성구","중구","군위군"],
+    "인천광역시": ["강화군","계양구","남동구","동구","미추홀구","부평구","서구","연수구","옹진군","중구"],
+    "광주광역시": ["광산구","남구","동구","북구","서구"],
+    "대전광역시": ["대덕구","동구","서구","유성구","중구"],
+    "울산광역시": ["남구","동구","북구","울주군","중구"],
+    "세종특별자치시": ["세종시"],
+    "경기도": ["가평군","고양시 덕양구","고양시 일산동구","고양시 일산서구","과천시","광명시","광주시","구리시","군포시","김포시","남양주시","동두천시","부천시","성남시 분당구","성남시 수정구","성남시 중원구","수원시 권선구","수원시 영통구","수원시 장안구","수원시 팔달구","시흥시","안산시 단원구","안산시 상록구","안성시","안양시 동안구","안양시 만안구","양주시","양평군","여주시","연천군","오산시","용인시 기흥구","용인시 수지구","용인시 처인구","의왕시","의정부시","이천시","파주시","평택시","포천시","하남시","화성시"],
+    "강원특별자치도": ["강릉시","고성군","동해시","삼척시","속초시","양구군","양양군","영월군","원주시","인제군","정선군","철원군","춘천시","태백시","평창군","홍천군","화천군","횡성군"],
+    "충청북도": ["괴산군","단양군","보은군","영동군","옥천군","음성군","제천시","증평군","진천군","청주시 상당구","청주시 서원구","청주시 청원구","청주시 흥덕구","충주시"],
+    "충청남도": ["계룡시","공주시","금산군","논산시","당진시","보령시","부여군","서산시","서천군","아산시","예산군","천안시 동남구","천안시 서북구","청양군","태안군","홍성군"],
+    "전북특별자치도": ["고창군","군산시","김제시","남원시","무주군","부안군","순창군","완주군","익산시","임실군","장수군","전주시 덕진구","전주시 완산구","정읍시","진안군"],
+    "전라남도": ["강진군","고흥군","곡성군","광양시","구례군","나주시","담양군","목포시","무안군","보성군","순천시","신안군","여수시","영광군","영암군","완도군","장성군","장흥군","진도군","함평군","해남군","화순군"],
+    "경상북도": ["경산시","경주시","고령군","구미시","김천시","문경시","봉화군","상주시","성주군","안동시","영덕군","영양군","영주시","영천시","예천군","울릉군","울진군","의성군","청도군","청송군","칠곡군","포항시 남구","포항시 북구"],
+    "경상남도": ["거제시","거창군","고성군","김해시","남해군","밀양시","사천시","산청군","양산시","의령군","진주시","창녕군","창원시 마산합포구","창원시 마산회원구","창원시 성산구","창원시 의창구","창원시 진해구","통영시","하동군","함안군","함양군","합천군"],
+    "제주특별자치도": ["제주시","서귀포시"]
+  };
+  if (sido && regionData[sido]) {
+    regionData[sido].forEach(name => {
+      const opt = document.createElement('option');
+      opt.value = name; opt.textContent = name;
+      sigungu.appendChild(opt);
+    });
+  }
+}
+
+function doSearch() {
+  const keyword = document.getElementById('search-input').value;
+  const sido = document.getElementById('search-sido').value;
+  const sigungu = document.getElementById('search-sigungu').value;
+  console.log('검색 조건:', { keyword, sido, sigungu, gender: searchGender });
+  // 실제: GET /api/coaches?keyword=&sido=&sigungu=&gender= → 코치 목록 이동
+}
+
+/**
+ * ═══════════════════════════════════════════════════
+ * 배너 좌우 자동 롤링
+ * - 3초 간격 자동 전환
+ * - 터치 스와이프 수동 전환
+ * - 인디케이터 dot 동기화
+ * - 마지막 → 첫 번째 순환
+ *
+ * 데이터: GET /api/banners [공개] → Banner 테이블 (어드민 등록)
+ */
+const track = document.getElementById('banner-track');
+const dots = document.querySelectorAll('.banner-dot');
+const totalBanners = dots.length;
+let currentBanner = 0;
+let autoPlayTimer;
+
+function goToBanner(index) {
+  currentBanner = index;
+  track.style.transform = 'translateX(-' + (currentBanner * 100) + '%)';
+  dots.forEach((dot, i) => {
+    dot.style.opacity = i === currentBanner ? '1' : '0.4';
+  });
+}
+
+function nextBanner() {
+  goToBanner((currentBanner + 1) % totalBanners);
+}
+
+function startAutoPlay() {
+  autoPlayTimer = setInterval(nextBanner, 3000);
+}
+
+function stopAutoPlay() {
+  clearInterval(autoPlayTimer);
+}
+
+// 자동 롤링 시작
+startAutoPlay();
+
+// 터치 스와이프
+let touchStartX = 0;
+let touchEndX = 0;
+const container = document.getElementById('banner-container');
+
+container.addEventListener('touchstart', function(e) {
+  touchStartX = e.changedTouches[0].screenX;
+  stopAutoPlay();
+}, { passive: true });
+
+container.addEventListener('touchend', function(e) {
+  touchEndX = e.changedTouches[0].screenX;
+  const diff = touchStartX - touchEndX;
+  if (Math.abs(diff) > 40) {
+    if (diff > 0) {
+      // 왼쪽 스와이프 → 다음
+      goToBanner((currentBanner + 1) % totalBanners);
+    } else {
+      // 오른쪽 스와이프 → 이전
+      goToBanner((currentBanner - 1 + totalBanners) % totalBanners);
+    }
+  }
+  startAutoPlay();
+}, { passive: true });
+
+// dot 클릭
+dots.forEach((dot, i) => {
+  dot.style.cursor = 'pointer';
+  dot.addEventListener('click', function() {
+    stopAutoPlay();
+    goToBanner(i);
+    startAutoPlay();
+  });
+});
+</script>
+<script src="../site-nav.js"></script>
+</body>
+</html>

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>배너 관리 — COURTSIDE Admin</title>
+<link rel="stylesheet" href="../common-admin.css">
+</head>
+<body>
+<div class="admin-layout">
+
+  <nav class="admin-sidebar">
+    <div class="logo">🎾 COURTSIDE <span style="font-size:11px;opacity:0.5;font-weight:400;">Admin</span></div>
+    <div class="nav-group"><div class="nav-group-title">Overview</div><a href="9-1-dashboard.html" class="nav-link"><span class="icon">📊</span>대시보드</a></div>
+    <div class="nav-group"><div class="nav-group-title">관리</div>
+      <a href="9-2-users.html" class="nav-link"><span class="icon">👥</span>회원 관리</a>
+      <a href="9-3-coach-verify.html" class="nav-link"><span class="icon">✅</span>코치 검증<span class="count">5</span></a>
+      <a href="9-4-banners.html" class="nav-link active"><span class="icon">🖼️</span>배너 관리</a>
+      <a href="9-8-reports.html" class="nav-link"><span class="icon">🚨</span>신고 관리</a>
+      <a href="9-9-schedule-admin.html" class="nav-link"><span class="icon">📅</span>스케줄 관리</a>
+    </div>
+    <div class="nav-group"><div class="nav-group-title">설정</div>
+      <a href="9-5-subscription-plans.html" class="nav-link"><span class="icon">💎</span>구독 플랜</a>
+      <a href="9-6-code-manage.html" class="nav-link"><span class="icon">⚙️</span>코드 관리</a>
+      <a href="9-7-terms.html" class="nav-link"><span class="icon">📜</span>약관 관리</a>
+    </div>
+  </nav>
+
+  <main class="admin-main">
+    <div class="admin-header" style="display:flex;justify-content:space-between;align-items:flex-start;">
+      <div>
+        <div class="breadcrumb">관리 › 배너 관리</div>
+        <h1>배너 관리</h1>
+        <div class="subtitle">홈 화면 상단에 노출되는 배너를 관리합니다</div>
+      </div>
+      <button class="btn-primary">+ 배너 추가</button>
+    </div>
+
+    <!-- Banner List -->
+    <div class="admin-card" style="padding:0;overflow:hidden;">
+      <table class="admin-table">
+        <thead><tr><th style="width:80px;">미리보기</th><th>제목</th><th>기간</th><th>노출순서</th><th>클릭수</th><th>상태</th><th></th></tr></thead>
+        <tbody>
+          <tr>
+            <td><div style="width:60px;height:36px;border-radius:6px;background:linear-gradient(135deg,var(--purple),#a78bfa);"></div></td>
+            <td style="font-weight:600;">시즌 오픈 배너</td>
+            <td style="color:var(--gray-500);">04.01 ~ 04.30</td>
+            <td>1</td>
+            <td style="color:var(--info);">128</td>
+            <td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td>
+            <td><span style="cursor:pointer;color:var(--gray-400);">✏️ 🗑️</span></td>
+          </tr>
+          <tr>
+            <td><div style="width:60px;height:36px;border-radius:6px;background:linear-gradient(135deg,var(--green),#5eead4);"></div></td>
+            <td style="font-weight:600;">코치 모집 배너</td>
+            <td style="color:var(--gray-500);">상시 운영</td>
+            <td>2</td>
+            <td style="color:var(--info);">87</td>
+            <td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td>
+            <td><span style="cursor:pointer;color:var(--gray-400);">✏️ 🗑️</span></td>
+          </tr>
+          <tr style="opacity:0.5;">
+            <td><div style="width:60px;height:36px;border-radius:6px;background:linear-gradient(135deg,var(--coral),#ff8787);"></div></td>
+            <td style="font-weight:600;">봄맞이 이벤트</td>
+            <td style="color:var(--gray-500);">03.15 ~ 03.31</td>
+            <td>3</td>
+            <td style="color:var(--gray-400);">45</td>
+            <td><div class="toggle" onclick="this.classList.toggle('on')"></div></td>
+            <td><span style="cursor:pointer;color:var(--gray-400);">✏️ 🗑️</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<script src="../site-nav.js"></script>
+</body>
+</html>

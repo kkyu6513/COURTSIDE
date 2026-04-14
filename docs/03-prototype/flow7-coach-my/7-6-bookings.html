@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=375, initial-scale=1.0"><title>7-6 예약 현황 — COURTSIDE</title><link rel="stylesheet" href="../common.css">
+<style>.filter-row{display:flex;gap:8px;padding:16px 20px;overflow-x:auto;}.bk-item{background:#fff;border-radius:14px;margin:0 20px 10px;padding:16px;border:1px solid var(--gray-100);display:flex;align-items:center;gap:12px;}.bk-avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}.bk-info{flex:1;}.bk-info .bk-name{font-size:15px;font-weight:700;color:var(--navy);}.bk-info .bk-detail{font-size:12px;color:var(--gray-500);margin-top:3px;}.bk-status{padding:4px 10px;border-radius:8px;font-size:11px;font-weight:700;flex-shrink:0;}</style>
+</head>
+<body>
+<div class="device-wrap">
+  <div class="device-label"><span class="device-num">6</span>예약 현황</div>
+  <div class="device">
+    <div class="status-bar"><span class="time">9:41</span><div class="status-icons"><span>📶</span><span>🔋</span></div></div>
+    <div class="top-nav"><a href="7-1-coach-mypage.html" class="back">‹</a><span class="title">예약 현황</span><span class="action"></span></div>
+    <div class="screen">
+      <!-- Filter Chips -->
+      <div class="filter-row">
+        <span class="chip active">전체</span>
+        <span class="chip">확정</span>
+        <span class="chip">대기</span>
+        <span class="chip">완료</span>
+      </div>
+      <!-- Booking Items -->
+      <div class="bk-item">
+        <div class="bk-avatar" style="background:#E0F7FA;">😊</div>
+        <div class="bk-info">
+          <div class="bk-name">이서연</div>
+          <div class="bk-detail">4/9(수) 10:00 · 정규 레슨</div>
+        </div>
+        <div class="bk-status" style="background:#DCFCE7;color:var(--success);">확정</div>
+      </div>
+      <div class="bk-item">
+        <div class="bk-avatar" style="background:#FFF3E0;">😎</div>
+        <div class="bk-info">
+          <div class="bk-name">박준호</div>
+          <div class="bk-detail">4/11(금) 14:00 · 체험 레슨</div>
+        </div>
+        <div class="bk-status" style="background:#FEF3C7;color:var(--warning);">대기</div>
+      </div>
+      <div class="bk-item">
+        <div class="bk-avatar" style="background:#F3E5F5;">😄</div>
+        <div class="bk-info">
+          <div class="bk-name">최윤아</div>
+          <div class="bk-detail">4/15(화) 19:00 · 정규 레슨</div>
+        </div>
+        <div class="bk-status" style="background:#FEF3C7;color:var(--warning);">대기</div>
+      </div>
+      <div class="bk-item">
+        <div class="bk-avatar" style="background:#E8F5E9;">🙂</div>
+        <div class="bk-info">
+          <div class="bk-name">정태민</div>
+          <div class="bk-detail">4/7(월) 09:00 · 정규 레슨</div>
+        </div>
+        <div class="bk-status" style="background:#F0F0F0;color:var(--gray-500);">완료</div>
+      </div>
+      <div class="bk-item">
+        <div class="bk-avatar" style="background:#E3F2FD;">😊</div>
+        <div class="bk-info">
+          <div class="bk-name">김하은</div>
+          <div class="bk-detail">4/6(일) 11:00 · 정규 레슨</div>
+        </div>
+        <div class="bk-status" style="background:#F0F0F0;color:var(--gray-500);">완료</div>
+      </div>
+      <div class="bk-item">
+        <div class="bk-avatar" style="background:#FFF8E1;">😃</div>
+        <div class="bk-info">
+          <div class="bk-name">오승우</div>
+          <div class="bk-detail">4/5(토) 16:00 · 쿠폰 레슨</div>
+        </div>
+        <div class="bk-status" style="background:#F0F0F0;color:var(--gray-500);">완료</div>
+      </div>
+    </div>
+  </div>
+</div>

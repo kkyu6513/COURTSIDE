@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=375, initial-scale=1.0">
+<title>3-1 레슨 신청 — COURTSIDE</title>
+<link rel="stylesheet" href="../common.css">
+<style>
+  .time-slot {
+    display:inline-flex;align-items:center;justify-content:center;
+    padding:8px 14px;border-radius:12px;font-size:13px;font-weight:600;
+    border:1.5px solid var(--gray-100);color:var(--gray-500);background:#fff;cursor:pointer;
+  }
+  .time-slot.selected { border-color:var(--green);background:#F0FDFA;color:var(--green); }
+  .time-slot.blocked { background:var(--gray-50);color:var(--gray-300);border-color:var(--gray-50);cursor:not-allowed; }
+</style>
+</head>
+<body>
+<div class="device-wrap">
+  <div class="device-label"><span class="device-num">10</span>레슨 신청</div>
+  <div class="device">
+    <div class="status-bar"><span class="time">9:41</span><div class="status-icons"><span>📶</span><span>🔋</span></div></div>
+    <div class="top-nav"><a class="back" href="../flow2-home/2-3-coach-detail.html">←</a><span class="title">레슨 신청</span><span class="action"></span></div>
+    <div class="screen screen-white" style="flex:1;overflow-y:auto;padding-bottom:0;">
+      <div class="step-indicator"><div class="step-dot active"></div><div class="step-dot"></div></div>
+
+      <div style="padding:16px 20px 0;">
+        <div style="font-size:18px;font-weight:700;color:var(--navy);">레슨 정보를 선택하세요</div>
+        <div style="font-size:13px;color:var(--gray-500);margin-top:4px;">김민수 코치에게 신청합니다</div>
+      </div>
+
+      <div style="padding:16px 20px 20px;display:flex;flex-direction:column;gap:20px;">
+
+        <!-- 레슨 유형 -->
+        <div>
+          <label style="font-size:14px;font-weight:600;color:var(--navy);display:block;margin-bottom:8px;">레슨 유형</label>
+          <div style="display:flex;gap:10px;">
+            <div id="type-regular" class="option-card selected" style="flex:1;padding:14px;text-align:center;border-color:var(--coral);background:#FFF5F5;cursor:pointer;" onclick="selectType('regular')">
+              <div style="font-size:24px;margin-bottom:4px;">📅</div>
+              <div style="font-size:14px;font-weight:700;color:var(--navy);">정규레슨</div>
+              <div style="font-size:11px;color:var(--gray-500);margin-top:2px;">매주 반복</div>
+            </div>
+            <div id="type-coupon" class="option-card" style="flex:1;padding:14px;text-align:center;cursor:pointer;" onclick="selectType('coupon')">
+              <div style="font-size:24px;margin-bottom:4px;">🎫</div>
+              <div style="font-size:14px;font-weight:700;color:var(--navy);">쿠폰레슨</div>
+              <div style="font-size:11px;color:var(--gray-500);margin-top:2px;">횟수 유연</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 정규레슨 세부 -->
+        <div id="regular-detail">
+          <label style="font-size:14px;font-weight:600;color:var(--navy);display:block;margin-bottom:8px;">주 횟수</label>
+          <div style="display:flex;gap:8px;">
+            <span class="chip active" onclick="selectChip(this)">주 1회</span>
+            <span class="chip" onclick="selectChip(this)">주 2회</span>
+            <span class="chip" onclick="selectChip(this)">주 3회</span>
+          </div>
+        </div>
+
+        <!-- 쿠폰레슨 세부 -->
+        <div id="coupon-detail" style="display:none;">
+          <div style="margin-bottom:16px;">
+            <label style="font-size:14px;font-weight:600;color:var(--navy);display:block;margin-bottom:8px;">총 횟수</label>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <span class="chip active" onclick="selectChip(this)">1회</span>
+              <span class="chip" onclick="selectChip(this)">2회</span>
+              <span class="chip" onclick="selectChip(this)">3회</span>
+              <span class="chip" onclick="selectChip(this)">4회</span>
+              <span class="chip" onclick="selectChip(this)">5회</span>
+              <span class="chip" onclick="selectChip(this)">6회</span>
+              <span class="chip" onclick="selectChip(this)">7회</span>
+              <span class="chip" onclick="selectChip(this)">8회</span>
+              <span class="chip" onclick="selectChip(this)">9회</span>
+              <span class="chip" onclick="selectChip(this)">10회</span>
+            </div>
+          </div>
+          <!--
+            유효기간 — 코치 프로필(CoachProfile.couponValidWeeks)에서 연동
+            데이터 경로: GET /api/coaches/:id → couponValidWeeks
+            코치가 1-6 프로필 등록 시 선택한 값과 동일
+          -->
+          <div id="coupon-valid-info" style="padding:12px 14px;background:var(--gray-50);border-radius:10px;display:flex;align-items:center;gap:8px;">
+            <span style="font-size:16px;">📋</span>
+            <div>
+              <div style="font-size:13px;font-weight:600;color:var(--navy);" id="coupon-valid-text">유효기간: 구매일로부터 -주</div>
+              <div style="font-size:11px;color:var(--gray-400);margin-top:2px;">코치가 설정한 유효기간이 적용됩니다</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 레슨 형태 -->
+        <div>
+          <label style="font-size:14px;font-weight:600;color:var(--navy);display:block;margin-bottom:8px;">레슨 형태</label>
+          <div style="display:flex;gap:8px;">
+            <span class="chip active" onclick="selectChip(this)">1:1 개인</span>
+            <span class="chip" onclick="selectChip(this)">그룹 (2~4인)</span>
+          </div>
+        </div>
+
+        <!-- 구분선 -->
+        <div style="height:1px;background:var(--gray-100);"></div>
+
+        <!-- 요일 선택 -->
+        <div>
+          <label style="font-size:14px;font-weight:600;color:var(--navy);display:block;margin-bottom:8px;">요일 선택 <span style="font-size:12px;color:var(--gray-400);font-weight:400;">(다중 선택)</span></label>
+          <div id="day-chips" style="display:flex;gap:8px;flex-wrap:wrap;">
+            <span class="chip" data-code="MON" data-label="월" onclick="this.classList.toggle('active')">월</span>
+            <span class="chip active" data-code="TUE" data-label="화" onclick="this.classList.toggle('active')">화</span>
+            <span class="chip" data-code="WED" data-label="수" onclick="this.classList.toggle('active')">수</span>
+            <span class="chip active" data-code="THU" data-label="목" onclick="this.classList.toggle('active')">목</span>
+            <span class="chip" data-code="FRI" data-label="금" onclick="this.classList.toggle('active')">금</span>
+            <span class="chip" data-code="SAT" data-label="토" onclick="this.classList.toggle('active')">토</span>
+            <span class="chip" data-code="SUN" data-label="일" onclick="this.classList.toggle('active')">일</span>
+          </div>
+          <div style="margin-top:8px;padding:10px 12px;background:#FFF7ED;border-radius:8px;display:flex;align-items:center;gap:6px;">
+            <span style="font-size:14px;">💡</span>
+            <span style="font-size:12px;color:#92400E;line-height:1.4;">선택한 요일은 희망 요일이며, 코치 확인 후 최종 확정됩니다</span>
+          </div>
+        </div>
+
+        <!-- 시간 선택 — 코치가 등록한 가능한 시간대만 노출 -->
+        <div>
+          <label style="font-size:14px;font-weight:600;color:var(--navy);display:block;margin-bottom:8px;">시간 선택 <span style="font-size:12px;color:var(--gray-400);font-weight:400;">(코치 가능 시간, 다중 선택)</span></label>
+          <!--
+            데이터 소스: GET /api/coaches/:id/schedule [공개]
+            코치가 1-7 스케줄 등록에서 등록한 시간대만 노출
+            isBlocked=true인 슬롯은 "예약됨"으로 비활성 표시
+            코치가 등록하지 않은 시간은 아예 미노출
+          -->
+          <div id="time-chips" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+          <div style="font-size:11px;color:var(--gray-400);margin-top:8px;">코치가 등록한 가능한 시간만 표시됩니다 · 회색: 이미 예약된 시간</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Bottom CTA -->
+    <div style="padding:12px 20px 32px;background:#fff;border-top:1px solid var(--gray-100);flex-shrink:0;">
+      <button class="btn-primary" onclick="saveAndNext()">다음</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function selectType(type) {
+  document.getElementById('type-regular').classList.toggle('selected', type === 'regular');
+  document.getElementById('type-regular').style.borderColor = type === 'regular' ? 'var(--coral)' : 'var(--gray-100)';
+  document.getElementById('type-regular').style.background = type === 'regular' ? '#FFF5F5' : '#fff';
+  document.getElementById('type-coupon').classList.toggle('selected', type === 'coupon');
+  document.getElementById('type-coupon').style.borderColor = type === 'coupon' ? 'var(--orange)' : 'var(--gray-100)';
+  document.getElementById('type-coupon').style.background = type === 'coupon' ? '#FFF7ED' : '#fff';
+  document.getElementById('regular-detail').style.display = type === 'regular' ? 'block' : 'none';
+  document.getElementById('coupon-detail').style.display = type === 'coupon' ? 'block' : 'none';
+}
+
+function selectChip(el) {
+  el.parentElement.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function toggleSlot(el) {
+  if (!el.classList.contains('blocked')) el.classList.toggle('selected');
+}
+
+/**
+ * 코치 가능 시간대 렌더링
+ * 실제: GET /api/coaches/:id/schedule → 코치가 등록한 슬롯만 반환
+ * 시뮬레이션: coachAvailableSlots (코치가 1-7에서 등록한 시간)
+ *
+ * 슬롯 상태:
+ *   available (선택 가능) — 코치가 등록 + 예약 없음
+ *   blocked (예약됨)     — 코치가 등록 + isBlocked=true (다른 수강생 예약)
+ *   미노출              — 코치가 등록하지 않은 시간
+ */
+// 코치가 1-7 스케줄 등록에서 10분 단위로 등록한 시간대
+// 실제: GET /api/coaches/:id/schedule → 10분 단위 슬롯 반환
+const coachAvailableSlots = [
+  // 오전
+  { code: 'T0900', label: '09:00', blocked: false },
+  { code: 'T0910', label: '09:10', blocked: false },
+  { code: 'T0920', label: '09:20', blocked: false },
+  { code: 'T0930', label: '09:30', blocked: false },
+  { code: 'T0940', label: '09:40', blocked: false },
+  { code: 'T0950', label: '09:50', blocked: false },
+  { code: 'T1000', label: '10:00', blocked: false },
+  { code: 'T1010', label: '10:10', blocked: true },  // 예약됨
+  { code: 'T1020', label: '10:20', blocked: true },  // 예약됨
+  { code: 'T1030', label: '10:30', blocked: false },
+  { code: 'T1040', label: '10:40', blocked: false },
+  { code: 'T1050', label: '10:50', blocked: false },
+  { code: 'T1100', label: '11:00', blocked: false },
+  { code: 'T1110', label: '11:10', blocked: false },
+  { code: 'T1120', label: '11:20', blocked: false },
+  // 오후
+  { code: 'T1400', label: '14:00', blocked: false },
+  { code: 'T1410', label: '14:10', blocked: false },
+  { code: 'T1420', label: '14:20', blocked: false },
+  { code: 'T1430', label: '14:30', blocked: false },
+  { code: 'T1440', label: '14:40', blocked: false },
+  { code: 'T1450', label: '14:50', blocked: false },
+  { code: 'T1500', label: '15:00', blocked: true },  // 예약됨
+  { code: 'T1510', label: '15:10', blocked: true },  // 예약됨
+  { code: 'T1520', label: '15:20', blocked: false },
+  { code: 'T1530', label: '15:30', blocked: false },
+  // 저녁
+  { code: 'T1800', label: '18:00', blocked: false },
+  { code: 'T1810', label: '18:10', blocked: false },
+  { code: 'T1820', label: '18:20', blocked: false },
+  { code: 'T1830', label: '18:30', blocked: false },
+  { code: 'T1900', label: '19:00', blocked: true },  // 예약됨
+  { code: 'T1910', label: '19:10', blocked: false },
+];
+
+function renderCoachTimeSlots() {
+  const container = document.getElementById('time-chips');
+  container.innerHTML = '';
+
+  coachAvailableSlots.forEach(slot => {
+    const el = document.createElement('span');
+    el.className = 'time-slot' + (slot.blocked ? ' blocked' : '');
+    el.textContent = slot.label;
+    el.dataset.code = slot.code;
+    el.dataset.label = slot.label;
+
+    if (slot.blocked) {
+      el.title = '이미 예약된 시간';
+    } else {
+      el.onclick = function() { toggleSlot(this); };
+    }
+
+    container.appendChild(el);
+  });
+}
+
+renderCoachTimeSlots();
+
+/**
+ * 코치 프로필 데이터 연동
+ * 실제: GET /api/coaches/:id → coachProfile
+ * 시뮬레이션: coachProfile 객체
+ *
+ * couponValidWeeks는 코치가 1-6 프로필 등록 시 선택한 값
+ * (CoachProfile.couponValidWeeks)
+ */
+const coachProfile = {
+  name: '김민수',
+  allowRegular: true,
+  allowCoupon: true,
+  couponValidWeeks: 4,  // 코치가 설정한 유효기간 (주)
+};
+
+// 유효기간 텍스트 연동
+document.getElementById('coupon-valid-text').textContent =
+  '유효기간: 구매일로부터 ' + coachProfile.couponValidWeeks + '주';
+
+/**
+ * 선택 데이터를 코드 기반으로 수집 → localStorage 저장 → 확인 화면 이동
+ *
+ * 코드 구조:
+ *   lessonType: REGULAR | COUPON
+ *   weeklyCount: W1 | W2 | W3 (정규)
+ *   totalSessions: S4 | S8 | S10 (쿠폰)
+ *   validWeeks: V4 | V6 (쿠폰)
+ *   lessonFormat: INDIVIDUAL | GROUP
+ *   days: [MON, TUE, WED, THU, FRI, SAT, SUN]
+ *   times: [T0900, T1000, T1100, ...]
+ */
+function saveAndNext() {
+  // 레슨 유형
+  const isRegular = document.getElementById('type-regular').classList.contains('selected');
+  const lessonType = isRegular ? 'REGULAR' : 'COUPON';
+
+  // 세부 항목
+  let detail = {};
+  if (isRegular) {
+    const weeklyChip = document.querySelector('#regular-detail .chip.active');
+    const weeklyMap = { '주 1회': 'W1', '주 2회': 'W2', '주 3회': 'W3' };
+    detail.weeklyCount = weeklyChip ? weeklyMap[weeklyChip.textContent] || weeklyChip.textContent : '';
+    detail.weeklyLabel = weeklyChip ? weeklyChip.textContent : '';
+  } else {
+    const sessChip = document.querySelector('#coupon-detail .chip.active');
+    const sessMap = { '1회':'S1','2회':'S2','3회':'S3','4회':'S4','5회':'S5','6회':'S6','7회':'S7','8회':'S8','9회':'S9','10회':'S10' };
+    detail.totalSessions = sessChip ? sessMap[sessChip.textContent] || sessChip.textContent : '';
+    detail.sessionsLabel = sessChip ? sessChip.textContent : '';
+
+    // 유효기간 — 코치 프로필(CoachProfile.couponValidWeeks)에서 연동
+    detail.validWeeks = 'V' + coachProfile.couponValidWeeks;
+    detail.validLabel = coachProfile.couponValidWeeks + '주';
+  }
+
+  // 레슨 형태
+  const formatChips = document.querySelectorAll('div:not(#regular-detail):not(#coupon-detail) > div > .chip.active');
+  let lessonFormat = 'INDIVIDUAL';
+  let formatLabel = '1:1 개인';
+  // 마지막 "레슨 형태" 영역의 active chip
+  const allChipGroups = document.querySelectorAll('.page-pad > div, [style*="gap:20px"] > div');
+  document.querySelectorAll('[style*="gap:20px"] > div').forEach(div => {
+    const label = div.querySelector('label');
+    if (label && label.textContent.includes('레슨 형태')) {
+      const active = div.querySelector('.chip.active');
+      if (active) {
+        formatLabel = active.textContent;
+        lessonFormat = active.textContent.includes('1:1') ? 'INDIVIDUAL' : 'GROUP';
+      }
+    }
+  });
+
+  // 요일
+  const days = [...document.querySelectorAll('#day-chips .chip.active')].map(c => ({
+    code: c.dataset.code,
+    label: c.dataset.label
+  }));
+
+  // 시간
+  const times = [...document.querySelectorAll('#time-chips .time-slot.selected')].map(c => ({
+    code: c.dataset.code,
+    label: c.dataset.label
+  }));
+
+  // 저장
+  const bookingData = {
+    lessonType,
+    lessonTypeLabel: isRegular ? '정규레슨' : '쿠폰레슨',
+    detail,
+    lessonFormat,
+    formatLabel,
+    days,
+    times
+  };
+
+  localStorage.setItem('bookingData', JSON.stringify(bookingData));
+  console.log('레슨 선택 저장:', bookingData);
+
+  window.location.href = '3-4-confirm.html';
+}
+</script>
+<script src="../time-slots.js"></script>
+<script src="../site-nav.js"></script>
+</body>
+</html>

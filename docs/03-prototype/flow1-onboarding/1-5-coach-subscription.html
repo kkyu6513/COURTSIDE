@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=375, initial-scale=1.0">
+<title>1-5 코치 구독 플랜 선택 — COURTSIDE</title>
+<link rel="stylesheet" href="../common.css">
+</head>
+<body>
+
+<div class="device-wrap">
+  <div class="device-label"><span class="device-num">5</span>코치 구독 플랜 선택</div>
+  <div class="device">
+    <div class="status-bar">
+      <span class="time">9:41</span>
+      <div class="status-icons"><span>📶</span><span>🔋</span></div>
+    </div>
+    <div class="top-nav">
+      <a class="back" href="1-3-role-select.html">←</a>
+      <span class="title">구독 플랜 선택</span>
+      <span class="action"></span>
+    </div>
+    <div class="screen">
+      <!-- Step Indicator — 2/3 -->
+      <div class="step-indicator">
+        <div class="step-dot done"></div>
+        <div class="step-dot active"></div>
+        <div class="step-dot"></div>
+      </div>
+
+      <!-- Header -->
+      <div style="padding:4px 20px 8px;">
+        <div style="font-size:18px;font-weight:700;color:var(--navy);">코치님, 플랜을 선택하세요</div>
+        <div style="font-size:13px;color:var(--gray-500);margin-top:4px;">언제든 변경할 수 있어요</div>
+      </div>
+
+      <!-- Plans — 어드민 관리 데이터 구조 -->
+      <div style="padding:12px 20px 32px;display:flex;flex-direction:column;gap:16px;" id="plan-list">
+        <!--
+          ┌─────────────────────────────────────────────────┐
+          │  구독 플랜 데이터 구조 (어드민에서 관리)            │
+          ├─────────────────────────────────────────────────┤
+          │  plan.name        : String   — 어드민 입력 텍스트  │
+          │  plan.price       : Number   — 어드민 입력 가격     │
+          │  plan.billingCycle: String   — 하드코딩 "/월"      │
+          │  plan.isBest      : Boolean  — 어드민 선택 (BEST)  │
+          │  plan.discount    : String?  — 어드민 입력 할인 문구 │
+          │  plan.features[]  : Array    — 어드민 코드 관리     │
+          │    ├ feature.code    : String — 항목 코드           │
+          │    ├ feature.label   : String — 노출 텍스트         │
+          │    └ feature.enabled : Boolean — 포함 여부          │
+          │  plan.ctaText     : String   — 어드민 입력 버튼 문구 │
+          │  plan.sortOrder   : Number   — 어드민 정렬 순서     │
+          └─────────────────────────────────────────────────┘
+
+          어드민 코드 관리 항목 (SubscriptionFeatureCode):
+          ┌──────────────────┬──────────────────────┐
+          │ Code             │ Label (기본값)         │
+          ├──────────────────┼──────────────────────┤
+          │ PROFILE_EXPOSURE │ 프로필 기본 노출       │
+          │ SEARCH_PRIORITY  │ 검색 상위 노출         │
+          │ REQUEST_LIMIT    │ 월 N건 신청 수신       │
+          │ REQUEST_UNLIMITED│ 무제한 신청 수신       │
+          │ STATS_DASHBOARD  │ 통계 대시보드          │
+          │ PRO_BADGE        │ PRO 배지 부여          │
+          │ ANNUAL_BADGE     │ ANNUAL 배지 부여       │
+          │ VERIFY_PRIORITY  │ 인증 배지 우선 심사     │
+          └──────────────────┴──────────────────────┘
+        -->
+
+        <!-- Plan 렌더링: planList.forEach(plan => { ... }) -->
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+/**
+ * 구독 플랜 데이터 (어드민에서 관리 → API 응답 시뮬레이션)
+ *
+ * 데이터 소스 구분:
+ *   [ADMIN_TEXT]   — 어드민이 직접 입력한 텍스트
+ *   [ADMIN_PRICE]  — 어드민이 입력한 가격 데이터
+ *   [HARDCODED]    — 프론트엔드 하드코딩 ("/월")
+ *   [ADMIN_SELECT] — 어드민이 코드 목록에서 선택한 항목
+ *   [ADMIN_TOGGLE] — 어드민이 on/off 선택한 값
+ */
+const planList = [
+  {
+    id: 'free',
+    name: '무료',                          // [ADMIN_TEXT]
+    price: 0,                              // [ADMIN_PRICE]
+    billingCycle: '/월',                    // [HARDCODED]
+    isBest: false,                         // [ADMIN_TOGGLE]
+    discount: null,                        // [ADMIN_TEXT] nullable
+    ctaText: '무료로 시작',                 // [ADMIN_TEXT]
+    ctaStyle: 'secondary',                 // [ADMIN_SELECT] primary|secondary
+    sortOrder: 1,                          // [ADMIN_PRICE]
+    features: [                            // [ADMIN_SELECT] — 코드 관리 항목에서 선택
+      { code: 'PROFILE_EXPOSURE',   label: '프로필 기본 노출',    enabled: true },
+      { code: 'REQUEST_LIMIT',      label: '월 5건 신청 수신',    enabled: true },
+      { code: 'STATS_DASHBOARD',    label: '통계 대시보드',       enabled: false },
+      { code: 'SEARCH_PRIORITY',    label: '검색 상위 노출',      enabled: false },
+    ]
+  },
+  {
+    id: 'monthly',
+    name: '월간 PRO',                      // [ADMIN_TEXT]
+    price: 29900,                          // [ADMIN_PRICE]
+    billingCycle: '/월',                    // [HARDCODED]
+    isBest: true,                          // [ADMIN_TOGGLE] — BEST 표시
+    discount: null,                        // [ADMIN_TEXT]
+    ctaText: 'PRO 시작하기',               // [ADMIN_TEXT]
+    ctaStyle: 'primary',                   // [ADMIN_SELECT]
+    sortOrder: 2,                          // [ADMIN_PRICE]
+    features: [
+      { code: 'SEARCH_PRIORITY',    label: '검색 상위 노출',      enabled: true },
+      { code: 'REQUEST_UNLIMITED',  label: '무제한 신청 수신',    enabled: true },
+      { code: 'STATS_DASHBOARD',    label: '통계 대시보드',       enabled: true },
+      { code: 'PRO_BADGE',          label: 'PRO 배지 부여',      enabled: true },
+    ]
+  },
+  {
+    id: 'annual',
+    name: '연간 PRO',                      // [ADMIN_TEXT]
+    price: 19900,                          // [ADMIN_PRICE]
+    billingCycle: '/월',                    // [HARDCODED]
+    isBest: false,                         // [ADMIN_TOGGLE]
+    discount: '33% 할인 — 연 ₩238,800',    // [ADMIN_TEXT]
+    ctaText: '연간 플랜 선택',              // [ADMIN_TEXT]
+    ctaStyle: 'secondary',                 // [ADMIN_SELECT]
+    sortOrder: 3,                          // [ADMIN_PRICE]
+    features: [
+      { code: 'SEARCH_PRIORITY',    label: '월간 PRO 전체 기능',  enabled: true },
+      { code: 'VERIFY_PRIORITY',    label: '인증 배지 우선 심사',  enabled: true },
+      { code: 'ANNUAL_BADGE',       label: 'ANNUAL 배지 부여',    enabled: true },
+    ]
+  }
+];
+
+/** 플랜 카드 렌더링 */
+function renderPlans() {
+  const container = document.getElementById('plan-list');
+
+  planList
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .forEach(plan => {
+      const card = document.createElement('div');
+      card.className = 'plan-card' + (plan.isBest ? ' popular' : '');
+
+      // 플랜명 [ADMIN_TEXT]
+      const nameEl = document.createElement('div');
+      nameEl.className = 'plan-name';
+      nameEl.textContent = plan.name;
+      card.appendChild(nameEl);
+
+      // 가격 [ADMIN_PRICE] + 빌링 주기 [HARDCODED]
+      const priceEl = document.createElement('div');
+      priceEl.className = 'plan-price';
+      priceEl.innerHTML = '₩' + plan.price.toLocaleString() + '<small>' + plan.billingCycle + '</small>';
+      card.appendChild(priceEl);
+
+      // 할인 문구 [ADMIN_TEXT] (있을 때만)
+      if (plan.discount) {
+        const discountEl = document.createElement('div');
+        discountEl.style.cssText = 'font-size:12px;color:#FF6B6B;font-weight:600;margin-bottom:4px;';
+        discountEl.textContent = '🔥 ' + plan.discount;
+        card.appendChild(discountEl);
+      }
+
+      // 부가 기능 목록 [ADMIN_SELECT]
+      plan.features.forEach(feat => {
+        const featEl = document.createElement('div');
+        featEl.className = 'plan-feature';
+        if (!feat.enabled) {
+          featEl.style.color = '#D1D5DB';
+          featEl.textContent = '✗ ' + feat.label;
+        } else {
+          featEl.textContent = '✓ ' + feat.label;
+        }
+        card.appendChild(featEl);
+      });
+
+      // CTA 버튼 [ADMIN_TEXT] + [ADMIN_SELECT] → 클릭 시 코치 프로필 등록 화면 이동
+      const ctaWrap = document.createElement('div');
+      ctaWrap.style.marginTop = '16px';
+      const btn = document.createElement('a');
+      btn.className = plan.ctaStyle === 'primary' ? 'btn-primary' : 'btn-secondary';
+      btn.style.cssText = 'height:44px;font-size:14px;display:flex;align-items:center;justify-content:center;text-decoration:none;';
+      btn.textContent = plan.ctaText;
+      btn.href = '1-6-coach-profile.html';
+      ctaWrap.appendChild(btn);
+      card.appendChild(ctaWrap);
+
+      container.appendChild(card);
+    });
+}
+
+renderPlans();
+</script>
+
+<script src="../site-nav.js"></script>
+</body>
+</html>

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>회원 관리 — COURTSIDE Admin</title>
+<link rel="stylesheet" href="../common-admin.css">
+</head>
+<body>
+<div class="admin-layout">
+
+  <!-- Sidebar -->
+  <nav class="admin-sidebar">
+    <div class="logo">🎾 COURTSIDE <span style="font-size:11px;opacity:0.5;font-weight:400;">Admin</span></div>
+    <div class="nav-group">
+      <div class="nav-group-title">Overview</div>
+      <a href="9-1-dashboard.html" class="nav-link"><span class="icon">📊</span>대시보드</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-title">관리</div>
+      <a href="9-2-users.html" class="nav-link active"><span class="icon">👥</span>회원 관리</a>
+      <a href="9-3-coach-verify.html" class="nav-link"><span class="icon">✅</span>코치 검증<span class="count">5</span></a>
+      <a href="9-4-banners.html" class="nav-link"><span class="icon">🖼️</span>배너 관리</a>
+      <a href="9-8-reports.html" class="nav-link"><span class="icon">🚨</span>신고 관리</a>
+      <a href="9-9-schedule-admin.html" class="nav-link"><span class="icon">📅</span>스케줄 관리</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-title">설정</div>
+      <a href="9-5-subscription-plans.html" class="nav-link"><span class="icon">💎</span>구독 플랜</a>
+      <a href="9-6-code-manage.html" class="nav-link"><span class="icon">⚙️</span>코드 관리</a>
+      <a href="9-7-terms.html" class="nav-link"><span class="icon">📜</span>약관 관리</a>
+    </div>
+  </nav>
+
+  <!-- Main -->
+  <main class="admin-main">
+    <div class="admin-header" style="display:flex;justify-content:space-between;align-items:flex-start;">
+      <div>
+        <div class="breadcrumb">관리 › 회원 관리</div>
+        <h1>회원 관리</h1>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input class="input-field" style="width:240px;" placeholder="이름, 이메일 검색" />
+        <button class="btn-secondary">내보내기</button>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div style="display:flex;gap:8px;margin-bottom:16px;">
+      <span class="chip active">전체 (156)</span>
+      <span class="chip">수강생 (108)</span>
+      <span class="chip">코치 (48)</span>
+      <span class="chip">차단 (3)</span>
+    </div>
+
+    <!-- Table -->
+    <div class="admin-card" style="padding:0;overflow:hidden;">
+      <table class="admin-table">
+        <thead>
+          <tr><th>이름</th><th>이메일</th><th>역할</th><th>가입일</th><th>구독</th><th>상태</th><th></th></tr>
+        </thead>
+        <tbody>
+          <tr><td style="font-weight:600;">홍길동</td><td style="color:var(--gray-500);">hong@email.com</td><td>수강생</td><td>2026.04.01</td><td>—</td><td><span class="badge badge-active">활성</span></td><td style="cursor:pointer;color:var(--gray-400);">⋯</td></tr>
+          <tr><td style="font-weight:600;">김민수</td><td style="color:var(--gray-500);">coach.kim@email.com</td><td>코치</td><td>2026.03.28</td><td><span class="badge badge-best">PRO</span></td><td><span class="badge badge-active">활성</span></td><td style="cursor:pointer;color:var(--gray-400);">⋯</td></tr>
+          <tr><td style="font-weight:600;">이서연</td><td style="color:var(--gray-500);">sy.lee@email.com</td><td>코치</td><td>2026.03.25</td><td><span style="font-size:12px;color:var(--orange);font-weight:600;">ANNUAL</span></td><td><span class="badge badge-active">활성</span></td><td style="cursor:pointer;color:var(--gray-400);">⋯</td></tr>
+          <tr><td style="font-weight:600;">박지수</td><td style="color:var(--gray-500);">js.park@email.com</td><td>수강생</td><td>2026.04.05</td><td>—</td><td><span class="badge badge-active">활성</span></td><td style="cursor:pointer;color:var(--gray-400);">⋯</td></tr>
+          <tr><td style="font-weight:600;">한도윤</td><td style="color:var(--gray-500);">dy.han@email.com</td><td>코치</td><td>2026.04.08</td><td><span style="font-size:12px;color:var(--gray-400);">무료</span></td><td><span class="badge badge-active">활성</span></td><td style="cursor:pointer;color:var(--gray-400);">⋯</td></tr>
+          <tr style="opacity:0.5;"><td style="font-weight:600;">최OO</td><td style="color:var(--gray-500);">choi@email.com</td><td>코치</td><td>2026.03.20</td><td>—</td><td><span class="badge badge-blocked">차단</span></td><td style="cursor:pointer;color:var(--gray-400);">⋯</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div style="display:flex;justify-content:center;gap:4px;margin-top:16px;">
+      <button class="btn-sm" style="background:var(--green);color:#fff;border-radius:8px;">1</button>
+      <button class="btn-sm" style="background:#fff;color:var(--gray-500);border:1px solid var(--gray-100);border-radius:8px;">2</button>
+      <button class="btn-sm" style="background:#fff;color:var(--gray-500);border:1px solid var(--gray-100);border-radius:8px;">3</button>
+    </div>
+  </main>
+</div>
+
+<script src="../site-nav.js"></script>
+</body>
+</html>

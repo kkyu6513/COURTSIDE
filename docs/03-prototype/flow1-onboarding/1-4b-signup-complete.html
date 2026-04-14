@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=375, initial-scale=1.0">
+<title>1-4b 수강생 가입 완료 — COURTSIDE</title>
+<link rel="stylesheet" href="../common.css">
+</head>
+<body>
+
+<div class="device-wrap">
+  <div class="device-label"><span class="device-num">4b</span>수강생 가입 완료</div>
+  <div class="device">
+    <div class="status-bar">
+      <span class="time">9:41</span>
+      <div class="status-icons"><span>📶</span><span>🔋</span></div>
+    </div>
+    <div class="screen screen-white" style="display:flex;flex-direction:column;padding-bottom:0;">
+
+      <!-- Step Indicator - Complete -->
+      <div class="step-indicator">
+        <div class="step-dot done"></div>
+        <div class="step-dot done"></div>
+        <div class="step-dot done"></div>
+      </div>
+
+      <!-- Content -->
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 20px;">
+
+        <!-- Success Icon -->
+        <div style="width:96px;height:96px;border-radius:50%;background:linear-gradient(135deg,#D1FAE5,#A7F3D0);display:flex;align-items:center;justify-content:center;font-size:44px;margin-bottom:24px;animation:bounceIn 0.5s ease;">
+          🎉
+        </div>
+
+        <div style="font-size:24px;font-weight:800;color:var(--navy);text-align:center;line-height:1.4;">
+          수강생 회원가입이<br>완료되었습니다!
+        </div>
+
+        <div style="font-size:14px;color:var(--gray-500);margin-top:12px;text-align:center;line-height:1.6;">
+          이제 나에게 딱 맞는 코치를 찾아보세요.<br>
+          COURTSIDE가 최적의 코치를 추천해 드릴게요!
+        </div>
+
+        <!-- Welcome Card -->
+        <div style="margin-top:32px;width:100%;background:var(--gray-50);border-radius:16px;padding:20px;">
+          <div style="font-size:14px;font-weight:600;color:var(--navy);margin-bottom:12px;">가입 정보 요약</div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+            <span style="font-size:13px;color:var(--gray-500);">역할</span>
+            <span style="font-size:13px;font-weight:600;color:var(--navy);">수강생</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+            <span style="font-size:13px;color:var(--gray-500);">NTRP 레벨</span>
+            <span style="font-size:13px;font-weight:600;color:var(--navy);">1.0~2.0 (입문)</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;">
+            <span style="font-size:13px;color:var(--gray-500);">희망 지역</span>
+            <span style="font-size:13px;font-weight:600;color:var(--navy);">서울특별시 강남구</span>
+          </div>
+          <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--gray-100);display:flex;align-items:center;gap:6px;">
+            <span style="font-size:14px;">💡</span>
+            <span style="font-size:12px;color:var(--gray-400);line-height:1.5;">가입 정보는 <strong style="color:var(--green);">마이페이지 > 나의 테니스 정보</strong>에서 언제든지 수정할 수 있어요</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- CTA Buttons -->
+      <div style="padding:0 20px 12px;display:flex;flex-direction:row;gap:10px;">
+        <a href="../flow2-home/2-1-home.html" class="btn-secondary" style="flex:1;height:48px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:14px;text-decoration:none;">
+          🏠 홈으로
+        </a>
+        <a href="../flow2-home/2-2-coach-list.html" class="btn-primary" style="flex:1;height:48px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:14px;text-decoration:none;">
+          🎾 코치 둘러보기
+        </a>
+      </div>
+      <div style="padding:0 20px 40px;text-align:center;font-size:12px;color:var(--gray-400);">
+        코치 둘러보기 → 코치 목록 페이지로 이동합니다
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+<style>
+@keyframes bounceIn {
+  0% { transform: scale(0.3); opacity: 0; }
+  50% { transform: scale(1.1); }
+  70% { transform: scale(0.9); }
+  100% { transform: scale(1); opacity: 1; }
+}
+</style>
+<script src="../site-nav.js"></script>
+</body>
+</html>

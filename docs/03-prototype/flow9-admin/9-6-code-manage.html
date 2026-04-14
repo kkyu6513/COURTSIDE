@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>코드 관리 — COURTSIDE Admin</title>
+<link rel="stylesheet" href="../common-admin.css">
+</head>
+<body>
+<div class="admin-layout">
+
+  <nav class="admin-sidebar">
+    <div class="logo">🎾 COURTSIDE <span style="font-size:11px;opacity:0.5;font-weight:400;">Admin</span></div>
+    <div class="nav-group"><div class="nav-group-title">Overview</div><a href="9-1-dashboard.html" class="nav-link"><span class="icon">📊</span>대시보드</a></div>
+    <div class="nav-group"><div class="nav-group-title">관리</div>
+      <a href="9-2-users.html" class="nav-link"><span class="icon">👥</span>회원 관리</a>
+      <a href="9-3-coach-verify.html" class="nav-link"><span class="icon">✅</span>코치 검증<span class="count">5</span></a>
+      <a href="9-4-banners.html" class="nav-link"><span class="icon">🖼️</span>배너 관리</a>
+      <a href="9-8-reports.html" class="nav-link"><span class="icon">🚨</span>신고 관리</a>
+      <a href="9-9-schedule-admin.html" class="nav-link"><span class="icon">📅</span>스케줄 관리</a>
+    </div>
+    <div class="nav-group"><div class="nav-group-title">설정</div>
+      <a href="9-5-subscription-plans.html" class="nav-link"><span class="icon">💎</span>구독 플랜</a>
+      <a href="9-6-code-manage.html" class="nav-link active"><span class="icon">⚙️</span>코드 관리</a>
+      <a href="9-7-terms.html" class="nav-link"><span class="icon">📜</span>약관 관리</a>
+    </div>
+  </nav>
+
+  <main class="admin-main">
+    <div class="admin-header" style="display:flex;justify-content:space-between;align-items:flex-start;">
+      <div>
+        <div class="breadcrumb">설정 › 코드 관리</div>
+        <h1>코드 관리</h1>
+        <div class="subtitle">구독 부가기능, 레슨 목표, 전문 분야 코드를 관리합니다</div>
+      </div>
+      <button class="btn-primary" id="add-btn">+ 항목 추가</button>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tab-bar">
+      <div class="tab-item active" onclick="showTab('features')">구독 부가기능 (8)</div>
+      <div class="tab-item" onclick="showTab('goals')">레슨 목표 (10)</div>
+      <div class="tab-item" onclick="showTab('specialties')">전문 분야 (11)</div>
+    </div>
+
+    <!-- Tab 1: 구독 부가기능 -->
+    <div id="tab-features" class="tab-content">
+      <div class="admin-card" style="padding:0;overflow:hidden;">
+        <table class="admin-table">
+          <thead><tr><th style="width:40px;">#</th><th style="width:200px;">코드</th><th>라벨</th><th style="width:80px;">활성</th><th style="width:60px;"></th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td><code style="font-size:12px;color:var(--info);background:#EFF6FF;padding:2px 6px;border-radius:4px;">PROFILE_EXPOSURE</code></td><td>프로필 기본 노출</td><td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td><td style="cursor:pointer;color:var(--gray-400);">✏️ 🗑️</td></tr>
+            <tr><td>2</td><td><code style="font-size:12px;color:var(--info);background:#EFF6FF;padding:2px 6px;border-radius:4px;">SEARCH_PRIORITY</code></td><td>검색 상위 노출</td><td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td><td style="cursor:pointer;color:var(--gray-400);">✏️ 🗑️</td></tr>
+            <tr><td>3</td><td><code style="font-size:12px;color:var(--info);background:#EFF6FF;padding:2px 6px;border-radius:4px;">REQUEST_LIMIT</code></td><td>월 N건 신청 수신</td><td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td><td style="cursor:pointer;color:var(--gray-400);">✏️ 🗑️</td></tr>
+            <tr><td>4</td><td><code style="font-size:12px;color:var(--info);background:#EFF6FF;padding:2px 6px;border-radius:4px;">REQUEST_UNLIMITED</code></td><td>무제한 신청 수신</td><td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td><td style="cursor:pointer;color:var(--gray-400);">✏️ 🗑️</td></tr>
+            <tr><td>5</td><td><code style="font-size:12px;color:var(--info);background:#EFF6FF;padding:2px 6px;border-radius:4px;">STATS_DASHBOARD</code></td><td>통계 대시보드</td><td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td><td style="cursor:pointer;color:var(--gray-400);">✏️ 🗑️</td></tr>
+            <tr><td>6</td><td><code style="font-size:12px;color:var(--info);background:#EFF6FF;padding:2px 6px;border-radius:4px;">PRO_BADGE</code></td><td>PRO 배지 부여</td><td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td><td style="cursor:pointer;color:var(--gray-400);">✏️ 🗑️</td></tr>
+            <tr><td>7</td><td><code style="font-size:12px;color:var(--info);background:#EFF6FF;padding:2px 6px;border-radius:4px;">ANNUAL_BADGE</code></td><td>ANNUAL 배지 부여</td><td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td><td style="cursor:pointer;color:var(--gray-400);">✏️ 🗑️</td></tr>
+            <tr><td>8</td><td><code style="font-size:12px;color:var(--info);background:#EFF6FF;padding:2px 6px;border-radius:4px;">VERIFY_PRIORITY</code></td><td>인증 배지 우선 심사</td><td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td><td style="cursor:pointer;color:var(--gray-400);">✏️ 🗑️</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Tab 2: 레슨 목표 -->
+    <div id="tab-goals" class="tab-content" style="display:none;">
+      <div class="admin-card" style="padding:0;overflow:hidden;">
+        <table class="admin-table">
+          <thead><tr><th style="width:40px;">#</th><th style="width:160px;">코드</th><th>라벨</th><th style="width:80px;">활성</th><th style="width:60px;"></th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td><code style="font-size:12px;color:var(--info);background:#EFF6FF;padding:2px 6px;border-radius:4px;">FOREHAND</code></td><td>포핸드 교정</td><td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td><td style="cursor:pointer;color:var(--gray-400);">✏️ 🗑️</td></tr>
+            <tr><td>2</td><td><code style="font-size:12px;color:var(--info);background:#EFF6FF;padding:2px 6px;border-radius:4px;">SERVE</code></td><td>서브 연습</td><td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td><td style="cursor:pointer;color:var(--gray-400);">✏️ 🗑️</td></tr>
+            <tr><td>3</td><td><code style="font-size:12px;color:var(--info);background:#EFF6FF;padding:2px 6px;border-radius:4px;">FITNESS</code></td><td>체력 향상</td><td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td><td style="cursor:pointer;color:var(--gray-400);">✏️ 🗑️</td></tr>
+            <tr><td>4</td><td><code style="font-size:12px;color:var(--info);background:#EFF6FF;padding:2px 6px;border-radius:4px;">STRATEGY</code></td><td>경기 전략</td><td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td><td style="cursor:pointer;color:var(--gray-400);">✏️ 🗑️</td></tr>
+            <tr><td>5</td><td><code style="font-size:12px;color:var(--info);background:#EFF6FF;padding:2px 6px;border-radius:4px;">DIET</code></td><td>다이어트</td><td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td><td style="cursor:pointer;color:var(--gray-400);">✏️ 🗑️</td></tr>
+            <tr><td>6</td><td><code style="font-size:12px;color:var(--info);background:#EFF6FF;padding:2px 6px;border-radius:4px;">HOBBY</code></td><td>재미/취미</td><td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td><td style="cursor:pointer;color:var(--gray-400);">✏️ 🗑️</td></tr>
+            <tr><td>7</td><td><code style="font-size:12px;color:var(--info);background:#EFF6FF;padding:2px 6px;border-radius:4px;">BACKHAND</code></td><td>백핸드 교정</td><td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td><td style="cursor:pointer;color:var(--gray-400);">✏️ 🗑️</td></tr>
+            <tr><td>8</td><td><code style="font-size:12px;color:var(--info);background:#EFF6FF;padding:2px 6px;border-radius:4px;">FOOTWORK</code></td><td>풋워크</td><td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td><td style="cursor:pointer;color:var(--gray-400);">✏️ 🗑️</td></tr>
+            <tr><td>9</td><td><code style="font-size:12px;color:var(--info);background:#EFF6FF;padding:2px 6px;border-radius:4px;">DOUBLES</code></td><td>복식 전략</td><td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td><td style="cursor:pointer;color:var(--gray-400);">✏️ 🗑️</td></tr>
+            <tr><td>10</td><td><code style="font-size:12px;color:var(--info);background:#EFF6FF;padding:2px 6px;border-radius:4px;">MENTAL</code></td><td>멘탈 강화</td><td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td><td style="cursor:pointer;color:var(--gray-400);">✏️ 🗑️</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Tab 3: 전문 분야 -->
+    <div id="tab-specialties" class="tab-content" style="display:none;">
+      <div class="admin-card" style="padding:0;overflow:hidden;">
+        <table class="admin-table">
+          <thead><tr><th style="width:40px;">#</th><th style="width:160px;">코드</th><th>라벨</th><th style="width:80px;">활성</th><th style="width:60px;"></th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td><code style="font-size:12px;color:var(--info);background:#EFF6FF;padding:2px 6px;border-radius:4px;">FOREHAND</code></td><td>포핸드</td><td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td><td style="cursor:pointer;color:var(--gray-400);">✏️ 🗑️</td></tr>
+            <tr><td>2</td><td><code style="font-size:12px;color:var(--info);background:#EFF6FF;padding:2px 6px;border-radius:4px;">BACKHAND</code></td><td>백핸드</td><td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td><td style="cursor:pointer;color:var(--gray-400);">✏️ 🗑️</td></tr>
+            <tr><td>3</td><td><code style="font-size:12px;color:var(--info);background:#EFF6FF;padding:2px 6px;border-radius:4px;">SERVE</code></td><td>서브</td><td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td><td style="cursor:pointer;color:var(--gray-400);">✏️ 🗑️</td></tr>
+            <tr><td>4</td><td><code style="font-size:12px;color:var(--info);background:#EFF6FF;padding:2px 6px;border-radius:4px;">VOLLEY</code></td><td>발리</td><td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td><td style="cursor:pointer;color:var(--gray-400);">✏️ 🗑️</td></tr>
+            <tr><td>5</td><td><code style="font-size:12px;color:var(--info);background:#EFF6FF;padding:2px 6px;border-radius:4px;">FOOTWORK</code></td><td>풋워크</td><td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td><td style="cursor:pointer;color:var(--gray-400);">✏️ 🗑️</td></tr>
+            <tr><td>6</td><td><code style="font-size:12px;color:var(--info);background:#EFF6FF;padding:2px 6px;border-radius:4px;">DOUBLES</code></td><td>복식전략</td><td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td><td style="cursor:pointer;color:var(--gray-400);">✏️ 🗑️</td></tr>
+            <tr><td>7</td><td><code style="font-size:12px;color:var(--info);background:#EFF6FF;padding:2px 6px;border-radius:4px;">STRATEGY</code></td><td>경기전략</td><td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td><td style="cursor:pointer;color:var(--gray-400);">✏️ 🗑️</td></tr>
+            <tr><td>8</td><td><code style="font-size:12px;color:var(--info);background:#EFF6FF;padding:2px 6px;border-radius:4px;">MENTAL</code></td><td>멘탈코칭</td><td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td><td style="cursor:pointer;color:var(--gray-400);">✏️ 🗑️</td></tr>
+            <tr><td>9</td><td><code style="font-size:12px;color:var(--info);background:#EFF6FF;padding:2px 6px;border-radius:4px;">FITNESS</code></td><td>체력훈련</td><td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td><td style="cursor:pointer;color:var(--gray-400);">✏️ 🗑️</td></tr>
+            <tr><td>10</td><td><code style="font-size:12px;color:var(--info);background:#EFF6FF;padding:2px 6px;border-radius:4px;">BEGINNER</code></td><td>입문지도</td><td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td><td style="cursor:pointer;color:var(--gray-400);">✏️ 🗑️</td></tr>
+            <tr><td>11</td><td><code style="font-size:12px;color:var(--info);background:#EFF6FF;padding:2px 6px;border-radius:4px;">KIDS</code></td><td>주니어</td><td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td><td style="cursor:pointer;color:var(--gray-400);">✏️ 🗑️</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+
+<script>
+function showTab(tabName) {
+  document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+  document.querySelectorAll('.tab-item').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + tabName).style.display = 'block';
+  const tabMap = { features: 0, goals: 1, specialties: 2 };
+  document.querySelectorAll('.tab-item')[tabMap[tabName]].classList.add('active');
+}
+</script>
+<script src="../site-nav.js"></script>
+</body>
+</html>

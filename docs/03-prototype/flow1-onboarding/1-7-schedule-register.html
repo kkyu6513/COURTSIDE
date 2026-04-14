@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=375, initial-scale=1.0">
+<title>1-7 스케줄 등록 — COURTSIDE</title>
+<link rel="stylesheet" href="../common.css">
+<style>
+  .day-tab {
+    flex: 1; text-align: center; padding: 10px 0; font-size: 14px; font-weight: 600;
+    color: var(--gray-400); cursor: pointer; border-bottom: 2px solid transparent;
+    transition: all 0.15s;
+  }
+  .day-tab.active { color: var(--green); border-bottom-color: var(--green); }
+  .day-tab .dot {
+    width: 6px; height: 6px; border-radius: 50%; background: var(--green);
+    margin: 4px auto 0; display: none;
+  }
+  .day-tab.has-slots .dot { display: block; }
+
+  .time-chip {
+    padding: 8px 0; text-align: center; border-radius: 10px;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    border: 1.5px solid var(--gray-100); color: var(--gray-500); background: #fff;
+    transition: all 0.15s;
+  }
+  .time-chip.active { border-color: var(--green); background: #F0FDFA; color: var(--green); }
+
+  .schedule-item {
+    display: flex; align-items: center; padding: 12px 14px; background: #fff;
+    border-radius: 12px; margin-bottom: 6px; gap: 10px;
+    border: 1px solid var(--gray-100);
+  }
+  .schedule-item .day-badge {
+    min-width: 32px; height: 32px; border-radius: 50%;
+    background: var(--green); color: #fff; font-size: 12px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .schedule-item .slots {
+    flex: 1; display: flex; flex-wrap: wrap; gap: 4px;
+  }
+  .schedule-item .slot-tag {
+    font-size: 11px; padding: 2px 8px; border-radius: 6px;
+    background: #F0FDFA; color: var(--green); font-weight: 600;
+  }
+  .schedule-item .delete { font-size: 14px; color: var(--gray-400); cursor: pointer; flex-shrink: 0; }
+</style>
+</head>
+<body>
+
+<div class="device-wrap">
+  <div class="device-label"><span class="device-num">7</span>스케줄 등록</div>
+  <div class="device">
+    <div class="status-bar">
+      <span class="time">9:41</span>
+      <div class="status-icons"><span>📶</span><span>🔋</span></div>
+    </div>
+    <div class="top-nav">
+      <a class="back" href="1-6b-coach-complete.html">←</a>
+      <span class="title">스케줄 등록</span>
+      <span class="action" style="font-size:13px;color:var(--gray-400);cursor:pointer;" onclick="location.href='../flow2-home/2-1-home.html'">건너뛰기</span>
+    </div>
+    <div class="screen screen-white" style="flex:1;overflow-y:auto;padding-bottom:0;">
+
+      <!-- 안내 -->
+      <div style="padding:20px 20px 12px;">
+        <div style="font-size:18px;font-weight:700;color:var(--navy);line-height:1.4;">레슨 가능한 시간을<br>등록해주세요</div>
+        <div style="font-size:13px;color:var(--gray-500);margin-top:6px;">요일을 선택하고, 레슨 가능한 시:분을 탭하세요</div>
+      </div>
+
+      <!-- 요일 탭 -->
+      <div style="display:flex;border-bottom:1px solid var(--gray-100);padding:0 12px;" id="day-tabs">
+        <div class="day-tab" data-day="0" onclick="selectDayTab(0)">일</div>
+        <div class="day-tab active has-slots" data-day="1" onclick="selectDayTab(1)">월<div class="dot"></div></div>
+        <div class="day-tab has-slots" data-day="2" onclick="selectDayTab(2)">화<div class="dot"></div></div>
+        <div class="day-tab has-slots" data-day="3" onclick="selectDayTab(3)">수<div class="dot"></div></div>
+        <div class="day-tab has-slots" data-day="4" onclick="selectDayTab(4)">목<div class="dot"></div></div>
+        <div class="day-tab has-slots" data-day="5" onclick="selectDayTab(5)">금<div class="dot"></div></div>
+        <div class="day-tab" data-day="6" onclick="selectDayTab(6)">토</div>
+      </div>
+
+      <!-- 선택된 요일의 시:분 슬롯 그리드 -->
+      <div style="padding:16px 20px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <div style="font-size:14px;font-weight:600;color:var(--navy);"><span id="current-day-label">월요일</span> 레슨 시간</div>
+          <div style="font-size:12px;color:var(--gray-400);">선택: <span id="selected-count" style="color:var(--green);font-weight:600;">3</span>개</div>
+        </div>
+
+        <!-- 오전 -->
+        <div style="font-size:12px;color:var(--gray-400);margin-bottom:6px;margin-top:4px;">오전</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px;" id="grid-am"></div>
+
+        <!-- 오후 -->
+        <div style="font-size:12px;color:var(--gray-400);margin-bottom:6px;">오후</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px;" id="grid-pm"></div>
+
+        <!-- 저녁 -->
+        <div style="font-size:12px;color:var(--gray-400);margin-bottom:6px;">저녁</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;" id="grid-evening"></div>
+      </div>
+
+      <!-- 반복 설정 -->
+      <div style="padding:0 20px 16px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px;background:var(--gray-50);border-radius:12px;">
+          <div>
+            <div style="font-size:14px;font-weight:600;color:var(--navy);">매주 반복</div>
+            <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">선택한 시간이 매주 반복됩니다</div>
+          </div>
+          <div id="repeat-toggle" style="width:48px;height:28px;border-radius:14px;background:var(--green);position:relative;cursor:pointer;" onclick="toggleRepeat()">
+            <div style="width:22px;height:22px;border-radius:50%;background:#fff;position:absolute;top:3px;left:23px;box-shadow:0 1px 4px rgba(0,0,0,0.2);transition:0.2s;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 등록된 스케줄 요약 -->
+      <div style="padding:0 20px 20px;">
+        <div style="font-size:14px;font-weight:600;color:var(--navy);margin-bottom:10px;">등록 요약 <span id="total-count" style="color:var(--green);">0</span>건</div>
+        <div id="schedule-summary"></div>
+        <div id="empty-msg" style="text-align:center;padding:20px;font-size:13px;color:var(--gray-400);">
+          요일별 시간을 선택하면 여기에 표시됩니다
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Bottom CTA -->
+    <div style="padding:12px 20px 32px;background:#fff;border-top:1px solid var(--gray-100);flex-shrink:0;">
+      <button class="btn-primary" onclick="submitSchedule()">등록 완료</button>
+    </div>
+
+    <!-- 토스트 -->
+    <div id="toast" style="display:none;position:absolute;bottom:100px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:12px 20px;border-radius:12px;font-size:13px;font-weight:600;white-space:nowrap;z-index:100;box-shadow:0 4px 16px rgba(0,0,0,0.2);"></div>
+  </div>
+</div>
+
+
+<script src="../time-slots.js"></script>
+<script>
+/**
+ * 스케줄 등록 — time-slots.js 공통 코드 사용
+ *
+ * 구조:
+ *   scheduleData[dayIndex] = Set(['09:00', '09:30', '10:00', ...])
+ *   → 요일 탭 전환 시 해당 요일의 선택 상태를 그리드에 반영
+ *   → 시:분 칩 토글 시 scheduleData 업데이트 + 요약 갱신
+ *
+ * DB 저장: Schedule 테이블에 요일(dayOfWeek) + 시:분(slotTime) 단위로 INSERT
+ * API: POST /api/schedule { schedules: [{ dayOfWeek, slotTime, isRecurring }] }
+ */
+
+// DAY_CODES, TIME_SLOTS, ALL_TIME_SLOTS → time-slots.js에서 로드
+const dayNamesFull = ['일요일','월요일','화요일','수요일','목요일','금요일','토요일'];
+
+// 요일별 선택된 시간 코드 Set (code 기반: T0900, T0930 등)
+const scheduleData = {
+  0: new Set(),
+  1: new Set(['T0900','T0930','T1000']),   // 월 시뮬레이션
+  2: new Set(['T1400','T1430']),            // 화
+  3: new Set(['T0900','T1000','T1030']),    // 수
+  4: new Set(['T1000','T1030','T1100']),    // 목
+  5: new Set(['T1300','T1330']),            // 금
+  6: new Set()
+};
+
+let currentDay = 1;
+
+function renderTimeGrid() {
+  const selected = scheduleData[currentDay];
+  const onToggle = (code, isSelected) => {
+    if (isSelected) selected.add(code);
+    else selected.delete(code);
+    updateSelectedCount();
+    updateSummary();
+    updateDayDots();
+  };
+  renderTimeSlotGrid('grid-am', TIME_SLOTS.AM, selected, null, onToggle);
+  renderTimeSlotGrid('grid-pm', TIME_SLOTS.PM, selected, null, onToggle);
+  renderTimeSlotGrid('grid-evening', TIME_SLOTS.EVENING, selected, null, onToggle);
+  updateSelectedCount();
+}
+
+function selectDayTab(day) {
+  currentDay = day;
+  document.querySelectorAll('.day-tab').forEach(t => t.classList.remove('active'));
+  document.querySelector('.day-tab[data-day="' + day + '"]').classList.add('active');
+  document.getElementById('current-day-label').textContent = dayNamesFull[day];
+  renderTimeGrid();
+}
+
+function updateSelectedCount() {
+  document.getElementById('selected-count').textContent = scheduleData[currentDay].size;
+}
+
+function updateDayDots() {
+  document.querySelectorAll('.day-tab').forEach(tab => {
+    const day = parseInt(tab.dataset.day);
+    if (scheduleData[day].size > 0) {
+      tab.classList.add('has-slots');
+    } else {
+      tab.classList.remove('has-slots');
+    }
+  });
+}
+
+function updateSummary() {
+  const container = document.getElementById('schedule-summary');
+  const emptyMsg = document.getElementById('empty-msg');
+  container.innerHTML = '';
+  let totalCount = 0;
+
+  for (let d = 0; d < 7; d++) {
+    const slots = scheduleData[d];
+    if (slots.size === 0) continue;
+
+    totalCount += slots.size;
+    const sorted = [...slots].sort();
+
+    const item = document.createElement('div');
+    item.className = 'schedule-item';
+    item.innerHTML =
+      '<div class="day-badge">' + DAY_CODES[d].label + '</div>' +
+      '<div class="slots">' + sorted.map(s => '<span class="slot-tag">' + getTimeLabel(s) + '</span>').join('') + '</div>' +
+      '<span class="delete" onclick="clearDay(' + d + ')">✕</span>';
+    container.appendChild(item);
+  }
+
+  document.getElementById('total-count').textContent = totalCount;
+  emptyMsg.style.display = totalCount > 0 ? 'none' : 'block';
+}
+
+function clearDay(day) {
+  scheduleData[day].clear();
+  if (currentDay === day) renderTimeGrid();
+  updateDayDots();
+  updateSummary();
+}
+
+function toggleRepeat() {
+  const toggle = document.getElementById('repeat-toggle');
+  const knob = toggle.querySelector('div');
+  if (toggle.dataset.on !== 'false') {
+    toggle.style.background = 'var(--gray-300)';
+    knob.style.left = '3px';
+    toggle.dataset.on = 'false';
+  } else {
+    toggle.style.background = 'var(--green)';
+    knob.style.left = '23px';
+    toggle.dataset.on = 'true';
+  }
+}
+
+function submitSchedule() {
+  let total = 0;
+  for (let d = 0; d < 7; d++) total += scheduleData[d].size;
+
+  if (total === 0) {
+    showToast('스케줄을 최소 1개 등록해주세요');
+    return;
+  }
+
+  // API 호출 시뮬레이션 — code 기반
+  const payload = [];
+  for (let d = 0; d < 7; d++) {
+    scheduleData[d].forEach(code => {
+      payload.push({
+        dayOfWeek: d,
+        dayCode: DAY_CODES[d].code,
+        slotCode: code,
+        slotTime: getTimeLabel(code),
+        isRecurring: true
+      });
+    });
+  }
+  console.log('POST /api/schedule:', payload);
+
+  window.location.href = '../flow2-home/2-1-home.html';
+}
+
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.style.display = 'block';
+  setTimeout(() => { toast.style.display = 'none'; }, 2000);
+}
+
+// 초기 렌더링
+renderTimeGrid();
+updateDayDots();
+updateSummary();
+</script>
+
+<script src="../site-nav.js"></script>
+</body>
+</html>

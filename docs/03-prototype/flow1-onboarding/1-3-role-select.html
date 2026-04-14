@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=375, initial-scale=1.0">
+<title>1-3 역할 선택 — COURTSIDE</title>
+<link rel="stylesheet" href="../common.css">
+</head>
+<body>
+
+<div class="device-wrap">
+  <div class="device-label"><span class="device-num">3</span>역할 선택</div>
+  <div class="device">
+    <div class="status-bar">
+      <span class="time">9:41</span>
+      <div class="status-icons"><span>📶</span><span>🔋</span></div>
+    </div>
+    <div class="screen screen-white" style="display:flex;flex-direction:column;padding-bottom:0;">
+      <!-- Step Indicator -->
+      <div class="step-indicator">
+        <div class="step-dot active"></div>
+        <div class="step-dot"></div>
+        <div class="step-dot"></div>
+      </div>
+      <!-- Header -->
+      <div style="padding:20px 20px 0;">
+        <div style="font-size:24px;font-weight:800;color:var(--navy);line-height:1.3;">
+          환영합니다! 👋<br>어떤 용도로 사용하시나요?
+        </div>
+        <div style="font-size:14px;color:var(--gray-500);margin-top:8px;">
+          역할에 맞는 최적의 경험을 제공해 드립니다
+        </div>
+      </div>
+
+      <!-- Role Cards -->
+      <div style="flex:1;padding:32px 20px;display:flex;flex-direction:column;gap:16px;">
+        <div class="option-card selected" id="student-card" onclick="selectRole('student')">
+          <div class="opt-icon">🏸</div>
+          <div class="opt-title">수강생으로 시작</div>
+          <div class="opt-desc">코치를 탐색하고 레슨을 신청해요</div>
+        </div>
+        <div class="option-card" id="coach-card" onclick="selectRole('coach')">
+          <div class="opt-icon">🏅</div>
+          <div class="opt-title">코치로 시작</div>
+          <div class="opt-desc">프로필을 등록하고 수강생을 만나요</div>
+        </div>
+      </div>
+
+      <!-- CTA -->
+      <div style="padding:0 20px 48px;">
+        <button class="btn-primary" onclick="goNext()">다음</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+let selectedRole = 'student';
+
+function selectRole(role) {
+  selectedRole = role;
+  document.getElementById('student-card').classList.toggle('selected', role === 'student');
+  document.getElementById('coach-card').classList.toggle('selected', role === 'coach');
+}
+
+function goNext() {
+  if (selectedRole === 'student') {
+    window.location.href = '1-4-student-profile.html';
+  } else {
+    window.location.href = '1-5-coach-subscription.html';
+  }
+}
+</script>
+<script src="../site-nav.js"></script>
+</body>
+</html>

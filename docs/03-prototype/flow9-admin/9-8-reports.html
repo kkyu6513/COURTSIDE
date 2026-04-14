@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>신고 관리 — COURTSIDE Admin</title>
+<link rel="stylesheet" href="../common-admin.css">
+</head>
+<body>
+<div class="admin-layout">
+
+  <nav class="admin-sidebar">
+    <div class="logo">🎾 COURTSIDE <span style="font-size:11px;opacity:0.5;font-weight:400;">Admin</span></div>
+    <div class="nav-group"><div class="nav-group-title">Overview</div><a href="9-1-dashboard.html" class="nav-link"><span class="icon">📊</span>대시보드</a></div>
+    <div class="nav-group"><div class="nav-group-title">관리</div>
+      <a href="9-2-users.html" class="nav-link"><span class="icon">👥</span>회원 관리</a>
+      <a href="9-3-coach-verify.html" class="nav-link"><span class="icon">✅</span>코치 검증</a>
+      <a href="9-4-banners.html" class="nav-link"><span class="icon">🖼️</span>배너 관리</a>
+      <a href="9-8-reports.html" class="nav-link active"><span class="icon">🚨</span>신고 관리<span class="count">3</span></a>
+      <a href="9-9-schedule-admin.html" class="nav-link"><span class="icon">📅</span>스케줄 관리</a>
+    </div>
+    <div class="nav-group"><div class="nav-group-title">설정</div>
+      <a href="9-5-subscription-plans.html" class="nav-link"><span class="icon">💎</span>구독 플랜</a>
+      <a href="9-6-code-manage.html" class="nav-link"><span class="icon">⚙️</span>코드 관리</a>
+      <a href="9-7-terms.html" class="nav-link"><span class="icon">📜</span>약관 관리</a>
+    </div>
+  </nav>
+
+  <main class="admin-main">
+    <div class="admin-header">
+      <div class="breadcrumb">관리 › 신고 관리</div>
+      <h1>신고 관리</h1>
+      <div class="subtitle">사용자 신고 내역을 검토하고 조치합니다</div>
+    </div>
+
+    <!-- 필터 -->
+    <div style="display:flex;gap:8px;margin-bottom:16px;">
+      <span class="chip active">전체 (12)</span>
+      <span class="chip">대기 (3)</span>
+      <span class="chip">검토중 (2)</span>
+      <span class="chip">완료 (7)</span>
+    </div>
+
+    <!-- 신고 목록 테이블 -->
+    <div class="admin-card" style="padding:0;overflow:hidden;">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>신고자</th>
+            <th>대상</th>
+            <th>사유</th>
+            <th>상세</th>
+            <th>신고일</th>
+            <th>상태</th>
+            <th style="width:200px;">조치</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="font-weight:600;">홍길동 (수강생)</td>
+            <td style="font-weight:600;">한도윤 (코치)</td>
+            <td><span style="font-size:12px;color:var(--info);background:#EFF6FF;padding:2px 8px;border-radius:4px;">부적절한 메시지</span></td>
+            <td style="color:var(--gray-500);font-size:13px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">채팅에서 외부 결제를 유도했습니다</td>
+            <td style="color:var(--gray-500);">2026.04.11</td>
+            <td><span class="badge badge-pending">대기</span></td>
+            <td>
+              <div style="display:flex;gap:6px;">
+                <button class="btn-sm" style="background:var(--warning);color:#fff;">경고</button>
+                <button class="btn-sm" style="background:var(--orange);color:#fff;">정지7일</button>
+                <button class="btn-sm" style="background:var(--error);color:#fff;">영구차단</button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td style="font-weight:600;">김영희 (수강생)</td>
+            <td style="font-weight:600;">최OO (코치)</td>
+            <td><span style="font-size:12px;color:var(--info);background:#EFF6FF;padding:2px 8px;border-radius:4px;">레슨 불이행</span></td>
+            <td style="color:var(--gray-500);font-size:13px;">예약 후 연락 없이 불참</td>
+            <td style="color:var(--gray-500);">2026.04.10</td>
+            <td><span class="badge badge-pending">대기</span></td>
+            <td>
+              <div style="display:flex;gap:6px;">
+                <button class="btn-sm" style="background:var(--warning);color:#fff;">경고</button>
+                <button class="btn-sm" style="background:var(--orange);color:#fff;">정지7일</button>
+                <button class="btn-sm" style="background:var(--error);color:#fff;">영구차단</button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td style="font-weight:600;">이철수 (수강생)</td>
+            <td style="font-weight:600;">박OO (코치)</td>
+            <td><span style="font-size:12px;color:var(--info);background:#EFF6FF;padding:2px 8px;border-radius:4px;">허위 프로필</span></td>
+            <td style="color:var(--gray-500);font-size:13px;">경력이 실제와 다릅니다</td>
+            <td style="color:var(--gray-500);">2026.04.09</td>
+            <td><span class="badge badge-pending">대기</span></td>
+            <td>
+              <div style="display:flex;gap:6px;">
+                <button class="btn-sm" style="background:var(--warning);color:#fff;">경고</button>
+                <button class="btn-sm" style="background:var(--orange);color:#fff;">정지7일</button>
+                <button class="btn-sm" style="background:var(--error);color:#fff;">영구차단</button>
+              </div>
+            </td>
+          </tr>
+          <tr style="opacity:0.5;">
+            <td style="font-weight:600;">박지수 (수강생)</td>
+            <td style="font-weight:600;">김OO (코치)</td>
+            <td><span style="font-size:12px;color:var(--gray-400);background:var(--gray-50);padding:2px 8px;border-radius:4px;">스팸/광고</span></td>
+            <td style="color:var(--gray-400);font-size:13px;">반복적인 홍보 메시지</td>
+            <td style="color:var(--gray-400);">2026.04.05</td>
+            <td><span class="badge badge-active">완료 (경고)</span></td>
+            <td style="font-size:12px;color:var(--gray-400);">2026.04.06 처리</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
+<script src="../site-nav.js"></script>
+</body>
+</html>

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=375, initial-scale=1.0"><title>7-3 신청 상세 수락/거절 — COURTSIDE</title><link rel="stylesheet" href="../common.css">
+<style>.info-card{background:#fff;border-radius:16px;margin:16px 20px;padding:20px;border:1px solid var(--gray-100);}.info-row{display:flex;justify-content:space-between;padding:8px 0;font-size:14px;border-bottom:1px solid var(--gray-50);}.info-row:last-child{border-bottom:none;}.info-row .lbl{color:var(--gray-500);font-weight:500;}.info-row .val{color:var(--navy);font-weight:600;}.btn-row{display:flex;gap:10px;padding:12px 20px 28px;background:#fff;border-top:1px solid var(--gray-100);flex-shrink:0;}.btn-sm{flex:1;height:48px;border-radius:12px;border:none;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;}.btn-reject{background:#FEE2E2;color:var(--error);}.btn-cancel{background:var(--gray-100);color:var(--gray-500);}.btn-accept{background:var(--green);color:#fff;flex:1.5;}</style>
+</head>
+<body>
+<div class="device-wrap">
+  <div class="device-label"><span class="device-num">3</span>신청 상세 수락/거절</div>
+  <div class="device">
+    <div class="status-bar"><span class="time">9:41</span><div class="status-icons"><span>📶</span><span>🔋</span></div></div>
+    <div class="top-nav"><a href="7-2-booking-inbox.html" class="back">‹</a><span class="title">신청 상세</span><span class="action"></span></div>
+    <div class="screen" style="flex:1;overflow-y:auto;padding-bottom:0;">
+      <!-- Student Info -->
+      <div style="text-align:center;padding:24px 20px 16px;background:#fff;">
+        <div style="width:64px;height:64px;border-radius:50%;margin:0 auto 10px;background:linear-gradient(135deg,var(--sky),var(--pink));display:flex;align-items:center;justify-content:center;font-size:28px;">😊</div>
+        <div style="font-size:18px;font-weight:700;color:var(--navy);">이서연</div>
+        <div style="font-size:13px;color:var(--gray-500);margin-top:4px;">여성 · 28세 · 테니스 경력 6개월</div>
+      </div>
+      <!-- Detail Card -->
+      <div class="info-card">
+        <div style="font-size:15px;font-weight:700;color:var(--navy);margin-bottom:12px;">신청 정보</div>
+        <div class="info-row"><span class="lbl">레슨 유형</span><span class="val" style="color:var(--coral);">🎾 정규 레슨</span></div>
+        <div class="info-row"><span class="lbl">NTRP</span><span class="val">2.5 (초중급)</span></div>
+        <div class="info-row"><span class="lbl">희망 요일</span><span class="val">월 · 수</span></div>
+        <div class="info-row"><span class="lbl">희망 시간</span><span class="val">오전 10:00</span></div>
+        <div class="info-row"><span class="lbl">희망 지역</span><span class="val">강남구</span></div>
+        <div class="info-row"><span class="lbl">횟수</span><span class="val">주 2회</span></div>
+      </div>
+      <!-- Student Message -->
+      <div class="info-card">
+        <div style="font-size:15px;font-weight:700;color:var(--navy);margin-bottom:8px;">수강생 메시지</div>
+        <div style="font-size:14px;color:var(--gray-500);line-height:1.6;">안녕하세요! 테니스를 시작한 지 6개월 됐는데 포핸드 자세 교정이 필요해서 신청합니다. 꾸준히 배우고 싶어요 🎾</div>
+      </div>
+      <!-- Rejection Reason -->
+      <div style="padding:0 20px 20px;">
+        <label class="input-label">거절/취소 사유 (선택)</label>
+        <textarea class="textarea" placeholder="거절 또는 취소 시 사유를 입력해주세요..."></textarea>
+      </div>
+    </div>
+    <!-- Fixed Bottom Buttons -->
+    <div class="btn-row">
+      <button class="btn-sm btn-reject">거절</button>
+      <button class="btn-sm btn-cancel">취소</button>
+      <button class="btn-sm btn-accept">수락하기</button>
+    </div>
+  </div>
+</div>

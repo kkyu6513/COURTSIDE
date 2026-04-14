@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>스케줄 관리 — COURTSIDE Admin</title>
+<link rel="stylesheet" href="../common-admin.css">
+<style>
+  .schedule-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 2px; margin-top: 12px; }
+  .schedule-grid .day-header { padding: 8px; text-align: center; font-size: 12px; font-weight: 700; color: var(--gray-500); background: var(--gray-50); border-radius: 6px 6px 0 0; }
+  .schedule-grid .day-header.today { background: var(--green); color: #fff; }
+  .schedule-grid .slot { padding: 4px 6px; font-size: 11px; border-radius: 4px; margin: 1px 2px; cursor: pointer; }
+  .slot-blocked { background: #D1FAE5; color: #065F46; }
+  .slot-available { background: var(--gray-50); color: var(--gray-400); }
+  .slot-hold { background: #FEF3C7; color: #92400E; border: 1px dashed #F59E0B; }
+
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+  .dot-green { background: var(--success); }
+  .dot-yellow { background: var(--warning); }
+  .dot-red { background: var(--error); }
+  .dot-blue { background: var(--info); }
+  .dot-gray { background: var(--gray-300); }
+  .dot-purple { background: var(--purple); }
+
+  .detail-panel { position: fixed; top: 0; right: -480px; width: 480px; height: 100vh; background: #fff; box-shadow: -4px 0 24px rgba(0,0,0,0.1); z-index: 200; transition: right 0.3s; overflow-y: auto; padding: 24px; }
+  .detail-panel.open { right: 0; }
+  .detail-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.3); z-index: 199; }
+  .detail-overlay.open { display: block; }
+
+  .timeline-item { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--gray-100); }
+  .timeline-item:last-child { border-bottom: none; }
+  .timeline-dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+  .timeline-content { flex: 1; }
+  .timeline-time { font-size: 11px; color: var(--gray-400); }
+  .timeline-text { font-size: 13px; color: var(--navy); margin-top: 2px; }
+
+  .action-select { height: 36px; border-radius: 8px; border: 1.5px solid var(--gray-200); padding: 0 10px; font-size: 13px; font-family: inherit; color: var(--navy); background: #fff; cursor: pointer; }
+</style>
+</head>
+<body>
+<div class="admin-layout">
+
+  <nav class="admin-sidebar">
+    <div class="logo">🎾 COURTSIDE <span style="font-size:11px;opacity:0.5;font-weight:400;">Admin</span></div>
+    <div class="nav-group"><div class="nav-group-title">Overview</div><a href="9-1-dashboard.html" class="nav-link"><span class="icon">📊</span>대시보드</a></div>
+    <div class="nav-group"><div class="nav-group-title">관리</div>
+      <a href="9-2-users.html" class="nav-link"><span class="icon">👥</span>회원 관리</a>
+      <a href="9-3-coach-verify.html" class="nav-link"><span class="icon">✅</span>코치 검증</a>
+      <a href="9-4-banners.html" class="nav-link"><span class="icon">🖼️</span>배너 관리</a>
+      <a href="9-8-reports.html" class="nav-link"><span class="icon">🚨</span>신고 관리</a>
+      <a href="9-9-schedule-admin.html" class="nav-link active"><span class="icon">📅</span>스케줄 관리<span class="count">5</span></a>
+    </div>
+    <div class="nav-group"><div class="nav-group-title">설정</div>
+      <a href="9-5-subscription-plans.html" class="nav-link"><span class="icon">💎</span>구독 플랜</a>
+      <a href="9-6-code-manage.html" class="nav-link"><span class="icon">⚙️</span>코드 관리</a>
+      <a href="9-7-terms.html" class="nav-link"><span class="icon">📜</span>약관 관리</a>
+    </div>
+  </nav>
+
+  <main class="admin-main">
+    <div class="admin-header">
+      <div class="breadcrumb">관리 › 스케줄 관리</div>
+      <h1>스케줄 관리</h1>
+      <div class="subtitle">모든 코치의 스케줄 현황 및 변경 요청을 관리합니다</div>
+    </div>
+
+    <!-- 상단 통계 -->
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-value">48</div>
+        <div class="stat-label">활성 코치 (PRO)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" style="color:var(--warning);">5</div>
+        <div class="stat-label">변경 요청 대기</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" style="color:var(--info);">3</div>
+        <div class="stat-label">홀드 진행 중</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" style="color:var(--success);">127</div>
+        <div class="stat-label">금주 확정 레슨</div>
+      </div>
+    </div>
+
+    <!-- 탭 -->
+    <div class="tab-bar">
+      <div class="tab-item active" onclick="switchAdminTab('schedule')">코치 스케줄 현황</div>
+      <div class="tab-item" onclick="switchAdminTab('reschedule')">변경 요청 관리 <span style="background:var(--coral);color:#fff;font-size:10px;padding:2px 6px;border-radius:8px;margin-left:4px;">5</span></div>
+      <div class="tab-item" onclick="switchAdminTab('history')">변경 이력</div>
+      <div class="tab-item" onclick="switchAdminTab('settings')">정책 설정</div>
+    </div>
+
+    <!-- ═══════════════════════════════════════ -->
+    <!-- 탭 1: 코치 스케줄 현황 -->
+    <!-- ═══════════════════════════════════════ -->
+    <div id="tab-schedule">
+      <!-- 검색/필터 -->
+      <div style="display:flex;gap:12px;margin-bottom:16px;align-items:center;">
+        <input class="input-field" placeholder="코치 이름 검색" style="width:200px;">
+        <select class="action-select">
+          <option>전체 지역</option>
+          <option>서울 강남구</option>
+          <option>서울 서초구</option>
+          <option>경기 성남시</option>
+        </select>
+        <select class="action-select">
+          <option>전체 플랜</option>
+          <option>PRO (월간)</option>
+          <option>PRO (연간)</option>
+          <option>무료</option>
+        </select>
+        <select class="action-select">
+          <option>이번 주</option>
+          <option>다음 주</option>
+          <option>이번 달</option>
+        </select>
+      </div>
+
+      <div class="admin-card" style="padding:0;overflow:hidden;">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th style="width:180px;">코치</th>
+              <th>플랜</th>
+              <th>등록 슬롯</th>
+              <th>예약 확정</th>
+              <th>대기 중</th>
+              <th>변경 요청</th>
+              <th>홀드</th>
+              <th>홀드 시간</th>
+              <th style="width:100px;">관리</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <div style="width:32px;height:32px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;">김</div>
+                  <div><div style="font-weight:600;">김민수</div><div style="font-size:11px;color:var(--gray-400);">서울 강남구</div></div>
+                </div>
+              </td>
+              <td><span class="badge badge-best">PRO 월간</span></td>
+              <td>42</td>
+              <td style="font-weight:600;color:var(--success);">12</td>
+              <td><span class="badge badge-pending">3</span></td>
+              <td><span class="badge" style="background:#F3E8FF;color:var(--purple);">2</span></td>
+              <td><span class="badge" style="background:#FEF3C7;color:#92400E;">1</span></td>
+              <td><span style="font-weight:600;color:var(--navy);">24h</span> <span style="font-size:10px;color:var(--purple);">개별</span></td>
+              <td><button class="btn-sm" style="background:var(--green);color:#fff;" onclick="openCoachDetail()">상세</button></td>
+            </tr>
+            <tr>
+              <td>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <div style="width:32px;height:32px;border-radius:50%;background:var(--info);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;">박</div>
+                  <div><div style="font-weight:600;">박서연</div><div style="font-size:11px;color:var(--gray-400);">서울 서초구</div></div>
+                </div>
+              </td>
+              <td><span class="badge badge-best">PRO 연간</span></td>
+              <td>56</td>
+              <td style="font-weight:600;color:var(--success);">18</td>
+              <td><span class="badge badge-pending">1</span></td>
+              <td><span class="badge" style="background:#F3E8FF;color:var(--purple);">1</span></td>
+              <td><span style="color:var(--gray-400);">—</span></td>
+              <td><span style="color:var(--gray-400);">12h</span> <span style="font-size:10px;color:var(--gray-400);">기본</span></td>
+              <td><button class="btn-sm" style="background:var(--green);color:#fff;">상세</button></td>
+            </tr>
+            <tr>
+              <td>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <div style="width:32px;height:32px;border-radius:50%;background:var(--coral);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;">이</div>
+                  <div><div style="font-weight:600;">이준호</div><div style="font-size:11px;color:var(--gray-400);">경기 성남시</div></div>
+                </div>
+              </td>
+              <td><span class="badge badge-best">PRO 월간</span></td>
+              <td>35</td>
+              <td style="font-weight:600;color:var(--success);">8</td>
+              <td><span style="color:var(--gray-400);">—</span></td>
+              <td><span class="badge" style="background:#F3E8FF;color:var(--purple);">2</span></td>
+              <td><span class="badge" style="background:#FEF3C7;color:#92400E;">2</span></td>
+              <td><span style="font-weight:600;color:var(--navy);">6h</span> <span style="font-size:10px;color:var(--purple);">개별</span></td>
+              <td><button class="btn-sm" style="background:var(--green);color:#fff;">상세</button></td>
+            </tr>
+            <tr>
+              <td>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <div style="width:32px;height:32px;border-radius:50%;background:var(--purple);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;">한</div>
+                  <div><div style="font-weight:600;">한도윤</div><div style="font-size:11px;color:var(--gray-400);">서울 강남구</div></div>
+                </div>
+              </td>
+              <td><span class="badge" style="background:var(--gray-100);color:var(--gray-500);">무료</span></td>
+              <td><span style="color:var(--gray-400);">—</span></td>
+              <td><span style="color:var(--gray-400);">—</span></td>
+              <td><span style="color:var(--gray-400);">—</span></td>
+              <td><span style="color:var(--gray-400);">—</span></td>
+              <td><span style="color:var(--gray-400);">—</span></td>
+              <td><span style="color:var(--gray-400);">—</span></td>
+              <td><button class="btn-sm" style="background:var(--gray-100);color:var(--gray-500);">상세</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 범례 -->
+      <div style="display:flex;gap:16px;margin-top:12px;font-size:12px;color:var(--gray-500);">
+        <span><span class="status-dot dot-green"></span>예약 확정</span>
+        <span><span class="status-dot dot-yellow"></span>홀드 중</span>
+        <span><span class="status-dot dot-purple"></span>변경 요청</span>
+        <span><span class="status-dot dot-gray"></span>가용 슬롯</span>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════ -->
+    <!-- 탭 2: 변경 요청 관리 -->
+    <!-- ═══════════════════════════════════════ -->
+    <div id="tab-reschedule" style="display:none;">
+      <!-- 필터 -->
+      <div style="display:flex;gap:8px;margin-bottom:16px;">
+        <span class="chip active" onclick="filterReschedule('all')">전체 (12)</span>
+        <span class="chip" onclick="filterReschedule('pending')"><span class="status-dot dot-yellow"></span>대기 (5)</span>
+        <span class="chip" onclick="filterReschedule('proposed')"><span class="status-dot dot-gray"></span>제안됨 (3)</span>
+        <span class="chip" onclick="filterReschedule('completed')"><span class="status-dot dot-blue"></span>완료 (2)</span>
+        <span class="chip" onclick="filterReschedule('rejected')"><span class="status-dot dot-red"></span>거절/불가 (2)</span>
+      </div>
+
+      <div class="admin-card" style="padding:0;overflow:hidden;">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>코치</th>
+              <th>수강생</th>
+              <th>기존 일정</th>
+              <th>희망 날짜</th>
+              <th>요청 시각</th>
+              <th>상태</th>
+              <th>홀드 만료</th>
+              <th style="width:240px;">어드민 조치</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- 대기 -->
+            <tr>
+              <td style="font-weight:600;">김민수</td>
+              <td>홍길동</td>
+              <td>4/15 (화) 10:00</td>
+              <td style="font-weight:600;color:#92400E;">4/17 (목) 10:00</td>
+              <td style="font-size:12px;color:var(--gray-400);">4/12 14:30</td>
+              <td><span class="badge" style="background:#D1FAE5;color:#065F46;">변경 가능</span></td>
+              <td><span style="color:var(--gray-400);">—</span></td>
+              <td>
+                <div style="display:flex;gap:6px;">
+                  <select class="action-select" style="flex:1;">
+                    <option>상태 변경</option>
+                    <option value="force-propose">강제 제안하기</option>
+                    <option value="force-reject">강제 거절</option>
+                    <option value="force-complete">강제 완료</option>
+                    <option value="cancel">요청 취소</option>
+                  </select>
+                  <button class="btn-sm" style="background:var(--green);color:#fff;">적용</button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td style="font-weight:600;">김민수</td>
+              <td>이철수</td>
+              <td>4/16 (수) 18:00</td>
+              <td style="font-weight:600;color:#92400E;">4/18 (금) 18:00</td>
+              <td style="font-size:12px;color:var(--gray-400);">4/13 08:00</td>
+              <td><span class="badge" style="background:#FEE2E2;color:var(--error);">변경 불가</span></td>
+              <td><span style="color:var(--gray-400);">—</span></td>
+              <td>
+                <div style="display:flex;gap:6px;">
+                  <select class="action-select" style="flex:1;">
+                    <option>상태 변경</option>
+                    <option value="force-propose">강제 제안 (슬롯 지정)</option>
+                    <option value="force-reject">강제 거절 알림</option>
+                    <option value="force-complete">강제 완료 (날짜 지정)</option>
+                    <option value="cancel">요청 취소</option>
+                  </select>
+                  <button class="btn-sm" style="background:var(--green);color:#fff;">적용</button>
+                </div>
+              </td>
+            </tr>
+            <!-- 제안됨 -->
+            <tr style="background:#FFFBEB;">
+              <td style="font-weight:600;">김민수</td>
+              <td>박지수</td>
+              <td>4/14 (월) 16:00</td>
+              <td style="font-weight:600;color:#92400E;">4/16 (수) 16:00</td>
+              <td style="font-size:12px;color:var(--gray-400);">4/12 09:15</td>
+              <td><span class="badge" style="background:var(--gray-100);color:var(--gray-500);">제안됨</span></td>
+              <td><span style="font-weight:600;color:#92400E;">8:32:15</span></td>
+              <td>
+                <div style="display:flex;gap:6px;">
+                  <select class="action-select" style="flex:1;">
+                    <option>상태 변경</option>
+                    <option value="force-accept">강제 수락 (슬롯 선택)</option>
+                    <option value="force-reject">강제 거절</option>
+                    <option value="extend-hold">홀드 연장 (+12h)</option>
+                    <option value="release-hold">홀드 즉시 해제</option>
+                    <option value="cancel">요청 취소</option>
+                  </select>
+                  <button class="btn-sm" style="background:var(--green);color:#fff;">적용</button>
+                </div>
+              </td>
+            </tr>
+            <tr style="background:#FFFBEB;">
+              <td style="font-weight:600;">이준호</td>
+              <td>최수진</td>
+              <td>4/15 (화) 14:00</td>
+              <td style="font-weight:600;color:#92400E;">4/17 (목) 14:00</td>
+              <td style="font-size:12px;color:var(--gray-400);">4/11 11:20</td>
+              <td><span class="badge" style="background:var(--gray-100);color:var(--gray-500);">제안됨</span></td>
+              <td><span style="font-weight:600;color:var(--error);">1:05:42</span></td>
+              <td>
+                <div style="display:flex;gap:6px;">
+                  <select class="action-select" style="flex:1;">
+                    <option>상태 변경</option>
+                    <option value="force-accept">강제 수락</option>
+                    <option value="extend-hold">홀드 연장 (+12h)</option>
+                    <option value="release-hold">홀드 즉시 해제</option>
+                  </select>
+                  <button class="btn-sm" style="background:var(--green);color:#fff;">적용</button>
+                </div>
+              </td>
+            </tr>
+            <!-- 완료 -->
+            <tr>
+              <td style="font-weight:600;">박서연</td>
+              <td>강예진</td>
+              <td style="text-decoration:line-through;color:var(--gray-400);">4/13 (일) 10:00</td>
+              <td style="font-weight:600;color:var(--info);">4/15 (화) 10:00</td>
+              <td style="font-size:12px;color:var(--gray-400);">4/10 16:40</td>
+              <td><span class="badge" style="background:#DBEAFE;color:#1E40AF;">변경 완료</span></td>
+              <td><span style="color:var(--gray-400);">—</span></td>
+              <td>
+                <div style="display:flex;gap:6px;">
+                  <select class="action-select" style="flex:1;">
+                    <option>상태 변경</option>
+                    <option value="rollback">원래 일정으로 복구</option>
+                    <option value="force-reassign">다른 날짜로 재지정</option>
+                  </select>
+                  <button class="btn-sm" style="background:var(--green);color:#fff;">적용</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════ -->
+    <!-- 탭 3: 변경 이력 -->
+    <!-- ═══════════════════════════════════════ -->
+    <div id="tab-history" style="display:none;">
+      <div style="display:flex;gap:12px;margin-bottom:16px;align-items:center;">
+        <input class="input-field" placeholder="코치 / 수강생 이름 검색" style="width:220px;">
+        <select class="action-select">
+          <option>전체 유형</option>
+          <option>변경 완료</option>
+          <option>거절 (불가)</option>
+          <option>만료 (미응답)</option>
+          <option>어드민 강제 변경</option>
+        </select>
+        <select class="action-select">
+          <option>최근 7일</option>
+          <option>최근 30일</option>
+          <option>전체</option>
+        </select>
+      </div>
+
+      <div class="admin-card" style="padding:0;overflow:hidden;">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>일시</th>
+              <th>코치</th>
+              <th>수강생</th>
+              <th>유형</th>
+              <th>변경 전</th>
+              <th>변경 후</th>
+              <th>처리자</th>
+              <th>비고</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="font-size:12px;">4/13 09:15</td>
+              <td style="font-weight:600;">박서연</td>
+              <td>강예진</td>
+              <td><span class="badge" style="background:#DBEAFE;color:#1E40AF;">변경 완료</span></td>
+              <td style="text-decoration:line-through;color:var(--gray-400);">4/13 10:00</td>
+              <td style="font-weight:600;color:var(--info);">4/15 10:00</td>
+              <td>수강생 수락</td>
+              <td style="font-size:12px;color:var(--gray-400);">정상 처리</td>
+            </tr>
+            <tr>
+              <td style="font-size:12px;">4/12 22:00</td>
+              <td style="font-weight:600;">이준호</td>
+              <td>김태희</td>
+              <td><span class="badge" style="background:#FEF3C7;color:#92400E;">홀드 만료</span></td>
+              <td>4/14 09:00</td>
+              <td><span style="color:var(--gray-400);">—</span></td>
+              <td>시스템 자동</td>
+              <td style="font-size:12px;color:var(--gray-400);">12h 미응답</td>
+            </tr>
+            <tr>
+              <td style="font-size:12px;">4/12 15:30</td>
+              <td style="font-weight:600;">김민수</td>
+              <td>정우성</td>
+              <td><span class="badge badge-blocked">거절 (불가)</span></td>
+              <td>4/15 14:00</td>
+              <td><span style="color:var(--gray-400);">—</span></td>
+              <td>코치 거절</td>
+              <td style="font-size:12px;color:var(--gray-400);">가용 슬롯 없음</td>
+            </tr>
+            <tr style="background:#FFF7ED;">
+              <td style="font-size:12px;">4/11 18:00</td>
+              <td style="font-weight:600;">이준호</td>
+              <td>박민서</td>
+              <td><span class="badge" style="background:#F3E8FF;color:var(--purple);">어드민 강제</span></td>
+              <td style="text-decoration:line-through;color:var(--gray-400);">4/13 16:00</td>
+              <td style="font-weight:600;color:var(--purple);">4/14 10:00</td>
+              <td style="font-weight:600;color:var(--purple);">관리자 (admin01)</td>
+              <td style="font-size:12px;color:var(--purple);">수강생 민원 처리</td>
+            </tr>
+            <tr>
+              <td style="font-size:12px;">4/11 10:20</td>
+              <td style="font-weight:600;">박서연</td>
+              <td>이하늘</td>
+              <td><span class="badge" style="background:#DBEAFE;color:#1E40AF;">변경 완료</span></td>
+              <td style="text-decoration:line-through;color:var(--gray-400);">4/12 11:00</td>
+              <td style="font-weight:600;color:var(--info);">4/13 14:00</td>
+              <td>수강생 수락</td>
+              <td style="font-size:12px;color:var(--gray-400);">정상 처리</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════ -->
+    <!-- 탭 4: 정책 설정 -->
+    <!-- ═══════════════════════════════════════ -->
+    <div id="tab-settings" style="display:none;">
+
+      <div class="admin-card">
+        <div class="card-title">홀드 정책</div>
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div>
+              <div style="font-size:14px;font-weight:600;color:var(--navy);">홀드 유효 시간</div>
+              <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">코치가 "모두 제안하기" 후 슬롯이 잠기는 시간</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <input class="input-field" type="number" value="12" style="width:80px;text-align:center;">
+              <span style="font-size:14px;color:var(--gray-500);">시간</span>
+            </div>
+          </div>
+          <div style="height:1px;background:var(--gray-100);"></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div>
+              <div style="font-size:14px;font-weight:600;color:var(--navy);">홀드 만료 시 자동 알림</div>
+              <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">미응답 만료 시 코치에게 자동 알림톡 발송</div>
+            </div>
+            <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+          </div>
+          <div style="height:1px;background:var(--gray-100);"></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div>
+              <div style="font-size:14px;font-weight:600;color:var(--navy);">수강생 동시 홀드 제한</div>
+              <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">한 수강생이 동시에 홀드할 수 있는 최대 건수</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <input class="input-field" type="number" value="1" style="width:80px;text-align:center;">
+              <span style="font-size:14px;color:var(--gray-500);">건</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="admin-card">
+        <div class="card-title">변경 요청 정책</div>
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div>
+              <div style="font-size:14px;font-weight:600;color:var(--navy);">변경 요청 가능 기한</div>
+              <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">레슨일 기준 며칠 전까지 변경 요청 가능</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:14px;color:var(--gray-500);">레슨일</span>
+              <input class="input-field" type="number" value="1" style="width:80px;text-align:center;">
+              <span style="font-size:14px;color:var(--gray-500);">일 전까지</span>
+            </div>
+          </div>
+          <div style="height:1px;background:var(--gray-100);"></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div>
+              <div style="font-size:14px;font-weight:600;color:var(--navy);">자동 추천 최대 슬롯 수</div>
+              <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">시스템이 자동 추천하는 변경 가능 날짜 최대 개수</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <input class="input-field" type="number" value="5" style="width:80px;text-align:center;">
+              <span style="font-size:14px;color:var(--gray-500);">개</span>
+            </div>
+          </div>
+          <div style="height:1px;background:var(--gray-100);"></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div>
+              <div style="font-size:14px;font-weight:600;color:var(--navy);">추천 범위 (희망 날짜 기준)</div>
+              <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">수강생 희망 날짜 전후 몇 일까지 추천 범위에 포함</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:14px;color:var(--gray-500);">±</span>
+              <input class="input-field" type="number" value="1" style="width:80px;text-align:center;">
+              <span style="font-size:14px;color:var(--gray-500);">일</span>
+            </div>
+          </div>
+          <div style="height:1px;background:var(--gray-100);"></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div>
+              <div style="font-size:14px;font-weight:600;color:var(--navy);">결제 건만 변경 허용</div>
+              <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">isPaid=true인 예약만 변경 요청 가능 (미결제는 취소 후 재신청)</div>
+            </div>
+            <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+          </div>
+          <div style="height:1px;background:var(--gray-100);"></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div>
+              <div style="font-size:14px;font-weight:600;color:var(--navy);">변경 완료 카드 노출 기간</div>
+              <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">코치 스케줄 홈에 "변경 완료" 카드가 표시되는 기간</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <input class="input-field" type="number" value="1" style="width:80px;text-align:center;">
+              <span style="font-size:14px;color:var(--gray-500);">일</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="admin-card">
+        <div class="card-title">알림 정책</div>
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div>
+              <div style="font-size:14px;font-weight:600;color:var(--navy);">변경 요청 시 코치 알림</div>
+              <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">RESCHEDULE_REQUEST 알림톡 발송</div>
+            </div>
+            <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+          </div>
+          <div style="height:1px;background:var(--gray-100);"></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div>
+              <div style="font-size:14px;font-weight:600;color:var(--navy);">불가 알림 시 수강생 알림</div>
+              <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">RESCHEDULE_UNAVAILABLE 알림톡 발송</div>
+            </div>
+            <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+          </div>
+          <div style="height:1px;background:var(--gray-100);"></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div>
+              <div style="font-size:14px;font-weight:600;color:var(--navy);">변경 완료 시 양측 알림</div>
+              <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">RESCHEDULE_ACCEPTED + RESCHEDULE_COMPLETED 알림톡 발송</div>
+            </div>
+            <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+          </div>
+          <div style="height:1px;background:var(--gray-100);"></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div>
+              <div style="font-size:14px;font-weight:600;color:var(--navy);">어드민 강제 변경 시 양측 알림</div>
+              <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">어드민이 상태를 직접 변경한 경우에도 알림톡 발송</div>
+            </div>
+            <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:12px;margin-top:8px;">
+        <button class="btn-secondary">초기화</button>
+        <button class="btn-primary">설정 저장</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- 코치 상세 슬라이드 패널 -->
+<!-- ═══════════════════════════════════════ -->
+<div id="detail-overlay" class="detail-overlay" onclick="closeCoachDetail()"></div>
+<div id="detail-panel" class="detail-panel">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+    <h2 style="font-size:18px;font-weight:800;color:var(--navy);">김민수 코치 스케줄</h2>
+    <button onclick="closeCoachDetail()" style="width:32px;height:32px;border-radius:8px;border:1px solid var(--gray-200);background:#fff;font-size:16px;cursor:pointer;">✕</button>
+  </div>
+
+  <!-- 코치 정보 -->
+  <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--gray-50);border-radius:12px;margin-bottom:20px;">
+    <div style="width:40px;height:40px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;">김</div>
+    <div>
+      <div style="font-weight:700;color:var(--navy);">김민수</div>
+      <div style="font-size:12px;color:var(--gray-400);">서울 강남구 · PRO 월간 · 42 슬롯</div>
+    </div>
+  </div>
+
+  <!-- 주간 스케줄 미니맵 -->
+  <div style="font-size:14px;font-weight:700;color:var(--navy);margin-bottom:8px;">이번 주 스케줄</div>
+  <div class="schedule-grid">
+    <div class="day-header">월 7</div>
+    <div class="day-header">화 8</div>
+    <div class="day-header">수 9</div>
+    <div class="day-header">목 10</div>
+    <div class="day-header">금 11</div>
+    <div class="day-header">토 12</div>
+    <div class="day-header today">일 13</div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:20px;">
+    <div><div class="slot slot-blocked">09:00</div><div class="slot slot-blocked">10:00</div><div class="slot slot-available">14:00</div></div>
+    <div><div class="slot slot-blocked">09:00</div><div class="slot slot-hold">10:00</div><div class="slot slot-blocked">14:00</div></div>
+    <div><div class="slot slot-available">09:00</div><div class="slot slot-available">10:00</div><div class="slot slot-blocked">18:00</div></div>
+    <div><div class="slot slot-hold">10:00</div><div class="slot slot-blocked">14:00</div><div class="slot slot-available">18:00</div></div>
+    <div><div class="slot slot-available">09:00</div><div class="slot slot-available">10:00</div><div class="slot slot-available">14:00</div></div>
+    <div><div class="slot slot-blocked">09:00</div><div class="slot slot-available">14:00</div></div>
+    <div><div class="slot slot-blocked">09:00</div><div class="slot slot-blocked">14:00</div><div class="slot slot-blocked">18:00</div></div>
+  </div>
+
+  <!-- 범례 -->
+  <div style="display:flex;gap:12px;font-size:11px;color:var(--gray-500);margin-bottom:20px;">
+    <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#D1FAE5;margin-right:4px;vertical-align:middle;"></span>확정</span>
+    <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#FEF3C7;border:1px dashed #F59E0B;margin-right:4px;vertical-align:middle;"></span>홀드</span>
+    <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:var(--gray-50);margin-right:4px;vertical-align:middle;"></span>가용</span>
+  </div>
+
+  <!-- 변경 요청 타임라인 -->
+  <div style="font-size:14px;font-weight:700;color:var(--navy);margin-bottom:12px;">변경 요청 이력</div>
+  <div class="timeline-item">
+    <div class="timeline-dot" style="background:var(--warning);"></div>
+    <div class="timeline-content">
+      <div class="timeline-time">4/13 08:00</div>
+      <div class="timeline-text"><strong>이철수</strong>가 변경 요청 — 4/16 18:00 → 희망 4/18 18:00 <span class="badge" style="background:#FEE2E2;color:var(--error);font-size:10px;">변경 불가</span></div>
+    </div>
+  </div>
+  <div class="timeline-item">
+    <div class="timeline-dot" style="background:var(--gray-300);"></div>
+    <div class="timeline-content">
+      <div class="timeline-time">4/12 14:30</div>
+      <div class="timeline-text"><strong>홍길동</strong>이 변경 요청 — 4/15 10:00 → 희망 4/17 10:00 <span class="badge" style="background:#D1FAE5;color:#065F46;font-size:10px;">변경 가능</span></div>
+    </div>
+  </div>
+  <div class="timeline-item">
+    <div class="timeline-dot" style="background:var(--info);"></div>
+    <div class="timeline-content">
+      <div class="timeline-time">4/12 09:15</div>
+      <div class="timeline-text"><strong>박지수</strong>에게 제안 발송 — 4/16 16:00, 4/17 10:00 <span class="badge" style="background:var(--gray-100);color:var(--gray-500);font-size:10px;">제안됨</span></div>
+    </div>
+  </div>
+
+  <!-- 코치별 홀드 시간 설정 -->
+  <div style="margin-bottom:20px;padding:16px;background:#F0FDFA;border-radius:12px;border:1px solid #D1FAE5;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <div style="font-size:14px;font-weight:700;color:#065F46;">코치별 홀드 시간 설정</div>
+      <span class="badge" style="background:#D1FAE5;color:#065F46;">개별 설정 적용 중</span>
+    </div>
+    <div style="font-size:12px;color:var(--gray-500);margin-bottom:12px;line-height:1.6;">
+      이 코치에게만 적용되는 홀드 시간입니다.<br>
+      "기본값 사용"을 선택하면 정책 설정의 전역 값(12h)이 적용됩니다.
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+        <input type="radio" name="hold-type" style="accent-color:var(--green);">
+        <span style="font-size:13px;color:var(--navy);">기본값 사용</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+        <input type="radio" name="hold-type" checked style="accent-color:var(--green);">
+        <span style="font-size:13px;color:var(--navy);">개별 설정</span>
+      </label>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-top:10px;">
+      <input class="input-field" type="number" value="24" style="width:80px;text-align:center;">
+      <span style="font-size:13px;color:var(--gray-500);">시간</span>
+      <button class="btn-sm" style="background:var(--green);color:#fff;margin-left:auto;">저장</button>
+    </div>
+    <div style="margin-top:8px;font-size:11px;color:var(--gray-400);">마지막 변경: admin01 · 4/12 15:30</div>
+  </div>
+
+  <!-- 어드민 직접 조치 -->
+  <div style="margin-top:20px;padding:16px;background:#FFF7ED;border-radius:12px;border:1px solid #FED7AA;">
+    <div style="font-size:14px;font-weight:700;color:#92400E;margin-bottom:12px;">어드민 직접 조치</div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <select class="action-select" style="width:100%;">
+        <option>조치 선택</option>
+        <option>특정 슬롯 강제 블록</option>
+        <option>특정 슬롯 강제 해제</option>
+        <option>모든 홀드 즉시 해제</option>
+        <option>코치 스케줄 전체 초기화</option>
+      </select>
+      <textarea placeholder="조치 사유 입력 (필수)" style="width:100%;height:60px;border-radius:8px;border:1px solid var(--gray-200);padding:10px;font-size:13px;font-family:inherit;resize:none;"></textarea>
+      <button class="btn-primary" style="width:100%;">조치 실행</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function switchAdminTab(tab) {
+  ['schedule','reschedule','history','settings'].forEach(t => {
+    document.getElementById('tab-' + t).style.display = t === tab ? 'block' : 'none';
+  });
+  document.querySelectorAll('.tab-bar .tab-item').forEach((el, i) => {
+    const tabs = ['schedule','reschedule','history','settings'];
+    el.classList.toggle('active', tabs[i] === tab);
+  });
+}
+
+function openCoachDetail() {
+  document.getElementById('detail-panel').classList.add('open');
+  document.getElementById('detail-overlay').classList.add('open');
+}
+function closeCoachDetail() {
+  document.getElementById('detail-panel').classList.remove('open');
+  document.getElementById('detail-overlay').classList.remove('open');
+}
+
+function filterReschedule(type) {
+  document.querySelectorAll('#tab-reschedule .chip').forEach(c => c.classList.remove('active'));
+  event.target.classList.add('active');
+}
+</script>
+<script src="../site-nav.js"></script>
+</body>
+</html>

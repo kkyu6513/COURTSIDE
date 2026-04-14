@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=375, initial-scale=1.0">
+<title>COURTSIDE — 프로토타입</title>
+<style>
+  @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+
+  /* ── Reset & Base ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Pretendard', -apple-system, sans-serif;
+    background: #e8e0f5;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding: 32px 16px 64px;
+  }
+
+  /* ── Design Tokens ── */
+  :root {
+    --green:   #2DD4BF;
+    --navy:    #1E3A5F;
+    --yellow:  #F9C846;
+    --purple:  #7C5CBF;
+    --coral:   #FF6B6B;
+    --orange:  #FF9F43;
+    --pink:    #F9A8D4;
+    --sky:     #93C5FD;
+    --gray-50: #F5F5F7;
+    --gray-100:#E5E7EB;
+    --gray-400:#9CA3AF;
+    --gray-500:#6B7280;
+    --success: #22C55E;
+    --warning: #F59E0B;
+    --error:   #EF4444;
+  }
+
+  /* ── Device Shell ── */
+  .device-row {
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+    flex-wrap: wrap;
+    width: 100%;
+    max-width: 1400px;
+    margin-bottom: 48px;
+  }
+  .device-wrap { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .device-label {
+    font-size: 13px; font-weight: 600; color: #5b4a8a;
+    background: rgba(255,255,255,0.6); padding: 4px 12px; border-radius: 20px;
+  }
+  .device {
+    width: 375px;
+    min-height: 812px;
+    background: #fff;
+    border-radius: 44px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.18), inset 0 0 0 2px rgba(0,0,0,0.08);
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Status Bar ── */
+  .status-bar {
+    height: 44px;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 24px 0;
+    font-size: 12px; font-weight: 600; color: var(--navy);
+    flex-shrink: 0;
+  }
+  .status-bar .time { font-size: 15px; font-weight: 700; }
+  .status-icons { display: flex; gap: 6px; align-items: center; }
+  .status-icons span { font-size: 14px; }
+
+  /* ── Screen Content ── */
+  .screen { flex: 1; overflow-y: auto; background: var(--gray-50); padding-bottom: 80px; }
+  .screen::-webkit-scrollbar { display: none; }
+  .screen-white { background: #fff; }
+
+  /* ── Bottom Nav ── */
+  .bottom-nav {
+    height: 72px;
+    background: #fff;
+    border-top: 1px solid var(--gray-100);
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: 0 8px 8px;
+    flex-shrink: 0;
+  }
+  .nav-item {
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    font-size: 10px; font-weight: 600; color: var(--gray-400);
+    cursor: pointer; padding: 8px 12px; border-radius: 12px;
+    transition: all 0.15s;
+  }
+  .nav-item.active { color: var(--green); }
+  .nav-item svg { width: 22px; height: 22px; }
+
+  /* ── Section Title ── */
+  .section-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0 20px; margin: 24px 0 12px;
+  }
+  .section-title { font-size: 17px; font-weight: 700; color: var(--navy); }
+  .section-more { font-size: 13px; color: var(--green); font-weight: 600; }
+
+  /* ── Horizontal Scroll Row ── */
+  .h-scroll { overflow-x: auto; padding: 0 20px 4px; display: flex; gap: 12px; }
+  .h-scroll::-webkit-scrollbar { display: none; }
+
+  /* ── Coach Card (horizontal) ── */
+  .coach-card-sm {
+    min-width: 160px; background: #fff; border-radius: 16px;
+    padding: 14px; box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+    cursor: pointer; transition: transform 0.15s;
+    flex-shrink: 0;
+  }
+  .coach-card-sm:active { transform: scale(0.97); }
+  .coach-card-sm .avatar {
+    width: 52px; height: 52px; border-radius: 50%; object-fit: cover;
+    background: linear-gradient(135deg, var(--green) 0%, var(--sky) 100%);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; margin-bottom: 10px;
+  }
+  .coach-card-sm .name { font-size: 14px; font-weight: 700; color: var(--navy); }
+  .coach-card-sm .sub { font-size: 11px; color: var(--gray-500); margin-top: 2px; }
+  .coach-card-sm .rating { display: flex; align-items: center; gap: 3px; margin-top: 6px; }
+  .coach-card-sm .rating span { font-size: 11px; font-weight: 600; color: var(--navy); }
+  .star { color: var(--yellow); font-size: 12px; }
+
+  /* ── Badge ── */
+  .badge {
+    display: inline-block; padding: 2px 7px; border-radius: 6px;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.3px;
+  }
+  .badge-pro   { background: #f3e8ff; color: var(--purple); }
+  .badge-free  { background: #eff6ff; color: #3B82F6; }
+  .badge-annual{ background: #fff7ed; color: #EA580C; }
+  .badge-new   { background: #fdf2f8; color: #db2777; }
+  .badge-hot   { background: #fff1f2; color: var(--coral); }
+
+  /* ── Hero Banner ── */
+  .hero-banner {
+    margin: 16px 20px 0;
+    background: linear-gradient(135deg, var(--purple) 0%, #a78bfa 100%);
+    border-radius: 20px;
+    padding: 20px;
+    display: flex; align-items: center; justify-content: space-between;
+    color: #fff;
+  }
+  .hero-banner .txt h3 { font-size: 16px; font-weight: 700; line-height: 1.4; }
+  .hero-banner .txt p  { font-size: 12px; opacity: 0.85; margin-top: 4px; }
+  .hero-banner .txt a  { font-size: 11px; color: #fff; text-decoration: underline; margin-top: 8px; display: block; }
+  .hero-banner .emoji  { font-size: 44px; }
+
+  /* ── Search Bar ── */
+  .search-wrap { padding: 16px 20px 0; }
+  .search-bar {
+    background: #fff;
+    border-radius: 14px;
+    padding: 12px 16px;
+    display: flex; align-items: center; gap: 10px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+  }
+  .search-bar input {
+    border: none; outline: none; font-family: inherit;
+    font-size: 14px; color: var(--navy); flex: 1; background: transparent;
+  }
+  .search-bar input::placeholder { color: var(--gray-400); }
+
+  /* ── Page Title ── */
+  .page-title {
+    font-size: 22px; font-weight: 800; color: var(--navy);
+    padding: 20px 20px 0;
+  }
+
+  /* ── Filter Chips ── */
+  .filter-row { overflow-x: auto; padding: 12px 20px; display: flex; gap: 8px; }
+  .filter-row::-webkit-scrollbar { display: none; }
+  .chip {
+    flex-shrink: 0; padding: 7px 14px; border-radius: 20px;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    background: #fff; color: var(--gray-500);
+    border: 1.5px solid var(--gray-100);
+    transition: all 0.15s;
+  }
+  .chip.active { background: var(--green); color: #fff; border-color: var(--green); }
+
+  /* ── Coach Card (vertical list) ── */
+  .coach-list { padding: 0 20px; display: flex; flex-direction: column; gap: 12px; }
+  .coach-card-lg {
+    background: #fff; border-radius: 16px;
+    padding: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    display: flex; gap: 12px; cursor: pointer;
+  }
+  .coach-card-lg .avatar-lg {
+    width: 68px; height: 68px; border-radius: 50%; flex-shrink: 0;
+    background: linear-gradient(135deg, var(--coral) 0%, var(--orange) 100%);
+    display: flex; align-items: center; justify-content: center; font-size: 28px;
+  }
+  .coach-card-lg .info { flex: 1; }
+  .coach-card-lg .name { font-size: 16px; font-weight: 700; color: var(--navy); }
+  .coach-card-lg .loc  { font-size: 12px; color: var(--gray-500); margin-top: 2px; }
+  .coach-card-lg .tags { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; }
+  .tag {
+    font-size: 11px; background: var(--gray-50); color: var(--gray-500);
+    padding: 3px 8px; border-radius: 6px; font-weight: 500;
+  }
+  .coach-card-lg .bottom { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+  .price { font-size: 13px; font-weight: 700; color: var(--navy); }
+  .price span { font-size: 11px; font-weight: 400; color: var(--gray-500); }
+
+  /* ── Detail Hero ── */
+  .detail-hero {
+    height: 260px; background: linear-gradient(135deg, #1E3A5F 0%, #2DD4BF 100%);
+    display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+    padding: 24px; color: #fff; position: relative;
+  }
+  .back-btn {
+    position: absolute; top: 56px; left: 16px;
+    width: 36px; height: 36px; background: rgba(255,255,255,0.2);
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 18px; cursor: pointer; color: #fff;
+  }
+  .detail-avatar {
+    width: 80px; height: 80px; border-radius: 50%;
+    background: rgba(255,255,255,0.25);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 36px; margin-bottom: 12px;
+    border: 3px solid rgba(255,255,255,0.5);
+  }
+  .detail-name { font-size: 22px; font-weight: 800; }
+  .detail-sub  { font-size: 13px; opacity: 0.85; margin-top: 4px; }
+
+  /* ── Detail Content ── */
+  .detail-body { padding: 20px; }
+  .detail-section { margin-bottom: 20px; }
+  .detail-section h4 { font-size: 14px; font-weight: 700; color: var(--navy); margin-bottom: 8px; }
+  .detail-section p  { font-size: 13px; color: var(--gray-500); line-height: 1.6; }
+  .spec-row {
+    display: flex; justify-content: space-between;
+    padding: 10px 0; border-bottom: 1px solid var(--gray-100);
+    font-size: 13px;
+  }
+  .spec-row .k { color: var(--gray-500); }
+  .spec-row .v { font-weight: 600; color: var(--navy); }
+
+  /* ── Review Card ── */
+  .review-card {
+    background: var(--gray-50); border-radius: 12px;
+    padding: 12px; margin-bottom: 8px;
+  }
+  .review-card .reviewer { font-size: 13px; font-weight: 600; color: var(--navy); }
+  .review-card .review-txt { font-size: 12px; color: var(--gray-500); margin-top: 4px; line-height: 1.5; }
+
+  /* ── Fixed Bottom CTA ── */
+  .fixed-bottom {
+    position: sticky; bottom: 0; background: #fff;
+    border-top: 1px solid var(--gray-100);
+    padding: 12px 20px 28px;
+    display: flex; gap: 10px;
+  }
+  .btn-outline {
+    flex: 1; height: 50px; border-radius: 25px;
+    border: 2px solid var(--green); background: #fff;
+    color: var(--green); font-size: 14px; font-weight: 700;
+    cursor: pointer; font-family: inherit;
+  }
+  .btn-primary {
+    flex: 2; height: 50px; border-radius: 25px;
+    border: none; background: var(--green);
+    color: #fff; font-size: 14px; font-weight: 700;
+    cursor: pointer; font-family: inherit;
+    box-shadow: 0 4px 16px rgba(45,212,191,0.35);
+  }
+
+  /* ── Booking Flow ── */
+  .booking-header {
+    background: #fff; padding: 20px 20px 0;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .booking-header h2 { font-size: 20px; font-weight: 800; color: var(--navy); }
+  .step-indicator { display: flex; gap: 6px; padding: 16px 20px; }
+  .step-dot {
+    flex: 1; height: 4px; border-radius: 2px;
+    background: var(--gray-100); transition: background 0.3s;
+  }
+  .step-dot.done { background: var(--green); }
+  .step-dot.active { background: var(--navy); }
+
+  .booking-section { padding: 20px; }
+  .booking-section h3 { font-size: 16px; font-weight: 700; color: var(--navy); margin-bottom: 12px; }
+
+  .option-card {
+    border: 2px solid var(--gray-100); border-radius: 14px;
+    padding: 16px; margin-bottom: 10px; cursor: pointer;
+    transition: all 0.15s; background: #fff;
+    display: flex; align-items: flex-start; gap: 12px;
+  }
+  .option-card.selected { border-color: var(--green); background: #f0fdfb; }
+  .option-card .icon-box {
+    width: 44px; height: 44px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center; font-size: 22px;
+    flex-shrink: 0;
+  }
+  .icon-coral { background: #fff1f0; }
+  .icon-orange { background: #fff7ed; }
+  .option-card .opt-title { font-size: 15px; font-weight: 700; color: var(--navy); }
+  .option-card .opt-desc  { font-size: 12px; color: var(--gray-500); margin-top: 3px; line-height: 1.5; }
+
+  .select-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+  .select-label { font-size: 13px; font-weight: 600; color: var(--gray-500); margin-bottom: 4px; }
+  .chip-group { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip-sel {
+    padding: 8px 14px; border-radius: 20px; font-size: 13px; font-weight: 600;
+    border: 1.5px solid var(--gray-100); background: #fff; color: var(--gray-500);
+    cursor: pointer; transition: all 0.15s;
+  }
+  .chip-sel.on { border-color: var(--green); background: #f0fdfb; color: var(--navy); }
+
+  .day-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+  .day-btn {
+    aspect-ratio: 1; border-radius: 50%; border: none;
+    background: var(--gray-50); font-size: 12px; font-weight: 600;
+    color: var(--gray-500); cursor: pointer; font-family: inherit;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .day-btn.on { background: var(--green); color: #fff; }
+
+  .time-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .time-btn {
+    padding: 8px 4px; border-radius: 10px; border: 1.5px solid var(--gray-100);
+    background: #fff; font-size: 12px; font-weight: 600; color: var(--gray-500);
+    cursor: pointer; font-family: inherit;
+  }
+  .time-btn.on { border-color: var(--green); background: #f0fdfb; color: var(--navy); }
+
+  .summary-card {
+    background: linear-gradient(135deg, var(--navy) 0%, #2D6A8F 100%);
+    border-radius: 20px; padding: 20px; color: #fff; margin-bottom: 20px;
+  }
+  .summary-card h4 { font-size: 13px; opacity: 0.7; margin-bottom: 12px; font-weight: 500; }
+  .summary-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13px; }
+  .summary-row .sk { opacity: 0.7; }
+  .summary-row .sv { font-weight: 700; }
+
+  .full-btn {
+    width: 100%; height: 52px; border-radius: 26px;
+    border: none; background: var(--green); color: #fff;
+    font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit;
+    box-shadow: 0 4px 20px rgba(45,212,191,0.4);
+    margin-top: 8px;
+  }
+  .full-btn:disabled { background: var(--gray-100); color: var(--gray-400); box-shadow: none; }
+
+  /* ── Onboarding ── */
+  .onboard-screen {
+    background: #fff; flex: 1; display: flex; flex-direction: column;
+    align-items: center; padding: 60px 32px 40px;
+  }
+  .onboard-screen .illust { font-size: 120px; margin-bottom: 32px; text-align: center; }
+  .onboard-screen h2 { font-size: 26px; font-weight: 800; color: var(--navy); text-align: center; line-height: 1.3; }
+  .onboard-screen p  { font-size: 14px; color: var(--gray-500); text-align: center; margin-top: 12px; line-height: 1.6; }
+  .dots { display: flex; gap: 6px; margin: 32px 0; }
+  .dot { width: 8px; height: 8px; border-radius: 4px; background: var(--gray-100); }
+  .dot.active { background: var(--navy); width: 20px; }
+
+  /* ── Section grouping title ── */
+  .row-title {
+    text-align: center; font-size: 22px; font-weight: 800; color: #4a3370;
+    margin: 0 0 24px; letter-spacing: -0.3px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════ ROW 1: 온보딩 ════════════════════════════════════════ -->
+<p class="row-title">① 온보딩</p>
+<div class="device-row">
+
+  <!-- Screen 1: Splash -->
+  <div class="device-wrap">
+    <div class="device-label">스플래시</div>
+    <div class="device">
+      <div class="status-bar">
+        <span class="time">9:41</span>
+        <div class="status-icons"><span>▲▲</span><span>WiFi</span><span>🔋</span></div>
+      </div>
+      <div class="screen screen-white" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 32px;">
+        <div style="font-size:72px;margin-bottom:20px;">🎾</div>
+        <h1 style="font-size:38px;font-weight:900;color:var(--navy);letter-spacing:-1px;">COURTSIDE</h1>
+        <p style="font-size:15px;color:var(--gray-500);margin-top:10px;text-align:center;line-height:1.6;">나에게 꼭 맞는 테니스 코치를<br>지금 바로 만나보세요</p>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;margin:32px 0;justify-content:center;">
+          <span style="font-size:36px;">🟢</span><span style="font-size:36px;">🔵</span><span style="font-size:36px;">🟠</span>
+          <span style="font-size:36px;">🔴</span><span style="font-size:36px;">🟡</span><span style="font-size:36px;">🟣</span>
+        </div>
+        <button class="full-btn" style="position:relative;bottom:auto;margin-top:40px;">시작하기</button>
+        <p style="font-size:12px;color:var(--gray-400);margin-top:16px;">이미 계정이 있으신가요? <span style="color:var(--green);font-weight:600;">로그인</span></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Screen 2: Onboarding 1 -->
+  <div class="device-wrap">
+    <div class="device-label">온보딩 1</div>
+    <div class="device">
+      <div class="status-bar">
+        <span class="time">9:41</span>
+        <div class="status-icons"><span>▲▲</span><span>WiFi</span><span>🔋</span></div>
+      </div>
+      <div class="onboard-screen">
+        <div class="illust">🏆</div>
+        <h2>검증된 코치와<br>함께 성장하세요</h2>
+        <p>자격증 인증 코치만 등록 가능.<br>당신의 실력에 맞는 코치를 찾아드려요.</p>
+        <div class="dots">
+          <div class="dot active"></div>
+          <div class="dot"></div>
+          <div class="dot"></div>
+        </div>
+        <button class="full-btn">다음</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Screen 3: Onboarding 2 -->
+  <div class="device-wrap">
+    <div class="device-label">온보딩 2</div>
+    <div class="device">
+      <div class="status-bar">
+        <span class="time">9:41</span>
+        <div class="status-icons"><span>▲▲</span><span>WiFi</span><span>🔋</span></div>
+      </div>
+      <div class="onboard-screen">
+        <div class="illust">📅</div>
+        <h2>간편하게<br>레슨을 신청하세요</h2>
+        <p>원하는 날짜와 시간을 선택하고<br>코치에게 바로 신청하세요.</p>
+        <div class="dots">
+          <div class="dot"></div>
+          <div class="dot active"></div>
+          <div class="dot"></div>
+        </div>
+        <button class="full-btn">다음</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ════════════════════════════════════════ ROW 2: 홈 & 탐색 ════════════════════════════════════════ -->
+<p class="row-title">② 홈 & 코치 탐색</p>
+<div class="device-row">
+
+  <!-- Screen 4: Home -->
+  <div class="device-wrap">
+    <div class="device-label">홈 화면</div>
+    <div class="device">
+      <div class="status-bar">
+        <span class="time">9:41</span>
+        <div class="status-icons"><span>▲▲</span><span>WiFi</span><span>🔋</span></div>
+      </div>
+      <div class="screen">
+        <!-- 동기부여 배너 -->
+        <div class="hero-banner">
+          <div class="txt">
+            <h3>오늘도 코트에서<br>만나요! 🎾</h3>
+            <p>이번 주 레슨 2회 남았어요</p>
+            <a href="#">내 예약 확인하기 →</a>
+          </div>
+          <div class="emoji">🔥</div>
+        </div>
+        <!-- 검색 -->
+        <div class="search-wrap">
+          <div class="search-bar">
+            <span style="font-size:18px;color:var(--gray-400)">🔍</span>
+            <input placeholder="지역, 코치 이름으로 검색" readonly>
+            <span style="font-size:16px;padding:4px 10px;background:var(--gray-50);border-radius:8px;color:var(--gray-500);font-size:12px;font-weight:600;">필터</span>
+          </div>
+        </div>
+        <!-- 우리동네 코치님 -->
+        <div class="section-header">
+          <span class="section-title">🏠 우리동네 코치님</span>
+          <span class="section-more">전체보기</span>
+        </div>
+        <div class="h-scroll">
+          <div class="coach-card-sm">
+            <div class="avatar">🎾</div>
+            <div style="display:flex;gap:4px;margin-bottom:4px;"><span class="badge badge-pro">PRO</span></div>
+            <div class="name">김지훈 코치</div>
+            <div class="sub">강남구 · NTRP 4.5</div>
+            <div class="rating"><span class="star">★</span><span>4.9</span><span style="color:var(--gray-400);font-size:10px;">(42)</span></div>
+          </div>
+          <div class="coach-card-sm">
+            <div class="avatar" style="background:linear-gradient(135deg,var(--coral),var(--orange))">🏆</div>
+            <div style="display:flex;gap:4px;margin-bottom:4px;"><span class="badge badge-annual">ANNUAL</span></div>
+            <div class="name">박소연 코치</div>
+            <div class="sub">서초구 · NTRP 5.0</div>
+            <div class="rating"><span class="star">★</span><span>5.0</span><span style="color:var(--gray-400);font-size:10px;">(89)</span></div>
+          </div>
+          <div class="coach-card-sm">
+            <div class="avatar" style="background:linear-gradient(135deg,var(--purple),var(--pink))">🎯</div>
+            <div style="display:flex;gap:4px;margin-bottom:4px;"><span class="badge badge-pro">PRO</span></div>
+            <div class="name">이민준 코치</div>
+            <div class="sub">송파구 · NTRP 4.0</div>
+            <div class="rating"><span class="star">★</span><span>4.7</span><span style="color:var(--gray-400);font-size:10px;">(31)</span></div>
+          </div>
+        </div>
+        <!-- 핫한 코치님 -->
+        <div class="section-header">
+          <span class="section-title">🔥 지금 핫한 코치님</span>
+          <span class="section-more">전체보기</span>
+        </div>
+        <div class="h-scroll">
+          <div class="coach-card-sm">
+            <div class="avatar" style="background:linear-gradient(135deg,var(--orange),var(--yellow))">🌟</div>
+            <div style="display:flex;gap:4px;margin-bottom:4px;"><span class="badge badge-hot">HOT</span></div>
+            <div class="name">최예린 코치</div>
+            <div class="sub">마포구 · 초보자 전문</div>
+            <div class="rating"><span class="star">★</span><span>4.8</span><span style="color:var(--gray-400);font-size:10px;">(67)</span></div>
+          </div>
+          <div class="coach-card-sm">
+            <div class="avatar" style="background:linear-gradient(135deg,#6ee7b7,#34d399)">💪</div>
+            <div style="display:flex;gap:4px;margin-bottom:4px;"><span class="badge badge-annual">ANNUAL</span></div>
+            <div class="name">강동현 코치</div>
+            <div class="sub">용산구 · 그룹레슨 전문</div>
+            <div class="rating"><span class="star">★</span><span>4.6</span><span style="color:var(--gray-400);font-size:10px;">(53)</span></div>
+          </div>
+        </div>
+        <!-- 신규 코치님 -->
+        <div class="section-header">
+          <span class="section-title">✨ 신규등록 코치님</span>
+          <span class="section-more">전체보기</span>
+        </div>
+        <div class="h-scroll" style="padding-bottom:12px;">
+          <div class="coach-card-sm">
+            <div class="avatar" style="background:linear-gradient(135deg,var(--sky),#60a5fa)">🆕</div>
+            <div style="display:flex;gap:4px;margin-bottom:4px;"><span class="badge badge-new">NEW</span></div>
+            <div class="name">윤하은 코치</div>
+            <div class="sub">성동구 · 여성 전문</div>
+            <div class="rating"><span class="star">★</span><span>NEW</span></div>
+          </div>
+          <div class="coach-card-sm">
+            <div class="avatar" style="background:linear-gradient(135deg,#c4b5fd,#8b5cf6)">🎾</div>
+            <div style="display:flex;gap:4px;margin-bottom:4px;"><span class="badge badge-new">NEW</span></div>
+            <div class="name">정승우 코치</div>
+            <div class="sub">광진구 · 주니어 전문</div>
+            <div class="rating"><span class="star">★</span><span>NEW</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="bottom-nav">
+        <div class="nav-item active">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>홈
+        </div>
+        <div class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>메시지
+        </div>
+        <div class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>검색
+        </div>
+        <div class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>마이
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Screen 5: Coach List -->
+  <div class="device-wrap">
+    <div class="device-label">코치 목록</div>
+    <div class="device">
+      <div class="status-bar">
+        <span class="time">9:41</span>
+        <div class="status-icons"><span>▲▲</span><span>WiFi</span><span>🔋</span></div>
+      </div>
+      <div class="screen">
+        <div class="page-title">코치 찾기</div>
+        <div class="filter-row">
+          <div class="chip active">전체</div>
+          <div class="chip">강남/서초</div>
+          <div class="chip">마포/용산</div>
+          <div class="chip">여성 코치</div>
+          <div class="chip">초보자</div>
+          <div class="chip">그룹레슨</div>
+        </div>
+        <div class="coach-list">
+          <div class="coach-card-lg">
+            <div class="avatar-lg">🎾</div>
+            <div class="info">
+              <div style="display:flex;align-items:center;gap:6px;">
+                <span class="name">김지훈 코치</span>
+                <span class="badge badge-pro">PRO</span>
+              </div>
+              <div class="loc">📍 강남구 역삼동</div>
+              <div class="tags">
+                <span class="tag">NTRP 4.5</span><span class="tag">1:1 개인</span><span class="tag">성인</span>
+              </div>
+              <div class="bottom">
+                <div class="rating"><span class="star">★</span><span style="font-size:13px;font-weight:600;color:var(--navy)">4.9</span><span style="font-size:11px;color:var(--gray-400)">(42)</span></div>
+                <div class="price">6만원 <span>/시간</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="coach-card-lg">
+            <div class="avatar-lg" style="background:linear-gradient(135deg,var(--purple),var(--pink))">🏆</div>
+            <div class="info">
+              <div style="display:flex;align-items:center;gap:6px;">
+                <span class="name">박소연 코치</span>
+                <span class="badge badge-annual">ANNUAL</span>
+              </div>
+              <div class="loc">📍 서초구 방배동</div>
+              <div class="tags">
+                <span class="tag">NTRP 5.0</span><span class="tag">전문 선수 출신</span>
+              </div>
+              <div class="bottom">
+                <div class="rating"><span class="star">★</span><span style="font-size:13px;font-weight:600;color:var(--navy)">5.0</span><span style="font-size:11px;color:var(--gray-400)">(89)</span></div>
+                <div class="price">8만원 <span>/시간</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="coach-card-lg">
+            <div class="avatar-lg" style="background:linear-gradient(135deg,var(--orange),var(--yellow))">💪</div>
+            <div class="info">
+              <div style="display:flex;align-items:center;gap:6px;">
+                <span class="name">최예린 코치</span>
+                <span class="badge badge-hot">HOT</span>
+              </div>
+              <div class="loc">📍 마포구 합정동</div>
+              <div class="tags">
+                <span class="tag">초보자 전문</span><span class="tag">그룹 가능</span>
+              </div>
+              <div class="bottom">
+                <div class="rating"><span class="star">★</span><span style="font-size:13px;font-weight:600;color:var(--navy)">4.8</span><span style="font-size:11px;color:var(--gray-400)">(67)</span></div>
+                <div class="price">5만원 <span>/시간</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="coach-card-lg">
+            <div class="avatar-lg" style="background:linear-gradient(135deg,#6ee7b7,#34d399)">🌟</div>
+            <div class="info">
+              <div style="display:flex;align-items:center;gap:6px;">
+                <span class="name">강동현 코치</span>
+                <span class="badge badge-pro">PRO</span>
+              </div>
+              <div class="loc">📍 용산구 이태원동</div>
+              <div class="tags">
+                <span class="tag">그룹레슨</span><span class="tag">주말 가능</span>
+              </div>
+              <div class="bottom">
+                <div class="rating"><span class="star">★</span><span style="font-size:13px;font-weight:600;color:var(--navy)">4.6</span><span style="font-size:11px;color:var(--gray-400)">(53)</span></div>
+                <div class="price">4만원 <span>/시간</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="bottom-nav">
+        <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>홈</div>
+        <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>메시지</div>
+        <div class="nav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>검색</div>
+        <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>마이</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Screen 6: Coach Detail -->
+  <div class="device-wrap">
+    <div class="device-label">코치 상세</div>
+    <div class="device">
+      <div class="status-bar">
+        <span class="time">9:41</span>
+        <div class="status-icons"><span>▲▲</span><span>WiFi</span><span>🔋</span></div>
+      </div>
+      <div class="screen screen-white" style="padding-bottom:90px;">
+        <div class="detail-hero">
+          <div class="back-btn">←</div>
+          <div class="detail-avatar">🎾</div>
+          <div class="detail-name">김지훈 코치</div>
+          <div class="detail-sub">강남구 역삼동 · <span class="badge badge-pro" style="font-size:11px;">PRO</span></div>
+          <div style="display:flex;align-items:center;gap:4px;margin-top:6px;">
+            <span class="star" style="font-size:14px;">★</span>
+            <span style="font-size:14px;font-weight:700;color:#fff;">4.9</span>
+            <span style="font-size:12px;color:rgba(255,255,255,0.7)">(42개 리뷰)</span>
+          </div>
+        </div>
+        <div class="detail-body">
+          <div class="detail-section">
+            <h4>코치 소개</h4>
+            <p>10년 경력의 대한테니스협회 공인 코치입니다. 초보부터 중급자까지 체계적인 커리큘럼으로 실력 향상을 도와드립니다.</p>
+          </div>
+          <div class="detail-section">
+            <h4>레슨 정보</h4>
+            <div class="spec-row"><span class="k">전문분야</span><span class="v">기초 · 중급 · 발리</span></div>
+            <div class="spec-row"><span class="k">레슨 형태</span><span class="v">1:1 개인 / 그룹(2-4인)</span></div>
+            <div class="spec-row"><span class="k">레슨 가격</span><span class="v">6만원/시간</span></div>
+            <div class="spec-row"><span class="k">활동 지역</span><span class="v">강남구, 서초구</span></div>
+            <div class="spec-row"><span class="k">자격증</span><span class="v">✅ KTA 공인 코치</span></div>
+          </div>
+          <div class="detail-section">
+            <h4>최근 리뷰</h4>
+            <div class="review-card">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <span class="reviewer">홍길동 님</span>
+                <span style="font-size:11px;color:var(--yellow)">★★★★★</span>
+              </div>
+              <div class="review-txt">정말 친절하고 체계적으로 가르쳐 주세요. 한 달만에 서브가 완전히 달라졌어요!</div>
+            </div>
+            <div class="review-card">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <span class="reviewer">이지은 님</span>
+                <span style="font-size:11px;color:var(--yellow)">★★★★★</span>
+              </div>
+              <div class="review-txt">초보인데도 눈높이에 맞게 설명해줘서 너무 좋았어요. 강력 추천합니다!</div>
+            </div>
+          </div>
+        </div>
+        <div class="fixed-bottom">
+          <button class="btn-outline">💬 문의하기</button>
+          <button class="btn-primary">🎾 레슨신청</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ════════════════════════════════════════ ROW 3: 레슨 신청 플로우 ════════════════════════════════════════ -->
+<p class="row-title">③ 레슨 신청 플로우</p>
+<div class="device-row">
+
+  <!-- Step 1: 유형 선택 -->
+  <div class="device-wrap">
+    <div class="device-label">Step 1 · 유형 선택</div>
+    <div class="device">
+      <div class="status-bar"><span class="time">9:41</span><div class="status-icons"><span>▲▲</span><span>WiFi</span><span>🔋</span></div></div>
+      <div class="screen screen-white">
+        <div class="booking-header">
+          <span style="font-size:20px;cursor:pointer;">←</span>
+          <h2>레슨 신청</h2>
+        </div>
+        <div class="step-indicator">
+          <div class="step-dot active"></div>
+          <div class="step-dot"></div>
+          <div class="step-dot"></div>
+          <div class="step-dot"></div>
+        </div>
+        <div class="booking-section">
+          <h3>레슨 유형을 선택해주세요</h3>
+          <div class="option-card selected">
+            <div class="icon-box icon-coral">🏃</div>
+            <div>
+              <div class="opt-title">정규레슨</div>
+              <div class="opt-desc">주 1·2·3회 정기적으로 수강<br>1:1 개인 또는 그룹(2~4인)</div>
+            </div>
+          </div>
+          <div class="option-card">
+            <div class="icon-box icon-orange">🎫</div>
+            <div>
+              <div class="opt-title">쿠폰레슨</div>
+              <div class="opt-desc">4·8·10회 패키지로 수강<br>유효기간 내 자유롭게 예약</div>
+            </div>
+          </div>
+        </div>
+        <div style="padding:0 20px;">
+          <button class="full-btn">다음 단계</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 2: 세부 항목 -->
+  <div class="device-wrap">
+    <div class="device-label">Step 2 · 세부 항목</div>
+    <div class="device">
+      <div class="status-bar"><span class="time">9:41</span><div class="status-icons"><span>▲▲</span><span>WiFi</span><span>🔋</span></div></div>
+      <div class="screen screen-white">
+        <div class="booking-header">
+          <span style="font-size:20px;cursor:pointer;">←</span>
+          <h2>정규레슨 설정</h2>
+        </div>
+        <div class="step-indicator">
+          <div class="step-dot done"></div>
+          <div class="step-dot active"></div>
+          <div class="step-dot"></div>
+          <div class="step-dot"></div>
+        </div>
+        <div class="booking-section">
+          <div class="select-group">
+            <div class="select-label">주 횟수</div>
+            <div class="chip-group">
+              <div class="chip-sel">주 1회</div>
+              <div class="chip-sel on">주 2회</div>
+              <div class="chip-sel">주 3회</div>
+            </div>
+          </div>
+          <div class="select-group" style="margin-top:16px;">
+            <div class="select-label">레슨 형태</div>
+            <div class="chip-group">
+              <div class="chip-sel on">1:1 개인</div>
+              <div class="chip-sel">그룹 2인</div>
+              <div class="chip-sel">그룹 3~4인</div>
+            </div>
+          </div>
+          <div style="margin-top:20px;">
+            <div class="select-label" style="margin-bottom:10px;">요일 선택 (다중)</div>
+            <div class="day-grid">
+              <button class="day-btn">월</button>
+              <button class="day-btn on">화</button>
+              <button class="day-btn">수</button>
+              <button class="day-btn on">목</button>
+              <button class="day-btn">금</button>
+              <button class="day-btn">토</button>
+              <button class="day-btn">일</button>
+            </div>
+          </div>
+        </div>
+        <div style="padding:0 20px;">
+          <button class="full-btn">다음 단계</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 3: 시간 선택 -->
+  <div class="device-wrap">
+    <div class="device-label">Step 3 · 시간 선택</div>
+    <div class="device">
+      <div class="status-bar"><span class="time">9:41</span><div class="status-icons"><span>▲▲</span><span>WiFi</span><span>🔋</span></div></div>
+      <div class="screen screen-white">
+        <div class="booking-header">
+          <span style="font-size:20px;cursor:pointer;">←</span>
+          <h2>시간 선택</h2>
+        </div>
+        <div class="step-indicator">
+          <div class="step-dot done"></div>
+          <div class="step-dot done"></div>
+          <div class="step-dot active"></div>
+          <div class="step-dot"></div>
+        </div>
+        <div class="booking-section">
+          <h3>원하는 시간대를 선택해주세요</h3>
+          <p style="font-size:12px;color:var(--gray-400);margin-bottom:16px;">1시간 단위, 중복 선택 가능</p>
+          <div class="select-label" style="margin-bottom:8px;">오전</div>
+          <div class="time-grid" style="margin-bottom:16px;">
+            <button class="time-btn">06:00</button>
+            <button class="time-btn">07:00</button>
+            <button class="time-btn on">08:00</button>
+            <button class="time-btn on">09:00</button>
+            <button class="time-btn">10:00</button>
+            <button class="time-btn">11:00</button>
+          </div>
+          <div class="select-label" style="margin-bottom:8px;">오후</div>
+          <div class="time-grid" style="margin-bottom:16px;">
+            <button class="time-btn">13:00</button>
+            <button class="time-btn">14:00</button>
+            <button class="time-btn">15:00</button>
+            <button class="time-btn">16:00</button>
+            <button class="time-btn">17:00</button>
+            <button class="time-btn">18:00</button>
+          </div>
+          <div class="select-label" style="margin-bottom:8px;">저녁</div>
+          <div class="time-grid">
+            <button class="time-btn">19:00</button>
+            <button class="time-btn">20:00</button>
+            <button class="time-btn">21:00</button>
+          </div>
+        </div>
+        <div style="padding:0 20px;">
+          <button class="full-btn">다음 단계</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 4: 신청 확인 -->
+  <div class="device-wrap">
+    <div class="device-label">Step 4 · 신청 확인</div>
+    <div class="device">
+      <div class="status-bar"><span class="time">9:41</span><div class="status-icons"><span>▲▲</span><span>WiFi</span><span>🔋</span></div></div>
+      <div class="screen screen-white">
+        <div class="booking-header">
+          <span style="font-size:20px;cursor:pointer;">←</span>
+          <h2>신청 확인</h2>
+        </div>
+        <div class="step-indicator">
+          <div class="step-dot done"></div>
+          <div class="step-dot done"></div>
+          <div class="step-dot done"></div>
+          <div class="step-dot active"></div>
+        </div>
+        <div class="booking-section">
+          <div class="summary-card">
+            <h4>신청 내용 요약</h4>
+            <div class="summary-row"><span class="sk">코치</span><span class="sv">김지훈 코치</span></div>
+            <div class="summary-row"><span class="sk">유형</span><span class="sv">정규레슨</span></div>
+            <div class="summary-row"><span class="sk">주 횟수</span><span class="sv">주 2회</span></div>
+            <div class="summary-row"><span class="sk">형태</span><span class="sv">1:1 개인</span></div>
+            <div class="summary-row"><span class="sk">요일</span><span class="sv">화, 목</span></div>
+            <div class="summary-row"><span class="sk">시간</span><span class="sv">08:00 ~ 09:00</span></div>
+            <div style="border-top:1px solid rgba(255,255,255,0.2);margin-top:8px;padding-top:8px;">
+              <div class="summary-row"><span class="sk">예상 비용</span><span class="sv" style="font-size:16px;">6만원 / 회</span></div>
+            </div>
+          </div>
+          <div style="background:var(--gray-50);border-radius:12px;padding:14px;margin-bottom:16px;">
+            <p style="font-size:12px;color:var(--gray-500);line-height:1.6;">
+              ✅ 플랫폼 내 결제 없이 신청합니다.<br>
+              코치 수락 후 직접 레슨 일정을 조율하세요.
+            </p>
+          </div>
+          <button class="full-btn">레슨 신청하기 🎾</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ════════════════════════════════════════ ROW 4: 마이페이지 ════════════════════════════════════════ -->
+<p class="row-title">④ 마이페이지</p>
+<div class="device-row">
+
+  <!-- 수강생 마이페이지 -->
+  <div class="device-wrap">
+    <div class="device-label">수강생 마이페이지</div>
+    <div class="device">
+      <div class="status-bar"><span class="time">9:41</span><div class="status-icons"><span>▲▲</span><span>WiFi</span><span>🔋</span></div></div>
+      <div class="screen screen-white">
+        <!-- 프로필 헤더 -->
+        <div style="background:linear-gradient(135deg,var(--navy),#2D6A8F);padding:32px 20px 24px;display:flex;align-items:center;gap:16px;">
+          <div style="width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:28px;border:2px solid rgba(255,255,255,0.4);">👤</div>
+          <div>
+            <div style="font-size:18px;font-weight:800;color:#fff;">홍길동</div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.7);margin-top:2px;">honggildong@email.com</div>
+            <div style="display:flex;gap:6px;margin-top:8px;">
+              <span class="badge" style="background:rgba(255,255,255,0.15);color:#fff;font-size:10px;">NTRP 3.0</span>
+              <span class="badge" style="background:rgba(255,255,255,0.15);color:#fff;font-size:10px;">강남구</span>
+            </div>
+          </div>
+        </div>
+        <!-- 내 레슨 신청 현황 -->
+        <div style="padding:20px 20px 0;">
+          <div class="section-title" style="margin-bottom:12px;">📋 내 레슨 신청</div>
+          <div style="background:linear-gradient(135deg,var(--coral),#ff8e53);border-radius:16px;padding:16px;margin-bottom:10px;color:#fff;display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div style="font-size:13px;opacity:0.85;">정규레슨 · 주 2회</div>
+              <div style="font-size:16px;font-weight:700;margin-top:2px;">김지훈 코치</div>
+              <div style="font-size:11px;opacity:0.8;margin-top:4px;">화, 목 08:00~09:00</div>
+            </div>
+            <span style="background:rgba(255,255,255,0.2);padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;">대기중</span>
+          </div>
+          <div style="background:linear-gradient(135deg,var(--green),#0ea5e9);border-radius:16px;padding:16px;margin-bottom:10px;color:#fff;display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div style="font-size:13px;opacity:0.85;">쿠폰레슨 · 8회</div>
+              <div style="font-size:16px;font-weight:700;margin-top:2px;">박소연 코치</div>
+              <div style="font-size:11px;opacity:0.8;margin-top:4px;">3회 완료 / 5회 남음</div>
+            </div>
+            <span style="background:rgba(255,255,255,0.2);padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;">진행중</span>
+          </div>
+        </div>
+        <!-- 메뉴 -->
+        <div style="padding:16px 20px;">
+          <div class="section-title" style="margin-bottom:10px;">설정</div>
+          <div style="background:#fff;border-radius:14px;overflow:hidden;border:1px solid var(--gray-100);">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--gray-100);">
+              <span style="font-size:14px;color:var(--navy);font-weight:500;">❤️ 찜한 코치</span><span style="color:var(--gray-400);">›</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--gray-100);">
+              <span style="font-size:14px;color:var(--navy);font-weight:500;">⭐ 내가 쓴 리뷰</span><span style="color:var(--gray-400);">›</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--gray-100);">
+              <span style="font-size:14px;color:var(--navy);font-weight:500;">🔔 알림 설정</span><span style="color:var(--gray-400);">›</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;">
+              <span style="font-size:14px;color:var(--error);font-weight:500;">로그아웃</span><span style="color:var(--gray-400);">›</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="bottom-nav">
+        <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>홈</div>
+        <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>메시지</div>
+        <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>검색</div>
+        <div class="nav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>마이</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 코치 마이페이지 -->
+  <div class="device-wrap">
+    <div class="device-label">코치 마이페이지</div>
+    <div class="device">
+      <div class="status-bar"><span class="time">9:41</span><div class="status-icons"><span>▲▲</span><span>WiFi</span><span>🔋</span></div></div>
+      <div class="screen screen-white">
+        <div style="background:linear-gradient(135deg,var(--purple),#a78bfa);padding:32px 20px 24px;display:flex;align-items:center;gap:16px;">
+          <div style="width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:28px;border:2px solid rgba(255,255,255,0.4);">🎾</div>
+          <div>
+            <div style="font-size:18px;font-weight:800;color:#fff;">김지훈 코치</div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.7);margin-top:2px;">coach.jihoon@email.com</div>
+            <div style="display:flex;gap:6px;margin-top:8px;">
+              <span class="badge badge-pro" style="background:rgba(255,255,255,0.2);color:#fff;">PRO 구독</span>
+              <span class="badge" style="background:rgba(255,255,255,0.15);color:#fff;font-size:10px;">✅ 인증 코치</span>
+            </div>
+          </div>
+        </div>
+        <!-- 이번 주 요약 -->
+        <div style="padding:16px 20px 0;">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;">
+            <div style="background:var(--gray-50);border-radius:12px;padding:12px;text-align:center;">
+              <div style="font-size:22px;font-weight:800;color:var(--green);">5</div>
+              <div style="font-size:11px;color:var(--gray-500);margin-top:2px;">이번 주 레슨</div>
+            </div>
+            <div style="background:var(--gray-50);border-radius:12px;padding:12px;text-align:center;">
+              <div style="font-size:22px;font-weight:800;color:var(--coral);">3</div>
+              <div style="font-size:11px;color:var(--gray-500);margin-top:2px;">신규 신청</div>
+            </div>
+            <div style="background:var(--gray-50);border-radius:12px;padding:12px;text-align:center;">
+              <div style="font-size:22px;font-weight:800;color:var(--yellow);">4.9</div>
+              <div style="font-size:11px;color:var(--gray-500);margin-top:2px;">평점</div>
+            </div>
+          </div>
+          <!-- 신규 신청 -->
+          <div class="section-title" style="margin-bottom:10px;">🔔 신규 레슨 신청</div>
+          <div style="background:#fff;border:1.5px solid var(--orange);border-radius:14px;padding:14px;margin-bottom:10px;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+              <div>
+                <div style="font-size:14px;font-weight:700;color:var(--navy);">홍길동 님</div>
+                <div style="font-size:12px;color:var(--gray-500);margin-top:2px;">정규레슨 · 주 2회 · 화목 08:00</div>
+              </div>
+              <span style="font-size:10px;background:#fff7ed;color:var(--orange);padding:3px 8px;border-radius:10px;font-weight:700;">NEW</span>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:10px;">
+              <button style="flex:1;padding:8px;border-radius:20px;border:none;background:var(--green);color:#fff;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;">수락</button>
+              <button style="flex:1;padding:8px;border-radius:20px;border:1.5px solid var(--gray-100);background:#fff;color:var(--gray-500);font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;">거절</button>
+            </div>
+          </div>
+        </div>
+        <!-- 메뉴 -->
+        <div style="padding:8px 20px 20px;">
+          <div style="background:#fff;border-radius:14px;overflow:hidden;border:1px solid var(--gray-100);">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--gray-100);"><span style="font-size:14px;color:var(--navy);font-weight:500;">📅 스케줄 관리</span><span style="color:var(--gray-400);">›</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--gray-100);"><span style="font-size:14px;color:var(--navy);font-weight:500;">💳 구독 플랜 관리</span><span style="color:var(--gray-400);">›</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--gray-100);"><span style="font-size:14px;color:var(--navy);font-weight:500;">📊 통계</span><span style="color:var(--gray-400);">›</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;"><span style="font-size:14px;color:var(--error);font-weight:500;">로그아웃</span><span style="color:var(--gray-400);">›</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="bottom-nav">
+        <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>홈</div>
+        <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>메시지</div>
+        <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>검색</div>
+        <div class="nav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>마이</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

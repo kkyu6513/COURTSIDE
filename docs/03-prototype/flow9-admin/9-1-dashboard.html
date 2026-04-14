@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>관리자 대시보드 — COURTSIDE Admin</title>
+<link rel="stylesheet" href="../common-admin.css">
+</head>
+<body>
+<div class="admin-layout">
+
+  <!-- Sidebar -->
+  <nav class="admin-sidebar">
+    <div class="logo">🎾 COURTSIDE <span style="font-size:11px;opacity:0.5;font-weight:400;">Admin</span></div>
+    <div class="nav-group">
+      <div class="nav-group-title">Overview</div>
+      <a href="9-1-dashboard.html" class="nav-link active"><span class="icon">📊</span>대시보드</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-title">관리</div>
+      <a href="9-2-users.html" class="nav-link"><span class="icon">👥</span>회원 관리</a>
+      <a href="9-3-coach-verify.html" class="nav-link"><span class="icon">✅</span>코치 검증<span class="count">5</span></a>
+      <a href="9-4-banners.html" class="nav-link"><span class="icon">🖼️</span>배너 관리</a>
+      <a href="9-8-reports.html" class="nav-link"><span class="icon">🚨</span>신고 관리</a>
+      <a href="9-9-schedule-admin.html" class="nav-link"><span class="icon">📅</span>스케줄 관리</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-title">설정</div>
+      <a href="9-5-subscription-plans.html" class="nav-link"><span class="icon">💎</span>구독 플랜</a>
+      <a href="9-6-code-manage.html" class="nav-link"><span class="icon">⚙️</span>코드 관리</a>
+      <a href="9-7-terms.html" class="nav-link"><span class="icon">📜</span>약관 관리</a>
+    </div>
+  </nav>
+
+  <!-- Main -->
+  <main class="admin-main">
+    <div class="admin-header">
+      <div class="breadcrumb">COURTSIDE Admin</div>
+      <h1>대시보드</h1>
+      <div class="subtitle">서비스 현황을 한눈에 확인하세요</div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-value" style="color:var(--green);">156</div><div class="stat-label">총 회원</div></div>
+      <div class="stat-card"><div class="stat-value" style="color:var(--purple);">48</div><div class="stat-label">등록 코치</div></div>
+      <div class="stat-card"><div class="stat-value" style="color:var(--coral);">5</div><div class="stat-label">검증 대기</div></div>
+      <div class="stat-card"><div class="stat-value" style="color:var(--info);">32</div><div class="stat-label">이번주 예약</div></div>
+    </div>
+
+    <!-- KPI -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div class="admin-card">
+        <div class="card-title">핵심 지표 (KPI)</div>
+        <div style="margin-bottom:16px;">
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;"><span style="font-size:14px;color:var(--gray-500);">재예약률</span><span style="font-size:14px;font-weight:600;color:var(--success);">45%</span></div>
+          <div class="progress-bar"><div class="fill" style="width:45%;background:var(--success);"></div></div>
+        </div>
+        <div style="margin-bottom:16px;">
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;"><span style="font-size:14px;color:var(--gray-500);">리뷰 작성률</span><span style="font-size:14px;font-weight:600;color:var(--info);">52%</span></div>
+          <div class="progress-bar"><div class="fill" style="width:52%;background:var(--info);"></div></div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;"><span style="font-size:14px;color:var(--gray-500);">코치 이탈률</span><span style="font-size:14px;font-weight:600;color:var(--error);">12%</span></div>
+          <div class="progress-bar"><div class="fill" style="width:12%;background:var(--error);"></div></div>
+        </div>
+      </div>
+
+      <div class="admin-card">
+        <div class="card-title">구독 현황</div>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:14px;color:var(--gray-500);">무료 플랜</span>
+            <span style="font-size:18px;font-weight:700;color:var(--navy);">20명</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:14px;color:var(--gray-500);">월간 PRO</span>
+            <span style="font-size:18px;font-weight:700;color:var(--purple);">6명</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:14px;color:var(--gray-500);">연간 PRO</span>
+            <span style="font-size:18px;font-weight:700;color:var(--orange);">2명</span>
+          </div>
+          <div style="border-top:1px solid var(--gray-100);padding-top:12px;display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:14px;font-weight:600;color:var(--navy);">월 구독 수익</span>
+            <span style="font-size:20px;font-weight:800;color:var(--green);">₩219,200</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="admin-card">
+      <div class="card-title">최근 활동</div>
+      <table class="admin-table">
+        <thead><tr><th>시간</th><th>유형</th><th>내용</th><th>상태</th></tr></thead>
+        <tbody>
+          <tr><td>09:32</td><td>검증 신청</td><td>한도윤 코치 — 자격증 업로드</td><td><span class="badge badge-pending">대기</span></td></tr>
+          <tr><td>09:15</td><td>회원가입</td><td>이수진 — 수강생 가입</td><td><span class="badge badge-active">완료</span></td></tr>
+          <tr><td>08:45</td><td>예약</td><td>홍길동 → 김민수 코치 정규레슨</td><td><span class="badge badge-active">확정</span></td></tr>
+          <tr><td>08:20</td><td>리뷰</td><td>박지수 → 이서연 코치 ★4.5</td><td><span class="badge badge-active">등록</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<script src="../site-nav.js"></script>
+</body>
+</html>

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=375, initial-scale=1.0">
+<title>1-1 스플래시 — COURTSIDE</title>
+<link rel="stylesheet" href="../common.css">
+</head>
+<body>
+
+<div class="device-wrap">
+  <div class="device-label"><span class="device-num">1</span>스플래시</div>
+  <div class="device">
+    <div class="status-bar">
+      <span class="time">9:41</span>
+      <div class="status-icons"><span>📶</span><span>🔋</span></div>
+    </div>
+    <div class="screen screen-white" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding-bottom:0;">
+      <div style="font-size:64px;margin-bottom:16px;">🎾</div>
+      <div style="font-size:32px;font-weight:800;color:var(--navy);letter-spacing:-1px;">COURTSIDE</div>
+      <div style="font-size:14px;color:var(--gray-500);margin-top:8px;">나에게 딱 맞는 테니스 코치</div>
+      <div style="margin-top:40px;width:40px;height:4px;border-radius:2px;background:var(--green);animation:pulse 1.5s ease-in-out infinite;"></div>
+      <!-- 2초 후 홈 화면으로 자동 이동 (로그인 여부 무관) -->
+    </div>
+  </div>
+</div>
+
+<script>
+// 스플래시 → 역할별 분기 이동
+// 비로그인/수강생 → 홈, 코치 → 스케줄 홈
+// 프로토타입: 기본 홈 이동 (우측 시뮬레이션 버튼으로 코치 진입 확인)
+setTimeout(function() {
+  window.location.href = '../flow2-home/2-1-home.html';
+}, 2000);
+</script>
+
+
+<style>
+@keyframes pulse {
+  0%, 100% { opacity: 0.4; transform: scaleX(1); }
+  50% { opacity: 1; transform: scaleX(1.5); }
+}
+</style>
+<script src="../site-nav.js"></script>
+</body>
+</html>

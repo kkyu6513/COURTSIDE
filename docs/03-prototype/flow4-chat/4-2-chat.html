@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=375, initial-scale=1.0">
+<title>4-2 1:1 채팅 — COURTSIDE</title>
+<link rel="stylesheet" href="../common.css">
+<style>
+  .more-overlay {
+    display:none;position:absolute;top:0;left:0;width:100%;height:100%;
+    background:rgba(0,0,0,0.4);z-index:60;
+  }
+  .more-overlay.show { display:block; }
+  .more-sheet {
+    position:absolute;bottom:0;left:0;width:100%;background:#fff;
+    border-radius:20px 20px 0 0;padding:8px 0 36px;
+    transform:translateY(100%);transition:transform 0.3s ease;
+  }
+  .more-overlay.show .more-sheet { transform:translateY(0); }
+  .more-item {
+    display:flex;align-items:center;gap:12px;padding:14px 20px;cursor:pointer;
+    font-size:15px;color:var(--navy);transition:background 0.1s;
+  }
+  .more-item:hover { background:var(--gray-50); }
+  .more-item .mi-icon { font-size:18px;width:24px;text-align:center; }
+  .more-item.danger { color:var(--error); }
+</style>
+</head>
+<body>
+<div class="device-wrap">
+  <div class="device-label"><span class="device-num">16</span>1:1 채팅</div>
+  <div class="device" style="position:relative;overflow:hidden;">
+    <div class="status-bar"><span class="time">9:41</span><div class="status-icons"><span>📶</span><span>🔋</span></div></div>
+    <div class="top-nav">
+      <a class="back" href="4-1-chat-list.html">←</a>
+      <span class="title">김민수 코치</span>
+      <span class="action" style="cursor:pointer;" onclick="openMore()">⋯</span>
+    </div>
+    <div class="screen screen-white" style="display:flex;flex-direction:column;flex:1;overflow-y:auto;padding-bottom:0;">
+      <div style="flex:1;padding:20px;display:flex;flex-direction:column;gap:8px;">
+        <div style="text-align:center;font-size:12px;color:var(--gray-400);margin-bottom:12px;">2026년 4월 9일</div>
+        <div style="max-width:70%;padding:10px 14px;border-radius:16px;font-size:14px;line-height:1.5;background:var(--gray-50);color:var(--navy);border-bottom-left-radius:4px;">안녕하세요! 레슨 문의 주셔서 감사합니다 😊</div>
+        <div style="font-size:10px;color:var(--gray-400);margin-top:2px;">오전 9:15</div>
+        <div style="max-width:70%;padding:10px 14px;border-radius:16px;font-size:14px;line-height:1.5;background:var(--green);color:#fff;margin-left:auto;border-bottom-right-radius:4px;">안녕하세요! 포핸드 교정 레슨 가능한가요?</div>
+        <div style="font-size:10px;color:var(--gray-400);margin-top:2px;text-align:right;">오전 9:20</div>
+        <div style="max-width:70%;padding:10px 14px;border-radius:16px;font-size:14px;line-height:1.5;background:var(--gray-50);color:var(--navy);border-bottom-left-radius:4px;">네, 물론이죠! 포핸드는 제 전문 분야입니다. 현재 NTRP가 어느 정도이신가요?</div>
+        <div style="font-size:10px;color:var(--gray-400);margin-top:2px;">오전 9:22</div>
+        <div style="max-width:70%;padding:10px 14px;border-radius:16px;font-size:14px;line-height:1.5;background:var(--green);color:#fff;margin-left:auto;border-bottom-right-radius:4px;">2.5 정도인 것 같아요. 자세가 많이 안 좋다고 하더라구요.</div>
+        <div style="font-size:10px;color:var(--gray-400);margin-top:2px;text-align:right;">오전 9:25</div>
+        <div style="max-width:70%;padding:10px 14px;border-radius:16px;font-size:14px;line-height:1.5;background:var(--gray-50);color:var(--navy);border-bottom-left-radius:4px;">그 정도면 충분히 교정 가능합니다! 화요일 10시에 어떠세요?</div>
+        <div style="font-size:10px;color:var(--gray-400);margin-top:2px;">오전 9:30</div>
+        <div style="max-width:70%;padding:10px 14px;border-radius:16px;font-size:14px;line-height:1.5;background:var(--green);color:#fff;margin-left:auto;border-bottom-right-radius:4px;">좋아요! 신청할게요 🎾</div>
+        <div style="font-size:10px;color:var(--gray-400);margin-top:2px;text-align:right;">오전 9:31</div>
+        <div style="max-width:70%;padding:10px 14px;border-radius:16px;font-size:14px;line-height:1.5;background:var(--gray-50);color:var(--navy);border-bottom-left-radius:4px;">네, 화요일 10시에 뵙겠습니다!</div>
+        <div style="font-size:10px;color:var(--gray-400);margin-top:2px;">오전 9:32</div>
+      </div>
+    </div>
+    <!-- Chat Input -->
+    <div style="padding:12px 20px 32px;background:#fff;border-top:1px solid var(--gray-100);display:flex;gap:10px;align-items:center;flex-shrink:0;">
+      <input type="file" id="chat-image-input" accept="image/jpeg,image/png" style="display:none;" onchange="handleChatImage(this)">
+      <span style="font-size:20px;cursor:pointer;" onclick="document.getElementById('chat-image-input').click()">📷</span>
+      <input class="input-field" style="flex:1;height:40px;border-radius:20px;" placeholder="메시지를 입력하세요" />
+      <div style="width:40px;height:40px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;font-size:16px;color:#fff;cursor:pointer;">→</div>
+    </div>
+
+    <!-- ⋯ 더보기 바텀시트 -->
+    <div id="more-overlay" class="more-overlay" onclick="closeMore()">
+      <div class="more-sheet" onclick="event.stopPropagation()">
+        <div style="width:40px;height:4px;border-radius:2px;background:var(--gray-300);margin:4px auto 8px;"></div>
+        <div class="more-item danger" onclick="confirmLeave()">
+          <span class="mi-icon">🚪</span>채팅방 나가기
+        </div>
+        <div class="more-item danger" onclick="confirmBlock()">
+          <span class="mi-icon">🚫</span>차단하기
+        </div>
+        <div class="more-item danger" onclick="openReport()">
+          <span class="mi-icon">🚨</span>신고하기
+        </div>
+      </div>
+    </div>
+
+    <!-- 신고하기 바텀시트 -->
+    <div id="report-overlay" class="more-overlay" onclick="closeReport()">
+      <div class="more-sheet" style="padding:20px 20px 36px;" onclick="event.stopPropagation()">
+        <div style="width:40px;height:4px;border-radius:2px;background:var(--gray-300);margin:0 auto 16px;"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <span style="font-size:17px;font-weight:700;color:var(--navy);">신고하기</span>
+          <span style="font-size:16px;color:var(--gray-400);cursor:pointer;" onclick="closeReport()">✕</span>
+        </div>
+
+        <div style="font-size:13px;color:var(--gray-500);margin-bottom:16px;">신고 사유를 선택해주세요</div>
+
+        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;" id="report-reasons">
+          <label style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--gray-50);border-radius:10px;cursor:pointer;border:1.5px solid var(--gray-100);" onclick="selectReason(this)">
+            <input type="radio" name="report" value="INAPPROPRIATE_MSG" style="accent-color:var(--green);width:18px;height:18px;">
+            <span style="font-size:14px;color:var(--navy);">부적절한 메시지</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--gray-50);border-radius:10px;cursor:pointer;border:1.5px solid var(--gray-100);" onclick="selectReason(this)">
+            <input type="radio" name="report" value="FAKE_PROFILE" style="accent-color:var(--green);width:18px;height:18px;">
+            <span style="font-size:14px;color:var(--navy);">허위 프로필</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--gray-50);border-radius:10px;cursor:pointer;border:1.5px solid var(--gray-100);" onclick="selectReason(this)">
+            <input type="radio" name="report" value="SPAM" style="accent-color:var(--green);width:18px;height:18px;">
+            <span style="font-size:14px;color:var(--navy);">스팸/광고</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--gray-50);border-radius:10px;cursor:pointer;border:1.5px solid var(--gray-100);" onclick="selectReason(this)">
+            <input type="radio" name="report" value="NO_SHOW" style="accent-color:var(--green);width:18px;height:18px;">
+            <span style="font-size:14px;color:var(--navy);">레슨 불이행</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--gray-50);border-radius:10px;cursor:pointer;border:1.5px solid var(--gray-100);" onclick="selectReason(this)">
+            <input type="radio" name="report" value="FRAUD" style="accent-color:var(--green);width:18px;height:18px;">
+            <span style="font-size:14px;color:var(--navy);">사기/금전 피해</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--gray-50);border-radius:10px;cursor:pointer;border:1.5px solid var(--gray-100);" onclick="selectReason(this)">
+            <input type="radio" name="report" value="OTHER" style="accent-color:var(--green);width:18px;height:18px;">
+            <span style="font-size:14px;color:var(--navy);">기타</span>
+          </label>
+        </div>
+
+        <div id="report-detail-wrap" style="display:none;margin-bottom:16px;">
+          <label style="font-size:13px;font-weight:600;color:var(--navy);display:block;margin-bottom:6px;">상세 내용</label>
+          <textarea id="report-detail" style="width:100%;min-height:80px;border-radius:10px;border:1px solid var(--gray-100);background:var(--gray-50);padding:12px;font-size:14px;color:var(--navy);font-family:inherit;outline:none;resize:none;" placeholder="상세 내용을 입력해주세요"></textarea>
+        </div>
+
+        <button class="btn-primary" style="height:48px;font-size:14px;" onclick="submitReport()">신고 접수</button>
+      </div>
+    </div>
+
+    <!-- 토스트 -->
+    <div id="toast" style="display:none;position:absolute;bottom:100px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:12px 20px;border-radius:12px;font-size:13px;font-weight:600;white-space:nowrap;z-index:100;box-shadow:0 4px 16px rgba(0,0,0,0.2);"></div>
+  </div>
+</div>
+
+<script>
+function openMore() {
+  document.getElementById('more-overlay').classList.add('show');
+}
+
+function closeMore() {
+  document.getElementById('more-overlay').classList.remove('show');
+}
+
+function confirmBlock() {
+  closeMore();
+  if (confirm('이 코치를 차단하시겠습니까?\n차단 시 채팅방이 비활성화되고, 해당 코치의 레슨 신청이 제한됩니다.')) {
+    // 실제: POST /api/users/block/:coachId → 차단 처리
+    // 채팅방 비활성화: ChatRoom.isBlocked = true
+    showToast('차단되었습니다');
+    setTimeout(() => { window.location.href = '4-1-chat-list.html'; }, 1000);
+  }
+}
+
+function confirmLeave() {
+  closeMore();
+  if (confirm('채팅방을 나가시겠습니까?\n대화 내용이 삭제됩니다.')) {
+    showToast('채팅방을 나갔습니다');
+    setTimeout(() => { window.location.href = '4-1-chat-list.html'; }, 1000);
+  }
+}
+
+function openReport() {
+  closeMore();
+  document.getElementById('report-overlay').classList.add('show');
+}
+
+function closeReport() {
+  document.getElementById('report-overlay').classList.remove('show');
+}
+
+function selectReason(el) {
+  // 선택 시 border 강조
+  document.querySelectorAll('#report-reasons label').forEach(l => l.style.borderColor = 'var(--gray-100)');
+  el.style.borderColor = 'var(--green)';
+  // "기타" 선택 시 상세 입력 표시
+  const val = el.querySelector('input').value;
+  document.getElementById('report-detail-wrap').style.display = val === 'OTHER' ? 'block' : 'none';
+}
+
+function submitReport() {
+  const selected = document.querySelector('#report-reasons input:checked');
+  if (!selected) {
+    showToast('신고 사유를 선택해주세요');
+    return;
+  }
+  if (selected.value === 'OTHER' && !document.getElementById('report-detail').value.trim()) {
+    showToast('상세 내용을 입력해주세요');
+    return;
+  }
+  // 실제: POST /api/reports { targetId, targetType, reasonCode, reasonDetail }
+  console.log('신고 접수:', selected.value, document.getElementById('report-detail').value);
+  closeReport();
+  showToast('신고가 접수되었습니다. 검토 후 조치하겠습니다');
+}
+
+/**
+ * 이미지 첨부 — 앨범에서 가져오기
+ * 클릭 → file input 트리거 → OS 앨범/파일 선택 → 미리보기 메시지로 추가
+ * 실제: S3 업로드 → WebSocket으로 IMAGE 타입 메시지 전송
+ */
+function handleChatImage(input) {
+  if (input.files && input.files[0]) {
+    const file = input.files[0];
+    if (file.size > 5 * 1024 * 1024) {
+      showToast('파일 크기는 5MB 이하여야 합니다');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const chatArea = document.querySelector('.screen > div');
+      const imgMsg = document.createElement('div');
+      imgMsg.style.cssText = 'max-width:70%;margin-left:auto;margin-top:8px;';
+      imgMsg.innerHTML = '<img src="' + e.target.result + '" style="width:100%;border-radius:12px;border-bottom-right-radius:4px;">';
+      chatArea.appendChild(imgMsg);
+      const timeEl = document.createElement('div');
+      timeEl.style.cssText = 'font-size:10px;color:var(--gray-400);margin-top:2px;text-align:right;';
+      timeEl.textContent = '방금 전';
+      chatArea.appendChild(timeEl);
+      chatArea.scrollTop = chatArea.scrollHeight;
+      // 실제: POST /api/chat/images (S3 업로드) → WebSocket emit (type=IMAGE)
+      console.log('이미지 전송:', file.name);
+    };
+    reader.readAsDataURL(file);
+    input.value = '';
+  }
+}
+
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.style.display = 'block';
+  setTimeout(() => { toast.style.display = 'none'; }, 2000);
+}
+</script>
+<script src="../site-nav.js"></script>
+</body>
+</html>

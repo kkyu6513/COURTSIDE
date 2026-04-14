@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=375, initial-scale=1.0">
+<title>1-6 코치 프로필 등록 — COURTSIDE</title>
+<link rel="stylesheet" href="../common.css">
+<style>
+  .required::after {
+    content: ' *';
+    color: var(--error);
+    font-weight: 700;
+  }
+  .optional-tag {
+    font-size: 11px;
+    color: var(--gray-400);
+    font-weight: 400;
+    margin-left: 4px;
+  }
+  /* 하단 고정 버튼 — device 내부 flex 구조 활용 */
+  .bottom-cta-fixed {
+    padding: 12px 20px 32px;
+    background: #fff;
+    border-top: 1px solid var(--gray-100);
+    flex-shrink: 0;
+  }
+</style>
+</head>
+<body>
+
+<div class="device-wrap">
+  <div class="device-label"><span class="device-num">6</span>코치 프로필 등록</div>
+  <div class="device">
+    <div class="status-bar">
+      <span class="time">9:41</span>
+      <div class="status-icons"><span>📶</span><span>🔋</span></div>
+    </div>
+    <div class="top-nav">
+      <a class="back" href="1-5-coach-subscription.html">←</a>
+      <span class="title">프로필 등록</span>
+      <span class="action"></span>
+    </div>
+
+    <!-- 스크롤 영역 -->
+    <div class="screen screen-white" style="flex:1;overflow-y:auto;padding-bottom:0;">
+      <!-- Step Indicator — 3/3 -->
+      <div class="step-indicator">
+        <div class="step-dot done"></div>
+        <div class="step-dot done"></div>
+        <div class="step-dot active"></div>
+      </div>
+
+      <!-- Required notice -->
+      <div style="padding:0 20px 8px;">
+        <div style="font-size:12px;color:var(--gray-400);"><span style="color:var(--error);font-weight:700;">*</span> 필수 입력 항목</div>
+      </div>
+
+      <!-- Form -->
+      <div class="page-pad" style="display:flex;flex-direction:column;gap:24px;padding-top:0;padding-bottom:20px;">
+
+        <!-- 프로필 대표 사진 [필수] -->
+        <div style="text-align:center;">
+          <input type="file" id="profile-photo-input" accept="image/jpeg,image/png" style="display:none;" onchange="handleProfilePhoto(this)">
+          <div id="profile-photo-area" onclick="document.getElementById('profile-photo-input').click()" style="width:88px;height:88px;border-radius:50%;background:var(--gray-50);border:2px dashed var(--gray-300);margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:28px;color:var(--gray-400);cursor:pointer;overflow:hidden;">
+            📷
+          </div>
+          <div style="font-size:13px;color:var(--green);margin-top:8px;font-weight:600;">프로필 사진 <span style="color:var(--error);font-weight:700;">*</span></div>
+          <div style="font-size:11px;color:var(--gray-400);margin-top:4px;">코치 카드에 노출되는 대표 사진 (필수)</div>
+        </div>
+
+        <!-- 소개 이미지 (다중 업로드 + 드래그 앤 드롭) [필수: 최소 1장] -->
+        <div>
+          <label class="input-label required">소개 이미지<span style="font-weight:400;font-size:11px;color:var(--gray-400);margin-left:4px;">(필수 1장, 최대 5장)</span></label>
+          <div style="font-size:12px;color:var(--gray-400);margin-bottom:8px;">코치 프로필 상세 페이지 상단에 슬라이드로 노출됩니다</div>
+          <!--
+            소개 이미지 데이터 구조
+            ┌──────────────────────────────────────────────────┐
+            │  CoachProfileImage                               │
+            ├──────────────────────────────────────────────────┤
+            │  image.id        : Number   — PK (자동 생성)      │
+            │  image.coachId   : Number   — FK → CoachProfile   │
+            │  image.url       : String   — S3 업로드 URL       │
+            │  image.sortOrder : Number   — 노출 순서 (0부터)    │
+            │  image.createdAt : DateTime — 업로드 일시          │
+            └──────────────────────────────────────────────────┘
+            - 최대 5장 업로드 가능
+            - 드래그 앤 드롭으로 순서 변경 → sortOrder 자동 재계산
+            - sortOrder=0 이미지가 상세 페이지 히어로 영역에 표시
+            - 프로필 저장 시 sortOrder 순서대로 DB INSERT/UPDATE
+            - 이미지 없을 시 기본 그라디언트 배경 표시
+
+            저장 API 요청 예시:
+            POST /api/coaches/profile/images
+            {
+              "images": [
+                { "url": "s3://...", "sortOrder": 0 },  ← 첫 번째 = 히어로
+                { "url": "s3://...", "sortOrder": 1 },
+                { "url": "s3://...", "sortOrder": 2 }
+              ]
+            }
+
+            순서 변경 API:
+            PUT /api/coaches/profile/images/reorder
+            {
+              "imageIds": [3, 1, 2]  ← 변경된 순서대로 ID 배열
+            }
+            → 서버에서 imageIds 배열 index를 sortOrder로 저장
+          -->
+          <div style="display:flex;gap:10px;overflow-x:auto;padding:4px 0 4px;" id="image-upload-list"></div>
+          <div style="font-size:11px;color:var(--gray-400);margin-top:6px;">JPG, PNG / 최대 5MB / 길게 눌러 드래그로 순서 변경</div>
+        </div>
+
+        <!-- 이름 [필수] -->
+        <div>
+          <label class="input-label required">이름</label>
+          <input class="input-field" id="coach-name" value="" placeholder="이름을 입력하세요" />
+        </div>
+
+        <!-- 성별 [필수] -->
+        <div>
+          <label class="input-label required">성별</label>
+          <div id="coach-gender" style="display:flex;gap:8px;">
+            <span class="chip" onclick="selectGender(this)">남성</span>
+            <span class="chip" onclick="selectGender(this)">여성</span>
+          </div>
+        </div>
+
+        <!-- 소개 [필수] -->
+        <div>
+          <label class="input-label required">소개</label>
+          <textarea class="textarea" id="coach-bio" style="min-height:80px;" placeholder="코치 소개를 작성해주세요"></textarea>
+        </div>
+
+        <!-- 전문 분야 [필수] — 어드민 코드 관리, on/off 토글 -->
+        <div>
+          <label class="input-label required">전문 분야 (다중 선택)</label>
+          <!--
+            전문 분야 데이터 구조 (어드민에서 CRUD 관리)
+            ┌──────────────────────────────────────────────────┐
+            │  CoachSpecialty (어드민 코드 관리 테이블)            │
+            ├──────────────────────────────────────────────────┤
+            │  specialty.id        : Number   — PK (자동 생성)   │
+            │  specialty.code      : String   — 고유 코드 (영문)  │
+            │  specialty.label     : String   — 노출 텍스트       │
+            │  specialty.isActive  : Boolean  — 활성 여부 (on/off)│
+            │  specialty.sortOrder : Number   — 정렬 순서         │
+            │  specialty.createdAt : DateTime — 등록일            │
+            │  specialty.updatedAt : DateTime — 수정일            │
+            └──────────────────────────────────────────────────┘
+
+            코치 프로필에서는 isActive=true 항목만 노출.
+            코치가 자신의 전문 분야를 on/off 토글로 선택.
+          -->
+          <div style="display:flex;gap:8px;flex-wrap:wrap;" id="specialty-list"></div>
+        </div>
+
+        <!-- 경력 [선택] -->
+        <div>
+          <label class="input-label">경력 (년)<span class="optional-tag">(선택)</span></label>
+          <input class="input-field" value="" type="number" placeholder="예: 5" />
+        </div>
+
+        <!-- NTRP 수준 [선택] -->
+        <div>
+          <label class="input-label">지도 가능 NTRP 범위<span class="optional-tag">(선택)</span></label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <span class="chip active" onclick="this.classList.toggle('active')">1.0~2.0</span>
+            <span class="chip active" onclick="this.classList.toggle('active')">2.5~3.0</span>
+            <span class="chip active" onclick="this.classList.toggle('active')">3.5~4.0</span>
+            <span class="chip" onclick="this.classList.toggle('active')">4.5+</span>
+          </div>
+        </div>
+
+        <!-- 자격증 [선택] -->
+        <div>
+          <label class="input-label">자격증<span class="optional-tag">(선택)</span></label>
+          <div style="padding:20px;border:2px dashed var(--gray-300);border-radius:12px;text-align:center;color:var(--gray-400);font-size:13px;cursor:pointer;">
+            <div style="font-size:24px;margin-bottom:6px;">📎</div>
+            자격증 이미지를 업로드하세요<br>
+            <span style="font-size:11px;">(JPG, PNG, PDF / 최대 5MB)</span>
+          </div>
+        </div>
+
+        <!-- 가격 공개 여부 [필수] — 가격 필수 여부를 결정하므로 가격 위에 배치 -->
+        <div>
+          <label class="input-label required">가격 공개 여부</label>
+          <div style="display:flex;gap:8px;">
+            <span class="chip active" id="price-public" onclick="setPriceVisibility('public')">공개</span>
+            <span class="chip" id="price-private" onclick="setPriceVisibility('private')">비공개 (문의 시 안내)</span>
+          </div>
+          <div style="font-size:11px;color:var(--gray-400);margin-top:6px;">
+            비공개 선택 시 프로필에 "가격 문의"로 표시됩니다
+          </div>
+        </div>
+
+        <!-- 레슨 가격 [조건부 필수: 공개 시 필수 / 비공개 시 선택] -->
+        <div id="price-section">
+          <label class="input-label required" id="price-label">레슨 가격 (1회 기준)</label>
+          <input class="input-field" id="price-input" placeholder="₩50,000" />
+          <div style="font-size:11px;color:var(--info);margin-top:6px;" id="price-hint">
+            가격 공개 설정 시 필수 입력 항목입니다
+          </div>
+        </div>
+
+        <!-- 레슨 지역 [필수] — 대한민국 전 지역 -->
+        <div>
+          <label class="input-label required">레슨 지역</label>
+          <div style="display:flex;gap:8px;">
+            <select class="input-field" style="flex:1;" id="coach-sido" onchange="updateCoachSigungu()">
+              <option value="">시·도 선택</option>
+              <option value="서울특별시">서울특별시</option>
+              <option value="부산광역시">부산광역시</option>
+              <option value="대구광역시">대구광역시</option>
+              <option value="인천광역시">인천광역시</option>
+              <option value="광주광역시">광주광역시</option>
+              <option value="대전광역시">대전광역시</option>
+              <option value="울산광역시">울산광역시</option>
+              <option value="세종특별자치시">세종특별자치시</option>
+              <option value="경기도">경기도</option>
+              <option value="강원특별자치도">강원특별자치도</option>
+              <option value="충청북도">충청북도</option>
+              <option value="충청남도">충청남도</option>
+              <option value="전북특별자치도">전북특별자치도</option>
+              <option value="전라남도">전라남도</option>
+              <option value="경상북도">경상북도</option>
+              <option value="경상남도">경상남도</option>
+              <option value="제주특별자치도">제주특별자치도</option>
+            </select>
+            <select class="input-field" style="flex:1;" id="coach-sigungu">
+              <option value="">시·군·구 선택</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- 레슨 방식 [필수] — 정규/쿠폰 가능 여부 -->
+        <div>
+          <label class="input-label required">레슨 방식</label>
+          <div id="coach-lesson-method" style="display:flex;gap:8px;">
+            <span class="chip" onclick="this.classList.toggle('active');toggleCouponOptions()">정규레슨</span>
+            <span class="chip" onclick="this.classList.toggle('active');toggleCouponOptions()">쿠폰레슨</span>
+          </div>
+          <div style="font-size:11px;color:var(--gray-400);margin-top:6px;">제공 가능한 레슨 방식을 모두 선택하세요</div>
+        </div>
+
+        <!-- 쿠폰레슨 유효기간 [쿠폰 선택 시 표시] -->
+        <div id="coupon-valid-section" style="display:none;">
+          <label class="input-label required">쿠폰레슨 유효기간</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <span class="chip" onclick="selectChipIn(this)">2주</span>
+            <span class="chip" onclick="selectChipIn(this)">3주</span>
+            <span class="chip active" onclick="selectChipIn(this)">4주</span>
+            <span class="chip" onclick="selectChipIn(this)">6주</span>
+            <span class="chip" onclick="selectChipIn(this)">8주</span>
+          </div>
+          <div style="font-size:11px;color:var(--gray-400);margin-top:6px;">수강생에게 안내되는 쿠폰 유효기간입니다</div>
+        </div>
+
+        <!-- 레슨 형태 [필수] -->
+        <div>
+          <label class="input-label required">가능한 레슨 형태</label>
+          <div id="coach-lesson-type" style="display:flex;gap:8px;">
+            <span class="chip" onclick="this.classList.toggle('active')">1:1 개인</span>
+            <span class="chip" onclick="this.classList.toggle('active')">그룹 (2~4인)</span>
+          </div>
+        </div>
+
+        <!-- 약관 동의 [필수] -->
+        <div>
+          <label class="input-label required">약관 동의</label>
+          <div style="background:var(--gray-50);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px;">
+            <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding-bottom:10px;border-bottom:1px solid var(--gray-100);">
+              <input type="checkbox" id="chk-all-coach" style="width:20px;height:20px;accent-color:var(--green);" onchange="toggleAllCoach()">
+              <span style="font-size:14px;font-weight:700;color:var(--navy);">전체 동의</span>
+            </label>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <input type="checkbox" class="terms-req-coach" style="width:16px;height:16px;accent-color:var(--green);" onchange="updateCoachBtn()">
+              <span style="font-size:13px;color:var(--gray-500);flex:1;">[필수] 이용약관 동의</span>
+              <a href="terms-detail.html?code=TERMS_OF_SERVICE" style="font-size:12px;color:var(--gray-400);text-decoration:none;">보기 ›</a>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <input type="checkbox" class="terms-req-coach" style="width:16px;height:16px;accent-color:var(--green);" onchange="updateCoachBtn()">
+              <span style="font-size:13px;color:var(--gray-500);flex:1;">[필수] 개인정보 처리방침 동의</span>
+              <a href="terms-detail.html?code=PRIVACY_POLICY" style="font-size:12px;color:var(--gray-400);text-decoration:none;">보기 ›</a>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <input type="checkbox" style="width:16px;height:16px;accent-color:var(--green);" onchange="updateCoachBtn()">
+              <span style="font-size:13px;color:var(--gray-500);flex:1;">[선택] 마케팅 정보 수신 동의</span>
+              <a href="terms-detail.html?code=MARKETING" style="font-size:12px;color:var(--gray-400);text-decoration:none;">보기 ›</a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Bottom CTA — device flex 자식으로 하단 고정 (스크롤 영역 밖) -->
+    <div class="bottom-cta-fixed">
+      <button id="btn-coach-complete" class="btn-primary" onclick="validateAndSubmit()" style="width:100%;">프로필 등록 완료</button>
+    </div>
+
+    <!-- 토스트 메시지 -->
+    <div id="toast" style="display:none;position:absolute;bottom:100px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:12px 20px;border-radius:12px;font-size:13px;font-weight:600;white-space:nowrap;z-index:100;box-shadow:0 4px 16px rgba(0,0,0,0.2);"></div>
+  </div>
+</div>
+
+
+<script>
+/**
+ * ═══════════════════════════════════════════════════
+ * 소개 이미지 — 드래그 앤 드롭 순서 변경
+ * ═══════════════════════════════════════════════════
+ *
+ * - HTML5 Drag and Drop API 사용 (라이브러리 없음)
+ * - 드래그 시 opacity 변경 + 드롭 위치 시각적 표시
+ * - 드롭 완료 시 sortOrder 자동 재계산 + 순서 번호 UI 갱신
+ * - "추가" 버튼은 항상 마지막에 고정 (드래그 대상 아님)
+ * - 삭제(✕) 클릭 시 목록에서 제거 + sortOrder 재계산
+ */
+
+// 이미지 데이터 (실제: S3 URL + DB id, 프로토타입: 시뮬레이션)
+const profileImages = [
+  { id: 1, url: 'linear-gradient(135deg, #2DD4BF, #93C5FD)', emoji: '🎾' },
+  { id: 2, url: 'linear-gradient(135deg, #7C5CBF, #a78bfa)', emoji: '🏸' },
+  { id: 3, url: 'linear-gradient(135deg, #FF6B6B, #FF9F43)', emoji: '🏆' },
+];
+
+let dragSrcIndex = null;
+
+function renderImages() {
+  const container = document.getElementById('image-upload-list');
+  container.innerHTML = '';
+
+  profileImages.forEach((img, index) => {
+    const el = document.createElement('div');
+    el.className = 'drag-image-item';
+    el.draggable = true;
+    el.dataset.index = index;
+    el.style.cssText = 'width:100px;height:100px;border-radius:12px;background:' + img.url + ';flex-shrink:0;position:relative;display:flex;align-items:center;justify-content:center;font-size:28px;cursor:grab;overflow:visible;transition:transform 0.15s,opacity 0.15s;' + (img.bgStyle || '');
+    el.innerHTML = (img.emoji || '')
+      + '<div onclick="removeImage(' + index + ')" style="position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;background:var(--error);color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,0.3);cursor:pointer;line-height:1;z-index:5;">✕</div>'
+      + '<div class="sort-badge" style="position:absolute;bottom:4px;left:4px;background:rgba(0,0,0,0.5);color:#fff;font-size:9px;padding:1px 5px;border-radius:4px;">' + (index + 1) + '</div>';
+
+    // Drag events
+    el.addEventListener('dragstart', handleDragStart);
+    el.addEventListener('dragover', handleDragOver);
+    el.addEventListener('dragenter', handleDragEnter);
+    el.addEventListener('dragleave', handleDragLeave);
+    el.addEventListener('drop', handleDrop);
+    el.addEventListener('dragend', handleDragEnd);
+
+    container.appendChild(el);
+  });
+
+  // 추가 버튼 (최대 5장 미만일 때만)
+  if (profileImages.length < 5) {
+    const addBtn = document.createElement('div');
+    addBtn.style.cssText = 'width:100px;height:100px;border-radius:12px;border:2px dashed var(--gray-300);flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;gap:4px;';
+    addBtn.innerHTML = '<span style="font-size:24px;color:var(--gray-400);">+</span><span style="font-size:10px;color:var(--gray-400);">추가</span>';
+    addBtn.onclick = addImage;
+    container.appendChild(addBtn);
+  }
+}
+
+function handleDragStart(e) {
+  dragSrcIndex = parseInt(this.dataset.index);
+  this.style.opacity = '0.4';
+  this.style.transform = 'scale(0.95)';
+  e.dataTransfer.effectAllowed = 'move';
+}
+
+function handleDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+}
+
+function handleDragEnter(e) {
+  e.preventDefault();
+  if (this.classList.contains('drag-image-item')) {
+    this.style.transform = 'scale(1.05)';
+    this.style.boxShadow = '0 0 0 3px var(--green)';
+  }
+}
+
+function handleDragLeave(e) {
+  if (this.classList.contains('drag-image-item')) {
+    this.style.transform = 'scale(1)';
+    this.style.boxShadow = 'none';
+  }
+}
+
+function handleDrop(e) {
+  e.stopPropagation();
+  e.preventDefault();
+  const dropIndex = parseInt(this.dataset.index);
+
+  if (dragSrcIndex !== null && dragSrcIndex !== dropIndex) {
+    // 배열에서 순서 변경
+    const [moved] = profileImages.splice(dragSrcIndex, 1);
+    profileImages.splice(dropIndex, 0, moved);
+    renderImages();
+
+    // 실제 구현 시: PUT /api/coaches/profile/images/reorder
+    console.log('순서 변경:', profileImages.map((img, i) => ({ id: img.id, sortOrder: i })));
+  }
+}
+
+function handleDragEnd(e) {
+  this.style.opacity = '1';
+  this.style.transform = 'scale(1)';
+  this.style.boxShadow = 'none';
+  dragSrcIndex = null;
+  // 모든 아이템 스타일 초기화
+  document.querySelectorAll('.drag-image-item').forEach(el => {
+    el.style.transform = 'scale(1)';
+    el.style.boxShadow = 'none';
+  });
+}
+
+function removeImage(index) {
+  profileImages.splice(index, 1);
+  renderImages();
+  console.log('삭제 후:', profileImages.map((img, i) => ({ id: img.id, sortOrder: i })));
+}
+
+function addImage() {
+  if (profileImages.length >= 5) return;
+  // hidden file input 생성 → 앨범/파일 선택 트리거
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/jpeg,image/png';
+  input.style.display = 'none';
+  input.onchange = function() {
+    if (input.files && input.files[0]) {
+      const file = input.files[0];
+      if (file.size > 5 * 1024 * 1024) {
+        alert('파일 크기는 5MB 이하여야 합니다');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        profileImages.push({
+          id: Date.now(),
+          url: 'url(' + e.target.result + ')',
+          emoji: '',
+          isReal: true,
+          bgStyle: 'background-size:cover;background-position:center;'
+        });
+        renderImages();
+        console.log('소개 이미지 추가:', file.name, '현재', profileImages.length, '장');
+        // 실제: POST /api/coaches/profile/images (FormData → S3 업로드 → URL+sortOrder 저장)
+      };
+      reader.readAsDataURL(file);
+    }
+    document.body.removeChild(input);
+  };
+  document.body.appendChild(input);
+  input.click();
+}
+
+// 초기 렌더링
+renderImages();
+
+/**
+ * ═══════════════════════════════════════════════════
+ * 프로필 사진 — 앨범에서 가져오기
+ * ═══════════════════════════════════════════════════
+ * - 프로필 사진 영역 클릭 → hidden file input 트리거 → 앨범/파일 선택
+ * - 선택 후 미리보기 표시 (FileReader)
+ * - 실제 구현: 선택 즉시 S3 업로드 → POST /api/users/me/avatar → URL 저장
+ */
+function handleProfilePhoto(input) {
+  if (input.files && input.files[0]) {
+    const file = input.files[0];
+
+    // 파일 크기 체크 (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('파일 크기는 5MB 이하여야 합니다');
+      return;
+    }
+
+    // 미리보기
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const area = document.getElementById('profile-photo-area');
+      area.innerHTML = '';
+      area.style.border = 'none';
+      area.style.background = 'none';
+      const img = document.createElement('img');
+      img.src = e.target.result;
+      img.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:50%;';
+      area.appendChild(img);
+    };
+    reader.readAsDataURL(file);
+
+    // 실제: POST /api/users/me/avatar (FormData)
+    console.log('프로필 사진 선택:', file.name, file.size);
+  }
+}
+
+/**
+ * ═══════════════════════════════════════════════════
+ * 전문 분야 데이터 (어드민에서 CRUD 관리 → API 응답 시뮬레이션)
+ *
+ * 데이터 소스: [ADMIN_CRUD] — 어드민에서 등록/수정/삭제/정렬/on-off 가능
+ * 코치 프로필에서는 isActive=true 항목만 노출, 코치가 on/off 토글로 선택
+ */
+const specialtyList = [
+  { code: 'FOREHAND',   label: '포핸드',     isActive: true,  sortOrder: 1 },
+  { code: 'BACKHAND',   label: '백핸드',     isActive: true,  sortOrder: 2 },
+  { code: 'SERVE',      label: '서브',       isActive: true,  sortOrder: 3 },
+  { code: 'VOLLEY',     label: '발리',       isActive: true,  sortOrder: 4 },
+  { code: 'FOOTWORK',   label: '풋워크',     isActive: true,  sortOrder: 5 },
+  { code: 'DOUBLES',    label: '복식전략',   isActive: true,  sortOrder: 6 },
+  { code: 'STRATEGY',   label: '경기전략',   isActive: true,  sortOrder: 7 },
+  { code: 'MENTAL',     label: '멘탈코칭',   isActive: true,  sortOrder: 8 },
+  { code: 'FITNESS',    label: '체력훈련',   isActive: true,  sortOrder: 9 },
+  { code: 'BEGINNER',   label: '입문지도',   isActive: true,  sortOrder: 10 },
+  { code: 'KIDS',       label: '주니어',     isActive: true,  sortOrder: 11 },
+  { code: 'RETURN',     label: '리턴',       isActive: false, sortOrder: 12 }, // 어드민 비활성 예시
+];
+
+/** 전문 분야 렌더링 — on/off 토글 */
+function renderSpecialties() {
+  const container = document.getElementById('specialty-list');
+  const selected = ['FOREHAND', 'SERVE']; // 코치 선택 시뮬레이션
+
+  specialtyList
+    .filter(s => s.isActive) // 어드민에서 활성화된 항목만 노출
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .forEach(spec => {
+      const chip = document.createElement('span');
+      chip.className = 'chip' + (selected.includes(spec.code) ? ' active' : '');
+      chip.textContent = spec.label;
+      chip.dataset.code = spec.code;
+      // on/off 토글
+      chip.onclick = () => chip.classList.toggle('active');
+      container.appendChild(chip);
+    });
+}
+renderSpecialties();
+
+/** 가격 공개 여부 → 가격 필수/선택 전환 */
+function setPriceVisibility(mode) {
+  const publicChip = document.getElementById('price-public');
+  const privateChip = document.getElementById('price-private');
+  const priceLabel = document.getElementById('price-label');
+  const priceInput = document.getElementById('price-input');
+  const priceHint = document.getElementById('price-hint');
+
+  if (mode === 'public') {
+    publicChip.classList.add('active');
+    privateChip.classList.remove('active');
+    // 공개 → 가격 필수
+    priceLabel.className = 'input-label required';
+    priceInput.placeholder = '₩50,000';
+    priceInput.disabled = false;
+    priceInput.style.opacity = '1';
+    priceHint.textContent = '가격 공개 설정 시 필수 입력 항목입니다';
+    priceHint.style.color = 'var(--info)';
+  } else {
+    publicChip.classList.remove('active');
+    privateChip.classList.add('active');
+    // 비공개 → 가격 선택 (비활성화)
+    priceLabel.className = 'input-label';
+    priceLabel.innerHTML = '레슨 가격 (1회 기준)<span class="optional-tag">(선택)</span>';
+    priceInput.placeholder = '비공개 — 프로필에 "가격 문의" 표시';
+    priceInput.value = '';
+    priceInput.disabled = true;
+    priceInput.style.opacity = '0.5';
+    priceHint.textContent = '비공개 선택 시 가격을 입력하지 않아도 됩니다';
+    priceHint.style.color = 'var(--gray-400)';
+  }
+}
+
+/** 대한민국 전 지역 데이터 */
+const regionData = {
+  "서울특별시": ["강남구","강동구","강북구","강서구","관악구","광진구","구로구","금천구","노원구","도봉구","동대문구","동작구","마포구","서대문구","서초구","성동구","성북구","송파구","양천구","영등포구","용산구","은평구","종로구","중구","중랑구"],
+  "부산광역시": ["강서구","금정구","기장군","남구","동구","동래구","부산진구","북구","사상구","사하구","서구","수영구","연제구","영도구","중구","해운대구"],
+  "대구광역시": ["남구","달서구","달성군","동구","북구","서구","수성구","중구","군위군"],
+  "인천광역시": ["강화군","계양구","남동구","동구","미추홀구","부평구","서구","연수구","옹진군","중구"],
+  "광주광역시": ["광산구","남구","동구","북구","서구"],
+  "대전광역시": ["대덕구","동구","서구","유성구","중구"],
+  "울산광역시": ["남구","동구","북구","울주군","중구"],
+  "세종특별자치시": ["세종시"],
+  "경기도": ["가평군","고양시 덕양구","고양시 일산동구","고양시 일산서구","과천시","광명시","광주시","구리시","군포시","김포시","남양주시","동두천시","부천시","성남시 분당구","성남시 수정구","성남시 중원구","수원시 권선구","수원시 영통구","수원시 장안구","수원시 팔달구","시흥시","안산시 단원구","안산시 상록구","안성시","안양시 동안구","안양시 만안구","양주시","양평군","여주시","연천군","오산시","용인시 기흥구","용인시 수지구","용인시 처인구","의왕시","의정부시","이천시","파주시","평택시","포천시","하남시","화성시"],
+  "강원특별자치도": ["강릉시","고성군","동해시","삼척시","속초시","양구군","양양군","영월군","원주시","인제군","정선군","철원군","춘천시","태백시","평창군","홍천군","화천군","횡성군"],
+  "충청북도": ["괴산군","단양군","보은군","영동군","옥천군","음성군","제천시","증평군","진천군","청주시 상당구","청주시 서원구","청주시 청원구","청주시 흥덕구","충주시"],
+  "충청남도": ["계룡시","공주시","금산군","논산시","당진시","보령시","부여군","서산시","서천군","아산시","예산군","천안시 동남구","천안시 서북구","청양군","태안군","홍성군"],
+  "전북특별자치도": ["고창군","군산시","김제시","남원시","무주군","부안군","순창군","완주군","익산시","임실군","장수군","전주시 덕진구","전주시 완산구","정읍시","진안군"],
+  "전라남도": ["강진군","고흥군","곡성군","광양시","구례군","나주시","담양군","목포시","무안군","보성군","순천시","신안군","여수시","영광군","영암군","완도군","장성군","장흥군","진도군","함평군","해남군","화순군"],
+  "경상북도": ["경산시","경주시","고령군","구미시","김천시","문경시","봉화군","상주시","성주군","안동시","영덕군","영양군","영주시","영천시","예천군","울릉군","울진군","의성군","청도군","청송군","칠곡군","포항시 남구","포항시 북구"],
+  "경상남도": ["거제시","거창군","고성군","김해시","남해군","밀양시","사천시","산청군","양산시","의령군","진주시","창녕군","창원시 마산합포구","창원시 마산회원구","창원시 성산구","창원시 의창구","창원시 진해구","통영시","하동군","함안군","함양군","합천군"],
+  "제주특별자치도": ["제주시","서귀포시"]
+};
+
+/** 쿠폰레슨 선택 시 유효기간 영역 표시/숨김 */
+function toggleCouponOptions() {
+  const couponChip = document.querySelector('#coach-lesson-method .chip:nth-child(2)');
+  const section = document.getElementById('coupon-valid-section');
+  section.style.display = couponChip.classList.contains('active') ? 'block' : 'none';
+}
+
+/** 유효기간 단일 선택 */
+function selectChipIn(el) {
+  el.parentElement.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+}
+
+/** 성별 단일 선택 */
+function selectGender(el) {
+  el.parentElement.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+}
+
+/**
+ * ═══════════════════════════════════════════════════
+ * 벨리데이션 — 프로필 등록 완료 클릭 시 필수 항목 체크
+ * ═══════════════════════════════════════════════════
+ *
+ * 필수 항목 (순서대로 체크):
+ *  1. 프로필 사진 — 이미지 업로드 여부
+ *  2. 소개 이미지 — 최소 1장
+ *  3. 이름 — 빈 값 체크
+ *  4. 성별 — 선택 여부
+ *  5. 소개 — 빈 값 체크
+ *  6. 전문 분야 — 최소 1개 선택
+ *  7. 가격 공개 여부 — 선택 여부
+ *  8. 레슨 가격 — 공개 시 빈 값 체크
+ *  9. 레슨 지역 — 시·도 + 시·군·구 선택
+ * 10. 가능한 레슨 유형 — 최소 1개 선택
+ * 11. 약관 동의 — 필수 약관 2개 동의
+ *
+ * 첫 번째 실패 항목에서 토스트 표시 + 해당 영역으로 스크롤
+ */
+function validateAndSubmit() {
+  const errors = [];
+
+  // 1. 프로필 사진
+  const photoArea = document.getElementById('profile-photo-area');
+  if (!photoArea.querySelector('img')) {
+    errors.push({ msg: '프로필 사진을 등록해주세요', el: photoArea });
+  }
+
+  // 2. 소개 이미지 최소 1장
+  if (profileImages.length === 0) {
+    errors.push({ msg: '소개 이미지를 최소 1장 등록해주세요', el: document.getElementById('image-upload-list') });
+  }
+
+  // 3. 이름
+  const nameInput = document.getElementById('coach-name');
+  if (!nameInput.value.trim()) {
+    errors.push({ msg: '이름을 입력해주세요', el: nameInput });
+  }
+
+  // 4. 성별
+  const genderSelected = document.querySelector('#coach-gender .chip.active');
+  if (!genderSelected) {
+    errors.push({ msg: '성별을 선택해주세요', el: document.getElementById('coach-gender') });
+  }
+
+  // 5. 소개
+  const bioInput = document.getElementById('coach-bio');
+  if (!bioInput.value.trim()) {
+    errors.push({ msg: '소개를 입력해주세요', el: bioInput });
+  }
+
+  // 6. 전문 분야 최소 1개
+  const specialtySelected = document.querySelectorAll('#specialty-list .chip.active');
+  if (specialtySelected.length === 0) {
+    errors.push({ msg: '전문 분야를 최소 1개 선택해주세요', el: document.getElementById('specialty-list') });
+  }
+
+  // 7. 가격 공개 여부
+  const pricePublic = document.getElementById('price-public');
+  const pricePrivate = document.getElementById('price-private');
+  if (!pricePublic.classList.contains('active') && !pricePrivate.classList.contains('active')) {
+    errors.push({ msg: '가격 공개 여부를 선택해주세요', el: pricePublic });
+  }
+
+  // 8. 레슨 가격 (공개 시 필수)
+  if (pricePublic.classList.contains('active')) {
+    const priceInput = document.getElementById('price-input');
+    if (!priceInput.value.trim()) {
+      errors.push({ msg: '레슨 가격을 입력해주세요', el: priceInput });
+    }
+  }
+
+  // 9. 레슨 지역
+  const sido = document.getElementById('coach-sido');
+  const sigungu = document.getElementById('coach-sigungu');
+  if (!sido.value) {
+    errors.push({ msg: '레슨 지역 (시·도)을 선택해주세요', el: sido });
+  } else if (!sigungu.value) {
+    errors.push({ msg: '레슨 지역 (시·군·구)을 선택해주세요', el: sigungu });
+  }
+
+  // 10. 레슨 방식 최소 1개
+  const lessonMethodSelected = document.querySelectorAll('#coach-lesson-method .chip.active');
+  if (lessonMethodSelected.length === 0) {
+    errors.push({ msg: '레슨 방식을 최소 1개 선택해주세요', el: document.getElementById('coach-lesson-method') });
+  }
+
+  // 10a. 쿠폰 선택 시 유효기간 확인
+  const couponChip = document.querySelector('#coach-lesson-method .chip:nth-child(2)');
+  if (couponChip && couponChip.classList.contains('active')) {
+    const validSelected = document.querySelectorAll('#coupon-valid-section .chip.active');
+    if (validSelected.length === 0) {
+      errors.push({ msg: '쿠폰레슨 유효기간을 선택해주세요', el: document.getElementById('coupon-valid-section') });
+    }
+  }
+
+  // 11. 레슨 형태 최소 1개
+  const lessonTypeSelected = document.querySelectorAll('#coach-lesson-type .chip.active');
+  if (lessonTypeSelected.length === 0) {
+    errors.push({ msg: '가능한 레슨 형태를 최소 1개 선택해주세요', el: document.getElementById('coach-lesson-type') });
+  }
+
+  // 12. 필수 약관 동의
+  const termsRequired = document.querySelectorAll('.terms-req-coach');
+  const allTermsAgreed = [...termsRequired].every(c => c.checked);
+  if (!allTermsAgreed) {
+    errors.push({ msg: '필수 약관에 동의해주세요', el: termsRequired[0] });
+  }
+
+  // 결과 처리
+  if (errors.length > 0) {
+    // 첫 번째 오류 토스트 + 스크롤
+    showToast(errors[0].msg);
+    errors[0].el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    // 오류 필드 강조 (빨간 테두리 1.5초)
+    const target = errors[0].el;
+    target.style.outline = '2px solid var(--error)';
+    target.style.outlineOffset = '4px';
+    target.style.borderRadius = '8px';
+    setTimeout(() => {
+      target.style.outline = 'none';
+      target.style.outlineOffset = '0';
+    }, 1500);
+  } else {
+    // 모든 벨리데이션 통과 → 다음 화면 이동
+    window.location.href = '1-6b-coach-complete.html';
+  }
+}
+
+/** 토스트 메시지 표시 */
+function showToast(message) {
+  const toast = document.getElementById('toast');
+  toast.textContent = message;
+  toast.style.display = 'block';
+  setTimeout(() => { toast.style.display = 'none'; }, 2500);
+}
+
+/** 약관 전체 동의 토글 */
+function toggleAllCoach() {
+  const allChk = document.getElementById('chk-all-coach');
+  allChk.closest('div').querySelectorAll('input[type="checkbox"]').forEach(c => c.checked = allChk.checked);
+  updateCoachBtn();
+}
+
+/** 약관 개별 변경 → 전체 동의 체크 상태 업데이트 */
+function updateCoachBtn() {
+  const allInputs = document.getElementById('chk-all-coach').closest('div').querySelectorAll('input:not(#chk-all-coach)');
+  document.getElementById('chk-all-coach').checked = [...allInputs].every(c => c.checked);
+}
+
+function updateCoachSigungu() {
+  const sido = document.getElementById('coach-sido').value;
+  const sigungu = document.getElementById('coach-sigungu');
+  sigungu.innerHTML = '<option value="">시·군·구 선택</option>';
+  if (sido && regionData[sido]) {
+    regionData[sido].forEach(function(name) {
+      const opt = document.createElement('option');
+      opt.value = name;
+      opt.textContent = name;
+      sigungu.appendChild(opt);
+    });
+  }
+}
+</script>
+
+<script src="../site-nav.js"></script>
+</body>
+</html>

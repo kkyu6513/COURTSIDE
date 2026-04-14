@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>약관 관리 — COURTSIDE Admin</title>
+<link rel="stylesheet" href="../common-admin.css">
+</head>
+<body>
+<div class="admin-layout">
+
+  <nav class="admin-sidebar">
+    <div class="logo">🎾 COURTSIDE <span style="font-size:11px;opacity:0.5;font-weight:400;">Admin</span></div>
+    <div class="nav-group"><div class="nav-group-title">Overview</div><a href="9-1-dashboard.html" class="nav-link"><span class="icon">📊</span>대시보드</a></div>
+    <div class="nav-group"><div class="nav-group-title">관리</div>
+      <a href="9-2-users.html" class="nav-link"><span class="icon">👥</span>회원 관리</a>
+      <a href="9-3-coach-verify.html" class="nav-link"><span class="icon">✅</span>코치 검증<span class="count">5</span></a>
+      <a href="9-4-banners.html" class="nav-link"><span class="icon">🖼️</span>배너 관리</a>
+      <a href="9-8-reports.html" class="nav-link"><span class="icon">🚨</span>신고 관리</a>
+      <a href="9-9-schedule-admin.html" class="nav-link"><span class="icon">📅</span>스케줄 관리</a>
+    </div>
+    <div class="nav-group"><div class="nav-group-title">설정</div>
+      <a href="9-5-subscription-plans.html" class="nav-link"><span class="icon">💎</span>구독 플랜</a>
+      <a href="9-6-code-manage.html" class="nav-link"><span class="icon">⚙️</span>코드 관리</a>
+      <a href="9-7-terms.html" class="nav-link active"><span class="icon">📜</span>약관 관리</a>
+    </div>
+  </nav>
+
+  <main class="admin-main">
+    <div class="admin-header" style="display:flex;justify-content:space-between;align-items:flex-start;">
+      <div>
+        <div class="breadcrumb">설정 › 약관 관리</div>
+        <h1>약관 관리</h1>
+        <div class="subtitle">서비스 약관을 등록·개정하고 사용자 동의 현황을 확인합니다</div>
+      </div>
+      <button class="btn-primary" onclick="document.getElementById('modal-new').style.display='flex'">+ 약관 추가 / 개정</button>
+    </div>
+
+    <!-- 약관 목록 테이블 -->
+    <div class="admin-card" style="padding:0;overflow:hidden;">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>약관명</th>
+            <th>코드</th>
+            <th>버전</th>
+            <th>필수</th>
+            <th>시행일</th>
+            <th>동의율</th>
+            <th>상태</th>
+            <th style="width:120px;">액션</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- 이용약관 -->
+          <tr>
+            <td style="font-weight:600;">이용약관</td>
+            <td><code style="font-size:12px;color:var(--info);background:#EFF6FF;padding:2px 6px;border-radius:4px;">TERMS_OF_SERVICE</code></td>
+            <td><span style="font-weight:600;">v1.0</span></td>
+            <td><span class="badge badge-active">필수</span></td>
+            <td style="color:var(--gray-500);">2026.04.01</td>
+            <td>
+              <div style="display:flex;align-items:center;gap:6px;">
+                <div style="width:60px;height:6px;background:var(--gray-100);border-radius:3px;overflow:hidden;">
+                  <div style="width:98%;height:100%;background:var(--success);border-radius:3px;"></div>
+                </div>
+                <span style="font-size:12px;font-weight:600;color:var(--success);">98%</span>
+              </div>
+            </td>
+            <td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td>
+            <td>
+              <div style="display:flex;gap:6px;">
+                <button class="btn-sm" style="background:var(--gray-50);color:var(--navy);border:1px solid var(--gray-100);" onclick="document.getElementById('modal-edit').style.display='flex'">✏️</button>
+                <button class="btn-sm" style="background:var(--gray-50);color:var(--info);border:1px solid var(--gray-100);">📊</button>
+                <button class="btn-sm" style="background:var(--gray-50);color:var(--purple);border:1px solid var(--gray-100);">📋</button>
+              </div>
+            </td>
+          </tr>
+          <!-- 개인정보 처리방침 -->
+          <tr>
+            <td style="font-weight:600;">개인정보 처리방침</td>
+            <td><code style="font-size:12px;color:var(--info);background:#EFF6FF;padding:2px 6px;border-radius:4px;">PRIVACY_POLICY</code></td>
+            <td><span style="font-weight:600;">v1.0</span></td>
+            <td><span class="badge badge-active">필수</span></td>
+            <td style="color:var(--gray-500);">2026.04.01</td>
+            <td>
+              <div style="display:flex;align-items:center;gap:6px;">
+                <div style="width:60px;height:6px;background:var(--gray-100);border-radius:3px;overflow:hidden;">
+                  <div style="width:98%;height:100%;background:var(--success);border-radius:3px;"></div>
+                </div>
+                <span style="font-size:12px;font-weight:600;color:var(--success);">98%</span>
+              </div>
+            </td>
+            <td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td>
+            <td>
+              <div style="display:flex;gap:6px;">
+                <button class="btn-sm" style="background:var(--gray-50);color:var(--navy);border:1px solid var(--gray-100);">✏️</button>
+                <button class="btn-sm" style="background:var(--gray-50);color:var(--info);border:1px solid var(--gray-100);">📊</button>
+                <button class="btn-sm" style="background:var(--gray-50);color:var(--purple);border:1px solid var(--gray-100);">📋</button>
+              </div>
+            </td>
+          </tr>
+          <!-- 마케팅 -->
+          <tr>
+            <td style="font-weight:600;">마케팅 정보 수신</td>
+            <td><code style="font-size:12px;color:var(--info);background:#EFF6FF;padding:2px 6px;border-radius:4px;">MARKETING</code></td>
+            <td><span style="font-weight:600;">v1.0</span></td>
+            <td><span class="badge" style="background:var(--gray-50);color:var(--gray-500);">선택</span></td>
+            <td style="color:var(--gray-500);">2026.04.01</td>
+            <td>
+              <div style="display:flex;align-items:center;gap:6px;">
+                <div style="width:60px;height:6px;background:var(--gray-100);border-radius:3px;overflow:hidden;">
+                  <div style="width:34%;height:100%;background:var(--warning);border-radius:3px;"></div>
+                </div>
+                <span style="font-size:12px;font-weight:600;color:var(--warning);">34%</span>
+              </div>
+            </td>
+            <td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td>
+            <td>
+              <div style="display:flex;gap:6px;">
+                <button class="btn-sm" style="background:var(--gray-50);color:var(--navy);border:1px solid var(--gray-100);">✏️</button>
+                <button class="btn-sm" style="background:var(--gray-50);color:var(--info);border:1px solid var(--gray-100);">📊</button>
+                <button class="btn-sm" style="background:var(--gray-50);color:var(--purple);border:1px solid var(--gray-100);">📋</button>
+              </div>
+            </td>
+          </tr>
+          <!-- 비활성 이전 버전 -->
+          <tr style="opacity:0.4;">
+            <td style="font-weight:600;">이용약관</td>
+            <td><code style="font-size:12px;color:var(--gray-400);background:var(--gray-50);padding:2px 6px;border-radius:4px;">TERMS_OF_SERVICE</code></td>
+            <td><span style="color:var(--gray-400);">v0.9 (이전)</span></td>
+            <td><span class="badge" style="background:var(--gray-50);color:var(--gray-400);">필수</span></td>
+            <td style="color:var(--gray-400);">2026.03.01</td>
+            <td style="color:var(--gray-400);">—</td>
+            <td><div class="toggle"></div></td>
+            <td>
+              <div style="display:flex;gap:6px;">
+                <button class="btn-sm" style="background:var(--gray-50);color:var(--gray-400);border:1px solid var(--gray-100);">📋</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 범례 -->
+    <div style="display:flex;gap:20px;margin-top:12px;font-size:12px;color:var(--gray-400);">
+      <span>✏️ 수정</span>
+      <span>📊 동의 현황 상세</span>
+      <span>📋 본문 미리보기</span>
+    </div>
+
+    <!-- 동의 현황 카드 -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:24px;">
+      <div class="admin-card" style="text-align:center;">
+        <div style="font-size:13px;color:var(--gray-500);margin-bottom:8px;">이용약관 동의율</div>
+        <div style="font-size:32px;font-weight:800;color:var(--success);">98%</div>
+        <div style="font-size:12px;color:var(--gray-400);margin-top:4px;">153/156명 동의 · 미동의 3명</div>
+      </div>
+      <div class="admin-card" style="text-align:center;">
+        <div style="font-size:13px;color:var(--gray-500);margin-bottom:8px;">개인정보 처리방침 동의율</div>
+        <div style="font-size:32px;font-weight:800;color:var(--success);">98%</div>
+        <div style="font-size:12px;color:var(--gray-400);margin-top:4px;">153/156명 동의 · 미동의 3명</div>
+      </div>
+      <div class="admin-card" style="text-align:center;">
+        <div style="font-size:13px;color:var(--gray-500);margin-bottom:8px;">마케팅 수신 동의율</div>
+        <div style="font-size:32px;font-weight:800;color:var(--warning);">34%</div>
+        <div style="font-size:12px;color:var(--gray-400);margin-top:4px;">53/156명 동의</div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- 약관 등록/개정 모달 -->
+<!-- ═══════════════════════════════════════ -->
+<div id="modal-new" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:200;align-items:center;justify-content:center;" onclick="if(event.target===this)this.style.display='none'">
+  <div style="background:#fff;border-radius:20px;width:640px;max-height:80vh;overflow-y:auto;padding:32px;" onclick="event.stopPropagation()">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+      <div style="font-size:20px;font-weight:800;color:var(--navy);">약관 등록 / 개정</div>
+      <span style="font-size:20px;color:var(--gray-400);cursor:pointer;" onclick="document.getElementById('modal-new').style.display='none'">✕</span>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:20px;">
+      <!-- 약관 코드 -->
+      <div>
+        <label style="font-size:13px;font-weight:600;color:var(--navy);display:block;margin-bottom:6px;">약관 코드 *</label>
+        <select class="input-field" style="width:100%;">
+          <option>신규 약관 코드 입력</option>
+          <option>TERMS_OF_SERVICE — 이용약관 (기존 개정)</option>
+          <option>PRIVACY_POLICY — 개인정보 처리방침 (기존 개정)</option>
+          <option>MARKETING — 마케팅 수신 (기존 개정)</option>
+        </select>
+        <div style="font-size:11px;color:var(--gray-400);margin-top:4px;">기존 약관 선택 시 새 버전으로 개정됩니다</div>
+      </div>
+
+      <!-- 제목 -->
+      <div>
+        <label style="font-size:13px;font-weight:600;color:var(--navy);display:block;margin-bottom:6px;">약관 제목 *</label>
+        <input class="input-field" style="width:100%;" placeholder="예: 이용약관" />
+      </div>
+
+      <!-- 버전 -->
+      <div style="display:flex;gap:16px;">
+        <div style="flex:1;">
+          <label style="font-size:13px;font-weight:600;color:var(--navy);display:block;margin-bottom:6px;">버전 *</label>
+          <input class="input-field" style="width:100%;" placeholder="예: 1.1" value="1.0" />
+        </div>
+        <div style="flex:1;">
+          <label style="font-size:13px;font-weight:600;color:var(--navy);display:block;margin-bottom:6px;">시행일 *</label>
+          <input class="input-field" style="width:100%;" type="date" value="2026-04-10" />
+        </div>
+      </div>
+
+      <!-- 필수/선택 -->
+      <div>
+        <label style="font-size:13px;font-weight:600;color:var(--navy);display:block;margin-bottom:6px;">동의 유형 *</label>
+        <div style="display:flex;gap:8px;">
+          <span class="chip active" style="cursor:pointer;">필수</span>
+          <span class="chip" style="cursor:pointer;">선택</span>
+        </div>
+      </div>
+
+      <!-- 본문 에디터 -->
+      <div>
+        <label style="font-size:13px;font-weight:600;color:var(--navy);display:block;margin-bottom:6px;">약관 본문 *</label>
+        <div style="border:1px solid var(--gray-100);border-radius:8px;overflow:hidden;">
+          <!-- 에디터 툴바 -->
+          <div style="display:flex;gap:4px;padding:8px 12px;background:var(--gray-50);border-bottom:1px solid var(--gray-100);">
+            <button style="border:none;background:none;font-weight:700;font-size:14px;color:var(--navy);cursor:pointer;padding:4px 8px;border-radius:4px;">B</button>
+            <button style="border:none;background:none;font-style:italic;font-size:14px;color:var(--navy);cursor:pointer;padding:4px 8px;">I</button>
+            <button style="border:none;background:none;font-size:14px;color:var(--navy);cursor:pointer;padding:4px 8px;text-decoration:underline;">U</button>
+            <span style="width:1px;background:var(--gray-300);margin:0 4px;"></span>
+            <button style="border:none;background:none;font-size:13px;color:var(--navy);cursor:pointer;padding:4px 8px;">H1</button>
+            <button style="border:none;background:none;font-size:13px;color:var(--navy);cursor:pointer;padding:4px 8px;">H2</button>
+            <span style="width:1px;background:var(--gray-300);margin:0 4px;"></span>
+            <button style="border:none;background:none;font-size:13px;color:var(--navy);cursor:pointer;padding:4px 8px;">•</button>
+            <button style="border:none;background:none;font-size:13px;color:var(--navy);cursor:pointer;padding:4px 8px;">1.</button>
+          </div>
+          <!-- 에디터 본문 -->
+          <div contenteditable="true" style="min-height:200px;padding:16px;font-size:14px;color:var(--navy);line-height:1.8;outline:none;">
+            <h2 style="font-size:16px;margin-bottom:8px;">제1조 (목적)</h2>
+            <p>이 약관은 COURTSIDE(이하 "회사")가 제공하는 테니스 코치 매칭 서비스(이하 "서비스")의 이용과 관련하여 회사와 이용자 간의 권리, 의무 및 책임사항을 규정함을 목적으로 합니다.</p>
+            <br>
+            <h2 style="font-size:16px;margin-bottom:8px;">제2조 (정의)</h2>
+            <p>1. "서비스"란 회사가 제공하는 테니스 코치-수강생 매칭 플랫폼을 말합니다.</p>
+            <p>2. "이용자"란 이 약관에 따라 서비스를 이용하는 회원을 말합니다.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 버튼 -->
+    <div style="display:flex;gap:10px;margin-top:24px;justify-content:flex-end;">
+      <button class="btn-secondary" style="width:auto;" onclick="document.getElementById('modal-new').style.display='none'">취소</button>
+      <button class="btn-primary" style="width:auto;">저장 및 활성화</button>
+    </div>
+
+    <!-- 개정 안내 -->
+    <div style="margin-top:16px;padding:14px;background:#FFF7ED;border-radius:8px;font-size:13px;color:#92400E;line-height:1.5;">
+      ⚠️ 기존 약관을 개정하면 새 버전이 활성화되고, 기존 버전은 자동 비활성화됩니다. 사용자 로그인 시 변경된 약관에 대한 재동의가 요청됩니다.
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- 약관 수정 모달 -->
+<!-- ═══════════════════════════════════════ -->
+<div id="modal-edit" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:200;align-items:center;justify-content:center;" onclick="if(event.target===this)this.style.display='none'">
+  <div style="background:#fff;border-radius:20px;width:640px;max-height:80vh;overflow-y:auto;padding:32px;" onclick="event.stopPropagation()">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+      <div>
+        <div style="font-size:20px;font-weight:800;color:var(--navy);">약관 수정</div>
+        <div style="font-size:13px;color:var(--gray-400);margin-top:4px;">이용약관 · v1.0 · TERMS_OF_SERVICE</div>
+      </div>
+      <span style="font-size:20px;color:var(--gray-400);cursor:pointer;" onclick="document.getElementById('modal-edit').style.display='none'">✕</span>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:20px;">
+      <div>
+        <label style="font-size:13px;font-weight:600;color:var(--navy);display:block;margin-bottom:6px;">약관 제목</label>
+        <input class="input-field" style="width:100%;" value="이용약관" />
+      </div>
+      <div style="display:flex;gap:16px;">
+        <div style="flex:1;">
+          <label style="font-size:13px;font-weight:600;color:var(--navy);display:block;margin-bottom:6px;">시행일</label>
+          <input class="input-field" style="width:100%;" type="date" value="2026-04-01" />
+        </div>
+        <div style="flex:1;">
+          <label style="font-size:13px;font-weight:600;color:var(--navy);display:block;margin-bottom:6px;">정렬 순서</label>
+          <input class="input-field" style="width:100%;" type="number" value="1" />
+        </div>
+      </div>
+      <div>
+        <label style="font-size:13px;font-weight:600;color:var(--navy);display:block;margin-bottom:6px;">본문 수정</label>
+        <div style="border:1px solid var(--gray-100);border-radius:8px;min-height:200px;padding:16px;" contenteditable="true">
+          <p style="font-size:14px;color:var(--navy);line-height:1.8;">약관 본문 내용이 여기에 표시됩니다...</p>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;margin-top:24px;justify-content:flex-end;">
+      <button class="btn-secondary" style="width:auto;" onclick="document.getElementById('modal-edit').style.display='none'">취소</button>
+      <button class="btn-primary" style="width:auto;">저장</button>
+    </div>
+
+    <div style="margin-top:16px;padding:14px;background:#F0FDFA;border-radius:8px;font-size:13px;color:#065F46;line-height:1.5;">
+      💡 본문 내용만 수정합니다. 약관을 개정(버전 변경)하려면 "약관 추가/개정" 버튼을 사용하세요.
+    </div>
+  </div>
+</div>
+
+
+<script src="../site-nav.js"></script>
+</body>
+</html>
