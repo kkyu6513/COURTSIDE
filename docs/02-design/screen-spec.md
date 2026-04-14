@@ -947,7 +947,7 @@
 |------|------|------|------|
 | 스케줄 관리 › | 클릭 | 스케줄 상세 관리 화면 | → **7-4 스케줄** |
 | 주간 미니 캘린더 | 클릭 | 해당 날짜의 레슨 일정 표시 | |
-| 오늘 레슨 항목 | 클릭 | **레슨 상세 풀팝업** 오픈. 상단 ← 뒤로 버튼. 구성: 상태 배지 + 수강생 프로필 (이름/연령/성별/NTRP + 대화하기 버튼) + 수강생 선택 일정 (라디오 선택 — 대기 시) + 레슨 유형/형태/목표/결제 정보. **상태별 하단**: [대기] 더보기(보류/거절) + 스케줄 확정하기 / [확정] 취소 + 레슨 완료 처리 / [레슨완료] 닫기 | |
+| 오늘 레슨 항목 | 클릭 | **레슨 상세 풀팝업** 오픈. 상단 ← 뒤로 버튼. 구성: 상태 배지 + 수강생 프로필 (이름/연령/성별/NTRP + 대화하기 버튼) + 수강생 선택 일정 (라디오 선택 — 대기 시) + 레슨 유형/형태/목표/결제 정보. **오늘 레슨 표시 상태**: 레슨 예정(📌 보라색) · 레슨완료(🏁 파란색). 확정 상태는 오늘 레슨 목록에 노출하지 않음. **상태별 하단**: [대기] 더보기(보류/거절) + 스케줄 확정하기 / [레슨 예정] 취소 + 레슨 완료 처리 / [레슨완료] 닫기 | |
 | 더보기 → 보류하기 | 클릭 | 사유 입력 팝업 (필수) → `PUT /api/bookings/:id/hold { reason }` → status=ON_HOLD + 수강생 BOOKING_ON_HOLD 알림톡 발송 (보류 사유 포함) | |
 | 더보기 → 거절하기 | 클릭 | 사유 입력 팝업 (필수) → `PUT /api/bookings/:id/reject { reason }` → status=REJECTED + 수강생 알림 | |
 | 스케줄 확정하기 | 클릭 | 라디오 선택된 일정으로 확정 → `PUT /api/bookings/:id/confirm { selectedScheduleId }` → status=CONFIRMED + 스케줄 블록 + 수강생 알림 | |
@@ -971,7 +971,7 @@
 | 👤 마이 | 코치 마이 | → **7-1 코치마이** |
 
 **표시 데이터**:
-- 오늘 레슨: `GET /api/bookings?role=coach&date=today&status=CONFIRMED` [인증: 코치]
+- 오늘 레슨: `GET /api/bookings?role=coach&date=today&status=CONFIRMED,COMPLETED` [인증: 코치] — 확정(CONFIRMED) 건은 "레슨 예정"으로 표시, COMPLETED 건은 "레슨완료"로 표시. 오늘 레슨 목록에서 "확정" 배지는 노출하지 않음
 - 변경 요청: `GET /api/bookings?role=coach&rescheduleStatus=PENDING,PROPOSED,COMPLETED&sort=rescheduleRequestedAt:ASC` [인증: 코치] — 먼저 요청한 수강생 순 정렬 (선입선출). 각 건에 자동 추천 결과 포함. COMPLETED는 당일까지만 반환
 - 대기 신청: `GET /api/bookings?role=coach&status=PENDING&limit=3` [인증: 코치]
 - 이번 주 요약: 총 레슨 수 / 대기 신청 수 / 완료 수
