@@ -163,11 +163,11 @@
             <span class="badge-sm" style="background:#FFF7ED;color:#EA580C;">🔄 변경 요청</span>
           </div>
           <div class="schedule-slot" style="background:#FAF5FF;border-left:4px solid var(--purple);cursor:pointer;" onclick="showLessonDetail('upcoming')">
-            <div><div class="time">17:00</div><div class="student">한지우 · 백핸드 · 그룹 · <span style="color:var(--info);font-weight:600;">1/4회</span></div></div>
+            <div><div class="time">17:00</div><div class="student">한지우 · 백핸드 · 그룹 · <span style="color:var(--info);font-weight:600;">1/4회</span> · <span style="color:var(--error);font-weight:600;">미결제</span></div></div>
             <span class="badge-sm" style="background:#F3E8FF;color:#7C5CBF;">레슨 예정</span>
           </div>
           <div class="schedule-slot" style="background:#FAF5FF;border-left:4px solid var(--purple);cursor:pointer;" onclick="showLessonDetail('upcoming')">
-            <div><div class="time">19:00</div><div class="student">최준혁 · 경기 전략 · 1:1 · <span style="color:var(--info);font-weight:600;">2/10회</span></div></div>
+            <div><div class="time">19:00</div><div class="student">최준혁 · 경기 전략 · 1:1 · <span style="color:var(--info);font-weight:600;">2/10회</span> · <span style="color:#3B82F6;font-weight:600;">외부결제</span></div></div>
             <span class="badge-sm" style="background:#F3E8FF;color:#7C5CBF;">레슨 예정</span>
           </div>
           <div class="schedule-slot" style="background:#FAF5FF;border-left:4px solid var(--purple);cursor:pointer;" onclick="showLessonDetail('upcoming')">
@@ -554,7 +554,7 @@ function showLessonDetail(status) {
       type: '정규레슨', format: '1:1 개인', goal: '발리 연습',
       schedule: [{ day: '일', date: '4/13', slot: 'T1000', label: '10:00' }],
       session: '6/8회', nextPayment: '4/20',
-      paid: true, price: '70,000원',
+      paymentStatus: 'paid', paid: true, price: '70,000원',
       badge: '<span style="display:inline-block;padding:4px 12px;border-radius:8px;background:#FEE2E2;color:#EF4444;font-size:13px;font-weight:700;">🎾 진행중</span>',
       statusMsg: '<div style="padding:12px;background:#FFF5F5;border-radius:10px;font-size:12px;color:var(--coral);line-height:1.6;margin-top:12px;"><strong>현재 레슨이 진행 중입니다.</strong><br>레슨 종료 후 완료 처리해 주세요.</div>'
     },
@@ -563,7 +563,7 @@ function showLessonDetail(status) {
       type: '정규레슨', format: '1:1 개인', goal: '포핸드 교정',
       schedule: [{ day: '일', date: '4/13', slot: 'T0900', label: '09:00' }],
       session: '5/8회', nextPayment: '4/20',
-      paid: true, price: '50,000원',
+      paymentStatus: 'paid', paid: true, price: '50,000원',
       badge: '<span style="display:inline-block;padding:4px 12px;border-radius:8px;background:#DBEAFE;color:#1E40AF;font-size:13px;font-weight:700;">🏁 레슨완료</span>',
       statusMsg: '<div style="padding:12px;background:var(--gray-50);border-radius:10px;font-size:12px;color:var(--gray-500);line-height:1.6;margin-top:12px;">레슨이 정상적으로 완료되었습니다.<br>수고하셨습니다!</div>'
     },
@@ -572,7 +572,7 @@ function showLessonDetail(status) {
       type: '정규레슨', format: '1:1 개인',
       schedule: [{ day: '일', date: '4/13', slot: 'T1600', label: '16:00' }],
       session: '3/8회', nextPayment: '4/25',
-      paid: true, price: '60,000원',
+      paymentStatus: 'paid', paid: true, price: '60,000원',
       badge: '<span style="display:inline-block;padding:4px 12px;border-radius:8px;background:#FFF7ED;color:#EA580C;font-size:13px;font-weight:700;">🔄 변경 요청</span>',
       statusMsg: '',
       originalSchedule: '4/14 (월) 16:00',
@@ -588,7 +588,7 @@ function showLessonDetail(status) {
         { day: '목', date: '4/17', slot: 'T1400', label: '14:00' }
       ],
       session: '-', nextPayment: null,
-      paid: false, price: '미결제 (신청만)',
+      paymentStatus: 'unpaid', paid: false, price: '미결제 (신청만)',
       badge: '<span style="display:inline-block;padding:4px 12px;border-radius:8px;background:#FEF3C7;color:#92400E;font-size:13px;font-weight:700;">⏳ 대기 중</span>',
       statusMsg: '<div style="padding:12px;background:#FFF7ED;border-radius:10px;font-size:12px;color:#92400E;line-height:1.6;margin-top:12px;"><strong>수강생이 레슨을 신청했어요.</strong><br>수락하면 레슨이 확정되고, 수강생에게 알림이 발송됩니다.</div>'
     },
@@ -599,7 +599,7 @@ function showLessonDetail(status) {
         { day: '일', date: '4/13', slot: 'T1400', label: '14:00' }
       ],
       session: '4/8회', nextPayment: '4/22',
-      paid: true, price: '60,000원',
+      paymentStatus: 'paid', paid: true, price: '60,000원',
       badge: '<span style="display:inline-block;padding:4px 12px;border-radius:8px;background:#F3E8FF;color:#7C5CBF;font-size:13px;font-weight:700;">📌 레슨 예정</span>',
       statusMsg: '<div style="padding:12px;background:#FAF5FF;border-radius:10px;font-size:12px;color:#7C5CBF;line-height:1.6;margin-top:12px;">오늘 14:00에 레슨이 예정되어 있어요.<br>시간에 맞춰 준비해 주세요!</div>'
     },
@@ -612,7 +612,7 @@ function showLessonDetail(status) {
         { day: '수', date: '4/16', slot: 'T1800', label: '18:00' },
         { day: '금', date: '4/18', slot: 'T1800', label: '18:00' }
       ],
-      paid: true, price: '50,000원 (쿠폰 3/10회)',
+      paymentStatus: 'paid', paid: true, price: '50,000원 (쿠폰 3/10회)',
       badge: '<span style="display:inline-block;padding:4px 12px;border-radius:8px;background:#D1FAE5;color:#065F46;font-size:13px;font-weight:700;">✅ 확정</span>',
       statusMsg: '<div style="padding:12px;background:#F0FDFA;border-radius:10px;font-size:12px;color:#065F46;line-height:1.6;margin-top:12px;">예정된 시간에 레슨을 진행해 주세요.<br>레슨 완료 후 하단 버튼으로 완료 처리하세요.</div>'
     }
@@ -704,7 +704,10 @@ function showLessonDetail(status) {
         <div style="height:1px;background:var(--gray-100);"></div>
         <div style="display:flex;justify-content:space-between;align-items:center;padding:0 4px;">
           <span style="font-size:13px;color:var(--gray-400);">결제</span>
-          <span style="font-size:14px;font-weight:600;color:var(--navy);">${d.price}</span>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:14px;font-weight:600;color:var(--navy);">${d.price}</span>
+            ${d.paymentStatus === 'paid' ? '<span style="padding:2px 6px;border-radius:4px;background:#D1FAE5;color:#065F46;font-size:10px;font-weight:700;">결제완료</span>' : d.paymentStatus === 'external' ? '<span style="padding:2px 6px;border-radius:4px;background:#DBEAFE;color:#1E40AF;font-size:10px;font-weight:700;">외부결제</span>' : '<span style="padding:2px 6px;border-radius:4px;background:#FEE2E2;color:#EF4444;font-size:10px;font-weight:700;">미결제</span>'}
+          </div>
         </div>
         ${d.nextPayment ? '<div style="height:1px;background:var(--gray-100);"></div><div style="display:flex;justify-content:space-between;align-items:center;padding:0 4px;"><span style="font-size:13px;color:var(--gray-400);">다음 결제일</span><span style="font-size:14px;font-weight:600;color:var(--navy);">' + d.nextPayment + '</span></div>' : ''}
       </div>
@@ -756,7 +759,10 @@ function showLessonDetail(status) {
         <div style="height:1px;background:var(--gray-100);"></div>
         <div style="display:flex;justify-content:space-between;align-items:center;padding:0 4px;">
           <span style="font-size:13px;color:var(--gray-400);">결제</span>
-          <span style="font-size:14px;font-weight:600;color:${d.paid ? 'var(--navy)' : 'var(--coral)'};">${d.price}</span>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:14px;font-weight:600;color:${d.paid ? 'var(--navy)' : 'var(--coral)'};">${d.price}</span>
+            ${d.paymentStatus === 'paid' ? '<span style="padding:2px 6px;border-radius:4px;background:#D1FAE5;color:#065F46;font-size:10px;font-weight:700;">결제완료</span>' : d.paymentStatus === 'external' ? '<span style="padding:2px 6px;border-radius:4px;background:#DBEAFE;color:#1E40AF;font-size:10px;font-weight:700;">외부결제</span>' : '<span style="padding:2px 6px;border-radius:4px;background:#FEE2E2;color:#EF4444;font-size:10px;font-weight:700;">미결제</span>'}
+          </div>
         </div>
         ${d.nextPayment ? '<div style="height:1px;background:var(--gray-100);"></div><div style="display:flex;justify-content:space-between;align-items:center;padding:0 4px;"><span style="font-size:13px;color:var(--gray-400);">다음 결제일</span><span style="font-size:14px;font-weight:600;color:var(--navy);">' + d.nextPayment + '</span></div>' : ''}
       </div>
