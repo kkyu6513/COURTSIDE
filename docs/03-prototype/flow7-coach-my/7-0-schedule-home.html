@@ -75,7 +75,7 @@
         <!-- 탭 헤더 -->
         <div style="display:flex;border-bottom:2px solid var(--gray-100);margin-bottom:14px;">
           <div id="tab-lesson" class="schedule-tab active" onclick="switchTab('lesson')" style="flex:1;text-align:center;padding:10px 0;font-size:14px;font-weight:700;color:var(--green);border-bottom:2px solid var(--green);margin-bottom:-2px;cursor:pointer;">
-            오늘 레슨 <span style="font-size:12px;">8</span>
+            오늘 레슨 <span style="font-size:12px;">9</span>
           </div>
           <div id="tab-reschedule" class="schedule-tab" onclick="switchTab('reschedule')" style="flex:1;text-align:center;padding:10px 0;font-size:14px;font-weight:700;color:var(--gray-400);border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer;position:relative;">
             변경 요청 <span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--coral);color:#fff;font-size:10px;font-weight:700;margin-left:2px;">4</span>
@@ -108,6 +108,14 @@
                   <div>
                     <div style="font-size:14px;font-weight:700;color:var(--navy);">레슨 예정</div>
                     <div style="font-size:12px;color:var(--gray-500);line-height:1.5;">오늘 진행 예정인 확정 레슨이에요.<br>시간에 맞춰 준비해 주세요!</div>
+                  </div>
+                </div>
+                <div style="height:1px;background:var(--gray-100);"></div>
+                <div style="display:flex;align-items:center;gap:10px;">
+                  <div style="width:36px;height:36px;border-radius:10px;background:#FFF7ED;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;">🔄</div>
+                  <div>
+                    <div style="font-size:14px;font-weight:700;color:var(--navy);">변경 요청</div>
+                    <div style="font-size:12px;color:var(--gray-500);line-height:1.5;">수강생이 일정 변경을 요청한 레슨이에요.<br><strong style="color:var(--orange);">변경 요청 탭에서 확인해 주세요!</strong></div>
                   </div>
                 </div>
                 <div style="height:1px;background:var(--gray-100);"></div>
@@ -149,6 +157,10 @@
           <div class="schedule-slot" style="background:#FAF5FF;border-left:4px solid var(--purple);cursor:pointer;" onclick="showLessonDetail('upcoming')">
             <div><div class="time">15:00</div><div class="student">정다은 · 풋워크 · 1:1</div></div>
             <span class="badge-sm" style="background:#F3E8FF;color:#7C5CBF;">레슨 예정</span>
+          </div>
+          <div class="schedule-slot" style="background:#FFF7ED;border-left:4px solid var(--orange);cursor:pointer;" onclick="showLessonDetail('reschedule')">
+            <div><div class="time" style="color:var(--orange);">16:00</div><div class="student">박지수 · 서브 연습 · 1:1</div></div>
+            <span class="badge-sm" style="background:#FFF7ED;color:#EA580C;">🔄 변경 요청</span>
           </div>
           <div class="schedule-slot" style="background:#FAF5FF;border-left:4px solid var(--purple);cursor:pointer;" onclick="showLessonDetail('upcoming')">
             <div><div class="time">17:00</div><div class="student">한지우 · 백핸드 · 그룹</div></div>
@@ -543,6 +555,14 @@ function showLessonDetail(status) {
       badge: '<span style="display:inline-block;padding:4px 12px;border-radius:8px;background:#DBEAFE;color:#1E40AF;font-size:13px;font-weight:700;">🏁 레슨완료</span>',
       statusMsg: '<div style="padding:12px;background:var(--gray-50);border-radius:10px;font-size:12px;color:var(--gray-500);line-height:1.6;margin-top:12px;">레슨이 정상적으로 완료되었습니다.<br>수고하셨습니다!</div>'
     },
+    reschedule: {
+      name: '박지수', age: '20대', gender: '여성', ntrp: 'NTRP 3.0',
+      type: '정규레슨', format: '1:1 개인',
+      schedule: [{ day: '일', date: '4/13', slot: 'T1600', label: '16:00' }],
+      paid: true, price: '60,000원',
+      badge: '<span style="display:inline-block;padding:4px 12px;border-radius:8px;background:#FFF7ED;color:#EA580C;font-size:13px;font-weight:700;">🔄 변경 요청</span>',
+      statusMsg: '<div style="padding:12px;background:#FFF7ED;border-radius:10px;font-size:12px;color:#EA580C;line-height:1.6;margin-top:12px;"><strong>수강생이 일정 변경을 요청했어요.</strong><br>변경 요청 탭에서 확인하고 처리해 주세요.</div>'
+    },
     pending: {
       name: '김영희 외 2인', age: '20대', gender: '여성', ntrp: 'NTRP 2.5',
       type: '정규레슨', format: '그룹 (3인)', goal: '서브 연습',
@@ -593,6 +613,7 @@ function showLessonDetail(status) {
 
   // 상태에 따라 라디오/체크 표시 방식 결정
   const isSelectable = (status === 'pending');
+  const isReschedule = (status === 'reschedule');
   const isCompleted = (status === 'completed');
   const isConfirmed = (status === 'confirmed');
   const isUpcoming = (status === 'upcoming');
@@ -605,6 +626,12 @@ function showLessonDetail(status) {
         <input type="radio" name="schedule-select" value="${i}" style="accent-color:var(--green);width:16px;height:16px;"${i===0?' checked':''}>
         <span style="font-size:14px;font-weight:600;color:var(--navy);">${s.date} (${s.day}) ${s.label}</span>
       </label>`;
+    } else if (isReschedule) {
+      // 변경 요청: 주황색 테마
+      return `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#FFF7ED;border-radius:10px;border:1.5px solid #FFEDD5;margin-top:6px;">
+        <span style="font-size:14px;">🔄</span>
+        <span style="font-size:14px;font-weight:600;color:#EA580C;">${s.date} (${s.day}) ${s.label}</span>
+      </div>`;
     } else if (isInProgress) {
       // 진행중: 코랄 테마
       return `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#FFF5F5;border-radius:10px;border:1.5px solid #FEE2E2;margin-top:6px;">
@@ -632,7 +659,7 @@ function showLessonDetail(status) {
     }
   }).join('');
 
-  const scheduleTitle = isSelectable ? '수강생 희망 일정 <span style="font-size:11px;color:var(--coral);font-weight:400;">(확정할 일정을 선택하세요)</span>' : isInProgress ? '진행중 레슨' : isUpcoming ? '오늘 레슨 일정' : '확정 일정';
+  const scheduleTitle = isSelectable ? '수강생 희망 일정 <span style="font-size:11px;color:var(--coral);font-weight:400;">(확정할 일정을 선택하세요)</span>' : isReschedule ? '변경 요청 일정' : isInProgress ? '진행중 레슨' : isUpcoming ? '오늘 레슨 일정' : '확정 일정';
 
   lesson.innerHTML = `
     <div style="display:flex;flex-direction:column;gap:10px;">
@@ -652,18 +679,16 @@ function showLessonDetail(status) {
       </div>
       <div style="height:1px;background:var(--gray-100);"></div>
       <div style="display:flex;justify-content:space-between;align-items:center;padding:0 4px;">
-        <span style="font-size:13px;color:var(--gray-400);">레슨 목표</span>
-        <span style="font-size:14px;font-weight:600;color:var(--navy);">${d.goal}</span>
-      </div>
-      <div style="height:1px;background:var(--gray-100);"></div>
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:0 4px;">
         <span style="font-size:13px;color:var(--gray-400);">결제</span>
         <span style="font-size:14px;font-weight:600;color:${d.paid ? 'var(--navy)' : 'var(--coral)'};">${d.price}</span>
       </div>
     </div>
     ${d.statusMsg}`;
 
-  if (status === 'inprogress') {
+  if (status === 'reschedule') {
+    actions.innerHTML = `
+      <button onclick="closeLessonDetail();switchTab('reschedule');" style="width:100%;height:48px;border-radius:12px;border:none;background:var(--orange);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">변경 요청 탭에서 확인하기</button>`;
+  } else if (status === 'inprogress') {
     actions.innerHTML = `
       <button onclick="completeLesson()" style="width:100%;height:48px;border-radius:12px;border:none;background:var(--coral);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">레슨 완료 처리</button>`;
   } else if (status === 'completed') {
