@@ -12,6 +12,7 @@
   .schedule-slot .time { font-size:14px;font-weight:600;color:var(--navy); }
   .schedule-slot .student { font-size:12px;color:var(--gray-500);margin-top:2px; }
   .badge-sm { font-size:11px;padding:3px 8px;border-radius:8px;font-weight:600; }
+  @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.6;} }
 </style>
 </head>
 <body>
@@ -74,7 +75,7 @@
         <!-- 탭 헤더 -->
         <div style="display:flex;border-bottom:2px solid var(--gray-100);margin-bottom:14px;">
           <div id="tab-lesson" class="schedule-tab active" onclick="switchTab('lesson')" style="flex:1;text-align:center;padding:10px 0;font-size:14px;font-weight:700;color:var(--green);border-bottom:2px solid var(--green);margin-bottom:-2px;cursor:pointer;">
-            오늘 레슨 <span style="font-size:12px;">2</span>
+            오늘 레슨 <span style="font-size:12px;">8</span>
           </div>
           <div id="tab-reschedule" class="schedule-tab" onclick="switchTab('reschedule')" style="flex:1;text-align:center;padding:10px 0;font-size:14px;font-weight:700;color:var(--gray-400);border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer;position:relative;">
             변경 요청 <span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--coral);color:#fff;font-size:10px;font-weight:700;margin-left:2px;">4</span>
@@ -94,6 +95,14 @@
             </div>
             <div id="accordion-content" style="max-height:0;overflow:hidden;transition:max-height 0.3s ease;">
               <div style="padding:0 14px 14px;display:flex;flex-direction:column;gap:10px;">
+                <div style="display:flex;align-items:center;gap:10px;">
+                  <div style="width:36px;height:36px;border-radius:10px;background:#FEE2E2;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;">🎾</div>
+                  <div>
+                    <div style="font-size:14px;font-weight:700;color:var(--navy);">진행중</div>
+                    <div style="font-size:12px;color:var(--gray-500);line-height:1.5;">현재 진행 중인 레슨이에요.<br>레슨 종료 후 완료 처리해 주세요!</div>
+                  </div>
+                </div>
+                <div style="height:1px;background:var(--gray-100);"></div>
                 <div style="display:flex;align-items:center;gap:10px;">
                   <div style="width:36px;height:36px;border-radius:10px;background:#F3E8FF;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;">📌</div>
                   <div>
@@ -125,8 +134,32 @@
             <div><div class="time" style="color:var(--gray-400);">09:00</div><div class="student">홍길동 · 포핸드 교정 · 1:1</div></div>
             <span class="badge-sm" style="background:#DBEAFE;color:#1E40AF;">레슨완료</span>
           </div>
+          <div class="schedule-slot" style="background:#FFF5F5;border-left:4px solid var(--coral);cursor:pointer;position:relative;" onclick="showLessonDetail('inprogress')">
+            <div><div class="time" style="color:var(--coral);">10:00</div><div class="student">이민호 · 발리 연습 · 1:1</div></div>
+            <span class="badge-sm" style="background:#FEE2E2;color:var(--error);animation:pulse 2s infinite;">🎾 진행중</span>
+          </div>
+          <div class="schedule-slot" style="background:#FAF5FF;border-left:4px solid var(--purple);cursor:pointer;" onclick="showLessonDetail('upcoming')">
+            <div><div class="time">13:00</div><div class="student">박수진 · 스매시 · 그룹</div></div>
+            <span class="badge-sm" style="background:#F3E8FF;color:#7C5CBF;">레슨 예정</span>
+          </div>
           <div class="schedule-slot" style="background:#FAF5FF;border-left:4px solid var(--purple);cursor:pointer;" onclick="showLessonDetail('upcoming')">
             <div><div class="time">14:00</div><div class="student">김영희 · 서브 연습 · 1:1</div></div>
+            <span class="badge-sm" style="background:#F3E8FF;color:#7C5CBF;">레슨 예정</span>
+          </div>
+          <div class="schedule-slot" style="background:#FAF5FF;border-left:4px solid var(--purple);cursor:pointer;" onclick="showLessonDetail('upcoming')">
+            <div><div class="time">15:00</div><div class="student">정다은 · 풋워크 · 1:1</div></div>
+            <span class="badge-sm" style="background:#F3E8FF;color:#7C5CBF;">레슨 예정</span>
+          </div>
+          <div class="schedule-slot" style="background:#FAF5FF;border-left:4px solid var(--purple);cursor:pointer;" onclick="showLessonDetail('upcoming')">
+            <div><div class="time">17:00</div><div class="student">한지우 · 백핸드 · 그룹</div></div>
+            <span class="badge-sm" style="background:#F3E8FF;color:#7C5CBF;">레슨 예정</span>
+          </div>
+          <div class="schedule-slot" style="background:#FAF5FF;border-left:4px solid var(--purple);cursor:pointer;" onclick="showLessonDetail('upcoming')">
+            <div><div class="time">19:00</div><div class="student">최준혁 · 경기 전략 · 1:1</div></div>
+            <span class="badge-sm" style="background:#F3E8FF;color:#7C5CBF;">레슨 예정</span>
+          </div>
+          <div class="schedule-slot" style="background:#FAF5FF;border-left:4px solid var(--purple);cursor:pointer;" onclick="showLessonDetail('upcoming')">
+            <div><div class="time">20:00</div><div class="student">오서연 · 포핸드 교정 · 1:1</div></div>
             <span class="badge-sm" style="background:#F3E8FF;color:#7C5CBF;">레슨 예정</span>
           </div>
         </div>
@@ -494,6 +527,14 @@ function showLessonDetail(status) {
   const actions = document.getElementById('detail-actions');
 
   const data = {
+    inprogress: {
+      name: '이민호', age: '30대', gender: '남성', ntrp: 'NTRP 4.0',
+      type: '정규레슨', format: '1:1 개인', goal: '발리 연습',
+      schedule: [{ day: '일', date: '4/13', slot: 'T1000', label: '10:00' }],
+      paid: true, price: '70,000원',
+      badge: '<span style="display:inline-block;padding:4px 12px;border-radius:8px;background:#FEE2E2;color:#EF4444;font-size:13px;font-weight:700;">🎾 진행중</span>',
+      statusMsg: '<div style="padding:12px;background:#FFF5F5;border-radius:10px;font-size:12px;color:var(--coral);line-height:1.6;margin-top:12px;"><strong>현재 레슨이 진행 중입니다.</strong><br>레슨 종료 후 완료 처리해 주세요.</div>'
+    },
     completed: {
       name: '홍길동', age: '30대', gender: '남성', ntrp: 'NTRP 3.0',
       type: '정규레슨', format: '1:1 개인', goal: '포핸드 교정',
@@ -551,10 +592,11 @@ function showLessonDetail(status) {
     </div>`;
 
   // 상태에 따라 라디오/체크 표시 방식 결정
-  const isSelectable = (status === 'pending'); // 대기: 코치가 일정 선택 후 확정
+  const isSelectable = (status === 'pending');
   const isCompleted = (status === 'completed');
   const isConfirmed = (status === 'confirmed');
   const isUpcoming = (status === 'upcoming');
+  const isInProgress = (status === 'inprogress');
 
   const scheduleHtml = d.schedule.map((s, i) => {
     if (isSelectable) {
@@ -563,6 +605,12 @@ function showLessonDetail(status) {
         <input type="radio" name="schedule-select" value="${i}" style="accent-color:var(--green);width:16px;height:16px;"${i===0?' checked':''}>
         <span style="font-size:14px;font-weight:600;color:var(--navy);">${s.date} (${s.day}) ${s.label}</span>
       </label>`;
+    } else if (isInProgress) {
+      // 진행중: 코랄 테마
+      return `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#FFF5F5;border-radius:10px;border:1.5px solid #FEE2E2;margin-top:6px;">
+        <span style="font-size:14px;">🎾</span>
+        <span style="font-size:14px;font-weight:600;color:var(--coral);">${s.date} (${s.day}) ${s.label}</span>
+      </div>`;
     } else if (isUpcoming) {
       // 레슨 예정: 보라색 테마
       return `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#FAF5FF;border-radius:10px;border:1.5px solid #E9D5FF;margin-top:6px;">
@@ -584,7 +632,7 @@ function showLessonDetail(status) {
     }
   }).join('');
 
-  const scheduleTitle = isSelectable ? '수강생 희망 일정 <span style="font-size:11px;color:var(--coral);font-weight:400;">(확정할 일정을 선택하세요)</span>' : isUpcoming ? '오늘 레슨 일정' : '확정 일정';
+  const scheduleTitle = isSelectable ? '수강생 희망 일정 <span style="font-size:11px;color:var(--coral);font-weight:400;">(확정할 일정을 선택하세요)</span>' : isInProgress ? '진행중 레슨' : isUpcoming ? '오늘 레슨 일정' : '확정 일정';
 
   lesson.innerHTML = `
     <div style="display:flex;flex-direction:column;gap:10px;">
@@ -615,7 +663,10 @@ function showLessonDetail(status) {
     </div>
     ${d.statusMsg}`;
 
-  if (status === 'completed') {
+  if (status === 'inprogress') {
+    actions.innerHTML = `
+      <button onclick="completeLesson()" style="width:100%;height:48px;border-radius:12px;border:none;background:var(--coral);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">레슨 완료 처리</button>`;
+  } else if (status === 'completed') {
     actions.innerHTML = '<button onclick="closeLessonDetail()" style="width:100%;height:48px;border-radius:12px;border:1.5px solid var(--gray-200);background:#fff;color:var(--gray-500);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">닫기</button>';
   } else if (status === 'upcoming') {
     actions.innerHTML = `
