@@ -74,7 +74,7 @@
         <!-- 탭 헤더 -->
         <div style="display:flex;border-bottom:2px solid var(--gray-100);margin-bottom:14px;">
           <div id="tab-lesson" class="schedule-tab active" onclick="switchTab('lesson')" style="flex:1;text-align:center;padding:10px 0;font-size:14px;font-weight:700;color:var(--green);border-bottom:2px solid var(--green);margin-bottom:-2px;cursor:pointer;">
-            오늘 레슨 <span style="font-size:12px;">3</span>
+            오늘 레슨 <span style="font-size:12px;">2</span>
           </div>
           <div id="tab-reschedule" class="schedule-tab" onclick="switchTab('reschedule')" style="flex:1;text-align:center;padding:10px 0;font-size:14px;font-weight:700;color:var(--gray-400);border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer;position:relative;">
             변경 요청 <span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--coral);color:#fff;font-size:10px;font-weight:700;margin-left:2px;">4</span>
@@ -94,14 +94,6 @@
             </div>
             <div id="accordion-content" style="max-height:0;overflow:hidden;transition:max-height 0.3s ease;">
               <div style="padding:0 14px 14px;display:flex;flex-direction:column;gap:10px;">
-                <div style="display:flex;align-items:center;gap:10px;">
-                  <div style="width:36px;height:36px;border-radius:10px;background:#D1FAE5;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;">✅</div>
-                  <div>
-                    <div style="font-size:14px;font-weight:700;color:var(--navy);">확정 레슨</div>
-                    <div style="font-size:12px;color:var(--gray-500);line-height:1.5;">코치님이 수락했거나 수강생이 결제한 레슨이에요.<br>예정된 시간에 레슨을 진행해 주세요!</div>
-                  </div>
-                </div>
-                <div style="height:1px;background:var(--gray-100);"></div>
                 <div style="display:flex;align-items:center;gap:10px;">
                   <div style="width:36px;height:36px;border-radius:10px;background:#F3E8FF;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;">📌</div>
                   <div>
@@ -136,10 +128,6 @@
           <div class="schedule-slot" style="background:#FAF5FF;border-left:4px solid var(--purple);cursor:pointer;" onclick="showLessonDetail('upcoming')">
             <div><div class="time">14:00 - 15:00</div><div class="student">김영희 · 서브 연습 · 1:1</div></div>
             <span class="badge-sm" style="background:#F3E8FF;color:#7C5CBF;">레슨 예정</span>
-          </div>
-          <div class="schedule-slot" style="background:#F0FDFA;border-left:4px solid var(--green);cursor:pointer;" onclick="showLessonDetail('confirmed')">
-            <div><div class="time">18:00 - 19:00</div><div class="student">이철수 · 백핸드 · 1:1</div></div>
-            <span class="badge-sm" style="background:#D1FAE5;color:#065F46;">확정</span>
           </div>
         </div>
 
