@@ -196,7 +196,7 @@
               </div>
             </div>
             <div style="margin-top:10px;">
-              <button style="width:100%;height:40px;border-radius:999px;border:none;background:var(--green);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">모두 제안하기</button>
+              <button onclick="proposeAll(this)" style="width:100%;height:40px;border-radius:999px;border:none;background:var(--green);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">모두 제안하기</button>
             </div>
           </div>
 
@@ -620,8 +620,8 @@ function showLessonDetail(status) {
   } else if (status === 'upcoming') {
     actions.innerHTML = `
       <div style="display:flex;gap:10px;">
-        <button style="flex:1;height:48px;border-radius:12px;border:1.5px solid var(--gray-200);background:#fff;color:var(--gray-500);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">취소</button>
-        <button style="flex:2;height:48px;border-radius:12px;border:none;background:var(--purple);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">레슨 완료 처리</button>
+        <button onclick="cancelLesson()" style="flex:1;height:48px;border-radius:12px;border:1.5px solid var(--gray-200);background:#fff;color:var(--gray-500);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">취소</button>
+        <button onclick="completeLesson()" style="flex:2;height:48px;border-radius:12px;border:none;background:var(--purple);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">레슨 완료 처리</button>
       </div>`;
   } else if (status === 'pending') {
     actions.innerHTML = `
@@ -632,7 +632,7 @@ function showLessonDetail(status) {
       </div>
       <div style="display:flex;gap:10px;">
         <button onclick="showMoreActions()" style="flex:1;height:48px;border-radius:12px;border:1.5px solid var(--gray-200);background:#fff;color:var(--gray-500);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">더보기</button>
-        <button style="flex:2;height:48px;border-radius:12px;border:none;background:var(--green);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">스케줄 확정하기</button>
+        <button onclick="confirmSchedule()" style="flex:2;height:48px;border-radius:12px;border:none;background:var(--green);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">스케줄 확정하기</button>
       </div>`;
   } else {
     actions.innerHTML = `
@@ -697,7 +697,8 @@ function confirmReasonAction() {
   closeReasonPopup();
   closeLessonDetail();
   const toast = document.getElementById('sent-toast');
-  toast.textContent = currentReasonAction === 'hold' ? '보류 처리되었습니다' : '거절 처리되었습니다';
+  const msgs = { hold: '보류 처리되었습니다', reject: '거절 처리되었습니다', cancel: '레슨이 취소되었습니다' };
+  toast.textContent = msgs[currentReasonAction] || '처리되었습니다';
   toast.style.display = 'block';
   setTimeout(() => { toast.style.display = 'none'; }, 2000);
 }
@@ -718,6 +719,58 @@ function closeUnavailableModal() {
 function sendUnavailableNotification() {
   closeUnavailableModal();
   const toast = document.getElementById('sent-toast');
+  toast.style.display = 'block';
+  setTimeout(() => { toast.style.display = 'none'; }, 2000);
+}
+
+// 스케줄 확정하기
+function confirmSchedule() {
+  if (confirm('선택한 일정으로 스케줄을 확정합니다.\n수강생에게 알림이 발송됩니다.')) {
+    closeLessonDetail();
+    const toast = document.getElementById('sent-toast');
+    toast.textContent = '스케줄이 확정되었습니다';
+    toast.style.display = 'block';
+    setTimeout(() => { toast.style.display = 'none'; }, 2000);
+  }
+}
+
+// 레슨 완료 처리
+function completeLesson() {
+  if (confirm('레슨을 완료 처리합니다.')) {
+    closeLessonDetail();
+    const toast = document.getElementById('sent-toast');
+    toast.textContent = '레슨이 완료 처리되었습니다';
+    toast.style.display = 'block';
+    setTimeout(() => { toast.style.display = 'none'; }, 2000);
+  }
+}
+
+// 레슨 취소
+function cancelLesson() {
+  currentReasonAction = 'cancel';
+  const title = document.getElementById('reason-title');
+  const desc = document.getElementById('reason-desc');
+  const notice = document.getElementById('reason-notice');
+  const btn = document.getElementById('reason-confirm-btn');
+  const input = document.getElementById('reason-input');
+  input.value = '';
+  title.textContent = '레슨 취소';
+  desc.textContent = '수강생에게 취소 사유가 전달됩니다.';
+  notice.innerHTML = '취소된 레슨은 복구할 수 없으며,<br>스케줄 블록이 자동 해제됩니다.';
+  btn.textContent = '취소하기';
+  btn.style.background = 'var(--error)';
+  btn.style.color = '#fff';
+  input.placeholder = '취소 사유를 입력해 주세요 (필수)';
+  document.getElementById('reason-popup').style.display = 'block';
+}
+
+// 모두 제안하기
+function proposeAll(btnEl) {
+  btnEl.disabled = true;
+  btnEl.textContent = '제안 완료';
+  btnEl.style.background = 'var(--gray-300)';
+  const toast = document.getElementById('sent-toast');
+  toast.textContent = '일정이 제안되었습니다';
   toast.style.display = 'block';
   setTimeout(() => { toast.style.display = 'none'; }, 2000);
 }
