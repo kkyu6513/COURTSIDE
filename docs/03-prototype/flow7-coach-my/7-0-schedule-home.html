@@ -734,8 +734,17 @@ function showLessonDetail(status) {
   if (status === 'reschedule') {
     actions.innerHTML = `
       <div style="display:flex;gap:10px;">
-        <button id="btn-propose-selected" onclick="proposeSelectedFromDetail(this)" disabled style="flex:1;height:48px;border-radius:12px;border:1.5px solid var(--gray-200);background:#fff;color:var(--gray-400);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">선택 제안하기</button>
-        <button onclick="proposeAllFromDetail(this)" style="flex:1;height:48px;border-radius:12px;border:none;background:var(--green);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">모두 제안하기</button>
+        <button id="btn-propose-selected" onclick="proposeSelectedFromDetail(this)" disabled style="flex:1;height:48px;border-radius:12px;border:2px solid var(--gray-200);background:#fff;color:var(--gray-400);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.15s;">선택 제안하기</button>
+        <button onclick="proposeAllFromDetail(this)" style="flex:1;height:48px;border-radius:12px;border:none;background:var(--green);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">모두 제안하기</button>
+      </div>
+      <div style="margin-top:12px;padding:14px;background:var(--gray-50);border-radius:12px;">
+        <div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:6px;">💡 제안하기란?</div>
+        <div style="font-size:11px;color:var(--gray-500);line-height:1.7;">
+          코치님이 선택한 날짜를 수강생에게 제안하는 기능이에요.<br>
+          · 제안하면 해당 시간이 <strong style="color:var(--navy);">12시간 동안 임시 홀드</strong>되어 다른 예약이 들어오지 않아요.<br>
+          · 수강생에게 <strong style="color:var(--navy);">카카오 알림톡</strong>으로 제안 내용이 발송돼요.<br>
+          · 12시간 내 수강생이 응답하지 않으면 홀드가 자동 해제돼요.
+        </div>
       </div>`;
   } else if (status === 'inprogress') {
     actions.innerHTML = `
@@ -901,20 +910,28 @@ function proposeAll(btnEl) {
 }
 
 function selectRcSlot(el) {
-  const all = document.querySelectorAll('.rc-slot');
   const wasSelected = el.style.borderColor === 'var(--green)';
-  all.forEach(s => { s.style.borderColor = 'transparent'; s.style.background = '#D1FAE5'; });
-  const btn = document.getElementById('btn-propose-selected');
   if (wasSelected) {
-    btn.disabled = true;
-    btn.style.color = 'var(--gray-400)';
-    btn.style.borderColor = 'var(--gray-200)';
+    el.style.borderColor = 'transparent';
+    el.style.background = '#D1FAE5';
   } else {
     el.style.borderColor = 'var(--green)';
     el.style.background = '#A7F3D0';
+  }
+  const selectedCount = document.querySelectorAll('.rc-slot[style*="border-color: var(--green)"]').length;
+  const btn = document.getElementById('btn-propose-selected');
+  if (selectedCount > 0) {
     btn.disabled = false;
     btn.style.color = 'var(--green)';
     btn.style.borderColor = 'var(--green)';
+    btn.style.background = '#F0FDFA';
+    btn.textContent = '선택 제안 (' + selectedCount + ')';
+  } else {
+    btn.disabled = true;
+    btn.style.color = 'var(--gray-400)';
+    btn.style.borderColor = 'var(--gray-200)';
+    btn.style.background = '#fff';
+    btn.textContent = '선택 제안하기';
   }
 }
 
