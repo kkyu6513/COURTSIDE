@@ -25,79 +25,64 @@
       <!-- 타이틀 -->
       <div style="padding:16px 20px 0;display:flex;justify-content:space-between;align-items:center;">
         <div>
+          <div style="font-size:12px;color:var(--gray-400);">안녕하세요, 김민수 코치님</div>
           <div style="font-size:20px;font-weight:800;color:var(--navy);">나의 스케줄</div>
-          <div style="font-size:12px;color:var(--gray-400);margin-top:6px;">안녕하세요, 김민수 코치님</div>
         </div>
         <a href="7-4-schedule.html" style="padding:6px 14px;border-radius:20px;background:var(--green);color:#fff;font-size:12px;font-weight:600;text-decoration:none;">스케줄 관리 ›</a>
       </div>
 
-      <!-- 선택 날짜 -->
+      <!-- 오늘 날짜 -->
       <div style="padding:16px 20px 8px;">
-        <div id="selected-date-label" style="font-size:15px;font-weight:700;color:var(--navy);">📅 오늘 · 4월 13일 (일)</div>
+        <div style="font-size:15px;font-weight:700;color:var(--navy);">📅 오늘 · 4월 13일 (일)</div>
       </div>
 
       <!-- 주간 미니 캘린더 -->
-      <div style="padding:0 20px 8px;display:flex;gap:6px;justify-content:space-between;">
-        <!-- 월 7 -->
-        <div class="cal-cell" onclick="selectCalDate(this,'mon')" style="flex:1;text-align:center;padding:8px 0;border-radius:10px;background:var(--gray-50);cursor:pointer;transition:all 0.15s;">
-          <div style="font-size:10px;color:var(--gray-400);">월</div>
-          <div style="font-size:14px;font-weight:600;color:var(--navy);margin-top:2px;">7</div>
-          <div style="display:flex;gap:3px;justify-content:center;margin-top:3px;">
-            <div style="width:4px;height:4px;border-radius:50%;background:var(--green);"></div>
+      <div style="padding:0 20px 8px;display:flex;align-items:center;gap:6px;">
+        <div style="flex:1;display:flex;gap:4px;justify-content:space-between;">
+          <div style="flex:1;text-align:center;padding:8px 0;border-radius:10px;background:var(--gray-50);">
+            <div style="font-size:10px;color:var(--gray-400);">월</div>
+            <div style="font-size:14px;font-weight:600;color:var(--navy);margin-top:2px;">7</div>
+            <div style="display:flex;gap:2px;justify-content:center;margin-top:3px;"><div style="width:4px;height:4px;border-radius:50%;background:var(--green);"></div></div>
+          </div>
+          <div style="flex:1;text-align:center;padding:8px 0;border-radius:10px;background:var(--gray-50);">
+            <div style="font-size:10px;color:var(--gray-400);">화</div>
+            <div style="font-size:14px;font-weight:600;color:var(--navy);margin-top:2px;">8</div>
+            <div style="display:flex;gap:2px;justify-content:center;margin-top:3px;"><div style="width:4px;height:4px;border-radius:50%;background:var(--green);"></div><div style="width:4px;height:4px;border-radius:50%;background:var(--coral);"></div></div>
+          </div>
+          <div style="flex:1;text-align:center;padding:8px 0;border-radius:10px;background:var(--gray-50);">
+            <div style="font-size:10px;color:var(--gray-400);">수</div>
+            <div style="font-size:14px;font-weight:600;color:var(--navy);margin-top:2px;">9</div>
+            <div style="display:flex;gap:2px;justify-content:center;margin-top:3px;"><div style="width:4px;height:4px;border-radius:50%;background:var(--green);"></div></div>
+          </div>
+          <div style="flex:1;text-align:center;padding:8px 0;border-radius:10px;background:var(--gray-50);">
+            <div style="font-size:10px;color:var(--gray-400);">목</div>
+            <div style="font-size:14px;font-weight:600;color:var(--navy);margin-top:2px;">10</div>
+            <div style="display:flex;gap:2px;justify-content:center;margin-top:3px;"><div style="width:4px;height:4px;border-radius:50%;background:var(--green);"></div><div style="width:4px;height:4px;border-radius:50%;background:var(--orange);"></div></div>
+          </div>
+          <div style="flex:1;text-align:center;padding:8px 0;border-radius:10px;background:var(--gray-50);">
+            <div style="font-size:10px;color:var(--gray-400);">금</div>
+            <div style="font-size:14px;font-weight:600;color:var(--navy);margin-top:2px;">11</div>
+            <div style="display:flex;gap:2px;justify-content:center;margin-top:3px;"><div style="width:4px;height:4px;border-radius:50%;background:var(--green);"></div></div>
+          </div>
+          <div style="flex:1;text-align:center;padding:8px 0;border-radius:10px;background:var(--gray-50);">
+            <div style="font-size:10px;color:var(--gray-400);">토</div>
+            <div style="font-size:14px;font-weight:600;color:var(--navy);margin-top:2px;">12</div>
+          </div>
+          <div style="flex:1;text-align:center;padding:8px 0;border-radius:10px;background:var(--green);color:#fff;">
+            <div style="font-size:10px;opacity:0.8;">일</div>
+            <div style="font-size:14px;font-weight:600;margin-top:2px;">13</div>
+            <div style="display:flex;gap:2px;justify-content:center;margin-top:3px;"><div style="width:4px;height:4px;border-radius:50%;background:#fff;"></div><div style="width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,0.5);"></div></div>
           </div>
         </div>
-        <!-- 화 8 -->
-        <div class="cal-cell" onclick="selectCalDate(this,'tue')" style="flex:1;text-align:center;padding:8px 0;border-radius:10px;background:var(--gray-50);cursor:pointer;transition:all 0.15s;">
-          <div style="font-size:10px;color:var(--gray-400);">화</div>
-          <div style="font-size:14px;font-weight:600;color:var(--navy);margin-top:2px;">8</div>
-          <div style="display:flex;gap:3px;justify-content:center;margin-top:3px;">
-            <div style="width:4px;height:4px;border-radius:50%;background:var(--green);"></div>
-            <div style="width:4px;height:4px;border-radius:50%;background:var(--warning);"></div>
-          </div>
-        </div>
-        <!-- 수 9 -->
-        <div class="cal-cell" onclick="selectCalDate(this,'wed')" style="flex:1;text-align:center;padding:8px 0;border-radius:10px;background:var(--gray-50);cursor:pointer;transition:all 0.15s;">
-          <div style="font-size:10px;color:var(--gray-400);">수</div>
-          <div style="font-size:14px;font-weight:600;color:var(--navy);margin-top:2px;">9</div>
-        </div>
-        <!-- 목 10 -->
-        <div class="cal-cell" onclick="selectCalDate(this,'thu')" style="flex:1;text-align:center;padding:8px 0;border-radius:10px;background:var(--gray-50);cursor:pointer;transition:all 0.15s;">
-          <div style="font-size:10px;color:var(--gray-400);">목</div>
-          <div style="font-size:14px;font-weight:600;color:var(--navy);margin-top:2px;">10</div>
-          <div style="display:flex;gap:3px;justify-content:center;margin-top:3px;">
-            <div style="width:4px;height:4px;border-radius:50%;background:var(--green);"></div>
-            <div style="width:4px;height:4px;border-radius:50%;background:var(--purple);"></div>
-          </div>
-        </div>
-        <!-- 금 11 -->
-        <div class="cal-cell" onclick="selectCalDate(this,'fri')" style="flex:1;text-align:center;padding:8px 0;border-radius:10px;background:var(--gray-50);cursor:pointer;transition:all 0.15s;">
-          <div style="font-size:10px;color:var(--gray-400);">금</div>
-          <div style="font-size:14px;font-weight:600;color:var(--navy);margin-top:2px;">11</div>
-          <div style="display:flex;gap:3px;justify-content:center;margin-top:3px;">
-            <div style="width:4px;height:4px;border-radius:50%;background:var(--green);"></div>
-          </div>
-        </div>
-        <!-- 토 12 -->
-        <div class="cal-cell" onclick="selectCalDate(this,'sat')" style="flex:1;text-align:center;padding:8px 0;border-radius:10px;background:var(--gray-50);cursor:pointer;transition:all 0.15s;">
-          <div style="font-size:10px;color:var(--gray-400);">토</div>
-          <div style="font-size:14px;font-weight:600;color:var(--navy);margin-top:2px;">12</div>
-        </div>
-        <!-- 일 13 (오늘) -->
-        <div class="cal-cell active" onclick="selectCalDate(this,'sun')" style="flex:1;text-align:center;padding:8px 0;border-radius:10px;background:var(--green);color:#fff;cursor:pointer;transition:all 0.15s;">
-          <div style="font-size:10px;opacity:0.8;">일</div>
-          <div style="font-size:14px;font-weight:600;margin-top:2px;">13</div>
-          <div style="display:flex;gap:3px;justify-content:center;margin-top:3px;">
-            <div style="width:4px;height:4px;border-radius:50%;background:#fff;"></div>
-            <div style="width:4px;height:4px;border-radius:50%;background:var(--purple);"></div>
-            <div style="width:4px;height:4px;border-radius:50%;background:var(--warning);"></div>
-          </div>
-        </div>
+        <button onclick="toggleCalendarTooltip()" style="width:20px;height:20px;border-radius:50%;border:1.5px solid var(--gray-300);background:#fff;color:var(--gray-400);font-size:10px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;flex-shrink:0;">?</button>
       </div>
-      <!-- 캘린더 범례 -->
-      <div style="padding:0 20px 12px;display:flex;gap:12px;justify-content:center;">
-        <div style="display:flex;align-items:center;gap:3px;font-size:10px;color:var(--gray-400);"><div style="width:4px;height:4px;border-radius:50%;background:var(--green);"></div>레슨</div>
-        <div style="display:flex;align-items:center;gap:3px;font-size:10px;color:var(--gray-400);"><div style="width:4px;height:4px;border-radius:50%;background:var(--purple);"></div>변경요청</div>
-        <div style="display:flex;align-items:center;gap:3px;font-size:10px;color:var(--gray-400);"><div style="width:4px;height:4px;border-radius:50%;background:var(--warning);"></div>대기신청</div>
+      <!-- 캘린더 범례 툴팁 -->
+      <div id="calendar-tooltip" style="display:none;margin:0 20px 12px;padding:10px 14px;background:var(--navy);border-radius:10px;animation:fadeIn 0.2s;">
+        <div style="display:flex;gap:12px;align-items:center;">
+          <div style="display:flex;align-items:center;gap:4px;"><div style="width:6px;height:6px;border-radius:50%;background:var(--green);"></div><span style="font-size:11px;color:#fff;">레슨</span></div>
+          <div style="display:flex;align-items:center;gap:4px;"><div style="width:6px;height:6px;border-radius:50%;background:var(--orange);"></div><span style="font-size:11px;color:#fff;">변경요청</span></div>
+          <div style="display:flex;align-items:center;gap:4px;"><div style="width:6px;height:6px;border-radius:50%;background:var(--coral);"></div><span style="font-size:11px;color:#fff;">대기신청</span></div>
+        </div>
       </div>
 
       <!-- 오늘 레슨 / 변경 요청 탭 -->
@@ -114,10 +99,6 @@
 
         <!-- 탭 콘텐츠: 오늘 레슨 -->
         <div id="content-lesson">
-          <!-- 다른 날짜 콘텐츠 (동적) -->
-          <div id="other-day-content" style="display:none;"></div>
-          <!-- 오늘 원래 콘텐츠 -->
-          <div id="original-today-content">
           <!-- 상태 안내 아코디언 -->
           <div style="background:var(--gray-50);border-radius:14px;margin-bottom:14px;">
             <div onclick="toggleAccordion()" style="display:flex;align-items:center;justify-content:space-between;padding:14px;cursor:pointer;">
@@ -209,7 +190,6 @@
             <span class="badge-sm" style="background:#F3E8FF;color:#7C5CBF;">레슨 예정</span>
           </div>
         </div>
-        </div><!-- /original-today-content -->
 
         <!-- 탭 콘텐츠: 변경 요청 -->
         <div id="content-reschedule" style="display:none;">
@@ -225,13 +205,13 @@
               <span class="badge-sm" style="background:var(--gray-100);color:var(--gray-500);">제안됨 · 응답 대기</span>
             </div>
             <div style="font-size:11px;color:var(--gray-400);margin-top:6px;">요청: 4/12 09:15</div>
-            <div style="margin-top:8px;padding:12px;background:#FFF7ED;border-radius:10px;">
-              <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
-                <span style="font-size:13px;color:var(--gray-400);text-decoration:line-through;">4/14 (월) 16:00</span>
-                <span style="font-size:14px;color:var(--gray-400);">→</span>
-                <span style="font-size:13px;font-weight:700;color:#92400E;">4/16 (수) 16:00</span>
-              </div>
-              <span style="font-size:11px;color:#92400E;">수강생 희망 변경</span>
+            <div style="margin-top:8px;padding:8px 10px;background:var(--gray-50);border-radius:8px;">
+              <div style="font-size:11px;color:var(--gray-400);margin-bottom:4px;">기존 일정</div>
+              <div style="font-size:13px;color:var(--gray-500);text-decoration:line-through;">4/14 (월) 16:00</div>
+            </div>
+            <div style="margin-top:6px;padding:8px 10px;background:#FFF7ED;border-radius:8px;">
+              <div style="font-size:11px;color:#92400E;margin-bottom:4px;">수강생 희망 날짜</div>
+              <div style="font-size:13px;font-weight:600;color:#92400E;">4/16 (수) 16:00</div>
             </div>
             <div style="margin-top:6px;padding:10px;background:var(--gray-50);border-radius:8px;border:1px solid var(--gray-100);">
               <div style="font-size:11px;color:var(--gray-500);margin-bottom:6px;">📨 제안된 날짜 (수강생 선택 대기)</div>
@@ -259,28 +239,23 @@
               <span class="badge-sm" style="background:#D1FAE5;color:#065F46;">변경 가능</span>
             </div>
             <div style="font-size:11px;color:var(--gray-400);margin-top:6px;">요청: 4/12 14:30</div>
-            <div style="margin-top:8px;padding:12px;background:#FFF7ED;border-radius:10px;">
-              <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-                <span style="font-size:13px;color:var(--gray-400);text-decoration:line-through;">4/15 (화) 10:00</span>
-                <span style="font-size:14px;color:var(--gray-400);">→</span>
-                <span style="font-size:13px;font-weight:700;color:#92400E;">4/17 (목) 10:00</span>
-              </div>
+            <div style="margin-top:8px;padding:8px 10px;background:var(--gray-50);border-radius:8px;">
+              <div style="font-size:11px;color:var(--gray-400);margin-bottom:4px;">기존 일정</div>
+              <div style="font-size:13px;color:var(--gray-500);text-decoration:line-through;">4/15 (화) 10:00</div>
+            </div>
+            <div style="margin-top:6px;padding:8px 10px;background:#FFF7ED;border-radius:8px;">
+              <div style="font-size:11px;color:#92400E;margin-bottom:4px;">수강생 희망 날짜</div>
               <div style="display:flex;justify-content:space-between;align-items:center;">
-                <span style="font-size:11px;color:#92400E;">수강생 희망 변경</span>
-                <button onclick="confirmDesiredSchedule()" style="padding:6px 14px;border-radius:8px;border:none;background:var(--coral);color:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;box-shadow:0 2px 6px rgba(255,107,107,0.4);">확정하기</button>
+                <div style="font-size:13px;font-weight:600;color:#92400E;">4/17 (목) 10:00</div>
+                <button onclick="confirmDesiredSchedule()" style="padding:5px 12px;border-radius:8px;border:none;background:var(--green);color:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">확정하기</button>
               </div>
             </div>
             <div style="margin-top:6px;padding:10px;background:#F0FDFA;border-radius:8px;border:1px solid #D1FAE5;">
-              <div style="font-size:11px;color:#065F46;margin-bottom:8px;">🤖 변경 가능한 다른 날짜 (자동 추천)</div>
-              <div style="display:flex;flex-direction:column;gap:6px;">
-                <label class="rc-slot-tab" onclick="selectRcSlotTab(this)" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:#D1FAE5;color:#065F46;cursor:pointer;border:2px solid transparent;transition:all 0.15s;">
-                  <input type="checkbox" style="width:18px;height:18px;accent-color:var(--green);flex-shrink:0;cursor:pointer;">
-                  <span style="font-size:13px;font-weight:600;">4/17 (목) 14:00</span>
-                </label>
-                <label class="rc-slot-tab" onclick="selectRcSlotTab(this)" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:#D1FAE5;color:#065F46;cursor:pointer;border:2px solid transparent;transition:all 0.15s;">
-                  <input type="checkbox" style="width:18px;height:18px;accent-color:var(--green);flex-shrink:0;cursor:pointer;">
-                  <span style="font-size:13px;font-weight:600;">4/18 (금) 10:00</span>
-                </label>
+              <div style="font-size:11px;color:#065F46;margin-bottom:6px;">🤖 변경 가능한 날짜 (자동 추천)</div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                <span class="rc-slot-tab" onclick="selectRcSlotTab(this)" style="padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;background:#D1FAE5;color:#065F46;cursor:pointer;border:2px solid transparent;transition:all 0.15s;">4/17 (목) 10:00</span>
+                <span class="rc-slot-tab" onclick="selectRcSlotTab(this)" style="padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;background:#D1FAE5;color:#065F46;cursor:pointer;border:2px solid transparent;transition:all 0.15s;">4/17 (목) 14:00</span>
+                <span class="rc-slot-tab" onclick="selectRcSlotTab(this)" style="padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;background:#D1FAE5;color:#065F46;cursor:pointer;border:2px solid transparent;transition:all 0.15s;">4/18 (금) 10:00</span>
               </div>
             </div>
             <div style="margin-top:10px;display:flex;gap:8px;">
@@ -305,13 +280,13 @@
               <span class="badge-sm" style="background:#FEE2E2;color:var(--error);">변경 불가</span>
             </div>
             <div style="font-size:11px;color:var(--gray-400);margin-top:6px;">요청: 4/13 08:00</div>
-            <div style="margin-top:8px;padding:12px;background:#FFF7ED;border-radius:10px;">
-              <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
-                <span style="font-size:13px;color:var(--gray-400);text-decoration:line-through;">4/16 (수) 18:00</span>
-                <span style="font-size:14px;color:var(--gray-400);">→</span>
-                <span style="font-size:13px;font-weight:700;color:#92400E;">4/18 (금) 18:00</span>
-              </div>
-              <span style="font-size:11px;color:#92400E;">수강생 희망 변경</span>
+            <div style="margin-top:8px;padding:8px 10px;background:var(--gray-50);border-radius:8px;">
+              <div style="font-size:11px;color:var(--gray-400);margin-bottom:4px;">기존 일정</div>
+              <div style="font-size:13px;color:var(--gray-500);text-decoration:line-through;">4/16 (수) 18:00</div>
+            </div>
+            <div style="margin-top:6px;padding:8px 10px;background:#FFF7ED;border-radius:8px;">
+              <div style="font-size:11px;color:#92400E;margin-bottom:4px;">수강생 희망 날짜</div>
+              <div style="font-size:13px;font-weight:600;color:#92400E;">4/18 (금) 18:00</div>
             </div>
             <div style="margin-top:6px;padding:10px;background:#FEF2F2;border-radius:8px;border:1px solid #FEE2E2;">
               <div style="font-size:11px;color:var(--error);margin-bottom:4px;">🤖 자동 추천 결과</div>
@@ -332,12 +307,14 @@
               <span class="badge-sm" style="background:#DBEAFE;color:#1E40AF;">변경 완료</span>
             </div>
             <div style="font-size:11px;color:var(--gray-400);margin-top:6px;">요청: 4/11 17:45</div>
-            <div style="margin-top:8px;padding:12px;background:#EFF6FF;border-radius:10px;border:1px solid #DBEAFE;">
-              <div style="display:flex;align-items:center;gap:8px;">
-                <span style="font-size:13px;color:var(--gray-400);text-decoration:line-through;">4/14 (월) 10:00</span>
-                <span style="font-size:14px;color:var(--gray-400);">→</span>
-                <span style="font-size:13px;font-weight:700;color:#1E40AF;">4/16 (수) 10:00</span>
-                <span style="font-size:10px;font-weight:700;background:#1E40AF;color:#fff;padding:2px 8px;border-radius:6px;margin-left:auto;">확정</span>
+            <div style="margin-top:8px;display:flex;gap:8px;">
+              <div style="flex:1;padding:8px 10px;background:var(--gray-50);border-radius:8px;">
+                <div style="font-size:11px;color:var(--gray-400);margin-bottom:4px;">변경 전</div>
+                <div style="font-size:13px;color:var(--gray-500);text-decoration:line-through;">4/14 (월) 10:00</div>
+              </div>
+              <div style="flex:1;padding:8px 10px;background:#EFF6FF;border-radius:8px;border:1px solid #DBEAFE;">
+                <div style="font-size:11px;color:#1E40AF;margin-bottom:4px;">변경 후</div>
+                <div style="font-size:13px;font-weight:600;color:#1E40AF;">4/16 (수) 10:00</div>
               </div>
             </div>
             <div style="margin-top:8px;text-align:center;font-size:11px;color:var(--gray-400);">오늘까지 표시 · 내일 자동 제거</div>
@@ -557,78 +534,9 @@
   </div>
 </div>
 <script>
-const calData = {
-  mon: { label: '4월 7일 (월)', lessons: [
-    { time: '10:00', name: '정우성', desc: '1:1 개인', status: 'completed', badge: '레슨완료', bgColor: 'var(--gray-50)', borderColor: 'var(--gray-300)', badgeBg: '#DBEAFE', badgeColor: '#1E40AF', opacity: '0.7' },
-    { time: '15:00', name: '강예진', desc: '1:1 개인', status: 'completed', badge: '레슨완료', bgColor: 'var(--gray-50)', borderColor: 'var(--gray-300)', badgeBg: '#DBEAFE', badgeColor: '#1E40AF', opacity: '0.7' }
-  ]},
-  tue: { label: '4월 8일 (화)', lessons: [
-    { time: '09:00', name: '한도윤', desc: '그룹 (3인)', status: 'upcoming', badge: '레슨 예정', bgColor: '#FAF5FF', borderColor: 'var(--purple)', badgeBg: '#F3E8FF', badgeColor: '#7C5CBF', opacity: '1' },
-    { time: '14:00', name: '이하늘', desc: '1:1 개인', status: 'upcoming', badge: '레슨 예정', bgColor: '#FAF5FF', borderColor: 'var(--purple)', badgeBg: '#F3E8FF', badgeColor: '#7C5CBF', opacity: '1' }
-  ]},
-  wed: { label: '4월 9일 (수)', lessons: []},
-  thu: { label: '4월 10일 (목)', lessons: [
-    { time: '10:00', name: '박민서', desc: '1:1 개인', status: 'upcoming', badge: '레슨 예정', bgColor: '#FAF5FF', borderColor: 'var(--purple)', badgeBg: '#F3E8FF', badgeColor: '#7C5CBF', opacity: '1' },
-    { time: '16:00', name: '김태희', desc: '그룹 (2인)', status: 'upcoming', badge: '레슨 예정', bgColor: '#FAF5FF', borderColor: 'var(--purple)', badgeBg: '#F3E8FF', badgeColor: '#7C5CBF', opacity: '1' }
-  ]},
-  fri: { label: '4월 11일 (금)', lessons: [
-    { time: '11:00', name: '조현우', desc: '1:1 개인', status: 'upcoming', badge: '레슨 예정', bgColor: '#FAF5FF', borderColor: 'var(--purple)', badgeBg: '#F3E8FF', badgeColor: '#7C5CBF', opacity: '1' }
-  ]},
-  sat: { label: '4월 12일 (토)', lessons: []},
-  sun: { label: 'TODAY' }
-};
-
-function selectCalDate(el, day) {
-  // 셀 스타일 초기화
-  document.querySelectorAll('.cal-cell').forEach(c => {
-    c.style.background = 'var(--gray-50)';
-    c.style.color = '';
-    c.classList.remove('active');
-    const dayLabel = c.querySelector('div:first-child');
-    const dateNum = c.querySelector('div:nth-child(2)');
-    if (dayLabel) dayLabel.style.color = 'var(--gray-400)';
-    if (dayLabel) dayLabel.style.opacity = '1';
-    if (dateNum) dateNum.style.color = 'var(--navy)';
-  });
-  // 선택 셀 활성화
-  el.style.background = 'var(--green)';
-  el.style.color = '#fff';
-  el.classList.add('active');
-  const dayLabel = el.querySelector('div:first-child');
-  const dateNum = el.querySelector('div:nth-child(2)');
-  if (dayLabel) { dayLabel.style.color = '#fff'; dayLabel.style.opacity = '0.8'; }
-  if (dateNum) dateNum.style.color = '#fff';
-
-  const data = calData[day];
-  const dateLabel = document.getElementById('selected-date-label');
-  const lessonContent = document.getElementById('content-lesson');
-
-  if (data.label === 'TODAY') {
-    // 오늘: 원래 콘텐츠 복원
-    dateLabel.innerHTML = '📅 오늘 · 4월 13일 (일)';
-    document.getElementById('original-today-content').style.display = 'block';
-    document.getElementById('other-day-content').style.display = 'none';
-    return;
-  }
-
-  const isToday = false;
-  dateLabel.innerHTML = '📅 ' + data.label;
-
-  // 다른 날짜 콘텐츠
-  document.getElementById('original-today-content').style.display = 'none';
-  const otherDay = document.getElementById('other-day-content');
-  otherDay.style.display = 'block';
-
-  if (data.lessons.length === 0) {
-    otherDay.innerHTML = '<div style="text-align:center;padding:40px 20px;"><div style="font-size:32px;margin-bottom:12px;">📭</div><div style="font-size:14px;font-weight:600;color:var(--navy);">레슨이 없는 날이에요</div><div style="font-size:12px;color:var(--gray-400);margin-top:4px;">이 날은 등록된 레슨이 없습니다</div></div>';
-  } else {
-    otherDay.innerHTML = data.lessons.map(l =>
-      `<div class="schedule-slot" style="background:${l.bgColor};border-left:4px solid ${l.borderColor};opacity:${l.opacity};">
-        <div><div class="time">${l.time}</div><div class="student">${l.name} · ${l.desc}</div></div>
-        <span class="badge-sm" style="background:${l.badgeBg};color:${l.badgeColor};">${l.badge}</span>
-      </div>`
-    ).join('');
-  }
+function toggleCalendarTooltip() {
+  const t = document.getElementById('calendar-tooltip');
+  t.style.display = t.style.display === 'none' ? 'block' : 'none';
 }
 
 function switchTab(tab) {
@@ -794,14 +702,9 @@ function showLessonDetail(status) {
   const scheduleTitle = isSelectable ? '수강생 희망 일정 <span style="font-size:11px;color:var(--coral);font-weight:400;">(확정할 일정을 선택하세요)</span>' : isReschedule ? '변경 요청 일정' : isInProgress ? '진행중 레슨' : isUpcoming ? '오늘 레슨 일정' : '확정 일정';
 
   if (isReschedule) {
-    const filteredSlots = d.desiredAvailable ? d.recommendedSlots.filter(s => s !== d.desiredSchedule) : d.recommendedSlots;
-    const slotsHtml = filteredSlots.map((s, i) => {
-      return `<label class="rc-slot" onclick="selectRcSlot(this)" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:#D1FAE5;color:#065F46;cursor:pointer;border:2px solid transparent;transition:all 0.15s;">
-        <input type="checkbox" style="width:18px;height:18px;accent-color:var(--green);flex-shrink:0;cursor:pointer;">
-        <span style="font-size:13px;font-weight:600;flex:1;">${s}</span>
-      </label>`;
-    }).join('');
-    const slotsTitle = d.desiredAvailable ? '변경 가능한 다른 날짜' : '변경 가능한 날짜';
+    const slotsHtml = d.recommendedSlots.map((s, i) =>
+      `<span class="rc-slot" onclick="selectRcSlot(this)" style="padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;background:#D1FAE5;color:#065F46;cursor:pointer;border:2px solid transparent;transition:all 0.15s;">${s}</span>`
+    ).join('');
     lesson.innerHTML = `
       <div style="display:flex;flex-direction:column;gap:10px;">
         <div style="display:flex;justify-content:space-between;align-items:center;padding:0 4px;">
@@ -835,20 +738,20 @@ function showLessonDetail(status) {
           <span style="font-size:15px;font-weight:800;color:var(--navy);">변경 요청</span>
         </div>
         <div style="display:flex;flex-direction:column;gap:8px;">
-          <div style="padding:12px;background:#FFF7ED;border-radius:10px;">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-              <span style="font-size:13px;color:var(--gray-400);text-decoration:line-through;">${d.originalSchedule}</span>
-              <span style="font-size:14px;color:var(--gray-400);">→</span>
-              <span style="font-size:13px;font-weight:700;color:#92400E;">${d.desiredSchedule}</span>
-            </div>
+          <div style="padding:8px 10px;background:var(--gray-50);border-radius:8px;">
+            <div style="font-size:11px;color:var(--gray-400);margin-bottom:4px;">기존 일정</div>
+            <div style="font-size:13px;color:var(--gray-500);text-decoration:line-through;">${d.originalSchedule}</div>
+          </div>
+          <div style="padding:8px 10px;background:#FFF7ED;border-radius:8px;">
+            <div style="font-size:11px;color:#92400E;margin-bottom:4px;">수강생 희망 날짜</div>
             <div style="display:flex;justify-content:space-between;align-items:center;">
-              <span style="font-size:11px;color:#92400E;">수강생 희망 변경</span>
-              ${d.desiredAvailable ? '<button onclick="confirmDesiredSchedule()" style="padding:6px 14px;border-radius:8px;border:none;background:var(--coral);color:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;box-shadow:0 2px 6px rgba(255,107,107,0.4);">확정하기</button>' : ''}
+              <div style="font-size:13px;font-weight:600;color:#92400E;">${d.desiredSchedule}</div>
+              ${d.desiredAvailable ? '<button onclick="confirmDesiredSchedule()" style="padding:5px 12px;border-radius:8px;border:none;background:var(--green);color:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">확정하기</button>' : ''}
             </div>
           </div>
           <div style="padding:10px;background:#F0FDFA;border-radius:8px;border:1px solid #D1FAE5;">
-            <div style="font-size:11px;color:#065F46;margin-bottom:6px;">🤖 ${slotsTitle} (자동 추천)</div>
-            <div style="display:flex;flex-direction:column;gap:6px;">${slotsHtml}</div>
+            <div style="font-size:11px;color:#065F46;margin-bottom:6px;">🤖 변경 가능한 날짜 (자동 추천)</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">${slotsHtml}</div>
           </div>
         </div>
       </div>`;
