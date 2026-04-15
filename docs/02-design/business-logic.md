@@ -503,6 +503,40 @@ COMPLETED (완료)
     [레슨완료]  닫기
 ```
 
+### 5.1c 레슨 완료 처리 정책
+
+```
+레슨 완료 처리는 두 가지 방식으로 이루어짐:
+
+1. 수동 완료: 코치가 레슨 상세에서 "레슨 완료 처리" 버튼 클릭
+   → 확인 다이얼로그 → PUT /api/bookings/:id/complete
+   → status = COMPLETED + 완료 시각 기록
+
+2. 자동 완료: 다음 레슨 시작 시각 도래 시 이전 레슨 자동 완료
+   판정: 동일 코치의 다음 CONFIRMED 건의 startTime에 도달했을 때
+         이전 CONFIRMED 건이 아직 COMPLETED가 아니면 자동 전환
+   → 스케줄러(Cron) 또는 다음 레슨 조회 시 트리거
+   → status = COMPLETED + completedAt = 해당 레슨의 endTime
+   → 자동 완료 시 코치에게 "레슨이 자동 완료 처리되었습니다" 알림
+
+자동 완료 실행 시점:
+  - 방법 A (Cron): 매 10분마다 체크
+    SELECT * FROM Booking
+    WHERE status = 'CONFIRMED'
+      AND coachId IN (
+        SELECT DISTINCT coachId FROM Booking
+        WHERE status = 'CONFIRMED' AND startTime <= NOW()
+      )
+    ORDER BY coachId, startTime ASC
+    → 같은 코치의 다음 건 startTime <= NOW()이면 이전 건 자동 COMPLETED
+
+  - 방법 B (이벤트): 코치 스케줄 홈 조회 시 (GET /api/bookings?role=coach&date=today)
+    서버에서 오늘 레슨 목록 반환 전, 자동 완료 대상 체크 후 상태 업데이트
+
+※ 자동 완료된 레슨도 회차에 정상 카운트됨
+※ 당일 마지막 레슨은 자동 완료 대상이 아님 (코치 수동 처리 필요)
+```
+
 ### 5.2 자동 블록
 
 ```
