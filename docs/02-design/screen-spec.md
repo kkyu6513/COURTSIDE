@@ -951,7 +951,7 @@
 | 더보기 → 보류하기 | 클릭 | 사유 입력 팝업 (필수) → `PUT /api/bookings/:id/hold { reason }` → status=ON_HOLD + 수강생 BOOKING_ON_HOLD 알림톡 발송 (보류 사유 포함) | |
 | 더보기 → 거절하기 | 클릭 | 사유 입력 팝업 (필수) → `PUT /api/bookings/:id/reject { reason }` → status=REJECTED + 수강생 알림 | |
 | 스케줄 확정하기 | 클릭 | ① 확인 바텀시트 ("선택한 일정으로 확정합니다. 수강생에게 알림이 발송됩니다.") → ② `PUT /api/bookings/:id/confirm { selectedScheduleId }` → ③ status=CONFIRMED + 스케줄 블록 + 수강생 알림 → ④ 성공 토스트 "스케줄이 확정되었습니다" + 모달 닫기 | |
-| 레슨 완료 처리 | 클릭 | [레슨 예정] 상태에서 표시. ① 확인 바텀시트 ("레슨을 완료 처리합니다.") → ② `PUT /api/bookings/:id/complete` → ③ status=COMPLETED → ④ 성공 토스트 "레슨이 완료 처리되었습니다" + 모달 닫기 | |
+| 레슨 완료 처리 | 클릭 | [레슨 예정/진행중] 상태에서 표시. ① 확인 바텀시트 ("레슨을 완료 처리합니다.") → ② `PUT /api/bookings/:id/complete` → ③ status=COMPLETED → ④ 성공 토스트 "레슨이 완료 처리되었습니다" + 모달 닫기. ※ 다음 레슨 시작 시각 도래 시 이전 레슨은 자동 완료 처리됨 (당일 마지막 레슨 제외) | |
 | 취소 (레슨 예정) | 클릭 | [레슨 예정] 상태에서 표시. ① 사유 입력 팝업 (필수) → ② `PUT /api/bookings/:id/cancel { reason }` → ③ status=CANCELLED + 스케줄 블록 해제 + 수강생 알림 → ④ 성공 토스트 "레슨이 취소되었습니다" + 모달 닫기 | |
 | 대기 중 신청 카드 | 클릭 | 신청 상세 (수락/거절) | → **7-3 수락거절** |
 | 전체보기 › | 클릭 | 신청 수신 목록 | → **7-2 신청수신** |
