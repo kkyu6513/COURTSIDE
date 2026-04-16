@@ -32,8 +32,16 @@
       </div>
 
       <!-- 선택 날짜 -->
-      <div style="padding:16px 20px 8px;">
+      <div style="padding:16px 20px 8px;display:flex;align-items:center;justify-content:space-between;">
         <div id="selected-date-label" style="font-size:15px;font-weight:700;color:var(--navy);">📅 오늘 · 4월 13일 (일)</div>
+        <div style="position:relative;">
+          <button onclick="toggleCalLegend()" style="width:20px;height:20px;border-radius:50%;border:1.5px solid var(--gray-300);background:#fff;color:var(--gray-400);font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;font-family:inherit;">?</button>
+          <div id="cal-legend-tooltip" style="display:none;position:absolute;top:28px;right:0;background:var(--navy);color:#fff;border-radius:10px;padding:10px 14px;width:140px;z-index:10;box-shadow:0 4px 12px rgba(0,0,0,0.2);">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:11px;"><div style="width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0;"></div>레슨 있는 날</div>
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:11px;"><div style="width:6px;height:6px;border-radius:50%;background:var(--purple);flex-shrink:0;"></div>변경 요청</div>
+            <div style="display:flex;align-items:center;gap:6px;font-size:11px;"><div style="width:6px;height:6px;border-radius:50%;background:var(--warning);flex-shrink:0;"></div>대기 중 신청</div>
+          </div>
+        </div>
       </div>
 
       <!-- 주간 미니 캘린더 -->
@@ -92,16 +100,6 @@
             <div style="width:4px;height:4px;border-radius:50%;background:var(--warning);"></div>
           </div>
         </div>
-        <div style="position:relative;flex-shrink:0;">
-          <button onclick="toggleCalendarTooltip()" style="width:20px;height:20px;border-radius:50%;border:1.5px solid var(--gray-300);background:#fff;color:var(--gray-400);font-size:10px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;">?</button>
-          <div id="calendar-tooltip" style="display:none;position:absolute;top:28px;right:0;padding:10px 14px;background:var(--navy);border-radius:10px;white-space:nowrap;z-index:50;box-shadow:0 4px 12px rgba(0,0,0,0.15);">
-            <div style="display:flex;flex-direction:column;gap:6px;">
-              <div style="display:flex;align-items:center;gap:6px;"><div style="width:6px;height:6px;border-radius:50%;background:var(--green);"></div><span style="font-size:11px;color:#fff;">레슨</span></div>
-              <div style="display:flex;align-items:center;gap:6px;"><div style="width:6px;height:6px;border-radius:50%;background:var(--purple);"></div><span style="font-size:11px;color:#fff;">변경요청</span></div>
-              <div style="display:flex;align-items:center;gap:6px;"><div style="width:6px;height:6px;border-radius:50%;background:var(--warning);"></div><span style="font-size:11px;color:#fff;">대기신청</span></div>
-            </div>
-          </div>
-        </div>
       </div>
 
       <!-- 오늘 레슨 / 변경 요청 탭 -->
@@ -122,58 +120,14 @@
           <div id="other-day-content" style="display:none;"></div>
           <!-- 오늘 원래 콘텐츠 -->
           <div id="original-today-content">
-          <!-- 상태 안내 아코디언 -->
-          <div style="background:var(--gray-50);border-radius:14px;margin-bottom:14px;">
-            <div onclick="toggleAccordion()" style="display:flex;align-items:center;justify-content:space-between;padding:14px;cursor:pointer;">
-              <div style="display:flex;align-items:center;gap:8px;">
-                <span style="font-size:16px;">💡</span>
-                <span style="font-size:14px;font-weight:600;color:var(--navy);">레슨 상태가 궁금하신가요?</span>
-              </div>
-              <span id="accordion-arrow" style="font-size:12px;color:var(--gray-400);transition:transform 0.3s;">▼</span>
-            </div>
-            <div id="accordion-content" style="max-height:0;overflow:hidden;transition:max-height 0.3s ease;">
-              <div style="padding:0 14px 14px;display:flex;flex-direction:column;gap:10px;">
-                <div style="display:flex;align-items:center;gap:10px;">
-                  <div style="width:36px;height:36px;border-radius:10px;background:#FEE2E2;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;">🎾</div>
-                  <div>
-                    <div style="font-size:14px;font-weight:700;color:var(--navy);">진행중</div>
-                    <div style="font-size:12px;color:var(--gray-500);line-height:1.5;">현재 진행 중인 레슨이에요.<br>레슨 종료 후 완료 처리해 주세요!</div>
-                  </div>
-                </div>
-                <div style="height:1px;background:var(--gray-100);"></div>
-                <div style="display:flex;align-items:center;gap:10px;">
-                  <div style="width:36px;height:36px;border-radius:10px;background:#F3E8FF;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;">📌</div>
-                  <div>
-                    <div style="font-size:14px;font-weight:700;color:var(--navy);">레슨 예정</div>
-                    <div style="font-size:12px;color:var(--gray-500);line-height:1.5;">오늘 진행 예정인 확정 레슨이에요.<br>시간에 맞춰 준비해 주세요!</div>
-                  </div>
-                </div>
-                <div style="height:1px;background:var(--gray-100);"></div>
-                <div style="display:flex;align-items:center;gap:10px;">
-                  <div style="width:36px;height:36px;border-radius:10px;background:#FFF7ED;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;">🔄</div>
-                  <div>
-                    <div style="font-size:14px;font-weight:700;color:var(--navy);">변경 요청</div>
-                    <div style="font-size:12px;color:var(--gray-500);line-height:1.5;">수강생이 일정 변경을 요청한 레슨이에요.<br><strong style="color:var(--orange);">변경 요청 탭에서 확인해 주세요!</strong></div>
-                  </div>
-                </div>
-                <div style="height:1px;background:var(--gray-100);"></div>
-                <div style="display:flex;align-items:center;gap:10px;">
-                  <div style="width:36px;height:36px;border-radius:10px;background:#FEF3C7;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;">⏳</div>
-                  <div>
-                    <div style="font-size:14px;font-weight:700;color:var(--navy);">대기 중 레슨</div>
-                    <div style="font-size:12px;color:var(--gray-500);line-height:1.5;">수강생이 신청했지만 아직 수락하지 않았어요.<br><strong style="color:var(--coral);">신청 내역에서 수락 또는 거절해 주세요!</strong></div>
-                  </div>
-                </div>
-                <div style="height:1px;background:var(--gray-100);"></div>
-                <div style="display:flex;align-items:center;gap:10px;">
-                  <div style="width:36px;height:36px;border-radius:10px;background:#DBEAFE;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;">🏁</div>
-                  <div>
-                    <div style="font-size:14px;font-weight:700;color:var(--navy);">레슨완료</div>
-                    <div style="font-size:12px;color:var(--gray-500);line-height:1.5;">오늘 이미 완료된 레슨이에요.<br>수고하셨습니다!</div>
-                  </div>
-                </div>
-              </div>
-            </div>
+          <!-- 상태 안내 -->
+          <div onclick="showStatusGuide()" style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--gray-100);border-radius:10px;margin-bottom:10px;flex-wrap:wrap;cursor:pointer;">
+            <span style="font-size:11px;color:var(--gray-500);">상태:</span>
+            <span style="display:flex;align-items:center;gap:3px;font-size:11px;color:var(--coral);font-weight:600;">🎾 진행중</span>
+            <span style="display:flex;align-items:center;gap:3px;font-size:11px;color:var(--purple);font-weight:600;">📌 예정</span>
+            <span style="display:flex;align-items:center;gap:3px;font-size:11px;color:#EA580C;font-weight:600;">🔄 변경</span>
+            <span style="display:flex;align-items:center;gap:3px;font-size:11px;color:#1E40AF;font-weight:600;">🏁 완료</span>
+            <span style="font-size:11px;color:var(--gray-400);margin-left:auto;">?</span>
           </div>
 
           <div class="schedule-slot" style="background:var(--gray-50);border-left:4px solid var(--gray-300);opacity:0.7;cursor:pointer;" onclick="showLessonDetail('completed')">
@@ -445,6 +399,48 @@
       알림톡이 발송되었습니다
     </div>
 
+    <!-- 상태 안내 팝업 -->
+    <div id="status-guide-popup" style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;z-index:100;">
+      <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);" onclick="closeStatusGuide()"></div>
+      <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:calc(100% - 48px);background:#fff;border-radius:20px;padding:24px 20px;z-index:101;max-height:80%;overflow-y:auto;">
+        <div style="font-size:17px;font-weight:800;color:var(--navy);text-align:center;margin-bottom:16px;">레슨 상태 안내</div>
+
+        <div style="display:flex;align-items:flex-start;gap:10px;padding:12px;background:#FEF2F2;border-radius:12px;margin-bottom:8px;">
+          <span style="font-size:20px;flex-shrink:0;">🎾</span>
+          <div>
+            <div style="font-size:14px;font-weight:700;color:var(--coral);">진행중</div>
+            <div style="font-size:12px;color:var(--gray-500);line-height:1.6;margin-top:2px;">지금 레슨이 진행되고 있어요.<br>레슨이 끝나면 완료 처리를 해주세요.</div>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:flex-start;gap:10px;padding:12px;background:#FAF5FF;border-radius:12px;margin-bottom:8px;">
+          <span style="font-size:20px;flex-shrink:0;">📌</span>
+          <div>
+            <div style="font-size:14px;font-weight:700;color:var(--purple);">레슨 예정</div>
+            <div style="font-size:12px;color:var(--gray-500);line-height:1.6;margin-top:2px;">오늘 진행될 레슨이에요.<br>레슨 시간에 맞춰 준비해 주세요.</div>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:flex-start;gap:10px;padding:12px;background:#FFF7ED;border-radius:12px;margin-bottom:8px;">
+          <span style="font-size:20px;flex-shrink:0;">🔄</span>
+          <div>
+            <div style="font-size:14px;font-weight:700;color:#EA580C;">변경 요청</div>
+            <div style="font-size:12px;color:var(--gray-500);line-height:1.6;margin-top:2px;">수강생이 레슨 일정 변경을 요청했어요.<br>변경 요청 탭에서 확인하고 응답해 주세요.</div>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:flex-start;gap:10px;padding:12px;background:#EFF6FF;border-radius:12px;">
+          <span style="font-size:20px;flex-shrink:0;">🏁</span>
+          <div>
+            <div style="font-size:14px;font-weight:700;color:#1E40AF;">레슨완료</div>
+            <div style="font-size:12px;color:var(--gray-500);line-height:1.6;margin-top:2px;">오늘 이미 완료된 레슨이에요.<br>수고하셨습니다!</div>
+          </div>
+        </div>
+
+        <button onclick="closeStatusGuide()" style="margin-top:16px;width:100%;height:48px;border-radius:12px;border:none;background:var(--green);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">확인</button>
+      </div>
+    </div>
+
     <!-- 홀드 안내 팝업 -->
     <div id="hold-info-popup" style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;z-index:100;">
       <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);" onclick="closeHoldInfoPopup()"></div>
@@ -561,6 +557,24 @@
   </div>
 </div>
 <script>
+function showStatusGuide() {
+  document.getElementById('status-guide-popup').style.display = 'block';
+}
+function closeStatusGuide() {
+  document.getElementById('status-guide-popup').style.display = 'none';
+}
+
+function toggleCalLegend() {
+  const tip = document.getElementById('cal-legend-tooltip');
+  tip.style.display = tip.style.display === 'none' ? 'block' : 'none';
+}
+document.addEventListener('click', function(e) {
+  const tip = document.getElementById('cal-legend-tooltip');
+  if (tip && !e.target.closest('[onclick*="toggleCalLegend"]') && !e.target.closest('#cal-legend-tooltip')) {
+    tip.style.display = 'none';
+  }
+});
+
 const calData = {
   mon: { label: '4월 7일 (월)', lessons: [
     { time: '10:00', name: '정우성', desc: '1:1 개인', status: 'completed', badge: '레슨완료', bgColor: 'var(--gray-50)', borderColor: 'var(--gray-300)', badgeBg: '#DBEAFE', badgeColor: '#1E40AF', opacity: '0.7' },
