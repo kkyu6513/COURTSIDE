@@ -650,6 +650,48 @@
           <div style="font-size:14px;font-weight:700;color:var(--navy);margin-bottom:8px;">상세 사유</div>
           <textarea id="makeup-reason-input" placeholder="상세 사유를 입력해 주세요" style="width:100%;height:80px;border-radius:12px;border:1.5px solid var(--gray-200);padding:12px;font-size:14px;font-family:inherit;resize:none;box-sizing:border-box;"></textarea>
           <div id="makeup-policy" style="margin-top:10px;padding:10px;background:var(--gray-50);border-radius:10px;font-size:11px;color:var(--gray-500);line-height:1.7;"></div>
+
+          <div style="margin-top:16px;">
+            <div style="font-size:14px;font-weight:700;color:var(--navy);margin-bottom:10px;">보강 가능 날짜 선택</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+              <button onclick="changeWeek(-1)" style="padding:6px 12px;border-radius:8px;border:1.5px solid var(--gray-200);background:#fff;color:var(--navy);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">‹ 이전주</button>
+              <span id="makeup-week-label" style="font-size:13px;font-weight:700;color:var(--navy);">4/14 (월) ~ 4/20 (일)</span>
+              <button onclick="changeWeek(1)" style="padding:6px 12px;border-radius:8px;border:1.5px solid var(--gray-200);background:#fff;color:var(--navy);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">다음주 ›</button>
+            </div>
+            <div id="makeup-week-slots" style="display:flex;flex-direction:column;gap:6px;">
+              <div style="background:var(--gray-50);border-radius:10px;padding:10px 12px;">
+                <div style="font-size:12px;font-weight:600;color:var(--navy);margin-bottom:6px;">4/14 (월)</div>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                  <label style="display:flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;background:#fff;border:1.5px solid var(--gray-100);cursor:pointer;font-size:11px;color:var(--navy);"><input type="checkbox" class="makeup-slot" style="accent-color:var(--green);width:14px;height:14px;">10:00</label>
+                  <label style="display:flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;background:#fff;border:1.5px solid var(--gray-100);cursor:pointer;font-size:11px;color:var(--navy);"><input type="checkbox" class="makeup-slot" style="accent-color:var(--green);width:14px;height:14px;">14:00</label>
+                  <label style="display:flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;background:#fff;border:1.5px solid var(--gray-100);cursor:pointer;font-size:11px;color:var(--navy);"><input type="checkbox" class="makeup-slot" style="accent-color:var(--green);width:14px;height:14px;">16:00</label>
+                </div>
+              </div>
+              <div style="background:var(--gray-50);border-radius:10px;padding:10px 12px;">
+                <div style="font-size:12px;font-weight:600;color:var(--navy);margin-bottom:6px;">4/15 (화)</div>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                  <label style="display:flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;background:#fff;border:1.5px solid var(--gray-100);cursor:pointer;font-size:11px;color:var(--navy);"><input type="checkbox" class="makeup-slot" style="accent-color:var(--green);width:14px;height:14px;">09:00</label>
+                  <label style="display:flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;background:#fff;border:1.5px solid var(--gray-100);cursor:pointer;font-size:11px;color:var(--navy);"><input type="checkbox" class="makeup-slot" style="accent-color:var(--green);width:14px;height:14px;">11:00</label>
+                </div>
+              </div>
+              <div style="background:var(--gray-50);border-radius:10px;padding:10px 12px;">
+                <div style="font-size:12px;font-weight:600;color:var(--navy);margin-bottom:6px;">4/17 (목)</div>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                  <label style="display:flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;background:#fff;border:1.5px solid var(--gray-100);cursor:pointer;font-size:11px;color:var(--navy);"><input type="checkbox" class="makeup-slot" style="accent-color:var(--green);width:14px;height:14px;">10:00</label>
+                  <label style="display:flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;background:#fff;border:1.5px solid var(--gray-100);cursor:pointer;font-size:11px;color:var(--navy);"><input type="checkbox" class="makeup-slot" style="accent-color:var(--green);width:14px;height:14px;">15:00</label>
+                  <label style="display:flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;background:#fff;border:1.5px solid var(--gray-100);cursor:pointer;font-size:11px;color:var(--navy);"><input type="checkbox" class="makeup-slot" style="accent-color:var(--green);width:14px;height:14px;">17:00</label>
+                </div>
+              </div>
+              <div style="background:var(--gray-50);border-radius:10px;padding:10px 12px;">
+                <div style="font-size:12px;font-weight:600;color:var(--navy);margin-bottom:6px;">4/19 (토)</div>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                  <label style="display:flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;background:#fff;border:1.5px solid var(--gray-100);cursor:pointer;font-size:11px;color:var(--navy);"><input type="checkbox" class="makeup-slot" style="accent-color:var(--green);width:14px;height:14px;">09:00</label>
+                  <label style="display:flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;background:#fff;border:1.5px solid var(--gray-100);cursor:pointer;font-size:11px;color:var(--navy);"><input type="checkbox" class="makeup-slot" style="accent-color:var(--green);width:14px;height:14px;">13:00</label>
+                </div>
+              </div>
+            </div>
+            <div style="margin-top:8px;font-size:11px;color:var(--gray-400);">가용 시간이 없는 날짜는 표시되지 않습니다.</div>
+          </div>
         </div>
 
         <div style="display:flex;gap:10px;margin-top:16px;">
@@ -1300,12 +1342,33 @@ function selectMakeupReason(type) {
   btn.disabled = false;
   btn.style.background = 'var(--green)';
 }
+let currentMakeupWeek = 0;
+const weekLabels = ['4/14 (월) ~ 4/20 (일)', '4/21 (월) ~ 4/27 (일)', '4/28 (월) ~ 5/4 (일)'];
+function changeWeek(dir) {
+  currentMakeupWeek = Math.max(0, Math.min(2, currentMakeupWeek + dir));
+  document.getElementById('makeup-week-label').textContent = weekLabels[currentMakeupWeek];
+  document.querySelectorAll('.makeup-slot').forEach(c => c.checked = false);
+}
+document.addEventListener('change', function(e) {
+  if (e.target.classList.contains('makeup-slot')) {
+    const checked = document.querySelectorAll('.makeup-slot:checked').length;
+    const btn = document.getElementById('makeup-save-btn');
+    if (checked > 0) { btn.disabled = false; btn.style.background = 'var(--green)'; }
+    else { btn.disabled = true; btn.style.background = 'var(--gray-300)'; }
+  }
+});
+
 function saveMakeup() {
   const input = document.getElementById('makeup-reason-input');
   if (!input.value.trim()) {
     input.style.borderColor = 'var(--error)';
     input.placeholder = '상세 사유를 반드시 입력해 주세요';
     input.focus();
+    return;
+  }
+  const checkedSlots = document.querySelectorAll('.makeup-slot:checked').length;
+  if (checkedSlots === 0) {
+    alert('보강 가능한 날짜를 1개 이상 선택해 주세요.');
     return;
   }
   closeMakeupPopup();
