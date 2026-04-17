@@ -457,10 +457,17 @@ COMPLETED (완료)
   날짜 클릭 동작:
     - 클릭한 날짜 셀 초록 활성화 → 나머지 셀 비활성 (gray-50)
     - 상단 날짜 라벨 동적 변경 ("📅 {날짜}")
-    - 오늘 레슨 영역을 해당 날짜의 레슨 목록으로 전환
+    - **모든 탭이 선택 날짜에 연동** (위계상 캘린더 > 탭):
+      오늘 레슨: 해당일 확정/완료 건
+      변경 요청: 해당일 기존 일정 기준 건 (상단 "{날짜} 기존 일정 기준" + "전체보기 ›")
+      대기 신청: 해당일 희망 일정 기준 건 (상단 "{날짜} 희망 일정 기준" + "전체보기 ›")
     - 레슨 없는 날: 빈 상태 메시지 ("레슨이 없는 날이에요")
     - 오늘 다시 클릭 시 원래 콘텐츠 복원
-    - API: GET /api/bookings?role=coach&date={선택날짜}&status=CONFIRMED,COMPLETED
+    - API:
+      오늘 레슨: GET /api/bookings?role=coach&date={선택날짜}&status=CONFIRMED,COMPLETED
+      변경 요청: GET /api/bookings?role=coach&date={선택날짜}&rescheduleStatus=PENDING,PROPOSED
+      대기 신청: GET /api/bookings?role=coach&desiredDate={선택날짜}&status=PENDING,ON_HOLD
+    - 전체보기: 날짜 필터 없이 전체 목록 (7-2-booking-inbox.html)
 
   범례 툴팁:
     - 날짜 라벨 우측 ? 버튼 클릭 시 네이비 툴팁 표시

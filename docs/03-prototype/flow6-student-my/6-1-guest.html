@@ -4,7 +4,7 @@
 <body>
 <div class="device-wrap">
   <div class="device-label"><span class="device-num">19</span>비로그인 마이</div>
-  <div class="device">
+  <div class="device" style="background:var(--gray-50);">
     <div class="status-bar"><span class="time">9:41</span><div class="status-icons"><span>📶</span><span>🔋</span></div></div>
     <div class="screen screen-white" style="display:flex;flex-direction:column;align-items:center;justify-content:center;">
       <div style="font-size:64px;margin-bottom:16px;">🔒</div>
@@ -12,11 +12,14 @@
       <div style="font-size:14px;color:var(--gray-500);margin-top:8px;text-align:center;">로그인하고 나에게 딱 맞는<br>코치를 만나보세요</div>
       <div style="margin-top:32px;padding:0 40px;width:100%;"><a href="../flow1-onboarding/1-2-login.html" class="btn-primary" style="display:block;text-align:center;text-decoration:none;line-height:52px;">로그인 / 회원가입</a></div>
     </div>
-    <div class="bottom-nav">
-      <a href="../flow2-home/2-1-home.html" class="nav-item" style="text-decoration:none;"><span class="icon">🏠</span>홈</a>
-      <a href="../flow4-chat/4-1-chat-list.html" class="nav-item" style="text-decoration:none;"><span class="icon">💬</span>메시지</a>
-      <a href="../flow2-home/2-2-coach-list.html" class="nav-item" style="text-decoration:none;"><span class="icon">🔍</span>검색</a>
-      <a href="6-1-guest.html" class="nav-item active" style="text-decoration:none;"><span class="icon">👤</span>마이</a>
+    <!-- Bottom Nav (플로팅 라운딩) -->
+    <div style="position:absolute;bottom:20px;left:16px;right:16px;z-index:50;">
+      <div style="display:flex;align-items:center;justify-content:space-around;height:60px;background:#fff;border-radius:30px;box-shadow:0 2px 16px rgba(0,0,0,0.1);border:1px solid var(--gray-100);">
+        <a href="../flow2-home/2-1-home.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;padding:8px 16px;"><span style="font-size:18px;">🏠</span><span style="font-size:9px;color:var(--gray-400);font-weight:600;">홈</span></a>
+        <a href="../flow4-chat/4-1-chat-list.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;padding:8px 16px;"><span style="font-size:18px;">💬</span><span style="font-size:9px;color:var(--gray-400);font-weight:600;">메시지</span></a>
+        <a href="../flow2-home/2-2-coach-list.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;padding:8px 16px;"><span style="font-size:18px;">🔍</span><span style="font-size:9px;color:var(--gray-400);font-weight:600;">검색</span></a>
+        <a href="6-1-guest.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;padding:8px 16px;border-radius:20px;"><span style="font-size:18px;">👤</span><span style="font-size:9px;color:var(--green);font-weight:700;">마이</span></a>
+      </div>
     </div>
   </div>
 </div>

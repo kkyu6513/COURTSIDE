@@ -174,7 +174,10 @@
 
         <!-- 탭 콘텐츠: 변경 요청 -->
         <div id="content-reschedule" style="display:none;">
-          <!-- 정렬: 변경 요청 시각 ASC (선입선출) -->
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <span id="reschedule-date-label" style="font-size:13px;color:var(--gray-400);">오늘 기존 일정 기준</span>
+            <a href="7-2-booking-inbox.html" style="font-size:13px;color:var(--green);font-weight:600;text-decoration:none;">전체보기 ›</a>
+          </div>
 
           <!-- 1번째 요청 (4/12 09:15) — 제안됨 · 박지수 -->
           <div style="background:#fff;border-radius:14px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,0.06);margin-bottom:10px;border-left:4px solid var(--gray-300);opacity:0.75;">
@@ -308,32 +311,55 @@
       </div>
 
         <!-- 탭 콘텐츠: 대기 신청 -->
-        <div id="content-pending" style="display:none;">
+        <div id="content-pending" style="display:none;padding:0 20px;">
+          <!-- 대기신청이란? -->
+          <div onclick="showPendingGuide()" style="display:flex;align-items:center;gap:6px;padding:10px 12px;background:var(--gray-100);border-radius:10px;margin-bottom:10px;cursor:pointer;">
+            <span style="font-size:11px;color:var(--gray-500);">대기신청이란?</span>
+            <span style="font-size:11px;color:var(--gray-400);margin-left:auto;">?</span>
+          </div>
+
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-            <span style="font-size:13px;color:var(--gray-400);">신청 들어온 순</span>
+            <span id="pending-date-label" style="font-size:13px;color:var(--gray-400);">오늘 희망 일정 기준</span>
             <a href="7-2-booking-inbox.html" style="font-size:13px;color:var(--green);font-weight:600;text-decoration:none;">전체보기 ›</a>
           </div>
 
-          <div style="background:#fff;border-radius:14px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,0.06);margin-bottom:8px;cursor:pointer;" onclick="showLessonDetail('pending')">
-            <div style="display:flex;justify-content:space-between;align-items:center;">
-              <div>
-                <div style="font-size:14px;font-weight:600;color:var(--navy);">박지수</div>
-                <div style="font-size:12px;color:var(--gray-500);margin-top:2px;">정규레슨 · 주 1회 · 1:1 개인</div>
-                <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">4/13 신청 · 화·목 10:00 희망</div>
+          <!-- 대기 신청 있는 경우 -->
+          <div id="pending-has-data">
+            <div style="background:#fff;border-radius:14px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,0.06);margin-bottom:8px;cursor:pointer;" onclick="showLessonDetail('pending')">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                  <div style="font-size:14px;font-weight:600;color:var(--navy);">박지수</div>
+                  <div style="font-size:12px;color:var(--gray-500);margin-top:2px;">정규레슨 · 주 1회 · 1:1 개인</div>
+                  <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">4/13 신청 · 화·목 10:00 희망</div>
+                </div>
+                <span class="badge-sm" style="background:#FEF3C7;color:#92400E;">대기</span>
               </div>
-              <span class="badge-sm" style="background:#FEF3C7;color:#92400E;">대기</span>
+            </div>
+
+            <div style="background:#fff;border-radius:14px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,0.06);cursor:pointer;" onclick="showLessonDetail('pending')">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                  <div style="font-size:14px;font-weight:600;color:var(--navy);">최수진</div>
+                  <div style="font-size:12px;color:var(--gray-500);margin-top:2px;">쿠폰레슨 · 4회 · 그룹</div>
+                  <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">4/12 신청 · 월·수 14:00 희망</div>
+                </div>
+                <span class="badge-sm" style="background:#FEF3C7;color:#92400E;">대기</span>
+              </div>
             </div>
           </div>
 
-          <div style="background:#fff;border-radius:14px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,0.06);cursor:pointer;" onclick="showLessonDetail('pending')">
-            <div style="display:flex;justify-content:space-between;align-items:center;">
-              <div>
-                <div style="font-size:14px;font-weight:600;color:var(--navy);">최수진</div>
-                <div style="font-size:12px;color:var(--gray-500);margin-top:2px;">쿠폰레슨 · 4회 · 그룹</div>
-                <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">4/12 신청 · 월·수 14:00 희망</div>
-              </div>
-              <span class="badge-sm" style="background:#FEF3C7;color:#92400E;">대기</span>
+          <!-- 대기 신청 없는 경우 (시뮬레이션 버튼으로 전환) -->
+          <div id="pending-empty" style="display:none;">
+            <div style="text-align:center;padding:40px 20px;">
+              <div style="font-size:32px;margin-bottom:12px;">📭</div>
+              <div style="font-size:14px;font-weight:600;color:var(--navy);">대기 중인 신청이 없어요</div>
+              <div style="font-size:12px;color:var(--gray-400);margin-top:4px;">오늘 희망 일정으로 들어온 신청이 없습니다</div>
             </div>
+          </div>
+
+          <!-- 시뮬레이션 토글 -->
+          <div style="margin-top:12px;text-align:center;">
+            <button onclick="togglePendingEmpty()" style="padding:6px 14px;border-radius:20px;border:1px solid var(--gray-200);background:#fff;color:var(--gray-400);font-size:11px;cursor:pointer;font-family:inherit;">빈 상태 시뮬레이션</button>
           </div>
         </div>
 
@@ -382,6 +408,36 @@
     <!-- 발송 완료 토스트 -->
     <div id="sent-toast" style="display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.8);color:#fff;padding:14px 24px;border-radius:12px;font-size:14px;font-weight:600;z-index:200;text-align:center;">
       알림톡이 발송되었습니다
+    </div>
+
+    <!-- 대기신청 안내 팝업 -->
+    <div id="pending-guide-popup" style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;z-index:100;">
+      <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);" onclick="closePendingGuide()"></div>
+      <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:calc(100% - 48px);background:#fff;border-radius:20px;padding:24px 20px;z-index:101;">
+        <div style="text-align:center;margin-bottom:16px;">
+          <div style="width:48px;height:48px;border-radius:50%;background:#FEF3C7;display:flex;align-items:center;justify-content:center;margin:0 auto;font-size:24px;">⏳</div>
+          <div style="font-size:17px;font-weight:800;color:var(--navy);margin-top:12px;">대기신청이란?</div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div style="padding:12px;background:var(--gray-50);border-radius:12px;">
+            <div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:4px;">수강생이 레슨을 신청한 상태</div>
+            <div style="font-size:12px;color:var(--gray-500);line-height:1.6;">수강생이 코치님께 레슨을 신청했지만, 아직 코치님이 수락하지 않은 상태예요.</div>
+          </div>
+
+          <div style="padding:12px;background:var(--gray-50);border-radius:12px;">
+            <div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:4px;">코치님이 해야 할 일</div>
+            <div style="font-size:12px;color:var(--gray-500);line-height:1.6;">신청 내역을 확인하고 <strong style="color:var(--green);">스케줄을 확정</strong>하거나, 일정이 어려우면 <strong style="color:var(--warning);">보류</strong> 또는 <strong style="color:var(--error);">거절</strong>할 수 있어요.</div>
+          </div>
+
+          <div style="padding:12px;background:var(--gray-50);border-radius:12px;">
+            <div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:4px;">날짜 기준 필터</div>
+            <div style="font-size:12px;color:var(--gray-500);line-height:1.6;">위 캘린더에서 선택한 날짜에 <strong>수강생이 희망한 일정</strong>이 포함된 신청만 표시돼요. 전체 신청을 보려면 우측 상단 "전체보기"를 눌러주세요.</div>
+          </div>
+        </div>
+
+        <button onclick="closePendingGuide()" style="margin-top:16px;width:100%;height:48px;border-radius:12px;border:none;background:var(--green);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">확인</button>
+      </div>
     </div>
 
     <!-- 상태 안내 팝업 -->
@@ -613,9 +669,14 @@ function selectCalDate(el, day) {
   const dateLabel = document.getElementById('selected-date-label');
   const lessonContent = document.getElementById('content-lesson');
 
+  const rescheduleLabel = document.getElementById('reschedule-date-label');
+  const pendingLabel = document.getElementById('pending-date-label');
+
   if (data.label === 'TODAY') {
     // 오늘: 원래 콘텐츠 복원
     dateLabel.innerHTML = '📅 오늘 · 4월 13일 (일)';
+    if (rescheduleLabel) rescheduleLabel.textContent = '오늘 기존 일정 기준';
+    if (pendingLabel) pendingLabel.textContent = '오늘 희망 일정 기준';
     document.getElementById('original-today-content').style.display = 'block';
     document.getElementById('other-day-content').style.display = 'none';
     return;
@@ -623,6 +684,8 @@ function selectCalDate(el, day) {
 
   const isToday = false;
   dateLabel.innerHTML = '📅 ' + data.label;
+  if (rescheduleLabel) rescheduleLabel.textContent = data.label + ' 기존 일정 기준';
+  if (pendingLabel) pendingLabel.textContent = data.label + ' 희망 일정 기준';
 
   // 다른 날짜 콘텐츠
   document.getElementById('original-today-content').style.display = 'none';
@@ -638,6 +701,25 @@ function selectCalDate(el, day) {
         <span class="badge-sm" style="background:${l.badgeBg};color:${l.badgeColor};">${l.badge}</span>
       </div>`
     ).join('');
+  }
+}
+
+function showPendingGuide() {
+  document.getElementById('pending-guide-popup').style.display = 'block';
+}
+function closePendingGuide() {
+  document.getElementById('pending-guide-popup').style.display = 'none';
+}
+
+function togglePendingEmpty() {
+  const hasData = document.getElementById('pending-has-data');
+  const empty = document.getElementById('pending-empty');
+  if (hasData.style.display === 'none') {
+    hasData.style.display = 'block';
+    empty.style.display = 'none';
+  } else {
+    hasData.style.display = 'none';
+    empty.style.display = 'block';
   }
 }
 

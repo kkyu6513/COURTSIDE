@@ -462,7 +462,7 @@
   <!-- Screen 4: Home -->
   <div class="device-wrap">
     <div class="device-label">홈 화면</div>
-    <div class="device">
+    <div class="device" style="background:var(--gray-50);">
       <div class="status-bar">
         <span class="time">9:41</span>
         <div class="status-icons"><span>▲▲</span><span>WiFi</span><span>🔋</span></div>
@@ -556,18 +556,13 @@
           </div>
         </div>
       </div>
-      <div class="bottom-nav">
-        <div class="nav-item active">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>홈
-        </div>
-        <div class="nav-item">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>메시지
-        </div>
-        <div class="nav-item">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>검색
-        </div>
-        <div class="nav-item">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>마이
+      <!-- Bottom Nav (플로팅 라운딩) -->
+      <div style="position:absolute;bottom:20px;left:16px;right:16px;z-index:50;">
+        <div style="display:flex;align-items:center;justify-content:space-around;height:60px;background:#fff;border-radius:30px;box-shadow:0 2px 16px rgba(0,0,0,0.1);border:1px solid var(--gray-100);">
+          <a href="#" style="display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;padding:8px 16px;border-radius:20px;"><span style="font-size:18px;">🏠</span><span style="font-size:9px;font-weight:700;color:var(--green);">홈</span></a>
+          <a href="#" style="display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;padding:8px 16px;"><span style="font-size:18px;">💬</span><span style="font-size:9px;font-weight:600;color:var(--gray-400);">메시지</span></a>
+          <a href="#" style="display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;padding:8px 16px;"><span style="font-size:18px;">🔍</span><span style="font-size:9px;font-weight:600;color:var(--gray-400);">검색</span></a>
+          <a href="#" style="display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;padding:8px 16px;"><span style="font-size:18px;">👤</span><span style="font-size:9px;font-weight:600;color:var(--gray-400);">마이</span></a>
         </div>
       </div>
     </div>
@@ -576,7 +571,7 @@
   <!-- Screen 5: Coach List -->
   <div class="device-wrap">
     <div class="device-label">코치 목록</div>
-    <div class="device">
+    <div class="device" style="background:var(--gray-50);">
       <div class="status-bar">
         <span class="time">9:41</span>
         <div class="status-icons"><span>▲▲</span><span>WiFi</span><span>🔋</span></div>
@@ -930,7 +925,7 @@
   <!-- 수강생 마이페이지 -->
   <div class="device-wrap">
     <div class="device-label">수강생 마이페이지</div>
-    <div class="device">
+    <div class="device" style="background:var(--gray-50);">
       <div class="status-bar"><span class="time">9:41</span><div class="status-icons"><span>▲▲</span><span>WiFi</span><span>🔋</span></div></div>
       <div class="screen screen-white">
         <!-- 프로필 헤더 -->
@@ -996,7 +991,7 @@
   <!-- 코치 마이페이지 -->
   <div class="device-wrap">
     <div class="device-label">코치 마이페이지</div>
-    <div class="device">
+    <div class="device" style="background:var(--gray-50);">
       <div class="status-bar"><span class="time">9:41</span><div class="status-icons"><span>▲▲</span><span>WiFi</span><span>🔋</span></div></div>
       <div class="screen screen-white">
         <div style="background:linear-gradient(135deg,var(--purple),#a78bfa);padding:32px 20px 24px;display:flex;align-items:center;gap:16px;">
