@@ -450,7 +450,7 @@
         <div id="weekly-day-header" style="display:grid;grid-template-columns:40px repeat(7,1fr);gap:0;"></div>
       </div>
       <!-- 스크롤 영역 -->
-      <div style="overflow-y:auto;flex:1;padding:0 12px;">
+      <div id="weekly-scroll-area" style="overflow-y:auto;flex:1;padding:0 12px;">
         <!-- 타임테이블 -->
         <div style="display:grid;grid-template-columns:40px repeat(7,1fr);gap:0;" id="weekly-timetable">
         </div>
@@ -596,6 +596,41 @@
             </div>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- 상태 처리 바텀시트 (레슨 완료 / 보강 / 결강) -->
+    <div id="status-actions-overlay" style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;z-index:150;">
+      <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);" onclick="closeStatusActions()"></div>
+      <div style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;padding:20px;z-index:151;">
+        <div style="width:40px;height:4px;border-radius:2px;background:var(--gray-200);margin:0 auto 16px;"></div>
+        <div style="font-size:16px;font-weight:800;color:var(--navy);margin-bottom:16px;">상태 처리하기</div>
+
+        <button onclick="closeStatusActions();completeLesson()" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--gray-50);border-radius:12px;border:none;cursor:pointer;margin-bottom:8px;font-family:inherit;text-align:left;">
+          <div style="width:40px;height:40px;border-radius:10px;background:#DBEAFE;display:flex;align-items:center;justify-content:center;font-size:18px;">🏁</div>
+          <div>
+            <div style="font-size:14px;font-weight:700;color:var(--navy);">레슨 완료</div>
+            <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">레슨이 정상적으로 완료되었습니다</div>
+          </div>
+        </button>
+
+        <button onclick="closeStatusActions();handleSupplement()" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--gray-50);border-radius:12px;border:none;cursor:pointer;margin-bottom:8px;font-family:inherit;text-align:left;">
+          <div style="width:40px;height:40px;border-radius:10px;background:#D1FAE5;display:flex;align-items:center;justify-content:center;font-size:18px;">➕</div>
+          <div>
+            <div style="font-size:14px;font-weight:700;color:var(--green);">보강 처리</div>
+            <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">추가 보강 레슨을 등록합니다</div>
+          </div>
+        </button>
+
+        <button onclick="closeStatusActions();handleAbsence()" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--gray-50);border-radius:12px;border:none;cursor:pointer;margin-bottom:8px;font-family:inherit;text-align:left;">
+          <div style="width:40px;height:40px;border-radius:10px;background:#FEE2E2;display:flex;align-items:center;justify-content:center;font-size:18px;">✕</div>
+          <div>
+            <div style="font-size:14px;font-weight:700;color:var(--error);">결강 처리</div>
+            <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">수강생에게 결강 안내가 발송됩니다</div>
+          </div>
+        </button>
+
+        <button onclick="closeStatusActions()" style="width:100%;height:48px;border-radius:12px;border:1px solid var(--gray-100);background:#fff;color:var(--gray-500);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:4px;">취소</button>
       </div>
     </div>
 
@@ -1143,6 +1178,22 @@ function renderWeeklySchedule() {
   const nowMin = String(Math.floor(now.getMinutes() / 10) * 10).padStart(2,'0');
   const nowTime = nowHour + ':' + nowMin;
 
+  // 과거 슬롯 상태를 "완료"로 자동 변환
+  hours.forEach(h => {
+    const row = schedule[h];
+    if (!row) return;
+    const hh = parseInt(h.split(':')[0]);
+    const mm = parseInt(h.split(':')[1]);
+    for (let d = 0; d < 7; d++) {
+      if (row[d]) {
+        const sd = new Date(weekDates[d].getFullYear(), weekDates[d].getMonth(), weekDates[d].getDate(), hh, mm, 0);
+        if (sd < now && row[d].s !== '완료') {
+          row[d] = Object.assign({}, row[d], {s: '완료'});
+        }
+      }
+    }
+  });
+
   let html = '';
   const isOnHour = (t) => t.endsWith(':00');
   hours.forEach(h => {
@@ -1155,20 +1206,29 @@ function renderWeeklySchedule() {
     for (let d = 0; d < 7; d++) {
       const row = schedule[h];
       const item = row ? row[d] : null;
+      const hh = parseInt(h.split(':')[0]);
+      const mm = parseInt(h.split(':')[1]);
+      const slotDate = new Date(weekDates[d].getFullYear(), weekDates[d].getMonth(), weekDates[d].getDate(), hh, mm, 0);
+      const isPast = slotDate < now;
       if (item) {
         const c = colorMap[item.s] || colorMap[''];
-        const cellBg = isNowRow ? `background:linear-gradient(rgba(255,107,107,0.12),rgba(255,107,107,0.12)),${c.bg};` : `background:${c.bg};`;
-        html += `<div style="height:40px;${cellBg}border-right:2px solid var(--gray-300);${rowBorder}display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:${c.text};cursor:pointer;" onclick="showScheduleToast(event,this,'${dates[d]} (${days[d]}) ${h}','${item.n}','${item.t}','${item.c}','${item.s}')">${isOnHour(h) ? item.s : ''}</div>`;
+        const cellBg = isNowRow ? `background:linear-gradient(rgba(255,107,107,0.12),rgba(255,107,107,0.12)),${c.bg}` : `background:${c.bg}`;
+        const cellOpacity = isPast && !isNowRow ? 'opacity:0.5;' : '';
+        html += `<div style="height:40px;${cellBg};${cellOpacity}border-right:2px solid var(--gray-300);${rowBorder}display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:${c.text};cursor:pointer;position:relative;z-index:1;" onclick="showScheduleToast(event,this,'${dates[d]} (${days[d]}) ${h}','${item.n}','${item.t}','${item.c}','${item.s}')">${isOnHour(h) ? item.s : ''}</div>`;
       } else {
-        const emptyBg = isNowRow ? 'background:rgba(255,107,107,0.08);' : 'background:#fff;';
-        html += `<div onclick="toggleEmptySlot(event,this,'${dates[d]} (${days[d]}) ${h}')" data-slot="${dates[d]} (${days[d]}) ${h}" style="height:40px;${emptyBg}border-right:2px solid var(--gray-300);${rowBorder}cursor:pointer;"></div>`;
+        if (isPast) {
+          html += `<div style="height:40px;background:var(--gray-100);border-right:2px solid var(--gray-300);${rowBorder}cursor:not-allowed;" onclick="toggleEmptySlot(event,this,'${dates[d]} (${days[d]}) ${h}')"></div>`;
+        } else {
+          const emptyBg = isNowRow ? 'background:rgba(255,107,107,0.08);' : 'background:#fff;';
+          html += `<div onclick="toggleEmptySlot(event,this,'${dates[d]} (${days[d]}) ${h}')" data-slot="${dates[d]} (${days[d]}) ${h}" style="height:40px;${emptyBg}border-right:2px solid var(--gray-300);${rowBorder}cursor:pointer;"></div>`;
+        }
       }
     }
   });
   timetable.innerHTML = html;
 
   // 현재 시간 기준 스크롤 포커싱
-  const scrollArea = timetable.parentElement;
+  const scrollArea = document.getElementById('weekly-scroll-area');
   const currentHourIndex = hours.indexOf(nowTime);
   if (currentHourIndex > 0) {
     const cellHeight = 41;
@@ -1179,8 +1239,24 @@ function renderWeeklySchedule() {
 let selectedEmptySlotTime = '';
 let selectedEmptySlots = [];
 
+function isSlotPast(datetime) {
+  // datetime: "4/17 (목) 14:00"
+  const parts = datetime.match(/(\d+)\/(\d+)\s*\(.+\)\s*(\d+):(\d+)/);
+  if (!parts) return false;
+  const now = new Date();
+  const slotDate = new Date(now.getFullYear(), parseInt(parts[1]) - 1, parseInt(parts[2]), parseInt(parts[3]), parseInt(parts[4]));
+  return slotDate < now;
+}
+
 function toggleEmptySlot(e, el, datetime) {
   e.stopPropagation();
+  if (isSlotPast(datetime)) {
+    const toast = document.getElementById('sent-toast');
+    toast.textContent = '이미 지난 시간은 선택할 수 없습니다';
+    toast.style.display = 'block';
+    setTimeout(() => { toast.style.display = 'none'; }, 2000);
+    return;
+  }
   const idx = selectedEmptySlots.indexOf(datetime);
   if (idx > -1) {
     selectedEmptySlots.splice(idx, 1);
@@ -1304,6 +1380,9 @@ function closeWeeklySchedule() {
   if (t) t.style.display = 'none';
 }
 function showScheduleToast(e, el, datetime, name, type, category, status) {
+  // 빈 슬롯 선택 초기화 + 플로팅 바 숨기기
+  clearSelectedSlots();
+
   const old = document.getElementById('schedule-detail-toast');
   if (old) old.remove();
 
@@ -1318,23 +1397,25 @@ function showScheduleToast(e, el, datetime, name, type, category, status) {
 
   const toast = document.createElement('div');
   toast.id = 'schedule-detail-toast';
-  toast.style.cssText = 'position:sticky;top:0;left:0;right:0;background:#fff;padding:12px 16px;box-shadow:0 2px 12px rgba(0,0,0,0.1);z-index:110;border-bottom:1px solid var(--gray-100);';
+  toast.style.cssText = 'position:sticky;top:0;left:0;right:0;margin:0 -12px;padding:14px 20px;background:linear-gradient(135deg,#2D4A3E,#3D6B5A);z-index:110;box-shadow:0 4px 16px rgba(45,74,62,0.3);';
   toast.innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:center;">
-      <div style="display:flex;align-items:center;gap:10px;">
-        <span style="font-size:14px;font-weight:700;color:var(--navy);">${name}</span>
-        <span style="font-size:11px;color:var(--gray-400);">${datetime}</span>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+      <div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+          <span style="font-size:16px;font-weight:800;color:#fff;">${name}</span>
+          <span style="padding:3px 10px;border-radius:6px;background:rgba(255,255,255,0.2);color:#fff;font-size:10px;font-weight:700;">${status}</span>
+        </div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.6);">${datetime}</div>
+        <div style="display:flex;gap:6px;margin-top:6px;">
+          <span style="padding:2px 8px;border-radius:4px;background:rgba(255,255,255,0.15);color:rgba(255,255,255,0.9);font-size:11px;font-weight:600;">${type}</span>
+          <span style="padding:2px 8px;border-radius:4px;background:rgba(255,255,255,0.15);color:rgba(255,255,255,0.9);font-size:11px;font-weight:600;">${category}</span>
+        </div>
+        <button onclick="document.getElementById('schedule-detail-toast').remove();closeWeeklySchedule();showLessonDetail('upcoming')" style="margin-top:10px;padding:8px 16px;border-radius:8px;border:none;background:rgba(255,255,255,0.2);color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">레슨 상세 보기 ›</button>
       </div>
-      <div style="display:flex;align-items:center;gap:8px;">
-        <span style="padding:2px 8px;border-radius:4px;background:${sc.bg};color:${sc.color};font-size:10px;font-weight:700;">${status}</span>
-        <span onclick="document.getElementById('schedule-detail-toast').remove()" style="font-size:14px;color:var(--gray-400);cursor:pointer;">✕</span>
-      </div>
-    </div>
-    <div style="display:flex;gap:8px;margin-top:4px;font-size:12px;color:var(--gray-500);">
-      <span>${type}</span><span>·</span><span>${category}</span>
+      <span onclick="document.getElementById('schedule-detail-toast').remove()" style="font-size:16px;color:rgba(255,255,255,0.5);cursor:pointer;padding:2px 6px;">✕</span>
     </div>`;
 
-  const scrollArea = document.querySelector('#weekly-schedule-modal > div:last-child');
+  const scrollArea = document.getElementById('weekly-scroll-area');
   scrollArea.insertBefore(toast, scrollArea.firstChild);
   e.stopPropagation();
 }
@@ -1350,6 +1431,30 @@ function toggleSelectAll() {
     el.style.background = cb.checked ? '#F0FDFA' : '#fff';
   });
   btn.textContent = allChecked ? '전체선택' : '선택해제';
+}
+
+function showStatusActions() {
+  document.getElementById('status-actions-overlay').style.display = 'block';
+}
+function closeStatusActions() {
+  document.getElementById('status-actions-overlay').style.display = 'none';
+}
+
+function handleSupplement() {
+  closeLessonDetail();
+  const toast = document.getElementById('sent-toast');
+  toast.textContent = '보강 레슨이 등록되었습니다';
+  toast.style.display = 'block';
+  setTimeout(() => { toast.style.display = 'none'; }, 2000);
+}
+function handleAbsence() {
+  if (confirm('결강 처리하시겠습니까?\n수강생에게 결강 안내가 발송됩니다.')) {
+    closeLessonDetail();
+    const toast = document.getElementById('sent-toast');
+    toast.textContent = '결강 처리되었습니다';
+    toast.style.display = 'block';
+    setTimeout(() => { toast.style.display = 'none'; }, 2000);
+  }
 }
 
 function showProposalModal() {
@@ -1683,10 +1788,7 @@ function showLessonDetail(status) {
     actions.innerHTML = '<button onclick="closeLessonDetail()" style="width:100%;height:48px;border-radius:12px;border:1px solid var(--gray-100);background:#fff;color:var(--gray-500);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">닫기</button>';
   } else if (status === 'upcoming') {
     actions.innerHTML = `
-      <div style="display:flex;gap:10px;">
-        <button onclick="cancelLesson()" style="flex:1;height:48px;border-radius:12px;border:1px solid var(--gray-100);background:#fff;color:var(--gray-500);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">취소</button>
-        <button onclick="completeLesson()" style="flex:2;height:48px;border-radius:12px;border:none;background:var(--purple);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">레슨 완료 처리</button>
-      </div>`;
+      <button onclick="showStatusActions()" style="width:100%;height:48px;border-radius:12px;border:none;background:var(--green);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">상태 처리하기</button>`;
   } else if (status === 'pending-conflict') {
     const conflictCount = d.schedule.filter(s => s.status === 'conflict').length;
 

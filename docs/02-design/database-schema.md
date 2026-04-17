@@ -80,6 +80,7 @@ enum BookingStatus {
   COMPLETED
   CANCELLED
   REJECTED
+  ABSENT
 }
 
 enum PaymentStatus {
