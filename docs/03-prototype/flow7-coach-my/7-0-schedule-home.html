@@ -445,9 +445,12 @@
           <button onclick="changeWeek(1)" style="padding:4px 10px;border-radius:6px;border:1px solid var(--gray-100);background:#fff;font-size:11px;font-weight:600;color:var(--gray-500);cursor:pointer;font-family:inherit;">다음주 ›</button>
         </div>
       </div>
-      <div style="overflow-y:auto;flex:1;padding:8px 12px;">
-        <!-- 주간 헤더 -->
-        <div id="weekly-day-header" style="display:grid;grid-template-columns:40px repeat(7,1fr);gap:0;margin-bottom:2px;"></div>
+      <!-- 주간 헤더 (스크롤 밖 고정) -->
+      <div style="padding:4px 12px;background:#fff;border-bottom:2px solid var(--gray-300);flex-shrink:0;">
+        <div id="weekly-day-header" style="display:grid;grid-template-columns:40px repeat(7,1fr);gap:0;"></div>
+      </div>
+      <!-- 스크롤 영역 -->
+      <div style="overflow-y:auto;flex:1;padding:0 12px;">
         <!-- 타임테이블 -->
         <div style="display:grid;grid-template-columns:40px repeat(7,1fr);gap:0;" id="weekly-timetable">
         </div>
@@ -963,7 +966,7 @@ function selectCalDate(el, day) {
   }
 }
 
-let currentWeekStart = new Date(2026, 3, 7); // 4/7 월요일
+let currentWeekStart = (function(){ const d = new Date(); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); d.setHours(0,0,0,0); return d; })(); // 실시간 이번 주 월요일
 
 function initYearMonthSelects() {
   const yearSel = document.getElementById('schedule-year-select');
@@ -993,7 +996,7 @@ function jumpToYearMonth() {
 }
 
 function showWeeklySchedule() {
-  currentWeekStart = new Date(2026, 3, 7);
+  const d = new Date(); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); d.setHours(0,0,0,0); currentWeekStart = d;
   initYearMonthSelects();
   renderWeeklySchedule();
   const modal = document.getElementById('weekly-schedule-modal');
@@ -1031,7 +1034,7 @@ function renderWeeklySchedule() {
     weekDates.push(d);
   }
 
-  const today = new Date(2026, 3, 13); // 시뮬레이션 오늘
+  const today = new Date(); // 실시간 오늘
 
   // 라벨 업데이트
   updateYearMonthSelects();
@@ -1041,15 +1044,15 @@ function renderWeeklySchedule() {
   weekLabel.textContent = startStr + ' ~ ' + endStr;
 
   // 요일 헤더
-  let headerHtml = '<div></div>';
+  let headerHtml = '<div style="border-right:2px solid var(--gray-300);background:#fff;"></div>';
   weekDates.forEach(d => {
     const isToday = d.getDate() === today.getDate() && d.getMonth() === today.getMonth();
     const dayName = dayNames[d.getDay()];
     const dateNum = d.getDate();
     if (isToday) {
-      headerHtml += `<div style="text-align:center;padding:6px 0;font-size:10px;font-weight:700;background:var(--green);border-radius:6px;color:#fff;">${dayName} ${dateNum}</div>`;
+      headerHtml += `<div style="text-align:center;padding:6px 0;font-size:10px;font-weight:700;background:var(--green);border-radius:6px;color:#fff;border-right:2px solid var(--gray-300);">${dayName} ${dateNum}</div>`;
     } else {
-      headerHtml += `<div style="text-align:center;padding:6px 0;font-size:10px;font-weight:700;color:var(--gray-400);">${dayName} ${dateNum}</div>`;
+      headerHtml += `<div style="text-align:center;padding:6px 0;font-size:10px;font-weight:700;color:var(--gray-400);background:#fff;border-right:2px solid var(--gray-300);">${dayName} ${dateNum}</div>`;
     }
   });
   dayHeader.innerHTML = headerHtml;
@@ -1067,7 +1070,9 @@ function renderWeeklySchedule() {
   }
 
   // 현재 주(4/7~4/13)인지 확인
-  const isCurrentWeek = currentWeekStart.getDate() === 7 && currentWeekStart.getMonth() === 3 && currentWeekStart.getFullYear() === 2026;
+  const realToday = new Date();
+  const realMonday = new Date(realToday); realMonday.setDate(realMonday.getDate() - ((realMonday.getDay() + 6) % 7)); realMonday.setHours(0,0,0,0);
+  const isCurrentWeek = currentWeekStart.getTime() === realMonday.getTime();
 
   // 과거/미래 주 히스토리 데이터 자동 생성
   const students = [
@@ -1146,7 +1151,7 @@ function renderWeeklySchedule() {
     const isNowRow = isCurrentWeek && h === nowTime;
     const nowRowBg = isNowRow ? 'background:rgba(255,107,107,0.08);' : '';
     const nowLabelStyle = isNowRow ? 'font-size:11px;font-weight:800;color:var(--coral);' : `font-size:11px;${labelWeight}`;
-    html += `<div style="${nowLabelStyle}text-align:right;padding:2px 6px 2px 0;display:flex;align-items:center;justify-content:flex-end;height:40px;${rowBorder}${nowRowBg}">${h}${isNowRow ? ' ◀' : ''}</div>`;
+    html += `<div style="${nowLabelStyle}text-align:right;padding:2px 6px 2px 0;display:flex;align-items:center;justify-content:flex-end;height:40px;${rowBorder}${nowRowBg}border-right:2px solid var(--gray-300);">${h}${isNowRow ? ' ◀' : ''}</div>`;
     for (let d = 0; d < 7; d++) {
       const row = schedule[h];
       const item = row ? row[d] : null;

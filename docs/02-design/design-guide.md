@@ -138,14 +138,18 @@ border-radius: 12px (radius-md)
 컬럼: 월~일 (7열) + 시간 라벨 (좌측 40px)
 셀 높이: 40px
 가로 구분선: 정시 — 2px solid var(--gray-300), 10분 — 1px solid var(--gray-300)
-세로 구분선: 2px solid var(--gray-300) (border-right)
-시간 라벨: 11px, 정시 — Navy bold, 10분 — gray-400
-현재 시간 하이라이트: 코랄 반투명 배경 rgba(255,107,107,0.08) + 라벨 코랄 bold + ◀
-빈 슬롯 선택: 초록 배경 (#D1FAE5)
+세로 구분선: 2px solid var(--gray-300) (border-right, 시간 라벨 포함 모든 셀)
+시간 라벨: 11px, 정시 — Navy bold, 10분 — gray-400, 모든 10분 표시
+요일 헤더: 스크롤 영역 밖 고정 (flex-shrink:0), 흰색 배경, 하단 2px 구분선 + shadow
+오늘 요일: 실시간 new Date() 기준 초록 배경 강조
+이번 주 시작: 실시간 오늘 기준 월요일 자동 계산
+현재 시간 하이라이트: 실시간 기준, 현재 주만, 코랄 반투명 배경 rgba(255,107,107,0.08) + 라벨 코랄 bold + ◀
+빈 슬롯 선택: 다중 선택 토글, 초록 배경 (#D1FAE5)
 하단 플로팅 바: 네이비 배경, border-radius 14px, absolute bottom 16px
-상단 토스트: sticky top, 흰색 배경 + shadow
+상단 토스트: 스크롤 영역 상단 삽입, 흰색 배경 + shadow
+년도/월 콤보: <select> 2024~2028, 1~12월, border + radius (드롭다운 화살표 표시)
 
-※ v2에서 추가
+※ v2에서 추가, v3에서 실시간 + 요일 헤더 고정 + 세로라인 통일
 ```
 
 ### 6.2 코치 카드 (Coach Card)
