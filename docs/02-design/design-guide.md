@@ -131,6 +131,23 @@ border-radius: 12px (radius-md)
 ※ 기존 좌측 컬러 보더 + 상태별 배경색 방식에서 변경 (v2)
 ```
 
+### 6.1b 전체 스케줄 타임테이블
+```
+형태: 풀팝업 (top-nav + flex column)
+시간 범위: 06:00 ~ 22:00 (10분 단위, 96행)
+컬럼: 월~일 (7열) + 시간 라벨 (좌측 40px)
+셀 높이: 40px
+가로 구분선: 정시 — 2px solid var(--gray-300), 10분 — 1px solid var(--gray-300)
+세로 구분선: 2px solid var(--gray-300) (border-right)
+시간 라벨: 11px, 정시 — Navy bold, 10분 — gray-400
+현재 시간 하이라이트: 코랄 반투명 배경 rgba(255,107,107,0.08) + 라벨 코랄 bold + ◀
+빈 슬롯 선택: 초록 배경 (#D1FAE5)
+하단 플로팅 바: 네이비 배경, border-radius 14px, absolute bottom 16px
+상단 토스트: sticky top, 흰색 배경 + shadow
+
+※ v2에서 추가
+```
+
 ### 6.2 코치 카드 (Coach Card)
 ```
 배경: White

@@ -427,20 +427,29 @@
         <div class="title">전체 스케줄</div>
         <div class="action"></div>
       </div>
-      <div style="overflow-y:auto;height:calc(100% - 48px);padding:16px 12px;">
-        <!-- 주간 헤더 -->
-        <div style="display:grid;grid-template-columns:40px repeat(7,1fr);gap:2px;margin-bottom:2px;">
-          <div></div>
-          <div style="text-align:center;padding:6px 0;font-size:10px;font-weight:700;color:var(--gray-400);">월 7</div>
-          <div style="text-align:center;padding:6px 0;font-size:10px;font-weight:700;color:var(--gray-400);">화 8</div>
-          <div style="text-align:center;padding:6px 0;font-size:10px;font-weight:700;color:var(--gray-400);">수 9</div>
-          <div style="text-align:center;padding:6px 0;font-size:10px;font-weight:700;color:var(--gray-400);">목 10</div>
-          <div style="text-align:center;padding:6px 0;font-size:10px;font-weight:700;color:var(--gray-400);">금 11</div>
-          <div style="text-align:center;padding:6px 0;font-size:10px;font-weight:700;color:var(--gray-400);">토 12</div>
-          <div style="text-align:center;padding:6px 0;font-size:10px;font-weight:700;color:var(--green);background:var(--green);border-radius:6px;color:#fff;">일 13</div>
+      <!-- 월/주 네비게이션 -->
+      <div style="padding:12px 16px;border-bottom:1px solid var(--gray-100);flex-shrink:0;">
+        <!-- 월 네비 -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <button onclick="changeMonth(-1)" style="width:32px;height:32px;border-radius:8px;border:1px solid var(--gray-100);background:#fff;font-size:14px;cursor:pointer;font-family:inherit;">‹</button>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <select id="schedule-year-select" onchange="jumpToYearMonth()" style="font-size:15px;font-weight:800;color:var(--navy);border:1px solid var(--gray-200);border-radius:8px;background:#fff;cursor:pointer;font-family:inherit;padding:4px 8px;"></select>
+            <select id="schedule-month-select" onchange="jumpToYearMonth()" style="font-size:15px;font-weight:800;color:var(--navy);border:1px solid var(--gray-200);border-radius:8px;background:#fff;cursor:pointer;font-family:inherit;padding:4px 8px;"></select>
+          </div>
+          <button onclick="changeMonth(1)" style="width:32px;height:32px;border-radius:8px;border:1px solid var(--gray-100);background:#fff;font-size:14px;cursor:pointer;font-family:inherit;">›</button>
         </div>
+        <!-- 주 네비 -->
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <button onclick="changeWeek(-1)" style="padding:4px 10px;border-radius:6px;border:1px solid var(--gray-100);background:#fff;font-size:11px;font-weight:600;color:var(--gray-500);cursor:pointer;font-family:inherit;">‹ 이전주</button>
+          <span id="schedule-week-label" style="font-size:13px;font-weight:600;color:var(--navy);">4/7 ~ 4/13</span>
+          <button onclick="changeWeek(1)" style="padding:4px 10px;border-radius:6px;border:1px solid var(--gray-100);background:#fff;font-size:11px;font-weight:600;color:var(--gray-500);cursor:pointer;font-family:inherit;">다음주 ›</button>
+        </div>
+      </div>
+      <div style="overflow-y:auto;flex:1;padding:8px 12px;">
+        <!-- 주간 헤더 -->
+        <div id="weekly-day-header" style="display:grid;grid-template-columns:40px repeat(7,1fr);gap:0;margin-bottom:2px;"></div>
         <!-- 타임테이블 -->
-        <div style="display:grid;grid-template-columns:40px repeat(7,1fr);gap:2px;" id="weekly-timetable">
+        <div style="display:grid;grid-template-columns:40px repeat(7,1fr);gap:0;" id="weekly-timetable">
         </div>
         <!-- 범례 -->
         <div style="display:flex;gap:12px;margin-top:16px;padding:10px;background:var(--gray-50);border-radius:10px;flex-wrap:wrap;">
@@ -450,6 +459,19 @@
           <div style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--gray-500);"><div style="width:10px;height:10px;border-radius:3px;background:#FFF7ED;border:1px solid #FFEDD5;"></div>변경 요청</div>
           <div style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--gray-500);"><div style="width:10px;height:10px;border-radius:3px;background:#DBEAFE;border:1px solid #BFDBFE;"></div>완료</div>
           <div style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--gray-500);"><div style="width:10px;height:10px;border-radius:3px;background:var(--gray-50);border:1px solid var(--gray-100);"></div>빈 시간</div>
+        </div>
+      </div>
+      <!-- 선택 슬롯 플로팅 바 -->
+      <div id="selected-slots-bar" style="display:none;position:absolute;bottom:16px;left:16px;right:16px;padding:12px 14px;background:var(--navy);border-radius:14px;z-index:110;box-shadow:0 4px 20px rgba(0,0,0,0.2);">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <span style="font-size:13px;font-weight:700;color:#fff;" id="selected-slots-count">0개 선택</span>
+            <div style="font-size:10px;color:rgba(255,255,255,0.5);margin-top:2px;" id="selected-slots-list"></div>
+          </div>
+          <div style="display:flex;gap:6px;">
+            <button onclick="clearSelectedSlots()" style="padding:8px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.3);background:transparent;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">초기화</button>
+            <button onclick="openSelectedSlotsAction()" style="padding:8px 14px;border-radius:8px;border:none;background:var(--green);color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">스케줄 잡기</button>
+          </div>
         </div>
       </div>
     </div>
@@ -482,37 +504,123 @@
       </div>
     </div>
 
-    <!-- 수강생 선택 바텀시트 -->
-    <div id="student-select-overlay" style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;z-index:140;">
-      <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);" onclick="closeStudentSelect()"></div>
-      <div style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;padding:20px;z-index:141;">
+    <!-- 수강생 선택 풀팝업 -->
+    <div id="student-select-overlay" style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;z-index:140;background:#fff;">
+      <div class="top-nav">
+        <a onclick="closeStudentSelect()" class="back" style="cursor:pointer;">←</a>
+        <div class="title">수강생 선택</div>
+        <div class="action"></div>
+      </div>
+      <div style="overflow-y:auto;height:calc(100% - 48px);padding:20px;">
+        <div id="student-select-time" style="font-size:13px;color:var(--gray-400);margin-bottom:16px;"></div>
+
+        <!-- 탭: 신규 등록 / 기존 수강생 -->
+        <div style="display:flex;border-bottom:2px solid var(--gray-100);margin-bottom:16px;">
+          <div id="st-tab-new" onclick="switchStudentTab('new')" style="flex:1;text-align:center;padding:10px 0;font-size:13px;font-weight:700;color:var(--green);border-bottom:2px solid var(--green);margin-bottom:-2px;cursor:pointer;">신규 수강생</div>
+          <div id="st-tab-existing" onclick="switchStudentTab('existing')" style="flex:1;text-align:center;padding:10px 0;font-size:13px;font-weight:700;color:var(--gray-400);border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer;">기존 수강생</div>
+        </div>
+
+        <!-- 신규 수강생 등록 폼 -->
+        <div id="st-content-new">
+          <div style="padding:14px;background:var(--gray-50);border-radius:14px;margin-bottom:16px;">
+            <div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:12px;">수강생 정보 입력</div>
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <div>
+                <label style="font-size:12px;font-weight:600;color:var(--gray-500);display:block;margin-bottom:4px;">이름 <span style="color:var(--error);">*</span></label>
+                <input id="ext-name" class="input-field" placeholder="수강생 이름" style="width:100%;height:40px;border-radius:10px;">
+              </div>
+              <div>
+                <label style="font-size:12px;font-weight:600;color:var(--gray-500);display:block;margin-bottom:4px;">연락처 <span style="color:var(--error);">*</span></label>
+                <input id="ext-phone" class="input-field" placeholder="010-0000-0000" style="width:100%;height:40px;border-radius:10px;">
+              </div>
+              <div>
+                <label style="font-size:12px;font-weight:600;color:var(--gray-500);display:block;margin-bottom:4px;">레슨 유형 <span style="color:var(--error);">*</span></label>
+                <div style="display:flex;gap:8px;">
+                  <label onclick="this.querySelector('input').checked=true" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:#fff;border:1.5px solid var(--gray-100);border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;color:var(--navy);">
+                    <input type="radio" name="ext-type" value="regular" checked style="accent-color:var(--green);">정규레슨
+                  </label>
+                  <label onclick="this.querySelector('input').checked=true" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:#fff;border:1.5px solid var(--gray-100);border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;color:var(--navy);">
+                    <input type="radio" name="ext-type" value="coupon" style="accent-color:var(--green);">쿠폰레슨
+                  </label>
+                </div>
+              </div>
+              <div>
+                <label style="font-size:12px;font-weight:600;color:var(--gray-500);display:block;margin-bottom:4px;">레슨 형태 <span style="color:var(--error);">*</span></label>
+                <div style="display:flex;gap:8px;">
+                  <label onclick="this.querySelector('input').checked=true" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:#fff;border:1.5px solid var(--gray-100);border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;color:var(--navy);">
+                    <input type="radio" name="ext-format" value="individual" checked style="accent-color:var(--green);">1:1 개인
+                  </label>
+                  <label onclick="this.querySelector('input').checked=true" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:#fff;border:1.5px solid var(--gray-100);border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;color:var(--navy);">
+                    <input type="radio" name="ext-format" value="group" style="accent-color:var(--green);">그룹
+                  </label>
+                </div>
+              </div>
+              <div>
+                <label style="font-size:12px;font-weight:600;color:var(--gray-500);display:block;margin-bottom:4px;">메모 (선택)</label>
+                <textarea id="ext-memo" placeholder="코치 전용 메모" style="width:100%;height:60px;border-radius:10px;border:1px solid var(--gray-100);padding:10px;font-size:13px;font-family:inherit;resize:none;box-sizing:border-box;"></textarea>
+              </div>
+            </div>
+          </div>
+          <button onclick="registerExternalStudent()" style="width:100%;height:48px;border-radius:12px;border:none;background:var(--green);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">등록 + 레슨 잡기</button>
+        </div>
+
+        <!-- 기존 수강생 목록 -->
+        <div id="st-content-existing" style="display:none;">
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div onclick="showPurposeSelect('홍길동')" style="display:flex;align-items:center;gap:12px;padding:14px;background:var(--gray-50);border-radius:12px;border:1px solid var(--gray-100);cursor:pointer;">
+              <div style="width:40px;height:40px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;">홍</div>
+              <div style="flex:1;">
+                <div style="font-size:14px;font-weight:600;color:var(--navy);">홍길동</div>
+                <div style="font-size:11px;color:var(--gray-400);">정규레슨 · 1:1 · 주 2회</div>
+              </div>
+              <span style="font-size:16px;color:var(--gray-300);">›</span>
+            </div>
+            <div onclick="showPurposeSelect('김영희')" style="display:flex;align-items:center;gap:12px;padding:14px;background:var(--gray-50);border-radius:12px;border:1px solid var(--gray-100);cursor:pointer;">
+              <div style="width:40px;height:40px;border-radius:50%;background:var(--info);color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;">김</div>
+              <div style="flex:1;">
+                <div style="font-size:14px;font-weight:600;color:var(--navy);">김영희</div>
+                <div style="font-size:11px;color:var(--gray-400);">정규레슨 · 그룹 · 주 1회</div>
+              </div>
+              <span style="font-size:16px;color:var(--gray-300);">›</span>
+            </div>
+            <div onclick="showPurposeSelect('이철수')" style="display:flex;align-items:center;gap:12px;padding:14px;background:var(--gray-50);border-radius:12px;border:1px solid var(--gray-100);cursor:pointer;">
+              <div style="width:40px;height:40px;border-radius:50%;background:var(--purple);color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;">이</div>
+              <div style="flex:1;">
+                <div style="font-size:14px;font-weight:600;color:var(--navy);">이철수</div>
+                <div style="font-size:11px;color:var(--gray-400);">쿠폰레슨 · 1:1 · 3/10회</div>
+              </div>
+              <span style="font-size:16px;color:var(--gray-300);">›</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 목적 선택 바텀시트 (날짜 변경 / 보강) -->
+    <div id="purpose-overlay" style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;z-index:150;">
+      <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);" onclick="closePurposeSelect()"></div>
+      <div style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;padding:20px;z-index:151;">
         <div style="width:40px;height:4px;border-radius:2px;background:var(--gray-200);margin:0 auto 16px;"></div>
-        <div style="font-size:16px;font-weight:800;color:var(--navy);margin-bottom:4px;">수강생 선택</div>
-        <div id="student-select-time" style="font-size:12px;color:var(--gray-400);margin-bottom:12px;"></div>
+        <div id="purpose-title" style="font-size:16px;font-weight:800;color:var(--navy);margin-bottom:4px;"></div>
+        <div id="purpose-time" style="font-size:12px;color:var(--gray-400);margin-bottom:16px;"></div>
 
-        <!-- 직접 입력 -->
-        <div style="display:flex;gap:8px;margin-bottom:12px;">
-          <input id="student-direct-input" class="input-field" placeholder="수강생 이름 직접 입력" style="flex:1;height:40px;border-radius:10px;">
-          <button onclick="directInputStudent()" style="height:40px;padding:0 14px;border-radius:10px;border:none;background:var(--green);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;">제안</button>
-        </div>
+        <button onclick="confirmPurpose('change')" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--gray-50);border-radius:12px;border:none;cursor:pointer;margin-bottom:8px;font-family:inherit;text-align:left;">
+          <div style="width:40px;height:40px;border-radius:10px;background:#FFF7ED;display:flex;align-items:center;justify-content:center;font-size:18px;">📅</div>
+          <div>
+            <div style="font-size:14px;font-weight:700;color:var(--navy);">날짜 변경</div>
+            <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">기존 레슨 일정을 이 시간으로 이동합니다</div>
+          </div>
+        </button>
 
-        <div style="font-size:12px;color:var(--gray-400);margin-bottom:8px;">또는 기존 수강생 선택</div>
+        <button onclick="confirmPurpose('supplement')" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--gray-50);border-radius:12px;border:none;cursor:pointer;margin-bottom:8px;font-family:inherit;text-align:left;">
+          <div style="width:40px;height:40px;border-radius:10px;background:#F0FDFA;display:flex;align-items:center;justify-content:center;font-size:18px;">➕</div>
+          <div>
+            <div style="font-size:14px;font-weight:700;color:var(--green);">보강 레슨</div>
+            <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">기존 일정 유지 + 이 시간에 추가 레슨을 등록합니다</div>
+          </div>
+        </button>
 
-        <!-- 수강생 목록 -->
-        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">
-          <div onclick="selectStudent(this)" style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--gray-50);border-radius:12px;border:1.5px solid var(--gray-100);cursor:pointer;transition:all 0.15s;">
-            <div style="width:36px;height:36px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;">홍</div>
-            <div><div style="font-size:14px;font-weight:600;color:var(--navy);">홍길동</div><div style="font-size:11px;color:var(--gray-400);">정규레슨 · 1:1</div></div>
-          </div>
-          <div onclick="selectStudent(this)" style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--gray-50);border-radius:12px;border:1.5px solid var(--gray-100);cursor:pointer;transition:all 0.15s;">
-            <div style="width:36px;height:36px;border-radius:50%;background:var(--info);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;">김</div>
-            <div><div style="font-size:14px;font-weight:600;color:var(--navy);">김영희</div><div style="font-size:11px;color:var(--gray-400);">정규레슨 · 그룹</div></div>
-          </div>
-          <div onclick="selectStudent(this)" style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--gray-50);border-radius:12px;border:1.5px solid var(--gray-100);cursor:pointer;transition:all 0.15s;">
-            <div style="width:36px;height:36px;border-radius:50%;background:var(--purple);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;">이</div>
-            <div><div style="font-size:14px;font-weight:600;color:var(--navy);">이철수</div><div style="font-size:11px;color:var(--gray-400);">쿠폰레슨 · 1:1</div></div>
-          </div>
-        </div>
+        <button onclick="closePurposeSelect()" style="width:100%;height:48px;border-radius:12px;border:1px solid var(--gray-100);background:#fff;color:var(--gray-500);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:4px;">취소</button>
       </div>
     </div>
 
@@ -855,46 +963,166 @@ function selectCalDate(el, day) {
   }
 }
 
+let currentWeekStart = new Date(2026, 3, 7); // 4/7 월요일
+
+function initYearMonthSelects() {
+  const yearSel = document.getElementById('schedule-year-select');
+  const monthSel = document.getElementById('schedule-month-select');
+  yearSel.innerHTML = '';
+  monthSel.innerHTML = '';
+  for (let y = 2024; y <= 2028; y++) {
+    yearSel.innerHTML += `<option value="${y}" ${y === currentWeekStart.getFullYear() ? 'selected' : ''}>${y}년</option>`;
+  }
+  for (let m = 1; m <= 12; m++) {
+    monthSel.innerHTML += `<option value="${m}" ${m === currentWeekStart.getMonth()+1 ? 'selected' : ''}>${m}월</option>`;
+  }
+}
+
+function updateYearMonthSelects() {
+  document.getElementById('schedule-year-select').value = currentWeekStart.getFullYear();
+  document.getElementById('schedule-month-select').value = currentWeekStart.getMonth() + 1;
+}
+
+function jumpToYearMonth() {
+  const y = parseInt(document.getElementById('schedule-year-select').value);
+  const m = parseInt(document.getElementById('schedule-month-select').value) - 1;
+  const d = new Date(y, m, 1);
+  while (d.getDay() !== 1) d.setDate(d.getDate() + 1);
+  currentWeekStart = d;
+  renderWeeklySchedule();
+}
+
 function showWeeklySchedule() {
+  currentWeekStart = new Date(2026, 3, 7);
+  initYearMonthSelects();
+  renderWeeklySchedule();
+  const modal = document.getElementById('weekly-schedule-modal');
+  modal.style.display = 'flex';
+  modal.style.flexDirection = 'column';
+}
+
+function changeWeek(dir) {
+  currentWeekStart.setDate(currentWeekStart.getDate() + (dir * 7));
+  renderWeeklySchedule();
+}
+
+function changeMonth(dir) {
+  currentWeekStart.setMonth(currentWeekStart.getMonth() + dir, 1);
+  // 해당 월의 첫 번째 월요일 찾기
+  const d = new Date(currentWeekStart);
+  while (d.getDay() !== 1) d.setDate(d.getDate() + 1);
+  currentWeekStart = d;
+  renderWeeklySchedule();
+}
+
+function renderWeeklySchedule() {
   const timetable = document.getElementById('weekly-timetable');
+  const dayHeader = document.getElementById('weekly-day-header');
+  const weekLabel = document.getElementById('schedule-week-label');
+
+  const dayNames = ['일','월','화','수','목','금','토'];
+  const monthNames = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+
+  // 주간 날짜 계산
+  const weekDates = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(currentWeekStart);
+    d.setDate(d.getDate() + i);
+    weekDates.push(d);
+  }
+
+  const today = new Date(2026, 3, 13); // 시뮬레이션 오늘
+
+  // 라벨 업데이트
+  updateYearMonthSelects();
+  const startStr = (currentWeekStart.getMonth()+1) + '/' + currentWeekStart.getDate();
+  const endDate = weekDates[6];
+  const endStr = (endDate.getMonth()+1) + '/' + endDate.getDate();
+  weekLabel.textContent = startStr + ' ~ ' + endStr;
+
+  // 요일 헤더
+  let headerHtml = '<div></div>';
+  weekDates.forEach(d => {
+    const isToday = d.getDate() === today.getDate() && d.getMonth() === today.getMonth();
+    const dayName = dayNames[d.getDay()];
+    const dateNum = d.getDate();
+    if (isToday) {
+      headerHtml += `<div style="text-align:center;padding:6px 0;font-size:10px;font-weight:700;background:var(--green);border-radius:6px;color:#fff;">${dayName} ${dateNum}</div>`;
+    } else {
+      headerHtml += `<div style="text-align:center;padding:6px 0;font-size:10px;font-weight:700;color:var(--gray-400);">${dayName} ${dateNum}</div>`;
+    }
+  });
+  dayHeader.innerHTML = headerHtml;
+
+  // dates/days 배열 (기존 로직 호환)
+  const dates = weekDates.map(d => (d.getMonth()+1) + '/' + d.getDate());
+  const days = weekDates.map(d => dayNames[d.getDay()]);
   // 주간 스케줄 데이터: 시간(행) x 요일(열)
-  const hours = ['09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00'];
-  const days = ['월','화','수','목','금','토','일'];
-  const dates = ['4/7','4/8','4/9','4/10','4/11','4/12','4/13'];
-  const schedule = {
-    '09:00': [
-      {s:'확정',n:'정우성',t:'1:1',c:'포핸드'},
-      null,null,null,null,
-      {s:'확정',n:'강예진',t:'1:1',c:'서브'},
-      {s:'확정',n:'홍길동',t:'1:1',c:'포핸드 교정'}
-    ],
-    '10:00': [
-      {s:'확정',n:'김태희',t:'1:1',c:'백핸드'},
-      {s:'예정',n:'한도윤',t:'그룹',c:'서브'},
-      null,
-      {s:'예정',n:'박민서',t:'1:1',c:'풋워크'},
-      null,null,
-      {s:'완료',n:'홍길동',t:'1:1',c:'포핸드 교정'}
-    ],
+  // 06:00~22:00 10분 단위 생성
+  const hours = [];
+  for (let h = 6; h < 22; h++) {
+    for (let m = 0; m < 60; m += 10) {
+      hours.push(String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0'));
+    }
+  }
+
+  // 현재 주(4/7~4/13)인지 확인
+  const isCurrentWeek = currentWeekStart.getDate() === 7 && currentWeekStart.getMonth() === 3 && currentWeekStart.getFullYear() === 2026;
+
+  // 과거/미래 주 히스토리 데이터 자동 생성
+  const students = [
+    {n:'홍길동',t:'1:1',c:'포핸드'},{n:'김영희',t:'그룹',c:'서브'},{n:'이철수',t:'1:1',c:'백핸드'},
+    {n:'박지수',t:'1:1',c:'발리'},{n:'정우성',t:'1:1',c:'풋워크'},{n:'강예진',t:'1:1',c:'전략'},
+    {n:'한도윤',t:'그룹',c:'기초'},{n:'최수진',t:'1:1',c:'서브'}
+  ];
+  const pastStatuses = ['완료','완료','완료','완료','확정','확정'];
+  const futureStatuses = ['예정','예정','예정','확정'];
+
+  function generateWeekData() {
+    const data = {};
+    const isPast = currentWeekStart < today;
+    const statusPool = isPast ? pastStatuses : futureStatuses;
+    // 하루 2~4개 레슨 랜덤 배치
+    const slotTimes = ['07:00','08:00','09:00','10:00','11:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00'];
+    for (let d = 0; d < 7; d++) {
+      const count = 2 + Math.floor(Math.abs(Math.sin(currentWeekStart.getDate() + d * 7)) * 3);
+      for (let i = 0; i < count; i++) {
+        const tIdx = Math.floor(Math.abs(Math.sin(d * 13 + i * 7 + currentWeekStart.getDate())) * slotTimes.length);
+        const time = slotTimes[tIdx];
+        if (!data[time]) data[time] = [null,null,null,null,null,null,null];
+        const st = students[Math.floor(Math.abs(Math.sin(d + i * 3 + currentWeekStart.getDate())) * students.length)];
+        const status = statusPool[Math.floor(Math.abs(Math.sin(d * 5 + i)) * statusPool.length)];
+        data[time][d] = {s:status, n:st.n, t:st.t, c:st.c};
+      }
+    }
+    return data;
+  }
+
+  // 데이터: 키=시간, 값=요일별 배열
+  const schedule = isCurrentWeek ? {
+    '06:00': [null,null,null,null,null,{s:'예정',n:'박서연',t:'1:1',c:'조깅'},null],
+    '06:30': [null,null,null,null,null,{s:'예정',n:'박서연',t:'1:1',c:'조깅'},null],
+    '09:00': [{s:'확정',n:'정우성',t:'1:1',c:'포핸드'},null,null,null,null,{s:'확정',n:'강예진',t:'1:1',c:'서브'},{s:'확정',n:'홍길동',t:'1:1',c:'포핸드 교정'}],
+    '09:10': [{s:'확정',n:'정우성',t:'1:1',c:'포핸드'},null,null,null,null,{s:'확정',n:'강예진',t:'1:1',c:'서브'},{s:'확정',n:'홍길동',t:'1:1',c:'포핸드 교정'}],
+    '09:20': [{s:'확정',n:'정우성',t:'1:1',c:'포핸드'},null,null,null,null,{s:'확정',n:'강예진',t:'1:1',c:'서브'},{s:'확정',n:'홍길동',t:'1:1',c:'포핸드 교정'}],
+    '09:30': [{s:'확정',n:'정우성',t:'1:1',c:'포핸드'},null,null,null,null,null,{s:'확정',n:'홍길동',t:'1:1',c:'포핸드 교정'}],
+    '09:40': [{s:'확정',n:'정우성',t:'1:1',c:'포핸드'},null,null,null,null,null,{s:'확정',n:'홍길동',t:'1:1',c:'포핸드 교정'}],
+    '09:50': [{s:'확정',n:'정우성',t:'1:1',c:'포핸드'},null,null,null,null,null,{s:'확정',n:'홍길동',t:'1:1',c:'포핸드 교정'}],
+    '10:00': [{s:'확정',n:'김태희',t:'1:1',c:'백핸드'},{s:'예정',n:'한도윤',t:'그룹',c:'서브'},null,{s:'예정',n:'박민서',t:'1:1',c:'풋워크'},null,null,{s:'완료',n:'홍길동',t:'1:1',c:'포핸드 교정'}],
+    '10:10': [{s:'확정',n:'김태희',t:'1:1',c:'백핸드'},{s:'예정',n:'한도윤',t:'그룹',c:'서브'},null,{s:'예정',n:'박민서',t:'1:1',c:'풋워크'},null,null,{s:'완료',n:'홍길동',t:'1:1',c:'포핸드 교정'}],
     '11:00': [null,null,null,null,{s:'예정',n:'조현우',t:'1:1',c:'전략'},null,null],
-    '12:00': [null,null,null,null,null,null,null],
     '13:00': [null,null,null,null,null,null,{s:'예정',n:'박수진',t:'그룹',c:'기초'}],
-    '14:00': [
-      null,
-      {s:'대기',n:'박지수',t:'1:1',c:'포핸드'},
-      null,
-      {s:'예정',n:'김영희',t:'1:1',c:'서브'},
-      {s:'예정',n:'이하늘',t:'1:1',c:'백핸드'},
-      null,
-      {s:'예정',n:'김영희',t:'1:1',c:'서브'}
-    ],
+    '14:00': [null,{s:'대기',n:'박지수',t:'1:1',c:'포핸드'},null,{s:'예정',n:'김영희',t:'1:1',c:'서브'},{s:'예정',n:'이하늘',t:'1:1',c:'백핸드'},null,{s:'예정',n:'김영희',t:'1:1',c:'서브'}],
+    '14:10': [null,{s:'대기',n:'박지수',t:'1:1',c:'포핸드'},null,{s:'예정',n:'김영희',t:'1:1',c:'서브'},{s:'예정',n:'이하늘',t:'1:1',c:'백핸드'},null,{s:'예정',n:'김영희',t:'1:1',c:'서브'}],
     '15:00': [null,null,null,null,null,null,{s:'예정',n:'정다은',t:'1:1',c:'발리'}],
     '16:00': [null,null,null,null,null,null,{s:'변경',n:'박지수',t:'1:1',c:'포핸드'}],
     '17:00': [null,null,null,{s:'대기',n:'최수진',t:'그룹',c:'기초'},null,null,{s:'예정',n:'한지우',t:'그룹',c:'기초'}],
     '18:00': [null,null,{s:'확정',n:'이철수',t:'1:1',c:'백핸드'},null,null,null,null],
+    '18:30': [null,null,{s:'확정',n:'이철수',t:'1:1',c:'백핸드'},null,null,null,null],
     '19:00': [null,null,null,null,null,null,{s:'예정',n:'최준혁',t:'1:1',c:'서브'}],
-    '20:00': [null,null,null,null,null,null,{s:'예정',n:'오서연',t:'1:1',c:'풋워크'}]
-  };
+    '20:00': [null,null,null,null,null,null,{s:'예정',n:'오서연',t:'1:1',c:'풋워크'}],
+    '21:00': [null,null,null,null,null,null,{s:'예정',n:'김하늘',t:'1:1',c:'전략'}]
+  } : generateWeekData();
   const colorMap = {
     '확정': { bg:'#D1FAE5', border:'#A7F3D0', text:'#065F46' },
     '예정': { bg:'#F3E8FF', border:'#DDD6FE', text:'#7C5CBF' },
@@ -904,23 +1132,89 @@ function showWeeklySchedule() {
     '':     { bg:'var(--gray-50)', border:'var(--gray-100)', text:'var(--gray-400)' }
   };
 
+  // 현재 시간 계산
+  const now = new Date();
+  const nowHour = String(now.getHours()).padStart(2,'0');
+  const nowMin = String(Math.floor(now.getMinutes() / 10) * 10).padStart(2,'0');
+  const nowTime = nowHour + ':' + nowMin;
+
   let html = '';
+  const isOnHour = (t) => t.endsWith(':00');
   hours.forEach(h => {
-    html += `<div style="font-size:9px;color:var(--gray-400);text-align:right;padding:4px 4px 4px 0;display:flex;align-items:center;justify-content:flex-end;height:36px;">${h}</div>`;
+    const rowBorder = isOnHour(h) ? 'border-top:2px solid var(--gray-300);' : 'border-top:1px solid var(--gray-300);';
+    const labelWeight = isOnHour(h) ? 'font-weight:700;color:var(--navy);' : 'font-weight:400;color:var(--gray-400);';
+    const isNowRow = isCurrentWeek && h === nowTime;
+    const nowRowBg = isNowRow ? 'background:rgba(255,107,107,0.08);' : '';
+    const nowLabelStyle = isNowRow ? 'font-size:11px;font-weight:800;color:var(--coral);' : `font-size:11px;${labelWeight}`;
+    html += `<div style="${nowLabelStyle}text-align:right;padding:2px 6px 2px 0;display:flex;align-items:center;justify-content:flex-end;height:40px;${rowBorder}${nowRowBg}">${h}${isNowRow ? ' ◀' : ''}</div>`;
     for (let d = 0; d < 7; d++) {
-      const item = schedule[h][d];
+      const row = schedule[h];
+      const item = row ? row[d] : null;
       if (item) {
         const c = colorMap[item.s] || colorMap[''];
-        html += `<div style="position:relative;height:36px;background:${c.bg};border:1px solid ${c.border};border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:${c.text};cursor:pointer;" onclick="showScheduleToast(event,this,'${dates[d]} (${days[d]}) ${h}','${item.n}','${item.t}','${item.c}','${item.s}')">${item.s}</div>`;
+        const cellBg = isNowRow ? `background:linear-gradient(rgba(255,107,107,0.12),rgba(255,107,107,0.12)),${c.bg};` : `background:${c.bg};`;
+        html += `<div style="height:40px;${cellBg}border-right:2px solid var(--gray-300);${rowBorder}display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:${c.text};cursor:pointer;" onclick="showScheduleToast(event,this,'${dates[d]} (${days[d]}) ${h}','${item.n}','${item.t}','${item.c}','${item.s}')">${isOnHour(h) ? item.s : ''}</div>`;
       } else {
-        html += `<div onclick="showEmptySlotAction(event,'${dates[d]} (${days[d]}) ${h}')" style="height:36px;background:var(--gray-50);border:1px solid var(--gray-100);border-radius:4px;cursor:pointer;"></div>`;
+        const emptyBg = isNowRow ? 'background:rgba(255,107,107,0.08);' : 'background:#fff;';
+        html += `<div onclick="toggleEmptySlot(event,this,'${dates[d]} (${days[d]}) ${h}')" data-slot="${dates[d]} (${days[d]}) ${h}" style="height:40px;${emptyBg}border-right:2px solid var(--gray-300);${rowBorder}cursor:pointer;"></div>`;
       }
     }
   });
   timetable.innerHTML = html;
-  document.getElementById('weekly-schedule-modal').style.display = 'block';
+
+  // 현재 시간 기준 스크롤 포커싱
+  const scrollArea = timetable.parentElement;
+  const currentHourIndex = hours.indexOf(nowTime);
+  if (currentHourIndex > 0) {
+    const cellHeight = 41;
+    const targetScroll = Math.max(0, currentHourIndex * cellHeight - 80);
+    setTimeout(() => { scrollArea.scrollTop = targetScroll; }, 50);
+  }
 }
 let selectedEmptySlotTime = '';
+let selectedEmptySlots = [];
+
+function toggleEmptySlot(e, el, datetime) {
+  e.stopPropagation();
+  const idx = selectedEmptySlots.indexOf(datetime);
+  if (idx > -1) {
+    selectedEmptySlots.splice(idx, 1);
+    el.style.background = '#fff';
+  } else {
+    selectedEmptySlots.push(datetime);
+    el.style.background = '#D1FAE5';
+  }
+  updateSelectedSlotsBar();
+}
+
+function updateSelectedSlotsBar() {
+  const bar = document.getElementById('selected-slots-bar');
+  const count = document.getElementById('selected-slots-count');
+  const list = document.getElementById('selected-slots-list');
+  if (selectedEmptySlots.length > 0) {
+    bar.style.display = 'block';
+    count.textContent = selectedEmptySlots.length + '개 선택';
+    const preview = selectedEmptySlots.slice(0, 3).map(s => s.split(') ')[1] || s).join(', ');
+    list.textContent = selectedEmptySlots.length > 3 ? preview + ' ...' : preview;
+  } else {
+    bar.style.display = 'none';
+  }
+}
+
+function clearSelectedSlots() {
+  selectedEmptySlots = [];
+  document.querySelectorAll('#weekly-timetable div[data-slot]').forEach(el => {
+    el.style.background = '#fff';
+  });
+  updateSelectedSlotsBar();
+}
+
+function openSelectedSlotsAction() {
+  selectedEmptySlotTime = selectedEmptySlots.join(', ');
+  document.getElementById('empty-slot-title').textContent = '📅 ' + selectedEmptySlots.length + '개 시간 선택됨';
+  document.getElementById('empty-slot-overlay').style.display = 'block';
+}
+
 function showEmptySlotAction(e, datetime) {
   e.stopPropagation();
   selectedEmptySlotTime = datetime;
@@ -940,26 +1234,51 @@ function closeStudentSelect() {
 }
 function selectStudent(el) {
   const name = el.querySelector('div > div:first-child').textContent;
+  showPurposeSelect(name);
+}
+let selectedStudentName = '';
+
+function switchStudentTab(tab) {
+  document.getElementById('st-content-new').style.display = tab === 'new' ? 'block' : 'none';
+  document.getElementById('st-content-existing').style.display = tab === 'existing' ? 'block' : 'none';
+  document.getElementById('st-tab-new').style.color = tab === 'new' ? 'var(--green)' : 'var(--gray-400)';
+  document.getElementById('st-tab-new').style.borderBottomColor = tab === 'new' ? 'var(--green)' : 'transparent';
+  document.getElementById('st-tab-existing').style.color = tab === 'existing' ? 'var(--green)' : 'var(--gray-400)';
+  document.getElementById('st-tab-existing').style.borderBottomColor = tab === 'existing' ? 'var(--green)' : 'transparent';
+}
+
+function registerExternalStudent() {
+  const name = document.getElementById('ext-name').value.trim();
+  const phone = document.getElementById('ext-phone').value.trim();
+  if (!name) { document.getElementById('ext-name').style.borderColor='var(--error)'; document.getElementById('ext-name').focus(); return; }
+  if (!phone) { document.getElementById('ext-phone').style.borderColor='var(--error)'; document.getElementById('ext-phone').focus(); return; }
   closeStudentSelect();
   closeWeeklySchedule();
   const toast = document.getElementById('sent-toast');
-  toast.textContent = name + '님에게 ' + selectedEmptySlotTime + ' 일정을 제안했습니다';
+  toast.textContent = name + '님 등록 완료 · ' + selectedEmptySlotTime + ' 레슨 확정';
   toast.style.display = 'block';
   setTimeout(() => { toast.style.display = 'none'; }, 2500);
 }
-function directInputStudent() {
-  const input = document.getElementById('student-direct-input');
-  const name = input.value.trim();
-  if (!name) {
-    input.style.borderColor = 'var(--error)';
-    input.placeholder = '이름을 입력해주세요';
-    input.focus();
-    return;
-  }
+
+function showPurposeSelect(name) {
+  selectedStudentName = name;
+  document.getElementById('purpose-title').textContent = name + '님';
+  document.getElementById('purpose-time').textContent = selectedEmptySlotTime + ' 에 레슨을 등록합니다';
+  document.getElementById('purpose-overlay').style.display = 'block';
+}
+function closePurposeSelect() {
+  document.getElementById('purpose-overlay').style.display = 'none';
+}
+function confirmPurpose(type) {
+  closePurposeSelect();
   closeStudentSelect();
   closeWeeklySchedule();
   const toast = document.getElementById('sent-toast');
-  toast.textContent = name + '님에게 ' + selectedEmptySlotTime + ' 일정을 제안했습니다';
+  if (type === 'change') {
+    toast.textContent = selectedStudentName + '님 ' + selectedEmptySlotTime + ' 날짜 변경 완료';
+  } else {
+    toast.textContent = selectedStudentName + '님 ' + selectedEmptySlotTime + ' 보강 레슨 등록 완료';
+  }
   toast.style.display = 'block';
   setTimeout(() => { toast.style.display = 'none'; }, 2500);
 }
@@ -973,7 +1292,9 @@ function emptySlotBlock() {
 }
 
 function closeWeeklySchedule() {
-  document.getElementById('weekly-schedule-modal').style.display = 'none';
+  const modal = document.getElementById('weekly-schedule-modal');
+  modal.style.display = 'none';
+  modal.style.flexDirection = '';
   const t = document.getElementById('schedule-detail-toast');
   if (t) t.style.display = 'none';
 }
