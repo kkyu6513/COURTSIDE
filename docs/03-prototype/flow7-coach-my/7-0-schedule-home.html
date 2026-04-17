@@ -550,6 +550,78 @@
       </div>
     </div>
 
+    <!-- 상태처리하기 바텀시트 -->
+    <div id="status-actions-popup" style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;z-index:125;">
+      <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);" onclick="closeStatusActions()"></div>
+      <div style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;padding:20px;z-index:126;">
+        <div style="width:40px;height:4px;border-radius:2px;background:var(--gray-200);margin:0 auto 16px;"></div>
+        <div style="font-size:16px;font-weight:800;color:var(--navy);margin-bottom:16px;">상태처리하기</div>
+
+        <button onclick="closeStatusActions();showMakeupPopup();" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--gray-50);border-radius:12px;border:none;cursor:pointer;margin-bottom:8px;font-family:inherit;text-align:left;">
+          <div style="width:40px;height:40px;border-radius:10px;background:#FFF7ED;display:flex;align-items:center;justify-content:center;font-size:18px;">🔄</div>
+          <div>
+            <div style="font-size:14px;font-weight:700;color:var(--navy);">보강처리</div>
+            <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">레슨 미진행, 보강 레슨을 등록합니다</div>
+          </div>
+        </button>
+
+        <button onclick="closeStatusActions();showAbsentPopup();" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--gray-50);border-radius:12px;border:none;cursor:pointer;margin-bottom:8px;font-family:inherit;text-align:left;">
+          <div style="width:40px;height:40px;border-radius:10px;background:#FEE2E2;display:flex;align-items:center;justify-content:center;font-size:18px;">✕</div>
+          <div>
+            <div style="font-size:14px;font-weight:700;color:var(--error);">결강처리</div>
+            <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">레슨 결강/불참 처리 (보강 없음)</div>
+          </div>
+        </button>
+
+        <button onclick="closeStatusActions();completeLesson();" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--gray-50);border-radius:12px;border:none;cursor:pointer;margin-bottom:8px;font-family:inherit;text-align:left;">
+          <div style="width:40px;height:40px;border-radius:10px;background:#DBEAFE;display:flex;align-items:center;justify-content:center;font-size:18px;">✅</div>
+          <div>
+            <div style="font-size:14px;font-weight:700;color:var(--info);">레슨완료 처리</div>
+            <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">레슨이 정상 완료되었습니다</div>
+          </div>
+        </button>
+
+        <button onclick="closeStatusActions()" style="width:100%;height:48px;border-radius:12px;border:1.5px solid var(--gray-200);background:#fff;color:var(--gray-500);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:4px;">취소</button>
+      </div>
+    </div>
+
+    <!-- 결강처리 바텀시트 -->
+    <div id="absent-popup" style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;z-index:130;">
+      <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);" onclick="closeAbsentPopup()"></div>
+      <div style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;padding:24px 20px;z-index:131;max-height:80%;overflow-y:auto;">
+        <div style="width:40px;height:4px;border-radius:2px;background:var(--gray-200);margin:0 auto 16px;"></div>
+        <div style="font-size:17px;font-weight:800;color:var(--navy);margin-bottom:4px;">결강처리</div>
+        <div style="font-size:13px;color:var(--gray-500);margin-bottom:20px;">레슨을 결강 처리하고 수강생에게 안내합니다.</div>
+
+        <div style="font-size:14px;font-weight:700;color:var(--navy);margin-bottom:10px;">사유 선택</div>
+        <label onclick="selectAbsentReason('student')" style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--gray-50);border-radius:12px;cursor:pointer;margin-bottom:8px;border:2px solid transparent;transition:all 0.15s;" id="absent-reason-student">
+          <input type="radio" name="absent-reason" value="student" style="accent-color:var(--error);width:18px;height:18px;flex-shrink:0;">
+          <div>
+            <div style="font-size:14px;font-weight:600;color:var(--navy);">고객 사유</div>
+            <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">수강생 무단 불참, 당일 취소 등</div>
+          </div>
+        </label>
+        <label onclick="selectAbsentReason('coach')" style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--gray-50);border-radius:12px;cursor:pointer;margin-bottom:16px;border:2px solid transparent;transition:all 0.15s;" id="absent-reason-coach">
+          <input type="radio" name="absent-reason" value="coach" style="accent-color:var(--error);width:18px;height:18px;flex-shrink:0;">
+          <div>
+            <div style="font-size:14px;font-weight:600;color:var(--navy);">코치 사유</div>
+            <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">코치 사정으로 레슨 진행 불가</div>
+          </div>
+        </label>
+
+        <div id="absent-detail" style="display:none;">
+          <div style="font-size:14px;font-weight:700;color:var(--navy);margin-bottom:8px;">상세 사유</div>
+          <textarea id="absent-reason-input" placeholder="상세 사유를 입력해 주세요" style="width:100%;height:80px;border-radius:12px;border:1.5px solid var(--gray-200);padding:12px;font-size:14px;font-family:inherit;resize:none;box-sizing:border-box;"></textarea>
+          <div id="absent-policy" style="margin-top:10px;padding:10px;background:var(--gray-50);border-radius:10px;font-size:11px;color:var(--gray-500);line-height:1.7;"></div>
+        </div>
+
+        <div style="display:flex;gap:10px;margin-top:16px;">
+          <button onclick="closeAbsentPopup()" style="flex:1;height:48px;border-radius:12px;border:1.5px solid var(--gray-200);background:#fff;color:var(--gray-500);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">취소</button>
+          <button id="absent-save-btn" onclick="saveAbsent()" disabled style="flex:2;height:48px;border-radius:12px;border:none;background:var(--gray-300);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">결강처리 저장</button>
+        </div>
+      </div>
+    </div>
+
     <!-- 보강처리 바텀시트 -->
     <div id="makeup-popup" style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;z-index:130;">
       <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);" onclick="closeMakeupPopup()"></div>
@@ -1145,6 +1217,57 @@ function proposeSelectedTab(btnEl) {
   btnEl.style.background = '#fff';
   const toast = document.getElementById('sent-toast');
   toast.textContent = '선택한 일정이 제안되었습니다';
+  toast.style.display = 'block';
+  setTimeout(() => { toast.style.display = 'none'; }, 2000);
+}
+
+function showStatusActions() {
+  document.getElementById('status-actions-popup').style.display = 'block';
+}
+function closeStatusActions() {
+  document.getElementById('status-actions-popup').style.display = 'none';
+}
+
+function showAbsentPopup() {
+  document.getElementById('absent-popup').style.display = 'block';
+  document.getElementById('absent-detail').style.display = 'none';
+  document.getElementById('absent-save-btn').disabled = true;
+  document.getElementById('absent-save-btn').style.background = 'var(--gray-300)';
+  document.querySelectorAll('input[name="absent-reason"]').forEach(r => r.checked = false);
+  document.getElementById('absent-reason-student').style.borderColor = 'transparent';
+  document.getElementById('absent-reason-coach').style.borderColor = 'transparent';
+  const input = document.getElementById('absent-reason-input');
+  if (input) input.value = '';
+}
+function closeAbsentPopup() {
+  document.getElementById('absent-popup').style.display = 'none';
+}
+function selectAbsentReason(type) {
+  document.getElementById('absent-detail').style.display = 'block';
+  document.getElementById('absent-reason-student').style.borderColor = type === 'student' ? 'var(--error)' : 'transparent';
+  document.getElementById('absent-reason-coach').style.borderColor = type === 'coach' ? 'var(--error)' : 'transparent';
+  const policy = document.getElementById('absent-policy');
+  if (type === 'student') {
+    policy.innerHTML = '<strong style="color:var(--navy);">고객 사유 정책</strong><br>해당 회차는 소진 처리됩니다. (노쇼 페널티)';
+  } else {
+    policy.innerHTML = '<strong style="color:var(--navy);">코치 사유 정책</strong><br>해당 회차는 미소진 처리됩니다.';
+  }
+  const btn = document.getElementById('absent-save-btn');
+  btn.disabled = false;
+  btn.style.background = 'var(--error)';
+}
+function saveAbsent() {
+  const input = document.getElementById('absent-reason-input');
+  if (!input.value.trim()) {
+    input.style.borderColor = 'var(--error)';
+    input.placeholder = '상세 사유를 반드시 입력해 주세요';
+    input.focus();
+    return;
+  }
+  closeAbsentPopup();
+  closeLessonDetail();
+  const toast = document.getElementById('sent-toast');
+  toast.textContent = '결강처리가 완료되었습니다';
   toast.style.display = 'block';
   setTimeout(() => { toast.style.display = 'none'; }, 2000);
 }
