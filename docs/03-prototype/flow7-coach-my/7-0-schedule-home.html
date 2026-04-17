@@ -949,21 +949,11 @@ function showLessonDetail(status) {
           · 12시간 내 수강생이 응답하지 않으면 홀드가 자동 해제돼요.
         </div>
       </div>`;
-  } else if (status === 'inprogress') {
+  } else if (status === 'inprogress' || status === 'upcoming') {
     actions.innerHTML = `
-      <div style="display:flex;gap:10px;">
-        <button onclick="showMakeupPopup()" style="flex:1;height:48px;border-radius:12px;border:1.5px solid var(--gray-200);background:#fff;color:var(--gray-500);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">보강처리</button>
-        <button onclick="completeLesson()" style="flex:2;height:48px;border-radius:12px;border:none;background:var(--coral);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">레슨 완료 처리</button>
-      </div>`;
+      <button onclick="showStatusActions()" style="width:100%;height:48px;border-radius:12px;border:none;background:var(--green);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">상태처리하기</button>`;
   } else if (status === 'completed') {
     actions.innerHTML = '<button onclick="closeLessonDetail()" style="width:100%;height:48px;border-radius:12px;border:1.5px solid var(--gray-200);background:#fff;color:var(--gray-500);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">닫기</button>';
-  } else if (status === 'upcoming') {
-    actions.innerHTML = `
-      <div style="display:flex;gap:10px;margin-bottom:8px;">
-        <button onclick="showMakeupPopup()" style="flex:1;height:48px;border-radius:12px;border:1.5px solid var(--gray-200);background:#fff;color:var(--gray-500);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">보강처리</button>
-        <button onclick="cancelLesson()" style="flex:1;height:48px;border-radius:12px;border:1.5px solid var(--gray-200);background:#fff;color:var(--gray-500);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">취소</button>
-      </div>
-      <button onclick="completeLesson()" style="width:100%;height:48px;border-radius:12px;border:none;background:var(--purple);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">레슨 완료 처리</button>`;
   } else if (status === 'pending') {
     actions.innerHTML = `
       <div style="padding:10px 12px;background:#F0FDFA;border-radius:10px;margin-bottom:10px;font-size:12px;color:#065F46;line-height:1.6;">
