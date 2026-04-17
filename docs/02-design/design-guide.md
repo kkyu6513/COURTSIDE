@@ -102,13 +102,33 @@
 
 ## 6. 컴포넌트 명세
 
-### 6.1 Bottom Navigation Bar
+### 6.1 Bottom Navigation Bar (플로팅 라운딩)
 ```
-구성: 홈 / 메시지 / 검색 / 마이메뉴 (4탭)
-높이: 60px + Safe Area
-아이콘: 24x24px, 활성 색상: Courtside Green
-레이블: Caption(12px, SemiBold)
-배경: White, 상단 border: 1px #E5E7EB
+형태: 플로팅 캡슐형 (position:absolute, bottom:20px, left/right:16px)
+높이: 60px
+border-radius: 30px
+배경: White (#fff)
+보더: 1px solid var(--gray-100)
+그림자: 0 2px 16px rgba(0,0,0,0.1)
+아이콘: 18px 이모지
+레이블: 9px, 활성(Courtside Green, Bold), 비활성(Gray-400, SemiBold)
+디바이스 배경: var(--gray-50) — 네비 뒤 배경과 자연스럽게 통합
+
+수강생/비로그인: 🏠홈 / 💬메시지 / 🔍검색 / 👤마이
+코치 전용:       📅스케줄 / 💬메시지 / 🔍검색 / 👤마이
+
+※ 기존 전체 너비 + 상단 border 방식에서 변경 (v2)
+```
+
+### 6.1a 레슨 스케줄 슬롯 카드
+```
+배경: White (#fff)
+보더: 1px solid var(--gray-100) — 전체 테두리 (상태별 색상 구분 없음)
+border-radius: 12px (radius-md)
+상태 구분: 우측 배지(badge-sm)로만 구분
+좌측 세로 보더 사용 안 함
+
+※ 기존 좌측 컬러 보더 + 상태별 배경색 방식에서 변경 (v2)
 ```
 
 ### 6.2 코치 카드 (Coach Card)
