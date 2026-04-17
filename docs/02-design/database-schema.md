@@ -319,6 +319,10 @@ Response: { "images": [
 | price | Int? | Nullable | 결제 금액 | FR-07a |
 | paymentId | Int? | FK → Payment, Nullable | 결제 FK | FR-07a |
 | isPaid | Boolean | Default: false | 결제 여부. true=결제 후 신청 (바로 CONFIRMED + 스케줄 관리 가능), false=미결제 신청 (코치 수락 대기) | FR-05b |
+| isExternal | Boolean | Default: false | 외부 수강생 여부. true=코치가 직접 등록한 외부 수강생 레슨 | FR-13a |
+| externalStudentId | Int? | FK → ExternalStudent, Nullable | 외부 수강생 FK (isExternal=true일 때) | FR-13a |
+| bookingType | String | Default: 'REGULAR_BOOKING' | 예약 유형 — `REGULAR_BOOKING`(일반) / `SUPPLEMENTARY`(보강) | FR-13a |
+| supplementaryReason | String? | Nullable | 보강 사유 (보강일 때 선택 입력) | FR-13a |
 | rescheduleStatus | String? | Nullable | 변경 요청 상태 — `PENDING`(요청중) / `PROPOSED`(제안됨) / `ACCEPTED`(수락) / `COMPLETED`(변경완료) / `REJECTED`(거절) / `NEGOTIATING`(재협의). null=변경 요청 없음 | FR-10a |
 | rescheduleRequestedDate | DateTime? | Nullable | 수강생 희망 변경 날짜 | FR-10a |
 | rescheduleRequestedTime | String? | Nullable | 수강생 희망 변경 시간 (HH:mm) | FR-10a |
@@ -482,6 +486,29 @@ Response: { "images": [
 | bookingId | Int? | FK → Booking, Nullable | 연결된 예약 (자동 블록 시) | FR-10 |
 | createdAt | DateTime | Default: now() | 생성일 | |
 | updatedAt | DateTime | @updatedAt | 수정일 | |
+
+### ExternalStudent
+
+> FR-13a (코치가 직접 등록하는 외부 수강생)
+
+| Column | Type | Constraints | Description | FR |
+|--------|------|-------------|-------------|-----|
+| id | Int | PK, Auto Increment | PK | |
+| coachId | Int | FK → User, Not Null | 등록한 코치 | FR-13a |
+| name | String | Not Null | 수강생 이름 | FR-13a |
+| phone | String | Not Null | 연락처 (알림톡 발송용) | FR-13a |
+| lessonType | LessonType | Not Null | 레슨 유형 (REGULAR / COUPON) | FR-13a |
+| lessonFormat | LessonFormat | Not Null | 레슨 형태 (INDIVIDUAL / GROUP) | FR-13a |
+| memo | String? | Nullable | 코치 전용 메모 | FR-13a |
+| linkedUserId | Int? | FK → User, Nullable | 서비스 가입 시 자동 매칭된 회원 ID | FR-13a |
+| createdAt | DateTime | Default: now() | 등록일 | |
+
+**Relations**: User(coach, N:1), User(linkedUser, 0:1)
+
+**정책**:
+- 코치만 CRUD 가능
+- phone 기준으로 서비스 가입 시 linkedUserId 자동 연결
+- 연결 후에도 ExternalStudent 레코드 유지 (이력 보존)
 
 ### ScheduleHold
 
@@ -892,8 +919,9 @@ ScheduleSetting (어드민 정책 설정, 독립)
 | 코드관리 | SubscriptionFeatureCode, LessonGoal, CoachSpecialty | 3 |
 | 약관 | Terms, UserTermsAgreement | 2 |
 | 신고 | Report, ReportReasonCode | 2 |
+| 외부수강생 | ExternalStudent | 1 |
 | 어드민 | RescheduleActionLog, ScheduleSetting | 2 |
-| **합계** | | **37** |
+| **합계** | | **38** |
 
 ---
 
@@ -905,3 +933,4 @@ ScheduleSetting (어드민 정책 설정, 독립)
 | 1.1 | 2026-04-10 | Terms(약관 마스터) 테이블 추가, UserTermsAgreement에 termsId FK 추가 — 32개 테이블 |
 | 1.2 | 2026-04-13 | ScheduleHold 테이블 추가 (슬롯 임시 홀드), Booking.rescheduleStatus에 PROPOSED/NEGOTIATING/COMPLETED 상태 추가 — 35개 테이블 |
 | 1.3 | 2026-04-13 | RescheduleActionLog, ScheduleSetting 테이블 추가 (어드민 스케줄 관리) — 37개 테이블 |
+| 1.4 | 2026-04-17 | ExternalStudent 테이블 추가 + Booking에 isExternal/externalStudentId/bookingType/supplementaryReason 컬럼 추가 — 38개 테이블 |
