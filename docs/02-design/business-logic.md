@@ -351,6 +351,50 @@ COMPLETED (완료)
     → Booking.holdAt = NOW()
     → 수강생에게 BOOKING_ON_HOLD 알림톡 발송 (보류 사유 포함)
     → 보류 중 신청은 "대기 중 신청" 목록에 유지
+
+[대체 일정 제안 — 슬롯 충돌 시]
+  대기 신청에서 수강생 희망 일정 중 이미 블록된 슬롯이 있는 경우:
+    → 코치 레슨 상세에 레슨가능/레슨불가 구분 표시
+    → 레슨불가 슬롯에 대해 코치가 대체 날짜를 선택하여 제안
+    → 대체 날짜 추천: 1순위 같은 요일 ±1시간, 2순위 ±1일 같은 시간, 3순위 ±1일 다른 시간 (상위 3개 우선 노출 + 더보기)
+
+  코치 제안 시:
+    POST /api/bookings/:id/propose { availableSlotIds, proposedSlotIds }
+    → 레슨가능 건: 즉시 스케줄 블록 (확정 대기)
+    → 제안 건: 수강생에게 BOOKING_PROPOSAL 알림톡 발송
+    → 수강생이 제안 날짜 중 1개 선택 → PUT /api/bookings/:id/accept-proposal { selectedSlotId }
+    → 전체 CONFIRMED + 코치 알림 발송
+    → 수강생 미응답 시 제안 만료 (홀드 정책 적용)
+
+  수강생 선택 화면:
+    → 알림톡 "일정 선택하기" → 6-6 신청 상세 (제안 선택 모드)
+    → 확정 일정 (읽기 전용) + 제안 일정 (라디오 선택) + 선택 완료 버튼
+
+[미결제 신청 미확정 리마인더]
+  수강생이 미결제(isPaid=false)로 레슨 신청 후, 코치가 스케줄 확정하지 않은 경우:
+
+  조건: Booking.status = PENDING 또는 ON_HOLD
+        AND isPaid = false
+        AND 희망 레슨일까지 남은 일수 체크
+
+  D-2 리마인더 (코치에게만):
+    스케줄러: 매일 09:00 실행
+    조건: 희망 레슨일 - 2일 AND status IN (PENDING, ON_HOLD)
+    → 코치에게 PENDING_CONFIRM_REMINDER 알림톡 발송
+    → "아직 확정하지 않은 레슨 신청이 있어요. 내일까지 확정하지 않으면 수강생에게 안내됩니다."
+
+  D-1 최종 리마인더 (코치 + 수강생):
+    스케줄러: 매일 09:00 실행
+    조건: 희망 레슨일 - 1일 AND status IN (PENDING, ON_HOLD)
+    → 코치에게 PENDING_CONFIRM_FINAL 알림톡:
+      "레슨 신청이 아직 미확정입니다. 오늘 중 확정 또는 거절해 주세요."
+    → 수강생에게 PENDING_CONFIRM_FINAL 알림톡:
+      "코치님이 아직 레슨을 확정하지 않았어요. 코치님에게 문의하거나 다른 코치를 찾아보세요."
+
+  희망 레슨일 당일 자동 처리:
+    조건: 희망 레슨일 당일 AND status IN (PENDING, ON_HOLD)
+    → 자동 처리 없음 (코치 판단에 맡김)
+    → 단, 대기 신청 목록에서 "미확정 D-day" 강조 표시
 ```
 
 ### 4.1a 결제 회원 vs 미결제 회원 기능 차이
@@ -755,8 +799,11 @@ GET /api/coaches/:id/schedule [공개]
 | BOOKING_CONFIRMED | 코치가 수락 시 | 수강생 | bookingAlert |
 | BOOKING_REJECTED | 코치가 거절 시 | 수강생 | bookingAlert |
 | BOOKING_ON_HOLD | 코치가 보류 시 | 수강생 | bookingAlert |
+| BOOKING_PROPOSAL | 코치가 대체 일정 제안 시 | 수강생 | bookingAlert |
 | BOOKING_CANCELLED | 취소 시 | 상대방 | bookingAlert |
 | LESSON_REMINDER | 레슨 D-1 09:00 | 수강생 + 코치 | lessonReminder |
+| PENDING_CONFIRM_REMINDER | 희망 레슨일 D-2 09:00 (미결제+미확정) | 코치 | bookingAlert |
+| PENDING_CONFIRM_FINAL | 희망 레슨일 D-1 09:00 (미결제+미확정) | 코치 + 수강생 | bookingAlert |
 | RESCHEDULE_REQUEST | 수강생이 변경 요청 시 | 코치 | bookingAlert |
 | RESCHEDULE_PROPOSED | 코치가 "모두 제안하기" 시 | 수강생 | bookingAlert |
 | RESCHEDULE_UNAVAILABLE | 코치가 "불가 알림 보내기" 시 | 수강생 | bookingAlert |
@@ -956,6 +1003,35 @@ GET /api/coaches/:id/schedule [공개]
 
 차단 해제:
   - 채팅 목록 → 차단된 채팅방 클릭 → "차단 해제" 바텀시트 → 해제 시 정상 복원
+```
+
+---
+
+## 13a. 채팅 내 일정 제안
+
+> 추후 상세 디벨롭 예정
+
+```
+코치가 채팅에서 레슨 가능한 날짜를 수강생에게 직접 제안:
+
+1. 코치: 채팅 입력창 📅 클릭 → 일정 제안 바텀시트
+   코치 가용 슬롯(isBlocked=false) 목록 표시
+   추천 3개 우선 + 더보기 (빈 시간 우선)
+   복수 선택 → "제안 보내기"
+
+2. 채팅: 카드형 메시지 생성 (ChatMessage.type = SCHEDULE_PROPOSAL)
+   POST /api/chat/rooms/:id/schedule-proposal { slotIds }
+
+3. 수강생: 카드에서 라디오로 1개 선택 → "선택 완료"
+   PUT /api/chat/messages/:id/accept-schedule { selectedSlotId }
+   → 해당 슬롯 Schedule isBlocked = true
+   → Booking 생성 또는 기존 Booking 일정 업데이트
+   → 카드 ✅ 확정 상태로 변경 (읽기 전용)
+   → 코치에게 알림
+
+레슨 신청/변경 요청 모두에서 사용 가능:
+  - 신규 레슨 신청 제안: Booking 새로 생성
+  - 기존 레슨 일정 변경 제안: 기존 Booking 일정 업데이트
 ```
 
 ---

@@ -59,6 +59,7 @@
     <div style="padding:12px 20px 32px;background:#fff;border-top:1px solid var(--gray-100);display:flex;gap:10px;align-items:center;flex-shrink:0;">
       <input type="file" id="chat-image-input" accept="image/jpeg,image/png" style="display:none;" onchange="handleChatImage(this)">
       <span style="font-size:20px;cursor:pointer;" onclick="document.getElementById('chat-image-input').click()">📷</span>
+      <span style="font-size:20px;cursor:pointer;" onclick="openScheduleProposal()">📅</span>
       <input class="input-field" style="flex:1;height:40px;border-radius:20px;" placeholder="메시지를 입력하세요" />
       <div style="width:40px;height:40px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;font-size:16px;color:#fff;cursor:pointer;">→</div>
     </div>
@@ -123,6 +124,53 @@
         </div>
 
         <button class="btn-primary" style="height:48px;font-size:14px;" onclick="submitReport()">신고 접수</button>
+      </div>
+    </div>
+
+    <!-- 일정 제안 바텀시트 -->
+    <div id="schedule-overlay" class="more-overlay" onclick="closeScheduleProposal()">
+      <div class="more-sheet" style="padding:20px 20px 36px;max-height:70%;overflow-y:auto;" onclick="event.stopPropagation()">
+        <div style="width:40px;height:4px;border-radius:2px;background:var(--gray-300);margin:0 auto 16px;"></div>
+        <div style="font-size:17px;font-weight:800;color:var(--navy);margin-bottom:4px;">📅 일정 제안하기</div>
+        <div style="font-size:12px;color:var(--gray-400);margin-bottom:16px;">레슨 가능한 날짜를 선택하여 수강생에게 제안하세요</div>
+
+        <!-- 추천 일정 -->
+        <div style="padding:14px;background:var(--gray-50);border-radius:14px;margin-bottom:12px;">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;">
+            <span style="font-size:13px;">🤖</span>
+            <span style="font-size:13px;font-weight:700;color:var(--navy);">추천 일정</span>
+            <span style="font-size:10px;color:var(--gray-400);margin-left:auto;">빈 시간 우선</span>
+          </div>
+          <div id="schedule-slots" style="display:flex;flex-direction:column;gap:6px;">
+            <div onclick="toggleSlot(this)" style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:#fff;border-radius:10px;border:1px solid var(--gray-100);cursor:pointer;transition:all 0.15s;">
+              <input type="checkbox" onclick="event.stopPropagation()" onchange="toggleSlotByCheckbox(this)" style="width:16px;height:16px;accent-color:var(--green);flex-shrink:0;cursor:pointer;">
+              <span style="font-size:13px;font-weight:600;color:var(--navy);">4/17 (목) 10:00</span>
+            </div>
+            <div onclick="toggleSlot(this)" style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:#fff;border-radius:10px;border:1px solid var(--gray-100);cursor:pointer;transition:all 0.15s;">
+              <input type="checkbox" onclick="event.stopPropagation()" onchange="toggleSlotByCheckbox(this)" style="width:16px;height:16px;accent-color:var(--green);flex-shrink:0;cursor:pointer;">
+              <span style="font-size:13px;font-weight:600;color:var(--navy);">4/17 (목) 14:00</span>
+            </div>
+            <div onclick="toggleSlot(this)" style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:#fff;border-radius:10px;border:1px solid var(--gray-100);cursor:pointer;transition:all 0.15s;">
+              <input type="checkbox" onclick="event.stopPropagation()" onchange="toggleSlotByCheckbox(this)" style="width:16px;height:16px;accent-color:var(--green);flex-shrink:0;cursor:pointer;">
+              <span style="font-size:13px;font-weight:600;color:var(--navy);">4/18 (금) 10:00</span>
+            </div>
+          </div>
+          <div id="more-schedule-slots" style="display:none;margin-top:6px;">
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              <div onclick="toggleSlot(this)" style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:#fff;border-radius:10px;border:1px solid var(--gray-100);cursor:pointer;transition:all 0.15s;">
+                <input type="checkbox" onclick="event.stopPropagation()" onchange="toggleSlotByCheckbox(this)" style="width:16px;height:16px;accent-color:var(--green);flex-shrink:0;cursor:pointer;">
+                <span style="font-size:13px;font-weight:600;color:var(--navy);">4/18 (금) 14:00</span>
+              </div>
+              <div onclick="toggleSlot(this)" style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:#fff;border-radius:10px;border:1px solid var(--gray-100);cursor:pointer;transition:all 0.15s;">
+                <input type="checkbox" onclick="event.stopPropagation()" onchange="toggleSlotByCheckbox(this)" style="width:16px;height:16px;accent-color:var(--green);flex-shrink:0;cursor:pointer;">
+                <span style="font-size:13px;font-weight:600;color:var(--navy);">4/19 (토) 10:00</span>
+              </div>
+            </div>
+          </div>
+          <button onclick="var el=document.getElementById('more-schedule-slots');el.style.display=el.style.display==='none'?'block':'none';this.textContent=el.style.display==='none'?'다른 시간 더보기 ▼':'접기 ▲'" style="width:100%;margin-top:8px;padding:8px;border-radius:8px;border:1px dashed var(--gray-200);background:#fff;color:var(--gray-400);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">다른 시간 더보기 ▼</button>
+        </div>
+
+        <button onclick="sendScheduleProposal()" style="width:100%;height:48px;border-radius:12px;border:none;background:var(--green);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">제안 보내기</button>
       </div>
     </div>
 
@@ -222,6 +270,81 @@ function handleChatImage(input) {
     reader.readAsDataURL(file);
     input.value = '';
   }
+}
+
+// 일정 제안
+function openScheduleProposal() {
+  document.getElementById('schedule-overlay').classList.add('show');
+}
+function closeScheduleProposal() {
+  document.getElementById('schedule-overlay').classList.remove('show');
+}
+function toggleSlot(el) {
+  const cb = el.querySelector('input');
+  cb.checked = !cb.checked;
+  el.style.borderColor = cb.checked ? 'var(--green)' : 'var(--gray-100)';
+  el.style.background = cb.checked ? '#F0FDFA' : '#fff';
+}
+function toggleSlotByCheckbox(cb) {
+  const el = cb.parentElement;
+  el.style.borderColor = cb.checked ? 'var(--green)' : 'var(--gray-100)';
+  el.style.background = cb.checked ? '#F0FDFA' : '#fff';
+}
+function sendScheduleProposal() {
+  const checked = document.querySelectorAll('#schedule-slots input:checked, #more-schedule-slots input:checked');
+  if (checked.length === 0) {
+    showToast('제안할 일정을 선택해주세요');
+    return;
+  }
+  closeScheduleProposal();
+  // 채팅에 카드형 메시지 추가
+  const slots = Array.from(checked).map(cb => cb.parentElement.querySelector('span').textContent);
+  const chatArea = document.querySelector('.screen-white > div');
+  const radioHtml = slots.map((s, i) =>
+    `<label onclick="this.parentElement.querySelectorAll('label').forEach(l=>{l.style.borderColor='var(--gray-100)';l.style.background='#fff'});this.style.borderColor='var(--green)';this.style.background='#F0FDFA';" style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:#fff;border-radius:8px;border:1px solid var(--gray-100);cursor:pointer;transition:all 0.15s;">
+      <input type="radio" name="chat-schedule" style="accent-color:var(--green);width:14px;height:14px;">
+      <span style="font-size:13px;font-weight:600;color:var(--navy);">${s}</span>
+    </label>`
+  ).join('');
+
+  chatArea.innerHTML += `
+    <div style="font-size:10px;color:var(--gray-400);margin-top:12px;text-align:right;">오전 9:35</div>
+    <div style="max-width:85%;margin-left:auto;">
+      <div style="background:#F0FDFA;border:1.5px solid #D1FAE5;border-radius:16px;padding:14px;border-bottom-right-radius:4px;">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;">
+          <span style="font-size:14px;">📅</span>
+          <span style="font-size:14px;font-weight:700;color:var(--navy);">일정 제안</span>
+        </div>
+        <div style="font-size:12px;color:var(--gray-500);margin-bottom:10px;">아래 일정 중 원하시는 시간을 선택해주세요</div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          ${radioHtml}
+        </div>
+        <button onclick="acceptChatSchedule(this)" style="width:100%;height:40px;border-radius:10px;border:none;background:var(--green);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:10px;">선택 완료</button>
+      </div>
+    </div>`;
+  chatArea.scrollTop = chatArea.scrollHeight;
+  showToast('일정이 제안되었습니다');
+}
+function acceptChatSchedule(btn) {
+  const card = btn.parentElement;
+  const selected = card.querySelector('input[name="chat-schedule"]:checked');
+  if (!selected) {
+    showToast('일정을 선택해주세요');
+    return;
+  }
+  const selectedText = selected.parentElement.querySelector('span').textContent;
+  // 카드를 확정 상태로 변경
+  card.innerHTML = `
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+      <span style="font-size:14px;">✅</span>
+      <span style="font-size:14px;font-weight:700;color:var(--navy);">일정 확정</span>
+    </div>
+    <div style="padding:10px 12px;background:#D1FAE5;border-radius:10px;display:flex;align-items:center;gap:8px;">
+      <span style="font-size:13px;font-weight:700;color:#065F46;">${selectedText}</span>
+      <span style="font-size:10px;font-weight:600;color:#065F46;margin-left:auto;background:#fff;padding:2px 8px;border-radius:4px;">확정</span>
+    </div>
+  `;
+  showToast('일정이 확정되었습니다');
 }
 
 function showToast(msg) {
