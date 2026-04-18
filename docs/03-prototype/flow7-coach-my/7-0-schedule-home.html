@@ -114,6 +114,9 @@
           <div id="tab-reschedule" class="schedule-tab" onclick="switchTab('reschedule')" style="flex:1;text-align:center;padding:10px 0;font-size:14px;font-weight:700;color:var(--gray-400);border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer;position:relative;">
             변경 요청 <span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--coral);color:#fff;font-size:10px;font-weight:700;margin-left:2px;">4</span>
           </div>
+          <div id="tab-pending" class="schedule-tab" onclick="switchTab('pending')" style="flex:1;text-align:center;padding:10px 0;font-size:14px;font-weight:700;color:var(--gray-400);border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer;position:relative;">
+            대기 신청 <span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--warning);color:#fff;font-size:10px;font-weight:700;margin-left:2px;">2</span>
+          </div>
         </div>
 
         <!-- 탭 콘텐츠: 오늘 레슨 -->
@@ -348,36 +351,31 @@
           </div>
         </div>
 
-      </div>
-
-      <!-- 대기 중 신청 -->
-      <div style="padding:20px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-          <span style="font-size:15px;font-weight:700;color:var(--navy);">대기 중 신청</span>
-          <a href="7-2-booking-inbox.html" style="font-size:13px;color:var(--green);font-weight:600;text-decoration:none;">전체보기 ›</a>
-        </div>
-
-        <div style="background:#fff;border-radius:14px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,0.06);margin-bottom:8px;cursor:pointer;" onclick="showLessonDetail('pending')">
-          <div style="display:flex;justify-content:space-between;align-items:center;">
-            <div>
-              <div style="font-size:14px;font-weight:600;color:var(--navy);">박지수</div>
-              <div style="font-size:12px;color:var(--gray-500);margin-top:2px;">정규레슨 · 주 1회 · 1:1 개인</div>
-              <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">4/13 신청 · 화·목 10:00 희망</div>
+        <!-- 탭 콘텐츠: 대기 신청 -->
+        <div id="content-pending" style="display:none;">
+          <div style="background:#fff;border-radius:14px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,0.06);margin-bottom:8px;cursor:pointer;" onclick="showLessonDetail('pending')">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <div>
+                <div style="font-size:14px;font-weight:600;color:var(--navy);">박지수</div>
+                <div style="font-size:12px;color:var(--gray-500);margin-top:2px;">정규레슨 · 주 1회 · 1:1 개인</div>
+                <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">4/13 신청 · 화·목 10:00 희망</div>
+              </div>
+              <span class="badge-sm" style="background:#FEF3C7;color:#92400E;">대기</span>
             </div>
-            <span class="badge-sm" style="background:#FEF3C7;color:#92400E;">대기</span>
+          </div>
+
+          <div style="background:#fff;border-radius:14px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,0.06);cursor:pointer;" onclick="showLessonDetail('pending')">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <div>
+                <div style="font-size:14px;font-weight:600;color:var(--navy);">최수진</div>
+                <div style="font-size:12px;color:var(--gray-500);margin-top:2px;">쿠폰레슨 · 4회 · 그룹</div>
+                <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">4/12 신청 · 월·수 14:00 희망</div>
+              </div>
+              <span class="badge-sm" style="background:#FEF3C7;color:#92400E;">대기</span>
+            </div>
           </div>
         </div>
 
-        <div style="background:#fff;border-radius:14px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,0.06);cursor:pointer;" onclick="showLessonDetail('pending')">
-          <div style="display:flex;justify-content:space-between;align-items:center;">
-            <div>
-              <div style="font-size:14px;font-weight:600;color:var(--navy);">최수진</div>
-              <div style="font-size:12px;color:var(--gray-500);margin-top:2px;">쿠폰레슨 · 4회 · 그룹</div>
-              <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">4/12 신청 · 월·수 14:00 희망</div>
-            </div>
-            <span class="badge-sm" style="background:#FEF3C7;color:#92400E;">대기</span>
-          </div>
-        </div>
       </div>
 
       <!-- 이번 주 요약 -->
@@ -792,25 +790,20 @@ function selectCalDate(el, day) {
 }
 
 function switchTab(tab) {
-  const lessonTab = document.getElementById('tab-lesson');
-  const rescheduleTab = document.getElementById('tab-reschedule');
-  const lessonContent = document.getElementById('content-lesson');
-  const rescheduleContent = document.getElementById('content-reschedule');
-  if (tab === 'lesson') {
-    lessonContent.style.display = 'block';
-    rescheduleContent.style.display = 'none';
-    lessonTab.style.color = 'var(--green)';
-    lessonTab.style.borderBottomColor = 'var(--green)';
-    rescheduleTab.style.color = 'var(--gray-400)';
-    rescheduleTab.style.borderBottomColor = 'transparent';
-  } else {
-    lessonContent.style.display = 'none';
-    rescheduleContent.style.display = 'block';
-    rescheduleTab.style.color = 'var(--green)';
-    rescheduleTab.style.borderBottomColor = 'var(--green)';
-    lessonTab.style.color = 'var(--gray-400)';
-    lessonTab.style.borderBottomColor = 'transparent';
-  }
+  const tabs = ['lesson', 'reschedule', 'pending'];
+  tabs.forEach(t => {
+    const tabEl = document.getElementById('tab-' + t);
+    const contentEl = document.getElementById('content-' + t);
+    if (t === tab) {
+      if (contentEl) contentEl.style.display = 'block';
+      tabEl.style.color = 'var(--green)';
+      tabEl.style.borderBottomColor = 'var(--green)';
+    } else {
+      if (contentEl) contentEl.style.display = 'none';
+      tabEl.style.color = 'var(--gray-400)';
+      tabEl.style.borderBottomColor = 'transparent';
+    }
+  });
 }
 
 function showLessonDetail(status) {
