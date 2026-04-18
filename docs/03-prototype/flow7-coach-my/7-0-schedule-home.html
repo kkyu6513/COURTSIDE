@@ -114,7 +114,7 @@
         <!-- 탭 헤더 -->
         <div style="display:flex;border-bottom:2px solid var(--gray-100);margin-bottom:14px;">
           <div id="tab-lesson" class="schedule-tab active" onclick="switchTab('lesson')" style="flex:1;text-align:center;padding:10px 0;font-size:13px;font-weight:700;color:var(--green);border-bottom:2px solid var(--green);margin-bottom:-2px;cursor:pointer;">
-            오늘 레슨 <span style="font-size:11px;">9</span>
+            오늘 레슨 <span style="font-size:11px;">11</span>
           </div>
           <div id="tab-reschedule" class="schedule-tab" onclick="switchTab('reschedule')" style="flex:1;text-align:center;padding:10px 0;font-size:13px;font-weight:700;color:var(--gray-400);border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer;position:relative;">
             변경 요청 <span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--coral);color:#fff;font-size:10px;font-weight:700;margin-left:2px;">4</span>
@@ -144,6 +144,10 @@
             <div><div class="time" style="color:var(--gray-400);">09:00</div><div class="student">홍길동 · 1:1 · <span style="color:var(--info);font-weight:600;">5/8회</span></div></div>
             <span class="badge-sm" style="background:#DBEAFE;color:#1E40AF;">레슨완료</span>
           </div>
+          <div class="schedule-slot" style="background:var(--gray-50);border:1px solid var(--gray-100);opacity:0.5;cursor:pointer;">
+            <div><div class="time" style="color:var(--gray-400);text-decoration:line-through;">09:30</div><div class="student" style="text-decoration:line-through;color:var(--gray-400);">강민서 · 그룹 · <span style="color:var(--gray-400);font-weight:600;">3/8회</span></div></div>
+            <span class="badge-sm" style="background:var(--gray-100);color:var(--gray-500);">❌ 결강</span>
+          </div>
           <div class="schedule-slot" style="background:#fff;border:1px solid var(--gray-100);cursor:pointer;position:relative;" onclick="showLessonDetail('inprogress')">
             <div><div class="time" style="color:var(--coral);">10:00</div><div class="student">이민호 · 1:1 · <span style="color:var(--info);font-weight:600;">6/8회</span></div></div>
             <span class="badge-sm" style="background:#FEE2E2;color:var(--error);animation:pulse 2s infinite;">🎾 진행중</span>
@@ -163,6 +167,10 @@
           <div class="schedule-slot" style="background:#fff;border:1px solid var(--gray-100);cursor:pointer;" onclick="showLessonDetail('reschedule')">
             <div><div class="time" style="color:var(--orange);">16:00</div><div class="student">박지수 · 1:1 · <span style="color:var(--info);font-weight:600;">3/8회</span></div></div>
             <span class="badge-sm" style="background:#FFF7ED;color:#EA580C;">🔄 변경 요청</span>
+          </div>
+          <div class="schedule-slot" style="background:#F0FDFA;border:1.5px dashed var(--green);cursor:pointer;">
+            <div><div class="time" style="color:var(--green);">16:30</div><div class="student">강민서 · 그룹 · <span style="color:var(--info);font-weight:600;">보강</span></div></div>
+            <span class="badge-sm" style="background:#D1FAE5;color:#065F46;">🔄 보강대기</span>
           </div>
           <div class="schedule-slot" style="background:#fff;border:1px solid var(--gray-100);cursor:pointer;" onclick="showLessonDetail('upcoming')">
             <div><div class="time">17:00</div><div class="student">한지우 · 그룹 · <span style="color:var(--info);font-weight:600;">1/4회</span> · <span style="color:var(--error);font-weight:600;">미결제</span></div></div>
