@@ -201,6 +201,12 @@
 
   let html = '<div class="snav-header">🎾 COURTSIDE<span style="font-size:11px;font-weight:400;opacity:0.5;">Sitemap</span></div>';
 
+  // 공통 링크 (작업 현황표, 상태 흐름도)
+  html += '<div style="padding:8px 16px;display:flex;flex-direction:column;gap:6px;border-bottom:1px solid rgba(255,255,255,0.06);">';
+  html += '<a href="' + basePath + 'project-status.html" style="display:flex;align-items:center;gap:6px;padding:8px 12px;border-radius:8px;background:rgba(255,255,255,0.08);color:#fff;text-decoration:none;font-size:12px;font-weight:600;">📊 작업 현황표</a>';
+  html += '<a href="' + basePath + 'status-flow.html" style="display:flex;align-items:center;gap:6px;padding:8px 12px;border-radius:8px;background:rgba(255,255,255,0.08);color:#fff;text-decoration:none;font-size:12px;font-weight:600;">상태 흐름도</a>';
+  html += '</div>';
+
   siteMap.forEach((flow, fi) => {
     const isCurrentFlow = fi === currentFlow;
     html += '<div class="snav-flow">';
@@ -235,21 +241,4 @@
     items.classList.toggle('show');
   };
 
-  // 작업 현황표 플로팅 버튼 (모든 페이지 공통)
-  const statusBtn = document.createElement('a');
-  statusBtn.href = basePath + 'project-status.html';
-  statusBtn.style.cssText = 'position:fixed;top:16px;right:16px;z-index:9999;display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:20px;background:rgba(30,58,95,0.9);color:#fff;font-size:12px;font-weight:700;font-family:Pretendard,-apple-system,sans-serif;text-decoration:none;box-shadow:0 4px 12px rgba(0,0,0,0.2);transition:all 0.2s;';
-  statusBtn.innerHTML = '<span style="font-size:14px;">📊</span> 작업 현황표';
-  statusBtn.onmouseenter = function(){ this.style.background='rgba(45,212,191,0.95)'; };
-  statusBtn.onmouseleave = function(){ this.style.background='rgba(30,58,95,0.9)'; };
-  document.body.appendChild(statusBtn);
-
-  // 상태 흐름도 플로팅 버튼 (모든 페이지 공통)
-  const flowBtn = document.createElement('a');
-  flowBtn.href = basePath + 'status-flow.html';
-  flowBtn.style.cssText = 'position:fixed;top:52px;right:16px;z-index:9999;display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:20px;background:rgba(124,92,191,0.9);color:#fff;font-size:12px;font-weight:700;font-family:Pretendard,-apple-system,sans-serif;text-decoration:none;box-shadow:0 4px 12px rgba(0,0,0,0.2);transition:all 0.2s;';
-  flowBtn.textContent = '상태 흐름도';
-  flowBtn.onmouseenter = function(){ this.style.background='rgba(45,212,191,0.95)'; };
-  flowBtn.onmouseleave = function(){ this.style.background='rgba(124,92,191,0.9)'; };
-  document.body.appendChild(flowBtn);
 })();
