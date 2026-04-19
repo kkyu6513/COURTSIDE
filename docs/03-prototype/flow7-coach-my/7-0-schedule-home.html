@@ -1849,10 +1849,12 @@ function showLessonDetail(status) {
       ${d.statusMsg}`;
   }
 
+  const statusBtn = '<button onclick="showStatusActions()" style="width:100%;height:48px;border-radius:12px;border:none;background:var(--green);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:8px;">상태처리하기</button>';
+
   if (status === 'absent' || status === 'makeup' || status === 'makeup_confirmed') {
-    actions.innerHTML = '<button onclick="closeLessonDetail()" style="width:100%;height:48px;border-radius:12px;border:1.5px solid var(--gray-200);background:#fff;color:var(--gray-500);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">닫기</button>';
+    actions.innerHTML = statusBtn + '<button onclick="closeLessonDetail()" style="width:100%;height:48px;border-radius:12px;border:1.5px solid var(--gray-200);background:#fff;color:var(--gray-500);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">닫기</button>';
   } else if (status === 'reschedule') {
-    actions.innerHTML = `
+    actions.innerHTML = statusBtn + `
       <div style="display:flex;gap:10px;">
         <button id="btn-propose-selected" onclick="proposeSelectedFromDetail(this)" disabled style="flex:1;height:48px;border-radius:12px;border:2px solid var(--gray-200);background:#fff;color:var(--gray-400);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.15s;">선택 제안하기</button>
         <button onclick="proposeAllFromDetail(this)" style="flex:1;height:48px;border-radius:12px;border:none;background:var(--green);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">모두 제안하기</button>
@@ -1866,14 +1868,10 @@ function showLessonDetail(status) {
           · 12시간 내 수강생이 응답하지 않으면 홀드가 자동 해제돼요.
         </div>
       </div>`;
-  } else if (status === 'inprogress') {
-    actions.innerHTML = `
-      <button onclick="completeLesson()" style="width:100%;height:48px;border-radius:12px;border:none;background:var(--coral);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">레슨 완료 처리</button>`;
+  } else if (status === 'inprogress' || status === 'upcoming') {
+    actions.innerHTML = statusBtn;
   } else if (status === 'completed') {
-    actions.innerHTML = '<button onclick="closeLessonDetail()" style="width:100%;height:48px;border-radius:12px;border:1px solid var(--gray-100);background:#fff;color:var(--gray-500);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">닫기</button>';
-  } else if (status === 'upcoming') {
-    actions.innerHTML = `
-      <button onclick="showStatusActions()" style="width:100%;height:48px;border-radius:12px;border:none;background:var(--green);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">상태 처리하기</button>`;
+    actions.innerHTML = statusBtn + '<button onclick="closeLessonDetail()" style="width:100%;height:48px;border-radius:12px;border:1px solid var(--gray-100);background:#fff;color:var(--gray-500);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">닫기</button>';
   } else if (status === 'pending-conflict') {
     const conflictCount = d.schedule.filter(s => s.status === 'conflict').length;
 
@@ -1922,7 +1920,7 @@ function showLessonDetail(status) {
         <button onclick="showProposalModal()" style="flex:2;height:48px;border-radius:12px;border:none;background:var(--green);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">제안하기</button>
       </div>`;
   } else if (status === 'pending') {
-    actions.innerHTML = `
+    actions.innerHTML = statusBtn + `
       <div style="padding:10px 12px;background:#F0FDFA;border-radius:10px;margin-bottom:10px;font-size:12px;color:#065F46;line-height:1.6;">
         <strong>스케줄 확정 안내</strong><br>
         수강생의 희망 일정으로 스케줄이 확정됩니다.<br>
