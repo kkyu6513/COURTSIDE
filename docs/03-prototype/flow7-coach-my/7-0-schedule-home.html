@@ -631,7 +631,50 @@
           </div>
         </button>
 
+        <button id="btn-payment-action" onclick="closeStatusActions();showPaymentConfirm()" style="width:100%;display:none;align-items:center;gap:12px;padding:14px 16px;background:var(--gray-50);border-radius:12px;border:none;cursor:pointer;margin-bottom:8px;font-family:inherit;text-align:left;">
+          <div style="width:40px;height:40px;border-radius:10px;background:#FFF7ED;display:flex;align-items:center;justify-content:center;font-size:18px;">💰</div>
+          <div>
+            <div style="font-size:14px;font-weight:700;color:#EA580C;">결제 확인</div>
+            <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">외부 결제(현금/계좌이체)를 확인합니다</div>
+          </div>
+        </button>
+
         <button onclick="closeStatusActions()" style="width:100%;height:48px;border-radius:12px;border:1px solid var(--gray-100);background:#fff;color:var(--gray-500);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:4px;">취소</button>
+      </div>
+    </div>
+
+    <!-- 결제 확인 바텀시트 -->
+    <div id="payment-confirm-popup" style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;z-index:155;">
+      <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);" onclick="closePaymentConfirm()"></div>
+      <div style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;padding:24px 20px;z-index:156;">
+        <div style="width:40px;height:4px;border-radius:2px;background:var(--gray-200);margin:0 auto 16px;"></div>
+        <div style="font-size:17px;font-weight:800;color:var(--navy);margin-bottom:4px;">결제 확인</div>
+        <div style="font-size:13px;color:var(--gray-500);margin-bottom:20px;">외부 결제를 확인하고 결제 상태를 변경합니다.</div>
+
+        <div style="font-size:14px;font-weight:700;color:var(--navy);margin-bottom:10px;">결제 수단</div>
+        <label onclick="selectPaymentType('cash')" id="pay-cash" style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--gray-50);border-radius:12px;cursor:pointer;margin-bottom:8px;border:2px solid transparent;transition:all 0.15s;">
+          <input type="radio" name="payment-type" value="cash" style="accent-color:var(--green);width:18px;height:18px;flex-shrink:0;">
+          <div>
+            <div style="font-size:14px;font-weight:600;color:var(--navy);">현금</div>
+          </div>
+        </label>
+        <label onclick="selectPaymentType('transfer')" id="pay-transfer" style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--gray-50);border-radius:12px;cursor:pointer;margin-bottom:8px;border:2px solid transparent;transition:all 0.15s;">
+          <input type="radio" name="payment-type" value="transfer" style="accent-color:var(--green);width:18px;height:18px;flex-shrink:0;">
+          <div>
+            <div style="font-size:14px;font-weight:600;color:var(--navy);">계좌이체</div>
+          </div>
+        </label>
+        <label onclick="selectPaymentType('other')" id="pay-other" style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--gray-50);border-radius:12px;cursor:pointer;margin-bottom:16px;border:2px solid transparent;transition:all 0.15s;">
+          <input type="radio" name="payment-type" value="other" style="accent-color:var(--green);width:18px;height:18px;flex-shrink:0;">
+          <div>
+            <div style="font-size:14px;font-weight:600;color:var(--navy);">기타</div>
+          </div>
+        </label>
+
+        <div style="display:flex;gap:10px;">
+          <button onclick="closePaymentConfirm()" style="flex:1;height:48px;border-radius:12px;border:1.5px solid var(--gray-200);background:#fff;color:var(--gray-500);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">취소</button>
+          <button id="pay-confirm-btn" onclick="confirmPayment()" disabled style="flex:2;height:48px;border-radius:12px;border:none;background:var(--gray-300);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">결제 확인</button>
+        </div>
       </div>
     </div>
 
@@ -926,6 +969,34 @@ function toggleFilter(el, type) {
     s.style.display = activeFilters.has('all') || activeFilters.has(s.dataset.status) ? 'flex' : 'none';
   });
 }
+function showPaymentConfirm() {
+  document.getElementById('payment-confirm-popup').style.display = 'block';
+  document.querySelectorAll('input[name="payment-type"]').forEach(r => r.checked = false);
+  document.getElementById('pay-cash').style.borderColor = 'transparent';
+  document.getElementById('pay-transfer').style.borderColor = 'transparent';
+  document.getElementById('pay-other').style.borderColor = 'transparent';
+  document.getElementById('pay-confirm-btn').disabled = true;
+  document.getElementById('pay-confirm-btn').style.background = 'var(--gray-300)';
+}
+function closePaymentConfirm() {
+  document.getElementById('payment-confirm-popup').style.display = 'none';
+}
+function selectPaymentType(type) {
+  document.getElementById('pay-cash').style.borderColor = type === 'cash' ? 'var(--green)' : 'transparent';
+  document.getElementById('pay-transfer').style.borderColor = type === 'transfer' ? 'var(--green)' : 'transparent';
+  document.getElementById('pay-other').style.borderColor = type === 'other' ? 'var(--green)' : 'transparent';
+  document.getElementById('pay-confirm-btn').disabled = false;
+  document.getElementById('pay-confirm-btn').style.background = 'var(--green)';
+}
+function confirmPayment() {
+  closePaymentConfirm();
+  closeLessonDetail();
+  const toast = document.getElementById('sent-toast');
+  toast.textContent = '외부 결제가 확인되었습니다';
+  toast.style.display = 'block';
+  setTimeout(() => { toast.style.display = 'none'; }, 2000);
+}
+
 function showStatusGuide() {
   document.getElementById('status-guide-popup').style.display = 'block';
 }
@@ -1469,9 +1540,17 @@ function toggleSelectAll() {
   btn.textContent = allChecked ? '전체선택' : '선택해제';
 }
 
+let currentDetailStatus = '';
+let currentDetailData = null;
 function showStatusActions(currentStatus) {
+  currentDetailStatus = currentStatus;
   const absentBtn = document.getElementById('btn-absent-action');
   if (absentBtn) absentBtn.style.display = currentStatus === 'absent' ? 'none' : 'flex';
+  const payBtn = document.getElementById('btn-payment-action');
+  if (payBtn) {
+    const d = currentDetailData;
+    payBtn.style.display = (d && d.paymentStatus === 'unpaid') ? 'flex' : 'none';
+  }
   document.getElementById('status-actions-overlay').style.display = 'block';
 }
 function closeStatusActions() {
@@ -1670,6 +1749,7 @@ function showLessonDetail(status) {
     }
   };
   const d = data[status];
+  currentDetailData = d;
 
   header.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;"><div style="font-size:18px;font-weight:800;color:var(--navy);">레슨 상세</div>' + d.badge + '</div>';
 
