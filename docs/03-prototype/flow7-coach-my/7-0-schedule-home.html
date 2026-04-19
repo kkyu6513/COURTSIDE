@@ -131,23 +131,15 @@
           <!-- 오늘 원래 콘텐츠 -->
           <div id="original-today-content">
           <!-- 상태 필터 -->
-          <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;">
-            <button onclick="showFilterPopup()" id="filter-btn" style="display:flex;align-items:center;gap:4px;padding:6px 12px;border-radius:8px;border:1.5px solid var(--gray-200);background:#fff;color:var(--navy);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">
-              <span style="font-size:14px;">⚙</span> <span id="filter-label">전체</span>
-            </button>
-            <div style="position:relative;margin-left:auto;">
-              <span onclick="toggleStatusTooltip()" style="width:20px;height:20px;border-radius:50%;border:1.5px solid var(--gray-300);background:#fff;color:var(--gray-400);font-size:10px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;">?</span>
-              <div id="status-tooltip" style="display:none;position:absolute;top:28px;right:0;background:var(--navy);border-radius:10px;padding:10px 14px;white-space:nowrap;z-index:50;box-shadow:0 4px 12px rgba(0,0,0,0.15);">
-                <div style="display:flex;flex-direction:column;gap:5px;">
-                  <div style="font-size:11px;color:#fff;">🎾 진행중</div>
-                  <div style="font-size:11px;color:#fff;">📌 레슨 예정</div>
-                  <div style="font-size:11px;color:#fff;">🔄 변경 요청</div>
-                  <div style="font-size:11px;color:#fff;">🏁 레슨완료</div>
-                  <div style="font-size:11px;color:#fff;">❌ 결강</div>
-                  <div style="font-size:11px;color:#fff;">✅ 보강</div>
-                </div>
-              </div>
-            </div>
+          <div style="display:flex;align-items:center;gap:5px;margin-bottom:10px;overflow-x:auto;">
+            <span style="font-size:14px;flex-shrink:0;margin-right:2px;">🔽</span>
+            <span onclick="toggleFilter(this,'all')" class="f-chip active" style="padding:5px 10px;border-radius:20px;background:var(--green);color:#fff;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;">전체</span>
+            <span onclick="toggleFilter(this,'inprogress')" class="f-chip" style="padding:5px 10px;border-radius:20px;background:var(--gray-100);color:var(--gray-500);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;">🎾 진행중</span>
+            <span onclick="toggleFilter(this,'upcoming')" class="f-chip" style="padding:5px 10px;border-radius:20px;background:var(--gray-100);color:var(--gray-500);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;">📌 예정</span>
+            <span onclick="toggleFilter(this,'reschedule')" class="f-chip" style="padding:5px 10px;border-radius:20px;background:var(--gray-100);color:var(--gray-500);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;">🔄 변경</span>
+            <span onclick="toggleFilter(this,'completed')" class="f-chip" style="padding:5px 10px;border-radius:20px;background:var(--gray-100);color:var(--gray-500);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;">🏁 완료</span>
+            <span onclick="toggleFilter(this,'absent')" class="f-chip" style="padding:5px 10px;border-radius:20px;background:var(--gray-100);color:var(--gray-500);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;">❌ 결강</span>
+            <span onclick="toggleFilter(this,'makeup')" class="f-chip" style="padding:5px 10px;border-radius:20px;background:var(--gray-100);color:var(--gray-500);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;">✅ 보강</span>
           </div>
 
           <div class="schedule-slot" style="background:#fff;border:1px solid var(--gray-100);opacity:0.7;cursor:pointer;" data-status="completed" onclick="showLessonDetail('completed')">
@@ -621,45 +613,6 @@
       </div>
     </div>
 
-    <!-- 상태 필터 바텀시트 -->
-    <div id="filter-popup" style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;z-index:140;">
-      <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);" onclick="closeFilterPopup()"></div>
-      <div style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;padding:20px;z-index:141;">
-        <div style="width:40px;height:4px;border-radius:2px;background:var(--gray-200);margin:0 auto 16px;"></div>
-        <div style="font-size:16px;font-weight:800;color:var(--navy);margin-bottom:16px;">상태 필터</div>
-        <div style="display:flex;flex-direction:column;gap:8px;">
-          <label style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--gray-50);border-radius:10px;cursor:pointer;">
-            <input type="checkbox" class="filter-check" value="inprogress" checked style="accent-color:var(--green);width:18px;height:18px;">
-            <span style="font-size:14px;">🎾</span><span style="font-size:13px;font-weight:600;color:var(--navy);">진행중</span>
-          </label>
-          <label style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--gray-50);border-radius:10px;cursor:pointer;">
-            <input type="checkbox" class="filter-check" value="upcoming" checked style="accent-color:var(--green);width:18px;height:18px;">
-            <span style="font-size:14px;">📌</span><span style="font-size:13px;font-weight:600;color:var(--navy);">레슨 예정</span>
-          </label>
-          <label style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--gray-50);border-radius:10px;cursor:pointer;">
-            <input type="checkbox" class="filter-check" value="reschedule" checked style="accent-color:var(--green);width:18px;height:18px;">
-            <span style="font-size:14px;">🔄</span><span style="font-size:13px;font-weight:600;color:var(--navy);">변경 요청</span>
-          </label>
-          <label style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--gray-50);border-radius:10px;cursor:pointer;">
-            <input type="checkbox" class="filter-check" value="completed" checked style="accent-color:var(--green);width:18px;height:18px;">
-            <span style="font-size:14px;">🏁</span><span style="font-size:13px;font-weight:600;color:var(--navy);">레슨완료</span>
-          </label>
-          <label style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--gray-50);border-radius:10px;cursor:pointer;">
-            <input type="checkbox" class="filter-check" value="absent" checked style="accent-color:var(--green);width:18px;height:18px;">
-            <span style="font-size:14px;">❌</span><span style="font-size:13px;font-weight:600;color:var(--navy);">결강</span>
-          </label>
-          <label style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--gray-50);border-radius:10px;cursor:pointer;">
-            <input type="checkbox" class="filter-check" value="makeup" checked style="accent-color:var(--green);width:18px;height:18px;">
-            <span style="font-size:14px;">✅</span><span style="font-size:13px;font-weight:600;color:var(--navy);">보강</span>
-          </label>
-        </div>
-        <div style="display:flex;gap:10px;margin-top:16px;">
-          <button onclick="closeFilterPopup()" style="flex:1;height:48px;border-radius:12px;border:1.5px solid var(--gray-200);background:#fff;color:var(--gray-500);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">취소</button>
-          <button onclick="applyFilter()" style="flex:2;height:48px;border-radius:12px;border:none;background:var(--green);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">적용하기</button>
-        </div>
-      </div>
-    </div>
-
     <!-- 상태 처리 바텀시트 (레슨 완료 / 보강 / 결강) -->
     <div id="status-actions-overlay" style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;z-index:150;">
       <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);" onclick="closeStatusActions()"></div>
@@ -958,35 +911,33 @@
   </div>
 </div>
 <script>
-function toggleStatusTooltip() {
-  const t = document.getElementById('status-tooltip');
-  t.style.display = t.style.display === 'none' ? 'block' : 'none';
-}
-function showFilterPopup() {
-  document.getElementById('filter-popup').style.display = 'block';
-}
-function closeFilterPopup() {
-  document.getElementById('filter-popup').style.display = 'none';
-}
-function applyFilter() {
-  const checked = [...document.querySelectorAll('.filter-check:checked')].map(c => c.value);
-  const all = document.querySelectorAll('.filter-check').length;
+let activeFilters = new Set(['all']);
+function toggleFilter(el, type) {
+  const chips = document.querySelectorAll('.f-chip');
+  const allChip = chips[0];
+  if (type === 'all') {
+    activeFilters = new Set(['all']);
+    chips.forEach(c => { c.style.background = 'var(--gray-100)'; c.style.color = 'var(--gray-500)'; });
+    allChip.style.background = 'var(--green)'; allChip.style.color = '#fff';
+  } else {
+    activeFilters.delete('all');
+    allChip.style.background = 'var(--gray-100)'; allChip.style.color = 'var(--gray-500)';
+    if (activeFilters.has(type)) {
+      activeFilters.delete(type);
+      el.style.background = 'var(--gray-100)'; el.style.color = 'var(--gray-500)';
+    } else {
+      activeFilters.add(type);
+      el.style.background = 'var(--green)'; el.style.color = '#fff';
+    }
+    if (activeFilters.size === 0) {
+      activeFilters.add('all');
+      allChip.style.background = 'var(--green)'; allChip.style.color = '#fff';
+    }
+  }
   const slots = document.querySelectorAll('.schedule-slot[data-status]');
   slots.forEach(s => {
-    s.style.display = checked.includes(s.dataset.status) ? 'flex' : 'none';
+    s.style.display = activeFilters.has('all') || activeFilters.has(s.dataset.status) ? 'flex' : 'none';
   });
-  const label = document.getElementById('filter-label');
-  const btn = document.getElementById('filter-btn');
-  if (checked.length === all) {
-    label.textContent = '전체';
-    btn.style.borderColor = 'var(--gray-200)';
-    btn.style.color = 'var(--navy)';
-  } else {
-    label.textContent = checked.length + '개 선택';
-    btn.style.borderColor = 'var(--green)';
-    btn.style.color = 'var(--green)';
-  }
-  closeFilterPopup();
 }
 function showStatusGuide() {
   document.getElementById('status-guide-popup').style.display = 'block';
