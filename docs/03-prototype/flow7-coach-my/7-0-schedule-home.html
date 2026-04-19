@@ -111,18 +111,6 @@
 
       <!-- 오늘 레슨 / 변경 요청 탭 -->
       <div style="padding:0 20px;">
-        <!-- 탭 헤더 -->
-        <div style="display:flex;border-bottom:2px solid var(--gray-100);margin-bottom:14px;">
-          <div id="tab-lesson" class="schedule-tab active" onclick="switchTab('lesson')" style="flex:1;text-align:center;padding:10px 0;font-size:13px;font-weight:700;color:var(--green);border-bottom:2px solid var(--green);margin-bottom:-2px;cursor:pointer;">
-            오늘 레슨 <span style="font-size:11px;">12</span>
-          </div>
-          <div id="tab-reschedule" class="schedule-tab" onclick="switchTab('reschedule')" style="flex:1;text-align:center;padding:10px 0;font-size:13px;font-weight:700;color:var(--gray-400);border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer;position:relative;">
-            변경 요청 <span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--coral);color:#fff;font-size:10px;font-weight:700;margin-left:2px;">4</span>
-          </div>
-          <div id="tab-pending" class="schedule-tab" onclick="switchTab('pending')" style="flex:1;text-align:center;padding:10px 0;font-size:13px;font-weight:700;color:var(--gray-400);border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer;position:relative;">
-            대기 신청 <span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--warning);color:#fff;font-size:10px;font-weight:700;margin-left:2px;">2</span>
-          </div>
-        </div>
 
         <!-- 탭 콘텐츠: 오늘 레슨 -->
         <div id="content-lesson">
@@ -133,13 +121,13 @@
           <!-- 상태 필터 -->
           <div style="display:flex;align-items:center;gap:5px;margin-bottom:10px;overflow-x:auto;">
             <span style="font-size:14px;flex-shrink:0;margin-right:2px;">🔽</span>
-            <span onclick="toggleFilter(this,'all')" class="f-chip active" style="padding:5px 10px;border-radius:20px;background:var(--green);color:#fff;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;">전체</span>
-            <span onclick="toggleFilter(this,'inprogress')" class="f-chip" style="padding:5px 10px;border-radius:20px;background:var(--gray-100);color:var(--gray-500);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;">🎾 진행중</span>
-            <span onclick="toggleFilter(this,'upcoming')" class="f-chip" style="padding:5px 10px;border-radius:20px;background:var(--gray-100);color:var(--gray-500);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;">📌 예정</span>
-            <span onclick="toggleFilter(this,'reschedule')" class="f-chip" style="padding:5px 10px;border-radius:20px;background:var(--gray-100);color:var(--gray-500);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;">🔄 변경</span>
-            <span onclick="toggleFilter(this,'completed')" class="f-chip" style="padding:5px 10px;border-radius:20px;background:var(--gray-100);color:var(--gray-500);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;">🏁 완료</span>
-            <span onclick="toggleFilter(this,'absent')" class="f-chip" style="padding:5px 10px;border-radius:20px;background:var(--gray-100);color:var(--gray-500);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;">❌ 결강</span>
-            <span onclick="toggleFilter(this,'makeup')" class="f-chip" style="padding:5px 10px;border-radius:20px;background:var(--gray-100);color:var(--gray-500);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;">✅ 보강</span>
+            <span onclick="toggleFilter(this,'all')" class="f-chip active" style="padding:5px 10px;border-radius:20px;background:var(--green);color:#fff;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;">전체 12</span>
+            <span onclick="toggleFilter(this,'inprogress')" class="f-chip" style="padding:5px 10px;border-radius:20px;background:var(--gray-100);color:var(--gray-500);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;">🎾 1</span>
+            <span onclick="toggleFilter(this,'upcoming')" class="f-chip" style="padding:5px 10px;border-radius:20px;background:var(--gray-100);color:var(--gray-500);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;">📌 5</span>
+            <span onclick="toggleFilter(this,'reschedule')" class="f-chip" style="padding:5px 10px;border-radius:20px;background:var(--gray-100);color:var(--gray-500);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;">🔄 1</span>
+            <span onclick="toggleFilter(this,'completed')" class="f-chip" style="padding:5px 10px;border-radius:20px;background:var(--gray-100);color:var(--gray-500);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;">🏁 1</span>
+            <span onclick="toggleFilter(this,'absent')" class="f-chip" style="padding:5px 10px;border-radius:20px;background:var(--gray-100);color:var(--gray-500);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;">❌ 1</span>
+            <span onclick="toggleFilter(this,'makeup')" class="f-chip" style="padding:5px 10px;border-radius:20px;background:var(--gray-100);color:var(--gray-500);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;">✅ 2</span>
           </div>
 
           <div class="schedule-slot" style="background:#fff;border:1px solid var(--gray-100);opacity:0.7;cursor:pointer;" data-status="completed" onclick="showLessonDetail('completed')">
