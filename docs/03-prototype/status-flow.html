@@ -23,7 +23,17 @@
   .chart-table td { padding:7px 6px; border-bottom:1px solid #E5E7EB; vertical-align:top; line-height:1.5; }
   .chart-table tr:hover { background:#F0FDFA; }
   .next-triggers { font-size:10px; color:#9CA3AF; line-height:1.6; }
-  .next-triggers span { display:inline-block; padding:1px 5px; border-radius:3px; background:#F5F5F7; color:#6B7280; margin:1px 0; font-size:10px; }
+  .acc-header { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border-radius:10px; cursor:pointer; margin-bottom:2px; font-size:13px; font-weight:800; }
+  .acc-header .arrow { font-size:12px; transition:transform 0.2s; }
+  .acc-header.open .arrow { transform:rotate(90deg); }
+  .acc-body { display:none; padding:0 0 8px; }
+  .acc-body.show { display:block; }
+  .acc-row { display:flex; align-items:flex-start; padding:6px 14px; font-size:11px; border-bottom:1px solid #F5F5F7; }
+  .acc-row:last-child { border-bottom:none; }
+  .acc-col1 { width:60px; flex-shrink:0; }
+  .acc-col2 { width:140px; flex-shrink:0; }
+  .acc-col3 { width:60px; flex-shrink:0; font-weight:600; }
+  .acc-col4 { flex:1; min-width:0; }
   .st { font-weight:600; }
   .end-state { color:#9CA3AF; font-style:italic; }
   .mode-btn { padding:8px 16px; border-radius:20px; font-size:12px; font-weight:700; cursor:pointer; font-family:inherit; transition:all 0.15s; }
@@ -193,64 +203,76 @@
   <!-- 전체 상태 전이 차트 -->
   <div class="section">
     <div class="section-title">전체 상태 전이 차트</div>
-    <table class="chart-table">
-      <thead>
-        <tr><th>현재 상태</th><th>주체</th><th>버튼/트리거</th><th>다음 상태</th><th>다음 상태에서 가능한 트리거</th></tr>
-      </thead>
-      <tbody>
-        <!-- ===== 대기 ===== -->
-        <tr><td colspan="5" style="background:#FEF3C7;font-weight:800;color:#92400E;padding:8px 10px;">대기 (PENDING)</td></tr>
-        <tr><td></td><td><span class="actor-coach">코치</span></td><td>스케줄 확정하기</td><td class="st" style="color:#065F46;">확정</td><td class="next-triggers"><span>상태처리하기</span> <span>결제 확인</span></td></tr>
-        <tr><td></td><td><span class="actor-coach">코치</span></td><td>더보기 > 보류하기</td><td class="st" style="color:#EA580C;">보류</td><td class="next-triggers"><span>스케줄 확정하기</span> <span>거절하기</span></td></tr>
-        <tr><td></td><td><span class="actor-coach">코치</span></td><td>더보기 > 거절하기</td><td class="st end-state">거절</td><td class="next-triggers">종료</td></tr>
-        <tr><td></td><td><span class="actor-coach">코치</span> <span class="actor-student">수강생</span></td><td>취소</td><td class="st end-state">취소</td><td class="next-triggers">종료</td></tr>
+    <div style="display:flex;gap:4px;margin-bottom:10px;font-size:10px;color:#9CA3AF;">
+      <span style="width:60px;">주체</span><span style="width:140px;">버튼/트리거</span><span style="width:60px;">다음 상태</span><span>가능한 트리거</span>
+    </div>
 
-        <!-- ===== 보류 ===== -->
-        <tr><td colspan="5" style="background:#FFF7ED;font-weight:800;color:#EA580C;padding:8px 10px;">보류 (ON_HOLD)</td></tr>
-        <tr><td></td><td><span class="actor-coach">코치</span></td><td>스케줄 확정하기</td><td class="st" style="color:#065F46;">확정</td><td class="next-triggers"><span>상태처리하기</span></td></tr>
-        <tr><td></td><td><span class="actor-coach">코치</span></td><td>거절하기</td><td class="st end-state">거절</td><td class="next-triggers">종료</td></tr>
-        <tr><td></td><td><span class="actor-coach">코치</span> <span class="actor-student">수강생</span></td><td>취소</td><td class="st end-state">취소</td><td class="next-triggers">종료</td></tr>
+    <!-- 대기 -->
+    <div class="acc-header" style="background:#FEF3C7;color:#92400E;" onclick="toggleAcc(this)">대기 (PENDING) <span class="arrow">›</span></div>
+    <div class="acc-body">
+      <div class="acc-row"><div class="acc-col1"><span class="actor-coach">코치</span></div><div class="acc-col2">스케줄 확정하기</div><div class="acc-col3" style="color:#065F46;">확정</div><div class="acc-col4 next-triggers"><span>상태처리하기</span> <span>결제 확인</span></div></div>
+      <div class="acc-row"><div class="acc-col1"><span class="actor-coach">코치</span></div><div class="acc-col2">더보기 > 보류하기</div><div class="acc-col3" style="color:#EA580C;">보류</div><div class="acc-col4 next-triggers"><span>스케줄 확정하기</span> <span>거절하기</span></div></div>
+      <div class="acc-row"><div class="acc-col1"><span class="actor-coach">코치</span></div><div class="acc-col2">더보기 > 거절하기</div><div class="acc-col3 end-state">거절</div><div class="acc-col4 next-triggers">종료</div></div>
+      <div class="acc-row"><div class="acc-col1"><span class="actor-coach">코치</span> <span class="actor-student">수강생</span></div><div class="acc-col2">취소</div><div class="acc-col3 end-state">취소</div><div class="acc-col4 next-triggers">종료</div></div>
+    </div>
 
-        <!-- ===== 확정 (레슨 예정) ===== -->
-        <tr><td colspan="5" style="background:#D1FAE5;font-weight:800;color:#065F46;padding:8px 10px;">확정 / 레슨 예정 (CONFIRMED)</td></tr>
-        <tr><td></td><td><span class="actor-coach">코치</span></td><td>상태처리하기 > 레슨 완료</td><td class="st" style="color:#1E40AF;">완료</td><td class="next-triggers">종료</td></tr>
-        <tr><td></td><td><span class="actor-coach">코치</span></td><td>상태처리하기 > 결강 처리</td><td class="st" style="color:#6B7280;">결강</td><td class="next-triggers"><span>상태처리하기 > 보강 처리</span></td></tr>
-        <tr><td></td><td><span class="actor-coach">코치</span></td><td>상태처리하기 > 보강 처리</td><td class="st" style="color:#065F46;">보강대기</td><td class="next-triggers"><span>일정 선택</span> <span>홀드 만료</span></td></tr>
-        <tr><td></td><td><span class="actor-coach">코치</span></td><td>상태처리하기 > 결제 확인</td><td class="st" style="color:#1E40AF;">외부결제</td><td class="next-triggers">결제 상태만 전환</td></tr>
-        <tr><td></td><td><span class="actor-student">수강생</span></td><td>일정 변경 요청</td><td class="st" style="color:#EA580C;">변경요청</td><td class="next-triggers"><span>확정하기</span> <span>선택/모두 제안하기</span> <span>불가 알림 보내기</span></td></tr>
-        <tr><td></td><td><span class="actor-coach">코치</span> <span class="actor-student">수강생</span></td><td>취소</td><td class="st end-state">취소</td><td class="next-triggers">종료 (환불)</td></tr>
-        <tr><td></td><td><span class="actor-system">시스템</span></td><td>레슨 시작 시간 도래</td><td class="st" style="color:#EF4444;">진행중</td><td class="next-triggers"><span>상태처리하기</span></td></tr>
+    <!-- 보류 -->
+    <div class="acc-header" style="background:#FFF7ED;color:#EA580C;" onclick="toggleAcc(this)">보류 (ON_HOLD) <span class="arrow">›</span></div>
+    <div class="acc-body">
+      <div class="acc-row"><div class="acc-col1"><span class="actor-coach">코치</span></div><div class="acc-col2">스케줄 확정하기</div><div class="acc-col3" style="color:#065F46;">확정</div><div class="acc-col4 next-triggers"><span>상태처리하기</span></div></div>
+      <div class="acc-row"><div class="acc-col1"><span class="actor-coach">코치</span></div><div class="acc-col2">거절하기</div><div class="acc-col3 end-state">거절</div><div class="acc-col4 next-triggers">종료</div></div>
+      <div class="acc-row"><div class="acc-col1"><span class="actor-coach">코치</span> <span class="actor-student">수강생</span></div><div class="acc-col2">취소</div><div class="acc-col3 end-state">취소</div><div class="acc-col4 next-triggers">종료</div></div>
+    </div>
 
-        <!-- ===== 진행중 ===== -->
-        <tr><td colspan="5" style="background:#FEE2E2;font-weight:800;color:#EF4444;padding:8px 10px;">진행중 (IN_PROGRESS)</td></tr>
-        <tr><td></td><td><span class="actor-coach">코치</span></td><td>상태처리하기 > 레슨 완료</td><td class="st" style="color:#1E40AF;">완료</td><td class="next-triggers">종료</td></tr>
-        <tr><td></td><td><span class="actor-coach">코치</span></td><td>상태처리하기 > 결강 처리</td><td class="st" style="color:#6B7280;">결강</td><td class="next-triggers"><span>상태처리하기 > 보강 처리</span></td></tr>
-        <tr><td></td><td><span class="actor-coach">코치</span></td><td>상태처리하기 > 보강 처리</td><td class="st" style="color:#065F46;">보강대기</td><td class="next-triggers"><span>일정 선택</span> <span>홀드 만료</span></td></tr>
-        <tr><td></td><td><span class="actor-system">시스템</span></td><td>다음 레슨 시작 (자동 완료)</td><td class="st" style="color:#1E40AF;">완료</td><td class="next-triggers">종료</td></tr>
+    <!-- 확정 -->
+    <div class="acc-header" style="background:#D1FAE5;color:#065F46;" onclick="toggleAcc(this)">확정 / 레슨 예정 (CONFIRMED) <span class="arrow">›</span></div>
+    <div class="acc-body">
+      <div class="acc-row"><div class="acc-col1"><span class="actor-coach">코치</span></div><div class="acc-col2">상태처리하기 > 레슨 완료</div><div class="acc-col3" style="color:#1E40AF;">완료</div><div class="acc-col4 next-triggers">종료</div></div>
+      <div class="acc-row"><div class="acc-col1"><span class="actor-coach">코치</span></div><div class="acc-col2">상태처리하기 > 결강 처리</div><div class="acc-col3" style="color:#6B7280;">결강</div><div class="acc-col4 next-triggers"><span>보강 처리</span></div></div>
+      <div class="acc-row"><div class="acc-col1"><span class="actor-coach">코치</span></div><div class="acc-col2">상태처리하기 > 보강 처리</div><div class="acc-col3" style="color:#065F46;">보강대기</div><div class="acc-col4 next-triggers"><span>일정 선택</span> <span>홀드 만료</span></div></div>
+      <div class="acc-row"><div class="acc-col1"><span class="actor-coach">코치</span></div><div class="acc-col2">상태처리하기 > 결제 확인</div><div class="acc-col3" style="color:#1E40AF;">외부결제</div><div class="acc-col4 next-triggers">결제 전환</div></div>
+      <div class="acc-row"><div class="acc-col1"><span class="actor-student">수강생</span></div><div class="acc-col2">일정 변경 요청</div><div class="acc-col3" style="color:#EA580C;">변경요청</div><div class="acc-col4 next-triggers"><span>확정하기</span> <span>제안하기</span> <span>불가 알림</span></div></div>
+      <div class="acc-row"><div class="acc-col1"><span class="actor-coach">코치</span> <span class="actor-student">수강생</span></div><div class="acc-col2">취소</div><div class="acc-col3 end-state">취소</div><div class="acc-col4 next-triggers">종료 (환불)</div></div>
+      <div class="acc-row"><div class="acc-col1"><span class="actor-system">시스템</span></div><div class="acc-col2">레슨 시작 시간 도래</div><div class="acc-col3" style="color:#EF4444;">진행중</div><div class="acc-col4 next-triggers"><span>상태처리하기</span></div></div>
+    </div>
 
-        <!-- ===== 완료 ===== -->
-        <tr><td colspan="5" style="background:#DBEAFE;font-weight:800;color:#1E40AF;padding:8px 10px;">완료 (COMPLETED)</td></tr>
-        <tr><td></td><td colspan="4" class="end-state">종료 상태 — 추가 전이 없음</td></tr>
+    <!-- 진행중 -->
+    <div class="acc-header" style="background:#FEE2E2;color:#EF4444;" onclick="toggleAcc(this)">진행중 (IN_PROGRESS) <span class="arrow">›</span></div>
+    <div class="acc-body">
+      <div class="acc-row"><div class="acc-col1"><span class="actor-coach">코치</span></div><div class="acc-col2">상태처리하기 > 레슨 완료</div><div class="acc-col3" style="color:#1E40AF;">완료</div><div class="acc-col4 next-triggers">종료</div></div>
+      <div class="acc-row"><div class="acc-col1"><span class="actor-coach">코치</span></div><div class="acc-col2">상태처리하기 > 결강 처리</div><div class="acc-col3" style="color:#6B7280;">결강</div><div class="acc-col4 next-triggers"><span>보강 처리</span></div></div>
+      <div class="acc-row"><div class="acc-col1"><span class="actor-coach">코치</span></div><div class="acc-col2">상태처리하기 > 보강 처리</div><div class="acc-col3" style="color:#065F46;">보강대기</div><div class="acc-col4 next-triggers"><span>일정 선택</span> <span>홀드 만료</span></div></div>
+      <div class="acc-row"><div class="acc-col1"><span class="actor-system">시스템</span></div><div class="acc-col2">다음 레슨 시작 (자동 완료)</div><div class="acc-col3" style="color:#1E40AF;">완료</div><div class="acc-col4 next-triggers">종료</div></div>
+    </div>
 
-        <!-- ===== 결강 ===== -->
-        <tr><td colspan="5" style="background:#F5F5F7;font-weight:800;color:#6B7280;padding:8px 10px;">결강 (ABSENT)</td></tr>
-        <tr><td></td><td><span class="actor-coach">코치</span></td><td>상태처리하기 > 보강 처리</td><td class="st" style="color:#065F46;">보강대기</td><td class="next-triggers"><span>일정 선택</span> <span>홀드 만료</span></td></tr>
+    <!-- 완료 -->
+    <div class="acc-header" style="background:#DBEAFE;color:#1E40AF;" onclick="toggleAcc(this)">완료 (COMPLETED) <span class="arrow">›</span></div>
+    <div class="acc-body"><div class="acc-row"><div class="acc-col1"></div><div class="acc-col2 end-state" colspan="3">종료 상태 — 추가 전이 없음</div></div></div>
 
-        <!-- ===== 보강대기 ===== -->
-        <tr><td colspan="5" style="background:#F0FDFA;font-weight:800;color:#065F46;padding:8px 10px;">보강대기 (MAKEUP_PENDING)</td></tr>
-        <tr><td></td><td><span class="actor-student">수강생</span></td><td>보강 일정 선택</td><td class="st" style="color:#065F46;">보강확정</td><td class="next-triggers"><span>상태처리하기</span></td></tr>
-        <tr><td></td><td><span class="actor-system">시스템</span></td><td>홀드 만료 (12시간)</td><td class="st" style="color:#065F46;">보강대기 (홀드 해제)</td><td class="next-triggers"><span>코치 재제안</span></td></tr>
+    <!-- 결강 -->
+    <div class="acc-header" style="background:#F5F5F7;color:#6B7280;" onclick="toggleAcc(this)">결강 (ABSENT) <span class="arrow">›</span></div>
+    <div class="acc-body">
+      <div class="acc-row"><div class="acc-col1"><span class="actor-coach">코치</span></div><div class="acc-col2">상태처리하기 > 보강 처리</div><div class="acc-col3" style="color:#065F46;">보강대기</div><div class="acc-col4 next-triggers"><span>일정 선택</span> <span>홀드 만료</span></div></div>
+    </div>
 
-        <!-- ===== 보강확정 ===== -->
-        <tr><td colspan="5" style="background:#F0FDFA;font-weight:800;color:#065F46;padding:8px 10px;">보강확정 (MAKEUP_CONFIRMED)</td></tr>
-        <tr><td></td><td><span class="actor-coach">코치</span></td><td>상태처리하기 > 레슨 완료</td><td class="st" style="color:#1E40AF;">완료</td><td class="next-triggers">종료</td></tr>
-        <tr><td></td><td><span class="actor-coach">코치</span></td><td>상태처리하기 > 결강 처리</td><td class="st" style="color:#6B7280;">결강</td><td class="next-triggers"><span>상태처리하기 > 보강 처리</span></td></tr>
+    <!-- 보강대기 -->
+    <div class="acc-header" style="background:#F0FDFA;color:#065F46;" onclick="toggleAcc(this)">보강대기 (MAKEUP_PENDING) <span class="arrow">›</span></div>
+    <div class="acc-body">
+      <div class="acc-row"><div class="acc-col1"><span class="actor-student">수강생</span></div><div class="acc-col2">보강 일정 선택</div><div class="acc-col3" style="color:#065F46;">보강확정</div><div class="acc-col4 next-triggers"><span>상태처리하기</span></div></div>
+      <div class="acc-row"><div class="acc-col1"><span class="actor-system">시스템</span></div><div class="acc-col2">홀드 만료 (12시간)</div><div class="acc-col3" style="color:#065F46;">보강대기</div><div class="acc-col4 next-triggers"><span>코치 재제안</span></div></div>
+    </div>
 
-        <!-- ===== 거절/취소 ===== -->
-        <tr><td colspan="5" style="background:#F5F5F7;font-weight:800;color:#6B7280;padding:8px 10px;">거절 / 취소 (REJECTED / CANCELLED)</td></tr>
-        <tr><td></td><td colspan="4" class="end-state">종료 상태 — 추가 전이 없음</td></tr>
-      </tbody>
-    </table>
+    <!-- 보강확정 -->
+    <div class="acc-header" style="background:#F0FDFA;color:#065F46;" onclick="toggleAcc(this)">보강확정 (MAKEUP_CONFIRMED) <span class="arrow">›</span></div>
+    <div class="acc-body">
+      <div class="acc-row"><div class="acc-col1"><span class="actor-coach">코치</span></div><div class="acc-col2">상태처리하기 > 레슨 완료</div><div class="acc-col3" style="color:#1E40AF;">완료</div><div class="acc-col4 next-triggers">종료</div></div>
+      <div class="acc-row"><div class="acc-col1"><span class="actor-coach">코치</span></div><div class="acc-col2">상태처리하기 > 결강 처리</div><div class="acc-col3" style="color:#6B7280;">결강</div><div class="acc-col4 next-triggers"><span>보강 처리</span></div></div>
+    </div>
+
+    <!-- 거절/취소 -->
+    <div class="acc-header" style="background:#F5F5F7;color:#6B7280;" onclick="toggleAcc(this)">거절 / 취소 <span class="arrow">›</span></div>
+    <div class="acc-body"><div class="acc-row"><div class="acc-col1"></div><div class="acc-col2 end-state">종료 상태 — 추가 전이 없음</div></div></div>
+
   </div>
 
   <div class="divider"></div>
@@ -258,22 +280,20 @@
   <!-- 변경 요청 흐름 -->
   <div class="section">
     <div class="section-title">변경 요청 흐름</div>
-    <table class="chart-table">
-      <thead>
-        <tr><th>현재 상태</th><th>주체</th><th>버튼/트리거</th><th>다음 상태</th><th>다음 상태에서 가능한 트리거</th></tr>
-      </thead>
-      <tbody>
-        <tr><td colspan="5" style="background:#FFF7ED;font-weight:800;color:#EA580C;padding:8px 10px;">변경요청 (RESCHEDULE_PENDING)</td></tr>
-        <tr><td></td><td><span class="actor-coach">코치</span></td><td>확정하기</td><td class="st" style="color:#065F46;">변경완료</td><td class="next-triggers">확정 상태로 복귀</td></tr>
-        <tr><td></td><td><span class="actor-coach">코치</span></td><td>선택 제안하기</td><td class="st" style="color:#9CA3AF;">제안됨</td><td class="next-triggers"><span>일정 선택</span> <span>홀드 만료</span></td></tr>
-        <tr><td></td><td><span class="actor-coach">코치</span></td><td>모두 제안하기</td><td class="st" style="color:#9CA3AF;">제안됨</td><td class="next-triggers"><span>일정 선택</span> <span>홀드 만료</span></td></tr>
-        <tr><td></td><td><span class="actor-coach">코치</span></td><td>불가 알림 보내기</td><td class="st end-state">변경거절</td><td class="next-triggers">기존 일정 유지</td></tr>
 
-        <tr><td colspan="5" style="background:#F5F5F7;font-weight:800;color:#6B7280;padding:8px 10px;">제안됨 (PROPOSED)</td></tr>
-        <tr><td></td><td><span class="actor-student">수강생</span></td><td>일정 선택</td><td class="st" style="color:#065F46;">변경완료</td><td class="next-triggers">확정 상태로 복귀</td></tr>
-        <tr><td></td><td><span class="actor-system">시스템</span></td><td>홀드 만료 (12시간)</td><td class="st" style="color:#EA580C;">변경요청 (홀드 해제)</td><td class="next-triggers"><span>확정하기</span> <span>제안하기</span> <span>불가 알림</span></td></tr>
-      </tbody>
-    </table>
+    <div class="acc-header" style="background:#FFF7ED;color:#EA580C;" onclick="toggleAcc(this)">변경요청 (RESCHEDULE_PENDING) <span class="arrow">›</span></div>
+    <div class="acc-body">
+      <div class="acc-row"><div class="acc-col1"><span class="actor-coach">코치</span></div><div class="acc-col2">확정하기</div><div class="acc-col3" style="color:#065F46;">변경완료</div><div class="acc-col4 next-triggers">확정 복귀</div></div>
+      <div class="acc-row"><div class="acc-col1"><span class="actor-coach">코치</span></div><div class="acc-col2">선택 제안하기</div><div class="acc-col3" style="color:#9CA3AF;">제안됨</div><div class="acc-col4 next-triggers"><span>일정 선택</span> <span>홀드 만료</span></div></div>
+      <div class="acc-row"><div class="acc-col1"><span class="actor-coach">코치</span></div><div class="acc-col2">모두 제안하기</div><div class="acc-col3" style="color:#9CA3AF;">제안됨</div><div class="acc-col4 next-triggers"><span>일정 선택</span> <span>홀드 만료</span></div></div>
+      <div class="acc-row"><div class="acc-col1"><span class="actor-coach">코치</span></div><div class="acc-col2">불가 알림 보내기</div><div class="acc-col3 end-state">변경거절</div><div class="acc-col4 next-triggers">기존 일정 유지</div></div>
+    </div>
+
+    <div class="acc-header" style="background:#F5F5F7;color:#6B7280;" onclick="toggleAcc(this)">제안됨 (PROPOSED) <span class="arrow">›</span></div>
+    <div class="acc-body">
+      <div class="acc-row"><div class="acc-col1"><span class="actor-student">수강생</span></div><div class="acc-col2">일정 선택</div><div class="acc-col3" style="color:#065F46;">변경완료</div><div class="acc-col4 next-triggers">확정 복귀</div></div>
+      <div class="acc-row"><div class="acc-col1"><span class="actor-system">시스템</span></div><div class="acc-col2">홀드 만료 (12시간)</div><div class="acc-col3" style="color:#EA580C;">변경요청</div><div class="acc-col4 next-triggers"><span>확정하기</span> <span>제안하기</span> <span>불가 알림</span></div></div>
+    </div>
   </div>
 
   <div class="divider"></div>
@@ -281,19 +301,17 @@
   <!-- 결제 상태 흐름 -->
   <div class="section">
     <div class="section-title">결제 상태 흐름</div>
-    <table class="chart-table">
-      <thead>
-        <tr><th>현재 상태</th><th>주체</th><th>버튼/트리거</th><th>다음 상태</th><th>다음 상태에서 가능한 트리거</th></tr>
-      </thead>
-      <tbody>
-        <tr><td colspan="5" style="background:#FEE2E2;font-weight:800;color:#EF4444;padding:8px 10px;">미결제</td></tr>
-        <tr><td></td><td><span class="actor-student">수강생</span></td><td>결제하기 (토스페이먼츠)</td><td class="st" style="color:#065F46;">결제완료</td><td class="next-triggers"><span>취소 + 환불</span></td></tr>
-        <tr><td></td><td><span class="actor-coach">코치</span></td><td>상태처리하기 > 결제 확인</td><td class="st" style="color:#1E40AF;">외부결제</td><td class="next-triggers">전환 완료</td></tr>
 
-        <tr><td colspan="5" style="background:#D1FAE5;font-weight:800;color:#065F46;padding:8px 10px;">결제완료</td></tr>
-        <tr><td></td><td><span class="actor-coach">코치</span> <span class="actor-student">수강생</span></td><td>취소 + 환불</td><td class="st end-state">환불완료</td><td class="next-triggers">종료</td></tr>
-      </tbody>
-    </table>
+    <div class="acc-header" style="background:#FEE2E2;color:#EF4444;" onclick="toggleAcc(this)">미결제 <span class="arrow">›</span></div>
+    <div class="acc-body">
+      <div class="acc-row"><div class="acc-col1"><span class="actor-student">수강생</span></div><div class="acc-col2">결제하기 (토스페이먼츠)</div><div class="acc-col3" style="color:#065F46;">결제완료</div><div class="acc-col4 next-triggers"><span>취소 + 환불</span></div></div>
+      <div class="acc-row"><div class="acc-col1"><span class="actor-coach">코치</span></div><div class="acc-col2">상태처리하기 > 결제 확인</div><div class="acc-col3" style="color:#1E40AF;">외부결제</div><div class="acc-col4 next-triggers">전환 완료</div></div>
+    </div>
+
+    <div class="acc-header" style="background:#D1FAE5;color:#065F46;" onclick="toggleAcc(this)">결제완료 <span class="arrow">›</span></div>
+    <div class="acc-body">
+      <div class="acc-row"><div class="acc-col1"><span class="actor-coach">코치</span> <span class="actor-student">수강생</span></div><div class="acc-col2">취소 + 환불</div><div class="acc-col3 end-state">환불완료</div><div class="acc-col4 next-triggers">종료</div></div>
+    </div>
   </div>
 
   <div class="divider"></div>
@@ -325,6 +343,11 @@
 
 </div>
 <script>
+function toggleAcc(el) {
+  el.classList.toggle('open');
+  const body = el.nextElementSibling;
+  body.classList.toggle('show');
+}
 function switchMode(mode) {
   document.getElementById('view-table').style.display = mode === 'table' ? 'block' : 'none';
   document.getElementById('view-chart').style.display = mode === 'chart' ? 'block' : 'none';
