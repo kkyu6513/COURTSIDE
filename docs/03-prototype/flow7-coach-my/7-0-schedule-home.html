@@ -634,7 +634,7 @@
           </div>
         </button>
 
-        <button onclick="closeStatusActions();handleAbsence()" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--gray-50);border-radius:12px;border:none;cursor:pointer;margin-bottom:8px;font-family:inherit;text-align:left;">
+        <button id="btn-absent-action" onclick="closeStatusActions();handleAbsence()" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--gray-50);border-radius:12px;border:none;cursor:pointer;margin-bottom:8px;font-family:inherit;text-align:left;">
           <div style="width:40px;height:40px;border-radius:10px;background:#FEE2E2;display:flex;align-items:center;justify-content:center;font-size:18px;">✕</div>
           <div>
             <div style="font-size:14px;font-weight:700;color:var(--error);">결강 처리</div>
@@ -1445,7 +1445,9 @@ function toggleSelectAll() {
   btn.textContent = allChecked ? '전체선택' : '선택해제';
 }
 
-function showStatusActions() {
+function showStatusActions(currentStatus) {
+  const absentBtn = document.getElementById('btn-absent-action');
+  if (absentBtn) absentBtn.style.display = currentStatus === 'absent' ? 'none' : 'flex';
   document.getElementById('status-actions-overlay').style.display = 'block';
 }
 function closeStatusActions() {
@@ -1849,7 +1851,7 @@ function showLessonDetail(status) {
       ${d.statusMsg}`;
   }
 
-  const statusBtn = '<button onclick="showStatusActions()" style="width:100%;height:48px;border-radius:12px;border:none;background:var(--green);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:8px;">상태처리하기</button>';
+  const statusBtn = `<button onclick="showStatusActions('${status}')" style="width:100%;height:48px;border-radius:12px;border:none;background:var(--green);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:8px;">상태처리하기</button>`;
 
   if (status === 'absent' || status === 'makeup' || status === 'makeup_confirmed') {
     actions.innerHTML = statusBtn + '<button onclick="closeLessonDetail()" style="width:100%;height:48px;border-radius:12px;border:1.5px solid var(--gray-200);background:#fff;color:var(--gray-500);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">닫기</button>';
