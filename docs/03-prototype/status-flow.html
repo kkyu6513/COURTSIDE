@@ -26,12 +26,163 @@
   .next-triggers span { display:inline-block; padding:1px 5px; border-radius:3px; background:#F5F5F7; color:#6B7280; margin:1px 0; font-size:10px; }
   .st { font-weight:600; }
   .end-state { color:#9CA3AF; font-style:italic; }
+  .mode-btn { padding:8px 16px; border-radius:20px; font-size:12px; font-weight:700; cursor:pointer; font-family:inherit; transition:all 0.15s; }
+  .mode-btn.active { background:#1E3A5F; color:#fff; border:none; }
+  .mode-btn.inactive { background:#fff; color:#6B7280; border:1.5px solid #E5E7EB; }
+  /* 플로우차트 */
+  .flowchart { padding:20px 0; overflow-x:auto; }
+  .fc-row { display:flex; align-items:center; justify-content:center; margin-bottom:4px; gap:8px; flex-wrap:nowrap; }
+  .fc-node { padding:10px 14px; border-radius:10px; font-size:12px; font-weight:700; text-align:center; white-space:nowrap; min-width:80px; position:relative; }
+  .fc-arrow { font-size:18px; color:#9CA3AF; flex-shrink:0; }
+  .fc-arrow-down { text-align:center; font-size:18px; color:#9CA3AF; margin:2px 0; }
+  .fc-label { font-size:9px; color:#6B7280; text-align:center; max-width:80px; line-height:1.3; margin:0 auto; }
+  .fc-group { display:flex; flex-direction:column; align-items:center; gap:2px; }
+  .fc-branch { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+  .fc-section { margin-bottom:24px; padding:16px; background:#fff; border-radius:14px; box-shadow:0 2px 8px rgba(0,0,0,0.06); }
+  .fc-section-title { font-size:14px; font-weight:800; color:#1E3A5F; margin-bottom:16px; text-align:center; }
+  .n-pending { background:#FEF3C7; color:#92400E; border:2px solid #F59E0B; }
+  .n-onhold { background:#FFF7ED; color:#EA580C; border:2px solid #EA580C; }
+  .n-confirmed { background:#D1FAE5; color:#065F46; border:2px solid #2DD4BF; }
+  .n-inprogress { background:#FEE2E2; color:#EF4444; border:2px solid #EF4444; }
+  .n-completed { background:#DBEAFE; color:#1E40AF; border:2px solid #3B82F6; }
+  .n-cancelled { background:#F5F5F7; color:#6B7280; border:2px solid #9CA3AF; }
+  .n-rejected { background:#F5F5F7; color:#6B7280; border:2px solid #6B7280; }
+  .n-absent { background:#F5F5F7; color:#6B7280; border:2px solid #D1D5DB; }
+  .n-makeup { background:#F0FDFA; color:#065F46; border:2px dashed #2DD4BF; }
+  .n-makeup-c { background:#F0FDFA; color:#065F46; border:2px solid #2DD4BF; }
+  .n-change { background:#FFF7ED; color:#EA580C; border:2px solid #FF9F43; }
+  .n-proposed { background:#F5F5F7; color:#6B7280; border:2px solid #D1D5DB; }
 </style>
 </head>
 <body>
 <div class="flow-page">
-  <div class="flow-title">상태 흐름도</div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+    <div class="flow-title">상태 흐름도</div>
+    <div style="display:flex;gap:6px;">
+      <button onclick="switchMode('table')" id="btn-table" class="mode-btn active">표</button>
+      <button onclick="switchMode('chart')" id="btn-chart" class="mode-btn inactive">차트</button>
+    </div>
+  </div>
   <div class="flow-desc">코치와 수강생의 레슨 상태 변화를 트리거별로 정리한 관계 차트입니다.<br>다음 상태에서 가능한 트리거도 함께 표시합니다.</div>
+
+  <!-- 플로우차트 모드 -->
+  <div id="view-chart" style="display:none;">
+
+    <div class="fc-section">
+      <div class="fc-section-title">예약 상태 흐름</div>
+      <div class="fc-group">
+        <div class="fc-node n-pending">대기 (PENDING)</div>
+        <div class="fc-arrow-down">↓</div>
+        <div class="fc-branch">
+          <div class="fc-group">
+            <div class="fc-label">코치 수락</div>
+            <div class="fc-arrow-down">↓</div>
+            <div class="fc-node n-confirmed">확정 (레슨 예정)</div>
+            <div class="fc-arrow-down">↓</div>
+            <div class="fc-branch">
+              <div class="fc-group">
+                <div class="fc-label">시간 도래</div>
+                <div class="fc-arrow-down">↓</div>
+                <div class="fc-node n-inprogress">진행중</div>
+                <div class="fc-arrow-down">↓</div>
+                <div class="fc-node n-completed">완료</div>
+              </div>
+              <div class="fc-group">
+                <div class="fc-label">결강</div>
+                <div class="fc-arrow-down">↓</div>
+                <div class="fc-node n-absent">결강</div>
+                <div class="fc-arrow-down">↓</div>
+                <div class="fc-node n-makeup">보강대기</div>
+                <div class="fc-arrow-down">↓</div>
+                <div class="fc-node n-makeup-c">보강확정</div>
+                <div class="fc-arrow-down">↓</div>
+                <div class="fc-node n-completed">완료</div>
+              </div>
+              <div class="fc-group">
+                <div class="fc-label">취소</div>
+                <div class="fc-arrow-down">↓</div>
+                <div class="fc-node n-cancelled">취소</div>
+              </div>
+            </div>
+          </div>
+          <div class="fc-group">
+            <div class="fc-label">보류</div>
+            <div class="fc-arrow-down">↓</div>
+            <div class="fc-node n-onhold">보류</div>
+            <div class="fc-arrow-down">↓</div>
+            <div class="fc-branch">
+              <div class="fc-group"><div class="fc-label">수락</div><div class="fc-arrow-down">↓</div><div class="fc-node n-confirmed" style="font-size:10px;">확정</div></div>
+              <div class="fc-group"><div class="fc-label">거절</div><div class="fc-arrow-down">↓</div><div class="fc-node n-rejected" style="font-size:10px;">거절</div></div>
+            </div>
+          </div>
+          <div class="fc-group">
+            <div class="fc-label">거절</div>
+            <div class="fc-arrow-down">↓</div>
+            <div class="fc-node n-rejected">거절</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="fc-section">
+      <div class="fc-section-title">변경 요청 흐름</div>
+      <div class="fc-group">
+        <div class="fc-node n-confirmed">확정</div>
+        <div class="fc-label">수강생 변경 요청</div>
+        <div class="fc-arrow-down">↓</div>
+        <div class="fc-node n-change">변경 요청</div>
+        <div class="fc-arrow-down">↓</div>
+        <div class="fc-branch">
+          <div class="fc-group">
+            <div class="fc-label">희망일 확정</div>
+            <div class="fc-arrow-down">↓</div>
+            <div class="fc-node n-confirmed" style="font-size:10px;">변경 완료</div>
+          </div>
+          <div class="fc-group">
+            <div class="fc-label">대체 제안</div>
+            <div class="fc-arrow-down">↓</div>
+            <div class="fc-node n-proposed">제안됨</div>
+            <div class="fc-arrow-down">↓</div>
+            <div class="fc-branch">
+              <div class="fc-group"><div class="fc-label">수강생 선택</div><div class="fc-arrow-down">↓</div><div class="fc-node n-confirmed" style="font-size:10px;">변경 완료</div></div>
+              <div class="fc-group"><div class="fc-label">홀드 만료</div><div class="fc-arrow-down">↓</div><div class="fc-node n-change" style="font-size:10px;">재요청</div></div>
+            </div>
+          </div>
+          <div class="fc-group">
+            <div class="fc-label">불가</div>
+            <div class="fc-arrow-down">↓</div>
+            <div class="fc-node n-rejected" style="font-size:10px;">변경 거절</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="fc-section">
+      <div class="fc-section-title">결제 상태 흐름</div>
+      <div class="fc-group">
+        <div class="fc-node" style="background:#FEE2E2;color:#EF4444;border:2px solid #EF4444;">미결제</div>
+        <div class="fc-arrow-down">↓</div>
+        <div class="fc-branch">
+          <div class="fc-group">
+            <div class="fc-label">토스페이먼츠</div>
+            <div class="fc-arrow-down">↓</div>
+            <div class="fc-node n-confirmed" style="font-size:10px;">결제완료</div>
+            <div class="fc-arrow-down">↓</div>
+            <div class="fc-node n-cancelled" style="font-size:10px;">환불</div>
+          </div>
+          <div class="fc-group">
+            <div class="fc-label">코치 확인</div>
+            <div class="fc-arrow-down">↓</div>
+            <div class="fc-node n-completed" style="font-size:10px;">외부결제</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 표 모드 -->
+  <div id="view-table">
 
   <div class="legend">
     <div class="legend-item"><span class="actor-coach">코치</span> 코치 트리거</div>
@@ -256,7 +407,17 @@
     </table>
   </div>
 
+  </div><!-- /view-table -->
+
 </div>
+<script>
+function switchMode(mode) {
+  document.getElementById('view-table').style.display = mode === 'table' ? 'block' : 'none';
+  document.getElementById('view-chart').style.display = mode === 'chart' ? 'block' : 'none';
+  document.getElementById('btn-table').className = 'mode-btn ' + (mode === 'table' ? 'active' : 'inactive');
+  document.getElementById('btn-chart').className = 'mode-btn ' + (mode === 'chart' ? 'active' : 'inactive');
+}
+</script>
 <script src="site-nav.js"></script>
 </body>
 </html>
