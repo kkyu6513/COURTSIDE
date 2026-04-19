@@ -1732,39 +1732,18 @@ function showLessonDetail(status) {
 
   if (isAbsent) {
     lesson.innerHTML = `
-      <div style="display:flex;flex-direction:column;gap:10px;">
-        <div style="padding:0 4px;">
-          <div style="font-size:13px;color:var(--gray-400);margin-bottom:2px;">결강 일정</div>
-          <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--gray-50);border-radius:10px;margin-top:6px;">
-            <span style="font-size:14px;">❌</span>
-            <span style="font-size:14px;font-weight:600;color:var(--gray-400);text-decoration:line-through;">${d.schedule[0].date} (${d.schedule[0].day}) ${d.schedule[0].label}</span>
-          </div>
-        </div>
-        <div style="height:1px;background:var(--gray-100);"></div>
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:0 4px;">
-          <span style="font-size:13px;color:var(--gray-400);">레슨 유형</span>
-          <span style="font-size:14px;font-weight:600;color:var(--navy);">${d.type}</span>
-        </div>
-        <div style="height:1px;background:var(--gray-100);"></div>
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:0 4px;">
-          <span style="font-size:13px;color:var(--gray-400);">레슨 형태</span>
-          <span style="font-size:14px;font-weight:600;color:var(--navy);">${d.format}</span>
-        </div>
-        <div style="height:1px;background:var(--gray-100);"></div>
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:0 4px;">
-          <span style="font-size:13px;color:var(--gray-400);">현재 회차</span>
-          <span style="font-size:14px;font-weight:600;color:var(--navy);">${d.session}</span>
-        </div>
-      </div>
-      <div style="margin-top:16px;">
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:12px;">
+      <div style="margin-top:4px;padding:16px;background:var(--gray-50);border-radius:14px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
           <span style="font-size:16px;">❌</span>
-          <span style="font-size:15px;font-weight:800;color:var(--navy);">결강 사유</span>
+          <span style="font-size:15px;font-weight:800;color:var(--navy);">결강 정보</span>
         </div>
-        <div style="padding:12px;background:var(--gray-50);border-radius:10px;">
-          <div style="font-size:13px;font-weight:600;color:var(--navy);margin-bottom:4px;">${d.absentReason}</div>
-          <div style="font-size:12px;color:var(--gray-500);line-height:1.6;">${d.absentDetail}</div>
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#fff;border-radius:10px;margin-bottom:10px;">
+          <span style="font-size:14px;font-weight:600;color:var(--gray-400);text-decoration:line-through;">${d.schedule[0].date} (${d.schedule[0].day}) ${d.schedule[0].label}</span>
         </div>
+        <div style="height:1px;background:var(--gray-200);margin-bottom:10px;"></div>
+        <div style="font-size:12px;color:var(--gray-400);margin-bottom:4px;">사유</div>
+        <div style="font-size:14px;font-weight:600;color:var(--navy);margin-bottom:2px;">${d.absentReason}</div>
+        <div style="font-size:12px;color:var(--gray-500);line-height:1.6;">${d.absentDetail}</div>
       </div>`;
   } else if (isMakeup) {
     const slotsHtml = d.proposedSlots.map(s =>
