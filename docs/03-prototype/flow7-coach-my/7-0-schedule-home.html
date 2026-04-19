@@ -1432,6 +1432,13 @@ function showScheduleToast(e, el, datetime, name, type, category, status) {
   e.stopPropagation();
 }
 
+let currentAltWeek = 0;
+const altWeekLabels = ['4/14 (월) ~ 4/20 (일)', '4/21 (월) ~ 4/27 (일)', '4/28 (월) ~ 5/4 (일)'];
+function changeAltWeek(dir) {
+  currentAltWeek = Math.max(0, Math.min(2, currentAltWeek + dir));
+  document.getElementById('alt-week-label').textContent = altWeekLabels[currentAltWeek];
+}
+
 function toggleSelectAll() {
   const btn = document.getElementById('btn-select-all');
   const checkboxes = document.querySelectorAll('#detail-actions input[type="checkbox"]');
@@ -1891,29 +1898,44 @@ function showLessonDetail(status) {
         레슨불가 일정을 대체할 날짜를 선택하여 수강생에게 제안해 주세요.
       </div>
 
-      <!-- 그룹 2: 추천 대체 일정 -->
+      <!-- 그룹 2: 추천 대체 일정 (주단위) -->
       <div style="padding:14px;background:var(--gray-50);border-radius:14px;margin-bottom:12px;">
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;">
           <span style="font-size:14px;">🤖</span>
-          <span style="font-size:13px;font-weight:700;color:var(--navy);">추천 대체 일정</span>
-          <span onclick="toggleSelectAll()" style="font-size:11px;color:var(--green);font-weight:600;margin-left:auto;cursor:pointer;padding:4px 10px;border:1px solid var(--green);border-radius:6px;" id="btn-select-all">전체선택</span>
+          <span style="font-size:13px;font-weight:700;color:var(--navy);">대체 일정 선택</span>
         </div>
-        <div style="display:flex;flex-direction:column;gap:6px;">
-          ${makeSlot('목 11:00', '<span style="font-size:9px;color:var(--green);font-weight:600;margin-left:auto;background:#D1FAE5;padding:2px 6px;border-radius:4px;">±1시간</span>')}
-          ${makeSlot('수 10:00', '<span style="font-size:9px;color:var(--green);font-weight:600;margin-left:auto;background:#D1FAE5;padding:2px 6px;border-radius:4px;">동일 시간</span>')}
-          ${makeSlot('목 14:00', '')}
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <button onclick="changeAltWeek(-1)" style="padding:5px 10px;border-radius:8px;border:1.5px solid var(--gray-200);background:#fff;color:var(--navy);font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">‹ 이전주</button>
+          <span id="alt-week-label" style="font-size:12px;font-weight:700;color:var(--navy);">4/14 (월) ~ 4/20 (일)</span>
+          <button onclick="changeAltWeek(1)" style="padding:5px 10px;border-radius:8px;border:1.5px solid var(--gray-200);background:#fff;color:var(--navy);font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">다음주 ›</button>
         </div>
-
-        <!-- 더보기 -->
-        <div id="more-alt-slots" style="display:none;margin-top:6px;">
-          <div style="display:flex;flex-direction:column;gap:6px;">
-            ${makeSlot('수 14:00', '')}
-            ${makeSlot('목 16:00', '')}
-            ${makeSlot('수 16:00', '')}
-            ${makeSlot('목 18:00', '')}
+        <div id="alt-week-slots" style="display:flex;flex-direction:column;gap:6px;">
+          <div style="background:#fff;border-radius:10px;padding:10px 12px;">
+            <div style="font-size:12px;font-weight:600;color:var(--navy);margin-bottom:6px;">4/16 (수)</div>
+            <div style="display:flex;flex-direction:column;gap:4px;">
+              ${makeSlot('수 10:00', '<span style="font-size:9px;color:var(--green);font-weight:600;margin-left:auto;background:#D1FAE5;padding:2px 6px;border-radius:4px;">추천</span>')}
+              ${makeSlot('수 14:00', '')}
+              ${makeSlot('수 16:00', '')}
+            </div>
+          </div>
+          <div style="background:#fff;border-radius:10px;padding:10px 12px;">
+            <div style="font-size:12px;font-weight:600;color:var(--navy);margin-bottom:6px;">4/17 (목)</div>
+            <div style="display:flex;flex-direction:column;gap:4px;">
+              ${makeSlot('목 11:00', '<span style="font-size:9px;color:var(--green);font-weight:600;margin-left:auto;background:#D1FAE5;padding:2px 6px;border-radius:4px;">추천</span>')}
+              ${makeSlot('목 14:00', '')}
+              ${makeSlot('목 16:00', '')}
+              ${makeSlot('목 18:00', '')}
+            </div>
+          </div>
+          <div style="background:#fff;border-radius:10px;padding:10px 12px;">
+            <div style="font-size:12px;font-weight:600;color:var(--navy);margin-bottom:6px;">4/18 (금)</div>
+            <div style="display:flex;flex-direction:column;gap:4px;">
+              ${makeSlot('금 10:00', '')}
+              ${makeSlot('금 15:00', '')}
+            </div>
           </div>
         </div>
-        <button onclick="var el=document.getElementById('more-alt-slots');el.style.display=el.style.display==='none'?'block':'none';this.textContent=el.style.display==='none'?'다른 시간 더보기 ▼':'접기 ▲'" style="width:100%;margin-top:8px;padding:8px;border-radius:8px;border:1px dashed var(--gray-200);background:#fff;color:var(--gray-400);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">다른 시간 더보기 ▼</button>
+        <div style="margin-top:6px;font-size:10px;color:var(--gray-400);">가용 시간이 없는 날짜는 표시되지 않습니다.</div>
       </div>
 
       <!-- 그룹 3: 버튼 -->
