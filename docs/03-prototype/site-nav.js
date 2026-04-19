@@ -243,4 +243,13 @@
   statusBtn.onmouseenter = function(){ this.style.background='rgba(45,212,191,0.95)'; };
   statusBtn.onmouseleave = function(){ this.style.background='rgba(30,58,95,0.9)'; };
   document.body.appendChild(statusBtn);
+
+  // 상태 흐름도 플로팅 버튼 (모든 페이지 공통)
+  const flowBtn = document.createElement('a');
+  flowBtn.href = basePath + 'status-flow.html';
+  flowBtn.style.cssText = 'position:fixed;top:52px;right:16px;z-index:9999;display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:20px;background:rgba(124,92,191,0.9);color:#fff;font-size:12px;font-weight:700;font-family:Pretendard,-apple-system,sans-serif;text-decoration:none;box-shadow:0 4px 12px rgba(0,0,0,0.2);transition:all 0.2s;';
+  flowBtn.textContent = '상태 흐름도';
+  flowBtn.onmouseenter = function(){ this.style.background='rgba(45,212,191,0.95)'; };
+  flowBtn.onmouseleave = function(){ this.style.background='rgba(124,92,191,0.9)'; };
+  document.body.appendChild(flowBtn);
 })();
