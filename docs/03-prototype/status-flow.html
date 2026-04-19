@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>상태 흐름도 — COURTSIDE</title>
+<link rel="stylesheet" href="common.css">
+<style>
+  body { background:#f5f5f7; padding:20px 16px; align-items:stretch; }
+  .flow-page { max-width:600px; margin:0 auto; }
+  .flow-title { font-size:24px; font-weight:800; color:#1E3A5F; margin-bottom:8px; }
+  .flow-desc { font-size:13px; color:#6B7280; margin-bottom:24px; line-height:1.6; }
+  .section { margin-bottom:24px; }
+  .section-title { font-size:16px; font-weight:800; color:#1E3A5F; margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+  .state-box { padding:12px 16px; border-radius:12px; margin-bottom:8px; }
+  .state-name { font-size:14px; font-weight:700; margin-bottom:6px; }
+  .trigger { font-size:12px; color:#6B7280; line-height:1.8; }
+  .trigger strong { color:#1E3A5F; }
+  .arrow { display:flex; align-items:center; gap:6px; padding:4px 0 4px 20px; font-size:12px; color:#9CA3AF; }
+  .arrow .to { font-weight:600; color:#1E3A5F; }
+  .actor-coach { background:#FEE2E2; color:#EF4444; font-size:10px; font-weight:700; padding:2px 6px; border-radius:4px; }
+  .actor-student { background:#DBEAFE; color:#1E40AF; font-size:10px; font-weight:700; padding:2px 6px; border-radius:4px; }
+  .actor-system { background:#F3E8FF; color:#7C5CBF; font-size:10px; font-weight:700; padding:2px 6px; border-radius:4px; }
+  .legend { display:flex; gap:12px; margin-bottom:20px; flex-wrap:wrap; }
+  .legend-item { display:flex; align-items:center; gap:4px; font-size:12px; color:#6B7280; }
+  .divider { height:1px; background:#E5E7EB; margin:20px 0; }
+
+  /* 상태별 컬러 */
+  .s-pending { background:#FEF3C7; border-left:4px solid #F59E0B; }
+  .s-pending .state-name { color:#92400E; }
+  .s-onhold { background:#FFF7ED; border-left:4px solid #EA580C; }
+  .s-onhold .state-name { color:#EA580C; }
+  .s-confirmed { background:#D1FAE5; border-left:4px solid #2DD4BF; }
+  .s-confirmed .state-name { color:#065F46; }
+  .s-inprogress { background:#FEE2E2; border-left:4px solid #EF4444; }
+  .s-inprogress .state-name { color:#EF4444; }
+  .s-completed { background:#DBEAFE; border-left:4px solid #3B82F6; }
+  .s-completed .state-name { color:#1E40AF; }
+  .s-cancelled { background:#F5F5F7; border-left:4px solid #9CA3AF; }
+  .s-cancelled .state-name { color:#6B7280; }
+  .s-rejected { background:#F5F5F7; border-left:4px solid #6B7280; }
+  .s-rejected .state-name { color:#6B7280; }
+  .s-absent { background:#F5F5F7; border-left:4px solid #9CA3AF; }
+  .s-absent .state-name { color:#6B7280; }
+  .s-makeup { background:#F0FDFA; border-left:4px solid #2DD4BF; }
+  .s-makeup .state-name { color:#065F46; }
+
+  .chart-table { width:100%; border-collapse:collapse; font-size:12px; }
+  .chart-table th { background:#1E3A5F; color:#fff; padding:10px 8px; text-align:left; font-weight:600; }
+  .chart-table td { padding:8px; border-bottom:1px solid #E5E7EB; vertical-align:top; }
+  .chart-table tr:hover { background:#F0FDFA; }
+</style>
+</head>
+<body>
+<div class="flow-page">
+  <div class="flow-title">📊 상태 흐름도</div>
+  <div class="flow-desc">코치와 수강생의 레슨 상태 변화를 트리거별로 정리한 관계 차트입니다.</div>
+
+  <!-- 범례 -->
+  <div class="legend">
+    <div class="legend-item"><span class="actor-coach">코치</span> 코치 트리거</div>
+    <div class="legend-item"><span class="actor-student">수강생</span> 수강생 트리거</div>
+    <div class="legend-item"><span class="actor-system">시스템</span> 자동 처리</div>
+  </div>
+
+  <!-- 전체 관계 차트 -->
+  <div class="section">
+    <div class="section-title">📋 전체 상태 전이 차트</div>
+    <table class="chart-table">
+      <thead>
+        <tr><th>현재 상태</th><th>트리거</th><th>주체</th><th>다음 상태</th></tr>
+      </thead>
+      <tbody>
+        <tr><td style="color:#92400E;font-weight:600;">⏳ 대기</td><td>스케줄 확정</td><td><span class="actor-coach">코치</span></td><td style="font-weight:600;color:#065F46;">✅ 확정</td></tr>
+        <tr><td style="color:#92400E;font-weight:600;">⏳ 대기</td><td>보류 (사유 필수)</td><td><span class="actor-coach">코치</span></td><td style="font-weight:600;color:#EA580C;">⏸ 보류</td></tr>
+        <tr><td style="color:#92400E;font-weight:600;">⏳ 대기</td><td>거절 (사유 필수)</td><td><span class="actor-coach">코치</span></td><td style="font-weight:600;color:#6B7280;">🚫 거절</td></tr>
+        <tr><td style="color:#92400E;font-weight:600;">⏳ 대기</td><td>취소 (사유 필수)</td><td><span class="actor-coach">코치</span> <span class="actor-student">수강생</span></td><td style="font-weight:600;color:#6B7280;">❌ 취소</td></tr>
+        <tr style="background:#FFF7ED;"><td style="color:#EA580C;font-weight:600;">⏸ 보류</td><td>스케줄 확정</td><td><span class="actor-coach">코치</span></td><td style="font-weight:600;color:#065F46;">✅ 확정</td></tr>
+        <tr style="background:#FFF7ED;"><td style="color:#EA580C;font-weight:600;">⏸ 보류</td><td>거절 (사유 필수)</td><td><span class="actor-coach">코치</span></td><td style="font-weight:600;color:#6B7280;">🚫 거절</td></tr>
+        <tr style="background:#FFF7ED;"><td style="color:#EA580C;font-weight:600;">⏸ 보류</td><td>취소</td><td><span class="actor-coach">코치</span> <span class="actor-student">수강생</span></td><td style="font-weight:600;color:#6B7280;">❌ 취소</td></tr>
+        <tr style="background:#F0FDFA;"><td style="color:#065F46;font-weight:600;">✅ 확정</td><td>레슨 시작 시간 도래</td><td><span class="actor-system">시스템</span></td><td style="font-weight:600;color:#EF4444;">🎾 진행중</td></tr>
+        <tr style="background:#F0FDFA;"><td style="color:#065F46;font-weight:600;">✅ 확정</td><td>레슨 완료 처리</td><td><span class="actor-coach">코치</span></td><td style="font-weight:600;color:#1E40AF;">🏁 완료</td></tr>
+        <tr style="background:#F0FDFA;"><td style="color:#065F46;font-weight:600;">✅ 확정</td><td>결강 처리 (사유 필수)</td><td><span class="actor-coach">코치</span></td><td style="font-weight:600;color:#6B7280;">❌ 결강</td></tr>
+        <tr style="background:#F0FDFA;"><td style="color:#065F46;font-weight:600;">✅ 확정</td><td>보강 처리 (사유 필수)</td><td><span class="actor-coach">코치</span></td><td style="font-weight:600;color:#065F46;">🔄 보강대기</td></tr>
+        <tr style="background:#F0FDFA;"><td style="color:#065F46;font-weight:600;">✅ 확정</td><td>변경 요청</td><td><span class="actor-student">수강생</span></td><td style="font-weight:600;color:#EA580C;">🔄 변경요청</td></tr>
+        <tr style="background:#F0FDFA;"><td style="color:#065F46;font-weight:600;">✅ 확정</td><td>취소</td><td><span class="actor-coach">코치</span> <span class="actor-student">수강생</span></td><td style="font-weight:600;color:#6B7280;">❌ 취소</td></tr>
+        <tr style="background:#FEE2E2;"><td style="color:#EF4444;font-weight:600;">🎾 진행중</td><td>레슨 완료 처리</td><td><span class="actor-coach">코치</span></td><td style="font-weight:600;color:#1E40AF;">🏁 완료</td></tr>
+        <tr style="background:#FEE2E2;"><td style="color:#EF4444;font-weight:600;">🎾 진행중</td><td>다음 레슨 시작</td><td><span class="actor-system">시스템</span></td><td style="font-weight:600;color:#1E40AF;">🏁 완료 (자동)</td></tr>
+        <tr style="background:#FEE2E2;"><td style="color:#EF4444;font-weight:600;">🎾 진행중</td><td>결강 처리</td><td><span class="actor-coach">코치</span></td><td style="font-weight:600;color:#6B7280;">❌ 결강</td></tr>
+        <tr style="background:#FEE2E2;"><td style="color:#EF4444;font-weight:600;">🎾 진행중</td><td>보강 처리</td><td><span class="actor-coach">코치</span></td><td style="font-weight:600;color:#065F46;">🔄 보강대기</td></tr>
+        <tr style="background:#DBEAFE;"><td style="color:#1E40AF;font-weight:600;">🏁 완료</td><td>종료 상태</td><td>—</td><td style="color:#9CA3AF;">—</td></tr>
+        <tr><td style="color:#6B7280;font-weight:600;">❌ 결강</td><td>보강 처리</td><td><span class="actor-coach">코치</span></td><td style="font-weight:600;color:#065F46;">🔄 보강대기</td></tr>
+        <tr style="background:#F0FDFA;"><td style="color:#065F46;font-weight:600;">🔄 보강대기</td><td>수강생 일정 선택</td><td><span class="actor-student">수강생</span></td><td style="font-weight:600;color:#065F46;">✅ 보강확정</td></tr>
+        <tr style="background:#F0FDFA;"><td style="color:#065F46;font-weight:600;">🔄 보강대기</td><td>홀드 만료 (12시간)</td><td><span class="actor-system">시스템</span></td><td style="font-weight:600;color:#065F46;">🔄 보강대기 (홀드 해제)</td></tr>
+        <tr style="background:#F0FDFA;"><td style="color:#065F46;font-weight:600;">✅ 보강확정</td><td>레슨 완료 처리</td><td><span class="actor-coach">코치</span></td><td style="font-weight:600;color:#1E40AF;">🏁 완료</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- 변경 요청 흐름 -->
+  <div class="section">
+    <div class="section-title">🔄 변경 요청 흐름</div>
+    <table class="chart-table">
+      <thead>
+        <tr><th>현재 상태</th><th>트리거</th><th>주체</th><th>다음 상태</th></tr>
+      </thead>
+      <tbody>
+        <tr><td style="color:#065F46;font-weight:600;">✅ 확정</td><td>일정 변경 요청</td><td><span class="actor-student">수강생</span></td><td style="font-weight:600;color:#EA580C;">변경 요청 (PENDING)</td></tr>
+        <tr><td style="color:#EA580C;font-weight:600;">변경 요청</td><td>희망 날짜로 확정</td><td><span class="actor-coach">코치</span></td><td style="font-weight:600;color:#065F46;">변경 완료</td></tr>
+        <tr><td style="color:#EA580C;font-weight:600;">변경 요청</td><td>대체 일정 제안</td><td><span class="actor-coach">코치</span></td><td style="font-weight:600;color:#9CA3AF;">제안됨 (PROPOSED)</td></tr>
+        <tr><td style="color:#EA580C;font-weight:600;">변경 요청</td><td>불가 알림 보내기</td><td><span class="actor-coach">코치</span></td><td style="font-weight:600;color:#6B7280;">변경 거절</td></tr>
+        <tr><td style="color:#9CA3AF;font-weight:600;">제안됨</td><td>수강생 일정 선택</td><td><span class="actor-student">수강생</span></td><td style="font-weight:600;color:#065F46;">변경 완료</td></tr>
+        <tr><td style="color:#9CA3AF;font-weight:600;">제안됨</td><td>홀드 만료 (12시간)</td><td><span class="actor-system">시스템</span></td><td style="font-weight:600;color:#EA580C;">변경 요청 (홀드 해제)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- 결제 상태 흐름 -->
+  <div class="section">
+    <div class="section-title">💰 결제 상태 흐름</div>
+    <table class="chart-table">
+      <thead>
+        <tr><th>현재 상태</th><th>트리거</th><th>주체</th><th>다음 상태</th></tr>
+      </thead>
+      <tbody>
+        <tr><td style="color:#EF4444;font-weight:600;">미결제</td><td>토스페이먼츠 결제</td><td><span class="actor-student">수강생</span></td><td style="font-weight:600;color:#065F46;">결제완료</td></tr>
+        <tr><td style="color:#EF4444;font-weight:600;">미결제</td><td>외부 결제 확인 (현금/계좌)</td><td><span class="actor-coach">코치</span></td><td style="font-weight:600;color:#1E40AF;">외부결제</td></tr>
+        <tr><td style="color:#065F46;font-weight:600;">결제완료</td><td>취소 + 환불</td><td><span class="actor-coach">코치</span> <span class="actor-student">수강생</span></td><td style="font-weight:600;color:#6B7280;">환불완료</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- 상태별 코치/수강생 화면 매핑 -->
+  <div class="section">
+    <div class="section-title">📱 상태별 화면 매핑</div>
+    <table class="chart-table">
+      <thead>
+        <tr><th>상태</th><th>코치 화면</th><th>수강생 화면</th></tr>
+      </thead>
+      <tbody>
+        <tr><td style="font-weight:600;">⏳ 대기</td><td>대기 신청 탭 → 레슨 상세 (스케줄 확정/더보기)</td><td>신청내역 → 대기 중 표시</td></tr>
+        <tr><td style="font-weight:600;">⏸ 보류</td><td>대기 신청 탭 → 보류 표시</td><td>신청내역 → 보류 사유 확인</td></tr>
+        <tr><td style="font-weight:600;">✅ 확정 (레슨 예정)</td><td>오늘 레슨 → 📌 레슨 예정</td><td>신청내역 → 확정 표시</td></tr>
+        <tr><td style="font-weight:600;">🎾 진행중</td><td>오늘 레슨 → 🎾 진행중 (펄스)</td><td>—</td></tr>
+        <tr><td style="font-weight:600;">🔄 변경 요청</td><td>오늘 레슨 → 🔄 변경 요청</td><td>신청내역 → 변경 요청 중</td></tr>
+        <tr><td style="font-weight:600;">🏁 완료</td><td>오늘 레슨 → 🏁 레슨완료</td><td>신청내역 → 완료 + 리뷰 작성</td></tr>
+        <tr><td style="font-weight:600;">❌ 결강</td><td>오늘 레슨 → ❌ 결강 (취소선)</td><td>알림톡 → 결강 안내</td></tr>
+        <tr><td style="font-weight:600;">🔄 보강대기</td><td>오늘 레슨 → 🔄 보강대기 (점선)</td><td>알림톡 → 보강 일정 선택</td></tr>
+        <tr><td style="font-weight:600;">✅ 보강확정</td><td>오늘 레슨 → ✅ 보강확정 (실선)</td><td>신청내역 → 보강 확정 표시</td></tr>
+        <tr><td style="font-weight:600;">🚫 거절</td><td>—</td><td>알림톡 → 거절 사유 확인</td></tr>
+        <tr><td style="font-weight:600;">❌ 취소</td><td>—</td><td>신청내역 → 취소 + 환불</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+<script src="site-nav.js"></script>
+</body>
+</html>
