@@ -195,120 +195,60 @@
     <div class="section-title">전체 상태 전이 차트</div>
     <table class="chart-table">
       <thead>
-        <tr><th>현재 상태</th><th>트리거</th><th>주체</th><th>다음 상태</th><th>다음 상태에서 가능한 트리거</th></tr>
+        <tr><th>현재 상태</th><th>주체</th><th>버튼/트리거</th><th>다음 상태</th><th>다음 상태에서 가능한 트리거</th></tr>
       </thead>
       <tbody>
-        <tr>
-          <td class="st" style="color:#92400E;">대기</td><td>스케줄 확정</td><td><span class="actor-coach">코치</span></td>
-          <td class="st" style="color:#065F46;">확정</td>
-          <td class="next-triggers"><span>완료 처리</span> <span>결강 처리</span> <span>보강 처리</span> <span>변경 요청</span> <span>취소</span> <span>결제 확인</span></td>
-        </tr>
-        <tr>
-          <td class="st" style="color:#92400E;">대기</td><td>보류 (사유 필수)</td><td><span class="actor-coach">코치</span></td>
-          <td class="st" style="color:#EA580C;">보류</td>
-          <td class="next-triggers"><span>스케줄 확정</span> <span>거절</span> <span>취소</span></td>
-        </tr>
-        <tr>
-          <td class="st" style="color:#92400E;">대기</td><td>거절 (사유 필수)</td><td><span class="actor-coach">코치</span></td>
-          <td class="st end-state">거절</td><td class="next-triggers">종료 상태</td>
-        </tr>
-        <tr>
-          <td class="st" style="color:#92400E;">대기</td><td>취소 (사유 필수)</td><td><span class="actor-coach">코치</span> <span class="actor-student">수강생</span></td>
-          <td class="st end-state">취소</td><td class="next-triggers">종료 상태</td>
-        </tr>
+        <!-- ===== 대기 ===== -->
+        <tr><td colspan="5" style="background:#FEF3C7;font-weight:800;color:#92400E;padding:8px 10px;">대기 (PENDING)</td></tr>
+        <tr><td></td><td><span class="actor-coach">코치</span></td><td>스케줄 확정하기</td><td class="st" style="color:#065F46;">확정</td><td class="next-triggers"><span>상태처리하기</span> <span>결제 확인</span></td></tr>
+        <tr><td></td><td><span class="actor-coach">코치</span></td><td>더보기 > 보류하기</td><td class="st" style="color:#EA580C;">보류</td><td class="next-triggers"><span>스케줄 확정하기</span> <span>거절하기</span></td></tr>
+        <tr><td></td><td><span class="actor-coach">코치</span></td><td>더보기 > 거절하기</td><td class="st end-state">거절</td><td class="next-triggers">종료</td></tr>
+        <tr><td></td><td><span class="actor-coach">코치</span> <span class="actor-student">수강생</span></td><td>취소</td><td class="st end-state">취소</td><td class="next-triggers">종료</td></tr>
 
-        <tr style="background:#FFF7ED;">
-          <td class="st" style="color:#EA580C;">보류</td><td>스케줄 확정</td><td><span class="actor-coach">코치</span></td>
-          <td class="st" style="color:#065F46;">확정</td>
-          <td class="next-triggers"><span>완료 처리</span> <span>결강 처리</span> <span>보강 처리</span> <span>변경 요청</span> <span>취소</span></td>
-        </tr>
-        <tr style="background:#FFF7ED;">
-          <td class="st" style="color:#EA580C;">보류</td><td>거절 (사유 필수)</td><td><span class="actor-coach">코치</span></td>
-          <td class="st end-state">거절</td><td class="next-triggers">종료 상태</td>
-        </tr>
-        <tr style="background:#FFF7ED;">
-          <td class="st" style="color:#EA580C;">보류</td><td>취소</td><td><span class="actor-coach">코치</span> <span class="actor-student">수강생</span></td>
-          <td class="st end-state">취소</td><td class="next-triggers">종료 상태</td>
-        </tr>
+        <!-- ===== 보류 ===== -->
+        <tr><td colspan="5" style="background:#FFF7ED;font-weight:800;color:#EA580C;padding:8px 10px;">보류 (ON_HOLD)</td></tr>
+        <tr><td></td><td><span class="actor-coach">코치</span></td><td>스케줄 확정하기</td><td class="st" style="color:#065F46;">확정</td><td class="next-triggers"><span>상태처리하기</span></td></tr>
+        <tr><td></td><td><span class="actor-coach">코치</span></td><td>거절하기</td><td class="st end-state">거절</td><td class="next-triggers">종료</td></tr>
+        <tr><td></td><td><span class="actor-coach">코치</span> <span class="actor-student">수강생</span></td><td>취소</td><td class="st end-state">취소</td><td class="next-triggers">종료</td></tr>
 
-        <tr style="background:#F0FDFA;">
-          <td class="st" style="color:#065F46;">확정 (레슨 예정)</td><td>레슨 시작 시간 도래</td><td><span class="actor-system">시스템</span></td>
-          <td class="st" style="color:#EF4444;">진행중</td>
-          <td class="next-triggers"><span>완료 처리</span> <span>자동 완료</span> <span>결강 처리</span> <span>보강 처리</span></td>
-        </tr>
-        <tr style="background:#F0FDFA;">
-          <td class="st" style="color:#065F46;">확정 (레슨 예정)</td><td>레슨 완료 처리</td><td><span class="actor-coach">코치</span></td>
-          <td class="st" style="color:#1E40AF;">완료</td><td class="next-triggers">종료 상태</td>
-        </tr>
-        <tr style="background:#F0FDFA;">
-          <td class="st" style="color:#065F46;">확정 (레슨 예정)</td><td>결강 처리 (사유 필수)</td><td><span class="actor-coach">코치</span></td>
-          <td class="st" style="color:#6B7280;">결강</td>
-          <td class="next-triggers"><span>보강 처리</span></td>
-        </tr>
-        <tr style="background:#F0FDFA;">
-          <td class="st" style="color:#065F46;">확정 (레슨 예정)</td><td>보강 처리 (사유 필수)</td><td><span class="actor-coach">코치</span></td>
-          <td class="st" style="color:#065F46;">보강대기</td>
-          <td class="next-triggers"><span>수강생 일정 선택</span> <span>홀드 만료</span></td>
-        </tr>
-        <tr style="background:#F0FDFA;">
-          <td class="st" style="color:#065F46;">확정 (레슨 예정)</td><td>변경 요청</td><td><span class="actor-student">수강생</span></td>
-          <td class="st" style="color:#EA580C;">변경요청</td>
-          <td class="next-triggers"><span>확정</span> <span>제안</span> <span>불가 알림</span></td>
-        </tr>
-        <tr style="background:#F0FDFA;">
-          <td class="st" style="color:#065F46;">확정 (레슨 예정)</td><td>취소</td><td><span class="actor-coach">코치</span> <span class="actor-student">수강생</span></td>
-          <td class="st end-state">취소</td><td class="next-triggers">종료 상태 (환불 처리)</td>
-        </tr>
+        <!-- ===== 확정 (레슨 예정) ===== -->
+        <tr><td colspan="5" style="background:#D1FAE5;font-weight:800;color:#065F46;padding:8px 10px;">확정 / 레슨 예정 (CONFIRMED)</td></tr>
+        <tr><td></td><td><span class="actor-coach">코치</span></td><td>상태처리하기 > 레슨 완료</td><td class="st" style="color:#1E40AF;">완료</td><td class="next-triggers">종료</td></tr>
+        <tr><td></td><td><span class="actor-coach">코치</span></td><td>상태처리하기 > 결강 처리</td><td class="st" style="color:#6B7280;">결강</td><td class="next-triggers"><span>상태처리하기 > 보강 처리</span></td></tr>
+        <tr><td></td><td><span class="actor-coach">코치</span></td><td>상태처리하기 > 보강 처리</td><td class="st" style="color:#065F46;">보강대기</td><td class="next-triggers"><span>일정 선택</span> <span>홀드 만료</span></td></tr>
+        <tr><td></td><td><span class="actor-coach">코치</span></td><td>상태처리하기 > 결제 확인</td><td class="st" style="color:#1E40AF;">외부결제</td><td class="next-triggers">결제 상태만 전환</td></tr>
+        <tr><td></td><td><span class="actor-student">수강생</span></td><td>일정 변경 요청</td><td class="st" style="color:#EA580C;">변경요청</td><td class="next-triggers"><span>확정하기</span> <span>선택/모두 제안하기</span> <span>불가 알림 보내기</span></td></tr>
+        <tr><td></td><td><span class="actor-coach">코치</span> <span class="actor-student">수강생</span></td><td>취소</td><td class="st end-state">취소</td><td class="next-triggers">종료 (환불)</td></tr>
+        <tr><td></td><td><span class="actor-system">시스템</span></td><td>레슨 시작 시간 도래</td><td class="st" style="color:#EF4444;">진행중</td><td class="next-triggers"><span>상태처리하기</span></td></tr>
 
-        <tr style="background:#FEE2E2;">
-          <td class="st" style="color:#EF4444;">진행중</td><td>레슨 완료 처리</td><td><span class="actor-coach">코치</span></td>
-          <td class="st" style="color:#1E40AF;">완료</td><td class="next-triggers">종료 상태</td>
-        </tr>
-        <tr style="background:#FEE2E2;">
-          <td class="st" style="color:#EF4444;">진행중</td><td>다음 레슨 시작 시간 도래</td><td><span class="actor-system">시스템</span></td>
-          <td class="st" style="color:#1E40AF;">완료 (자동)</td><td class="next-triggers">종료 상태</td>
-        </tr>
-        <tr style="background:#FEE2E2;">
-          <td class="st" style="color:#EF4444;">진행중</td><td>결강 처리</td><td><span class="actor-coach">코치</span></td>
-          <td class="st" style="color:#6B7280;">결강</td>
-          <td class="next-triggers"><span>보강 처리</span></td>
-        </tr>
-        <tr style="background:#FEE2E2;">
-          <td class="st" style="color:#EF4444;">진행중</td><td>보강 처리</td><td><span class="actor-coach">코치</span></td>
-          <td class="st" style="color:#065F46;">보강대기</td>
-          <td class="next-triggers"><span>수강생 일정 선택</span> <span>홀드 만료</span></td>
-        </tr>
+        <!-- ===== 진행중 ===== -->
+        <tr><td colspan="5" style="background:#FEE2E2;font-weight:800;color:#EF4444;padding:8px 10px;">진행중 (IN_PROGRESS)</td></tr>
+        <tr><td></td><td><span class="actor-coach">코치</span></td><td>상태처리하기 > 레슨 완료</td><td class="st" style="color:#1E40AF;">완료</td><td class="next-triggers">종료</td></tr>
+        <tr><td></td><td><span class="actor-coach">코치</span></td><td>상태처리하기 > 결강 처리</td><td class="st" style="color:#6B7280;">결강</td><td class="next-triggers"><span>상태처리하기 > 보강 처리</span></td></tr>
+        <tr><td></td><td><span class="actor-coach">코치</span></td><td>상태처리하기 > 보강 처리</td><td class="st" style="color:#065F46;">보강대기</td><td class="next-triggers"><span>일정 선택</span> <span>홀드 만료</span></td></tr>
+        <tr><td></td><td><span class="actor-system">시스템</span></td><td>다음 레슨 시작 (자동 완료)</td><td class="st" style="color:#1E40AF;">완료</td><td class="next-triggers">종료</td></tr>
 
-        <tr style="background:#DBEAFE;">
-          <td class="st" style="color:#1E40AF;">완료</td><td colspan="4" class="end-state">종료 상태 — 추가 전이 없음</td>
-        </tr>
+        <!-- ===== 완료 ===== -->
+        <tr><td colspan="5" style="background:#DBEAFE;font-weight:800;color:#1E40AF;padding:8px 10px;">완료 (COMPLETED)</td></tr>
+        <tr><td></td><td colspan="4" class="end-state">종료 상태 — 추가 전이 없음</td></tr>
 
-        <tr>
-          <td class="st" style="color:#6B7280;">결강</td><td>보강 처리</td><td><span class="actor-coach">코치</span></td>
-          <td class="st" style="color:#065F46;">보강대기</td>
-          <td class="next-triggers"><span>수강생 일정 선택</span> <span>홀드 만료</span></td>
-        </tr>
+        <!-- ===== 결강 ===== -->
+        <tr><td colspan="5" style="background:#F5F5F7;font-weight:800;color:#6B7280;padding:8px 10px;">결강 (ABSENT)</td></tr>
+        <tr><td></td><td><span class="actor-coach">코치</span></td><td>상태처리하기 > 보강 처리</td><td class="st" style="color:#065F46;">보강대기</td><td class="next-triggers"><span>일정 선택</span> <span>홀드 만료</span></td></tr>
 
-        <tr style="background:#F0FDFA;">
-          <td class="st" style="color:#065F46;">보강대기</td><td>수강생 일정 선택</td><td><span class="actor-student">수강생</span></td>
-          <td class="st" style="color:#065F46;">보강확정</td>
-          <td class="next-triggers"><span>완료 처리</span> <span>결강 처리</span></td>
-        </tr>
-        <tr style="background:#F0FDFA;">
-          <td class="st" style="color:#065F46;">보강대기</td><td>홀드 만료 (12시간)</td><td><span class="actor-system">시스템</span></td>
-          <td class="st" style="color:#065F46;">보강대기 (홀드 해제)</td>
-          <td class="next-triggers"><span>코치 재제안</span></td>
-        </tr>
+        <!-- ===== 보강대기 ===== -->
+        <tr><td colspan="5" style="background:#F0FDFA;font-weight:800;color:#065F46;padding:8px 10px;">보강대기 (MAKEUP_PENDING)</td></tr>
+        <tr><td></td><td><span class="actor-student">수강생</span></td><td>보강 일정 선택</td><td class="st" style="color:#065F46;">보강확정</td><td class="next-triggers"><span>상태처리하기</span></td></tr>
+        <tr><td></td><td><span class="actor-system">시스템</span></td><td>홀드 만료 (12시간)</td><td class="st" style="color:#065F46;">보강대기 (홀드 해제)</td><td class="next-triggers"><span>코치 재제안</span></td></tr>
 
-        <tr style="background:#F0FDFA;">
-          <td class="st" style="color:#065F46;">보강확정</td><td>레슨 완료 처리</td><td><span class="actor-coach">코치</span></td>
-          <td class="st" style="color:#1E40AF;">완료</td><td class="next-triggers">종료 상태</td>
-        </tr>
-        <tr style="background:#F0FDFA;">
-          <td class="st" style="color:#065F46;">보강확정</td><td>결강 처리</td><td><span class="actor-coach">코치</span></td>
-          <td class="st" style="color:#6B7280;">결강</td>
-          <td class="next-triggers"><span>보강 처리</span></td>
-        </tr>
+        <!-- ===== 보강확정 ===== -->
+        <tr><td colspan="5" style="background:#F0FDFA;font-weight:800;color:#065F46;padding:8px 10px;">보강확정 (MAKEUP_CONFIRMED)</td></tr>
+        <tr><td></td><td><span class="actor-coach">코치</span></td><td>상태처리하기 > 레슨 완료</td><td class="st" style="color:#1E40AF;">완료</td><td class="next-triggers">종료</td></tr>
+        <tr><td></td><td><span class="actor-coach">코치</span></td><td>상태처리하기 > 결강 처리</td><td class="st" style="color:#6B7280;">결강</td><td class="next-triggers"><span>상태처리하기 > 보강 처리</span></td></tr>
+
+        <!-- ===== 거절/취소 ===== -->
+        <tr><td colspan="5" style="background:#F5F5F7;font-weight:800;color:#6B7280;padding:8px 10px;">거절 / 취소 (REJECTED / CANCELLED)</td></tr>
+        <tr><td></td><td colspan="4" class="end-state">종료 상태 — 추가 전이 없음</td></tr>
       </tbody>
     </table>
   </div>
@@ -320,36 +260,18 @@
     <div class="section-title">변경 요청 흐름</div>
     <table class="chart-table">
       <thead>
-        <tr><th>현재 상태</th><th>트리거</th><th>주체</th><th>다음 상태</th><th>다음 상태에서 가능한 트리거</th></tr>
+        <tr><th>현재 상태</th><th>주체</th><th>버튼/트리거</th><th>다음 상태</th><th>다음 상태에서 가능한 트리거</th></tr>
       </thead>
       <tbody>
-        <tr>
-          <td class="st" style="color:#065F46;">확정</td><td>일정 변경 요청</td><td><span class="actor-student">수강생</span></td>
-          <td class="st" style="color:#EA580C;">변경요청</td>
-          <td class="next-triggers"><span>희망 날짜 확정</span> <span>대체 일정 제안</span> <span>불가 알림</span></td>
-        </tr>
-        <tr>
-          <td class="st" style="color:#EA580C;">변경요청</td><td>희망 날짜로 확정</td><td><span class="actor-coach">코치</span></td>
-          <td class="st" style="color:#065F46;">변경완료</td><td class="next-triggers">확정 상태로 복귀</td>
-        </tr>
-        <tr>
-          <td class="st" style="color:#EA580C;">변경요청</td><td>대체 일정 제안</td><td><span class="actor-coach">코치</span></td>
-          <td class="st" style="color:#9CA3AF;">제안됨</td>
-          <td class="next-triggers"><span>수강생 일정 선택</span> <span>홀드 만료</span></td>
-        </tr>
-        <tr>
-          <td class="st" style="color:#EA580C;">변경요청</td><td>불가 알림 보내기</td><td><span class="actor-coach">코치</span></td>
-          <td class="st end-state">변경거절</td><td class="next-triggers">기존 일정 유지</td>
-        </tr>
-        <tr>
-          <td class="st" style="color:#9CA3AF;">제안됨</td><td>수강생 일정 선택</td><td><span class="actor-student">수강생</span></td>
-          <td class="st" style="color:#065F46;">변경완료</td><td class="next-triggers">확정 상태로 복귀</td>
-        </tr>
-        <tr>
-          <td class="st" style="color:#9CA3AF;">제안됨</td><td>홀드 만료 (12시간)</td><td><span class="actor-system">시스템</span></td>
-          <td class="st" style="color:#EA580C;">변경요청 (홀드 해제)</td>
-          <td class="next-triggers"><span>코치 재제안</span> <span>불가 알림</span></td>
-        </tr>
+        <tr><td colspan="5" style="background:#FFF7ED;font-weight:800;color:#EA580C;padding:8px 10px;">변경요청 (RESCHEDULE_PENDING)</td></tr>
+        <tr><td></td><td><span class="actor-coach">코치</span></td><td>확정하기</td><td class="st" style="color:#065F46;">변경완료</td><td class="next-triggers">확정 상태로 복귀</td></tr>
+        <tr><td></td><td><span class="actor-coach">코치</span></td><td>선택 제안하기</td><td class="st" style="color:#9CA3AF;">제안됨</td><td class="next-triggers"><span>일정 선택</span> <span>홀드 만료</span></td></tr>
+        <tr><td></td><td><span class="actor-coach">코치</span></td><td>모두 제안하기</td><td class="st" style="color:#9CA3AF;">제안됨</td><td class="next-triggers"><span>일정 선택</span> <span>홀드 만료</span></td></tr>
+        <tr><td></td><td><span class="actor-coach">코치</span></td><td>불가 알림 보내기</td><td class="st end-state">변경거절</td><td class="next-triggers">기존 일정 유지</td></tr>
+
+        <tr><td colspan="5" style="background:#F5F5F7;font-weight:800;color:#6B7280;padding:8px 10px;">제안됨 (PROPOSED)</td></tr>
+        <tr><td></td><td><span class="actor-student">수강생</span></td><td>일정 선택</td><td class="st" style="color:#065F46;">변경완료</td><td class="next-triggers">확정 상태로 복귀</td></tr>
+        <tr><td></td><td><span class="actor-system">시스템</span></td><td>홀드 만료 (12시간)</td><td class="st" style="color:#EA580C;">변경요청 (홀드 해제)</td><td class="next-triggers"><span>확정하기</span> <span>제안하기</span> <span>불가 알림</span></td></tr>
       </tbody>
     </table>
   </div>
@@ -361,23 +283,15 @@
     <div class="section-title">결제 상태 흐름</div>
     <table class="chart-table">
       <thead>
-        <tr><th>현재 상태</th><th>트리거</th><th>주체</th><th>다음 상태</th><th>다음 상태에서 가능한 트리거</th></tr>
+        <tr><th>현재 상태</th><th>주체</th><th>버튼/트리거</th><th>다음 상태</th><th>다음 상태에서 가능한 트리거</th></tr>
       </thead>
       <tbody>
-        <tr>
-          <td class="st" style="color:#EF4444;">미결제</td><td>토스페이먼츠 결제</td><td><span class="actor-student">수강생</span></td>
-          <td class="st" style="color:#065F46;">결제완료</td>
-          <td class="next-triggers"><span>취소 + 환불</span></td>
-        </tr>
-        <tr>
-          <td class="st" style="color:#EF4444;">미결제</td><td>외부 결제 확인 (현금/계좌/기타)</td><td><span class="actor-coach">코치</span></td>
-          <td class="st" style="color:#1E40AF;">외부결제</td>
-          <td class="next-triggers">전환 후 추가 트리거 없음</td>
-        </tr>
-        <tr>
-          <td class="st" style="color:#065F46;">결제완료</td><td>취소 + 환불</td><td><span class="actor-coach">코치</span> <span class="actor-student">수강생</span></td>
-          <td class="st end-state">환불완료</td><td class="next-triggers">종료 상태</td>
-        </tr>
+        <tr><td colspan="5" style="background:#FEE2E2;font-weight:800;color:#EF4444;padding:8px 10px;">미결제</td></tr>
+        <tr><td></td><td><span class="actor-student">수강생</span></td><td>결제하기 (토스페이먼츠)</td><td class="st" style="color:#065F46;">결제완료</td><td class="next-triggers"><span>취소 + 환불</span></td></tr>
+        <tr><td></td><td><span class="actor-coach">코치</span></td><td>상태처리하기 > 결제 확인</td><td class="st" style="color:#1E40AF;">외부결제</td><td class="next-triggers">전환 완료</td></tr>
+
+        <tr><td colspan="5" style="background:#D1FAE5;font-weight:800;color:#065F46;padding:8px 10px;">결제완료</td></tr>
+        <tr><td></td><td><span class="actor-coach">코치</span> <span class="actor-student">수강생</span></td><td>취소 + 환불</td><td class="st end-state">환불완료</td><td class="next-triggers">종료</td></tr>
       </tbody>
     </table>
   </div>
