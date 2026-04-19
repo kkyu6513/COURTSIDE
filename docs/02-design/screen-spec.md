@@ -1128,7 +1128,7 @@
 - 변경 요청: `GET /api/bookings?role=coach&rescheduleStatus=PENDING,PROPOSED,COMPLETED&sort=rescheduleRequestedAt:ASC` [인증: 코치] — 먼저 요청한 수강생 순 정렬 (선입선출). 각 건에 자동 추천 결과 포함. COMPLETED는 당일까지만 반환
 - 대기 신청: `GET /api/bookings?role=coach&status=PENDING&limit=3` [인증: 코치]
 - 오늘 레슨 카드 표시 정보: 시작 시간 + 수강생명 + 레슨 형태(1:1/그룹) + **현재 회차(N/M회)** + 결제 상태 + 상태 배지. 레슨 목적은 미표시
-- 오늘 레슨 상태 필터: 상태 아이콘 칩으로 필터링 (진행중/예정/변경/완료/결강/보강). 클릭 시 해당 상태만 표시, 다시 클릭 시 전체 표시. 상태 범례는 "?" 툴팁으로 표시
+- 오늘 레슨 상태 필터: 필터 아이콘 1개 클릭 → 바텀시트에서 상태 다중 선택 (진행중/예정/변경/완료/결강/보강). 적용 시 선택한 상태만 표시. 상태 범례는 "?" 툴팁으로 표시
 - 이번 주 요약: 총 레슨 수 / 대기 신청 수 / 완료 수
 - 홀드 상태: `GET /api/schedule-holds?coachId=me` [인증: 코치] — 현재 활성 홀드 목록 (남은 시간 계산용)
 
