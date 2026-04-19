@@ -130,61 +130,74 @@
           <div id="other-day-content" style="display:none;"></div>
           <!-- 오늘 원래 콘텐츠 -->
           <div id="original-today-content">
-          <!-- 상태 안내 -->
-          <div onclick="showStatusGuide()" style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--gray-100);border-radius:10px;margin-bottom:10px;flex-wrap:wrap;cursor:pointer;">
-            <span style="font-size:11px;color:var(--gray-500);">상태:</span>
-            <span style="display:flex;align-items:center;gap:3px;font-size:11px;color:var(--coral);font-weight:600;">🎾 진행중</span>
-            <span style="display:flex;align-items:center;gap:3px;font-size:11px;color:var(--purple);font-weight:600;">📌 예정</span>
-            <span style="display:flex;align-items:center;gap:3px;font-size:11px;color:#EA580C;font-weight:600;">🔄 변경</span>
-            <span style="display:flex;align-items:center;gap:3px;font-size:11px;color:#1E40AF;font-weight:600;">🏁 완료</span>
-            <span style="font-size:11px;color:var(--gray-400);margin-left:auto;">?</span>
+          <!-- 상태 필터 -->
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;">
+            <span onclick="filterLesson('all')" class="lesson-filter active" style="padding:5px 10px;border-radius:8px;background:var(--green);color:#fff;font-size:11px;font-weight:600;cursor:pointer;transition:all 0.15s;">전체</span>
+            <span onclick="filterLesson('inprogress')" class="lesson-filter" style="padding:5px 10px;border-radius:8px;background:var(--gray-100);color:var(--gray-500);font-size:11px;font-weight:600;cursor:pointer;transition:all 0.15s;">🎾</span>
+            <span onclick="filterLesson('upcoming')" class="lesson-filter" style="padding:5px 10px;border-radius:8px;background:var(--gray-100);color:var(--gray-500);font-size:11px;font-weight:600;cursor:pointer;transition:all 0.15s;">📌</span>
+            <span onclick="filterLesson('reschedule')" class="lesson-filter" style="padding:5px 10px;border-radius:8px;background:var(--gray-100);color:var(--gray-500);font-size:11px;font-weight:600;cursor:pointer;transition:all 0.15s;">🔄</span>
+            <span onclick="filterLesson('completed')" class="lesson-filter" style="padding:5px 10px;border-radius:8px;background:var(--gray-100);color:var(--gray-500);font-size:11px;font-weight:600;cursor:pointer;transition:all 0.15s;">🏁</span>
+            <span onclick="filterLesson('absent')" class="lesson-filter" style="padding:5px 10px;border-radius:8px;background:var(--gray-100);color:var(--gray-500);font-size:11px;font-weight:600;cursor:pointer;transition:all 0.15s;">❌</span>
+            <div style="position:relative;margin-left:auto;">
+              <span onclick="toggleStatusTooltip()" style="width:20px;height:20px;border-radius:50%;border:1.5px solid var(--gray-300);background:#fff;color:var(--gray-400);font-size:10px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;">?</span>
+              <div id="status-tooltip" style="display:none;position:absolute;top:28px;right:0;background:var(--navy);border-radius:10px;padding:10px 14px;white-space:nowrap;z-index:50;box-shadow:0 4px 12px rgba(0,0,0,0.15);">
+                <div style="display:flex;flex-direction:column;gap:5px;">
+                  <div style="font-size:11px;color:#fff;">🎾 진행중</div>
+                  <div style="font-size:11px;color:#fff;">📌 레슨 예정</div>
+                  <div style="font-size:11px;color:#fff;">🔄 변경 요청</div>
+                  <div style="font-size:11px;color:#fff;">🏁 레슨완료</div>
+                  <div style="font-size:11px;color:#fff;">❌ 결강</div>
+                  <div style="font-size:11px;color:#fff;">✅ 보강</div>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <div class="schedule-slot" style="background:#fff;border:1px solid var(--gray-100);opacity:0.7;cursor:pointer;" onclick="showLessonDetail('completed')">
+          <div class="schedule-slot" style="background:#fff;border:1px solid var(--gray-100);opacity:0.7;cursor:pointer;" data-status="completed" onclick="showLessonDetail('completed')">
             <div><div class="time" style="color:var(--gray-400);">09:00</div><div class="student">홍길동 · 1:1 · <span style="color:var(--info);font-weight:600;">5/8회</span></div></div>
             <span class="badge-sm" style="background:#DBEAFE;color:#1E40AF;">레슨완료</span>
           </div>
-          <div class="schedule-slot" style="background:var(--gray-50);border:1px solid var(--gray-100);opacity:0.5;cursor:pointer;" onclick="showLessonDetail('absent')">
+          <div class="schedule-slot" style="background:var(--gray-50);border:1px solid var(--gray-100);opacity:0.5;cursor:pointer;" data-status="absent" onclick="showLessonDetail('absent')">
             <div><div class="time" style="color:var(--gray-400);text-decoration:line-through;">09:30</div><div class="student" style="text-decoration:line-through;color:var(--gray-400);">강민서 · 그룹 · <span style="color:var(--gray-400);font-weight:600;">3/8회</span></div></div>
             <span class="badge-sm" style="background:var(--gray-100);color:var(--gray-500);">❌ 결강</span>
           </div>
-          <div class="schedule-slot" style="background:#fff;border:1px solid var(--gray-100);cursor:pointer;position:relative;" onclick="showLessonDetail('inprogress')">
+          <div class="schedule-slot" style="background:#fff;border:1px solid var(--gray-100);cursor:pointer;position:relative;" data-status="inprogress" onclick="showLessonDetail('inprogress')">
             <div><div class="time" style="color:var(--coral);">10:00</div><div class="student">이민호 · 1:1 · <span style="color:var(--info);font-weight:600;">6/8회</span></div></div>
             <span class="badge-sm" style="background:#FEE2E2;color:var(--error);animation:pulse 2s infinite;">🎾 진행중</span>
           </div>
-          <div class="schedule-slot" style="background:#fff;border:1px solid var(--gray-100);cursor:pointer;" onclick="showLessonDetail('upcoming')">
+          <div class="schedule-slot" style="background:#fff;border:1px solid var(--gray-100);cursor:pointer;" data-status="upcoming" onclick="showLessonDetail('upcoming')">
             <div><div class="time">13:00</div><div class="student">박수진 · 그룹 · <span style="color:var(--info);font-weight:600;">2/4회</span></div></div>
             <span class="badge-sm" style="background:#F3E8FF;color:#7C5CBF;">레슨 예정</span>
           </div>
-          <div class="schedule-slot" style="background:#fff;border:1px solid var(--gray-100);cursor:pointer;" onclick="showLessonDetail('upcoming')">
+          <div class="schedule-slot" style="background:#fff;border:1px solid var(--gray-100);cursor:pointer;" data-status="upcoming" onclick="showLessonDetail('upcoming')">
             <div><div class="time">14:00</div><div class="student">김영희 · 1:1 · <span style="color:var(--info);font-weight:600;">4/8회</span></div></div>
             <span class="badge-sm" style="background:#F3E8FF;color:#7C5CBF;">레슨 예정</span>
           </div>
-          <div class="schedule-slot" style="background:#fff;border:1px solid var(--gray-100);cursor:pointer;" onclick="showLessonDetail('upcoming')">
+          <div class="schedule-slot" style="background:#fff;border:1px solid var(--gray-100);cursor:pointer;" data-status="upcoming" onclick="showLessonDetail('upcoming')">
             <div><div class="time">15:00</div><div class="student">정다은 · 1:1 · <span style="color:var(--info);font-weight:600;">7/8회</span></div></div>
             <span class="badge-sm" style="background:#F3E8FF;color:#7C5CBF;">레슨 예정</span>
           </div>
-          <div class="schedule-slot" style="background:#fff;border:1px solid var(--gray-100);cursor:pointer;" onclick="showLessonDetail('reschedule')">
+          <div class="schedule-slot" style="background:#fff;border:1px solid var(--gray-100);cursor:pointer;" data-status="reschedule" onclick="showLessonDetail('reschedule')">
             <div><div class="time" style="color:var(--orange);">16:00</div><div class="student">박지수 · 1:1 · <span style="color:var(--info);font-weight:600;">3/8회</span></div></div>
             <span class="badge-sm" style="background:#FFF7ED;color:#EA580C;">🔄 변경 요청</span>
           </div>
-          <div class="schedule-slot" style="background:#F0FDFA;border:1.5px dashed var(--green);cursor:pointer;" onclick="showLessonDetail('makeup')">
+          <div class="schedule-slot" style="background:#F0FDFA;border:1.5px dashed var(--green);cursor:pointer;" data-status="makeup" onclick="showLessonDetail('makeup')">
             <div><div class="time" style="color:var(--green);">16:30</div><div class="student">강민서 · 그룹 · <span style="color:var(--info);font-weight:600;">보강</span></div></div>
             <span class="badge-sm" style="background:#D1FAE5;color:#065F46;">🔄 보강대기</span>
           </div>
-          <div class="schedule-slot" style="background:#F0FDFA;border:1.5px solid var(--green);cursor:pointer;" onclick="showLessonDetail('makeup_confirmed')">
+          <div class="schedule-slot" style="background:#F0FDFA;border:1.5px solid var(--green);cursor:pointer;" data-status="makeup" onclick="showLessonDetail('makeup_confirmed')">
             <div><div class="time" style="color:#065F46;">17:00</div><div class="student">김태호 · 1:1 · <span style="color:var(--info);font-weight:600;">보강</span></div></div>
             <span class="badge-sm" style="background:#D1FAE5;color:#065F46;">✅ 보강확정</span>
           </div>
-          <div class="schedule-slot" style="background:#fff;border:1px solid var(--gray-100);cursor:pointer;" onclick="showLessonDetail('upcoming')">
+          <div class="schedule-slot" style="background:#fff;border:1px solid var(--gray-100);cursor:pointer;" data-status="upcoming" onclick="showLessonDetail('upcoming')">
             <div><div class="time">18:00</div><div class="student">한지우 · 그룹 · <span style="color:var(--info);font-weight:600;">1/4회</span> · <span style="color:var(--error);font-weight:600;">미결제</span></div></div>
             <span class="badge-sm" style="background:#F3E8FF;color:#7C5CBF;">레슨 예정</span>
           </div>
-          <div class="schedule-slot" style="background:#fff;border:1px solid var(--gray-100);cursor:pointer;" onclick="showLessonDetail('upcoming')">
+          <div class="schedule-slot" style="background:#fff;border:1px solid var(--gray-100);cursor:pointer;" data-status="upcoming" onclick="showLessonDetail('upcoming')">
             <div><div class="time">19:00</div><div class="student">최준혁 · 1:1 · <span style="color:var(--info);font-weight:600;">2/10회</span> · <span style="color:#3B82F6;font-weight:600;">외부결제</span></div></div>
             <span class="badge-sm" style="background:#F3E8FF;color:#7C5CBF;">레슨 예정</span>
           </div>
-          <div class="schedule-slot" style="background:#fff;border:1px solid var(--gray-100);cursor:pointer;" onclick="showLessonDetail('upcoming')">
+          <div class="schedule-slot" style="background:#fff;border:1px solid var(--gray-100);cursor:pointer;" data-status="upcoming" onclick="showLessonDetail('upcoming')">
             <div><div class="time">20:00</div><div class="student">오서연 · 1:1 · <span style="color:var(--info);font-weight:600;">5/8회</span></div></div>
             <span class="badge-sm" style="background:#F3E8FF;color:#7C5CBF;">레슨 예정</span>
           </div>
@@ -909,6 +922,21 @@
   </div>
 </div>
 <script>
+function toggleStatusTooltip() {
+  const t = document.getElementById('status-tooltip');
+  t.style.display = t.style.display === 'none' ? 'block' : 'none';
+}
+function filterLesson(type) {
+  const filters = document.querySelectorAll('.lesson-filter');
+  filters.forEach(f => { f.style.background = 'var(--gray-100)'; f.style.color = 'var(--gray-500)'; });
+  event.target.style.background = 'var(--green)';
+  event.target.style.color = '#fff';
+  const slots = document.querySelectorAll('.schedule-slot[data-status]');
+  slots.forEach(s => {
+    if (type === 'all') { s.style.display = 'flex'; }
+    else { s.style.display = s.dataset.status === type ? 'flex' : 'none'; }
+  });
+}
 function showStatusGuide() {
   document.getElementById('status-guide-popup').style.display = 'block';
 }
