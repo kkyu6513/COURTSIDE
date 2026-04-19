@@ -144,7 +144,7 @@
             <div><div class="time" style="color:var(--gray-400);">09:00</div><div class="student">홍길동 · 1:1 · <span style="color:var(--info);font-weight:600;">5/8회</span></div></div>
             <span class="badge-sm" style="background:#DBEAFE;color:#1E40AF;">레슨완료</span>
           </div>
-          <div class="schedule-slot" style="background:var(--gray-50);border:1px solid var(--gray-100);opacity:0.5;cursor:pointer;">
+          <div class="schedule-slot" style="background:var(--gray-50);border:1px solid var(--gray-100);opacity:0.5;cursor:pointer;" onclick="showLessonDetail('absent')">
             <div><div class="time" style="color:var(--gray-400);text-decoration:line-through;">09:30</div><div class="student" style="text-decoration:line-through;color:var(--gray-400);">강민서 · 그룹 · <span style="color:var(--gray-400);font-weight:600;">3/8회</span></div></div>
             <span class="badge-sm" style="background:var(--gray-100);color:var(--gray-500);">❌ 결강</span>
           </div>
@@ -168,7 +168,7 @@
             <div><div class="time" style="color:var(--orange);">16:00</div><div class="student">박지수 · 1:1 · <span style="color:var(--info);font-weight:600;">3/8회</span></div></div>
             <span class="badge-sm" style="background:#FFF7ED;color:#EA580C;">🔄 변경 요청</span>
           </div>
-          <div class="schedule-slot" style="background:#F0FDFA;border:1.5px dashed var(--green);cursor:pointer;">
+          <div class="schedule-slot" style="background:#F0FDFA;border:1.5px dashed var(--green);cursor:pointer;" onclick="showLessonDetail('makeup')">
             <div><div class="time" style="color:var(--green);">16:30</div><div class="student">강민서 · 그룹 · <span style="color:var(--info);font-weight:600;">보강</span></div></div>
             <span class="badge-sm" style="background:#D1FAE5;color:#065F46;">🔄 보강대기</span>
           </div>
@@ -1524,6 +1524,28 @@ function showLessonDetail(status) {
   const actions = document.getElementById('detail-actions');
 
   const data = {
+    absent: {
+      name: '강민서', age: '20대', gender: '여성', ntrp: 'NTRP 2.0',
+      type: '정규레슨', format: '그룹 (3인)',
+      schedule: [{ day: '일', date: '4/13', slot: 'T0930', label: '09:30' }],
+      session: '3/8회', lastPayment: '3/15', nextPayment: '4/15',
+      paymentStatus: 'paid', paid: true, price: '50,000원',
+      badge: '<span style="display:inline-block;padding:4px 12px;border-radius:8px;background:var(--gray-100);color:var(--gray-500);font-size:13px;font-weight:700;">❌ 결강</span>',
+      statusMsg: '',
+      absentReason: '고객 사유',
+      absentDetail: '개인 사정으로 불참'
+    },
+    makeup: {
+      name: '강민서', age: '20대', gender: '여성', ntrp: 'NTRP 2.0',
+      type: '정규레슨', format: '그룹 (3인)',
+      schedule: [{ day: '일', date: '4/13', slot: 'T1630', label: '16:30' }],
+      session: '보강', lastPayment: '3/15', nextPayment: '4/15',
+      paymentStatus: 'paid', paid: true, price: '50,000원',
+      badge: '<span style="display:inline-block;padding:4px 12px;border-radius:8px;background:#D1FAE5;color:#065F46;font-size:13px;font-weight:700;">🔄 보강대기</span>',
+      statusMsg: '',
+      proposedSlots: ['4/16 (수) 10:00', '4/17 (목) 14:00'],
+      holdRemaining: '9:15:30'
+    },
     inprogress: {
       name: '이민호', age: '30대', gender: '남성', ntrp: 'NTRP 4.0',
       type: '정규레슨', format: '1:1 개인', goal: '발리 연습',
@@ -1705,7 +1727,82 @@ function showLessonDetail(status) {
 
   const scheduleTitle = isConflict ? '수강생 희망 일정 (주 ' + d.schedule.length + '회) <span style="font-size:11px;color:var(--error);font-weight:400;">⚠️ 레슨불가 있음</span>' : isSelectable ? '수강생 희망 일정' : isReschedule ? '변경 요청 일정' : isInProgress ? '진행중 레슨' : isUpcoming ? '오늘 레슨 일정' : '확정 일정';
 
-  if (isReschedule) {
+  const isAbsent = (status === 'absent');
+  const isMakeup = (status === 'makeup');
+
+  if (isAbsent) {
+    lesson.innerHTML = `
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="padding:0 4px;">
+          <div style="font-size:13px;color:var(--gray-400);margin-bottom:2px;">결강 일정</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--gray-50);border-radius:10px;margin-top:6px;">
+            <span style="font-size:14px;">❌</span>
+            <span style="font-size:14px;font-weight:600;color:var(--gray-400);text-decoration:line-through;">${d.schedule[0].date} (${d.schedule[0].day}) ${d.schedule[0].label}</span>
+          </div>
+        </div>
+        <div style="height:1px;background:var(--gray-100);"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:0 4px;">
+          <span style="font-size:13px;color:var(--gray-400);">레슨 유형</span>
+          <span style="font-size:14px;font-weight:600;color:var(--navy);">${d.type}</span>
+        </div>
+        <div style="height:1px;background:var(--gray-100);"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:0 4px;">
+          <span style="font-size:13px;color:var(--gray-400);">레슨 형태</span>
+          <span style="font-size:14px;font-weight:600;color:var(--navy);">${d.format}</span>
+        </div>
+        <div style="height:1px;background:var(--gray-100);"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:0 4px;">
+          <span style="font-size:13px;color:var(--gray-400);">현재 회차</span>
+          <span style="font-size:14px;font-weight:600;color:var(--navy);">${d.session}</span>
+        </div>
+      </div>
+      <div style="margin-top:16px;">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:12px;">
+          <span style="font-size:16px;">❌</span>
+          <span style="font-size:15px;font-weight:800;color:var(--navy);">결강 사유</span>
+        </div>
+        <div style="padding:12px;background:var(--gray-50);border-radius:10px;">
+          <div style="font-size:13px;font-weight:600;color:var(--navy);margin-bottom:4px;">${d.absentReason}</div>
+          <div style="font-size:12px;color:var(--gray-500);line-height:1.6;">${d.absentDetail}</div>
+        </div>
+      </div>`;
+  } else if (isMakeup) {
+    const slotsHtml = d.proposedSlots.map(s =>
+      '<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:#F0FDFA;border-radius:8px;border:1px solid #D1FAE5;margin-top:4px;"><span style="font-size:13px;">📌</span><span style="font-size:13px;font-weight:600;color:#065F46;">' + s + '</span></div>'
+    ).join('');
+    lesson.innerHTML = `
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="padding:0 4px;">
+          <div style="font-size:13px;color:var(--gray-400);margin-bottom:2px;">보강 레슨 일정</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#F0FDFA;border-radius:10px;border:1.5px dashed var(--green);margin-top:6px;">
+            <span style="font-size:14px;">🔄</span>
+            <span style="font-size:14px;font-weight:600;color:var(--green);">${d.schedule[0].date} (${d.schedule[0].day}) ${d.schedule[0].label}</span>
+          </div>
+        </div>
+        <div style="height:1px;background:var(--gray-100);"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:0 4px;">
+          <span style="font-size:13px;color:var(--gray-400);">레슨 유형</span>
+          <span style="font-size:14px;font-weight:600;color:var(--navy);">${d.type}</span>
+        </div>
+        <div style="height:1px;background:var(--gray-100);"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:0 4px;">
+          <span style="font-size:13px;color:var(--gray-400);">레슨 형태</span>
+          <span style="font-size:14px;font-weight:600;color:var(--navy);">${d.format}</span>
+        </div>
+      </div>
+      <div style="margin-top:16px;">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:12px;">
+          <span style="font-size:16px;">🔄</span>
+          <span style="font-size:15px;font-weight:800;color:var(--navy);">제안된 보강 일정</span>
+        </div>
+        <div style="font-size:12px;color:var(--gray-500);margin-bottom:8px;">수강생 선택 대기중</div>
+        ${slotsHtml}
+        <div style="margin-top:10px;display:flex;align-items:center;gap:6px;padding:8px 10px;background:#FFFBEB;border-radius:8px;">
+          <span style="font-size:14px;">⏳</span>
+          <span style="font-size:12px;font-weight:600;color:#92400E;">홀드 남은 시간 ${d.holdRemaining}</span>
+        </div>
+      </div>`;
+  } else if (isReschedule) {
     const filteredSlots = d.desiredAvailable ? d.recommendedSlots.filter(s => s !== d.desiredSchedule) : d.recommendedSlots;
     const slotsHtml = filteredSlots.map((s, i) => {
       return `<label class="rc-slot" onclick="selectRcSlot(this)" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:#D1FAE5;color:#065F46;cursor:pointer;border:2px solid transparent;transition:all 0.15s;">
@@ -1774,7 +1871,9 @@ function showLessonDetail(status) {
       ${d.statusMsg}`;
   }
 
-  if (status === 'reschedule') {
+  if (status === 'absent' || status === 'makeup') {
+    actions.innerHTML = '<button onclick="closeLessonDetail()" style="width:100%;height:48px;border-radius:12px;border:1.5px solid var(--gray-200);background:#fff;color:var(--gray-500);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">닫기</button>';
+  } else if (status === 'reschedule') {
     actions.innerHTML = `
       <div style="display:flex;gap:10px;">
         <button id="btn-propose-selected" onclick="proposeSelectedFromDetail(this)" disabled style="flex:1;height:48px;border-radius:12px;border:2px solid var(--gray-200);background:#fff;color:var(--gray-400);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.15s;">선택 제안하기</button>
