@@ -743,6 +743,21 @@
       </div>
     </div>
 
+    <!-- 보강 날짜 선택 바텀시트 -->
+    <div id="makeup-date-sheet" style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;z-index:160;">
+      <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);" onclick="closeMakeupDateSheet()"></div>
+      <div style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;padding:20px 20px 32px;z-index:161;max-height:85%;overflow-y:auto;">
+        <div style="width:40px;height:4px;border-radius:2px;background:var(--gray-200);margin:0 auto 16px;"></div>
+        <div style="font-size:17px;font-weight:800;color:var(--navy);margin-bottom:4px;">보강 날짜 제안</div>
+        <div style="font-size:13px;color:var(--gray-500);margin-bottom:16px;">수강생에게 제안할 보강 가능 날짜를 선택하세요 (복수 선택 가능)</div>
+        <div id="makeup-date-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;"></div>
+        <button id="makeup-propose-btn" onclick="proposeMakeupDates()" disabled
+          style="width:100%;height:50px;border-radius:14px;border:none;background:var(--gray-300);color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.15s;">
+          제안하기
+        </button>
+      </div>
+    </div>
+
     <!-- 수강생 뷰 오버레이 -->
     <div id="student-view-overlay" style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;z-index:300;">
       <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);" onclick="closeStudentView()"></div>
@@ -1391,7 +1406,50 @@ function closeStatusActions() {
 
 function handleSupplement() {
   closeLessonDetail();
-  window.location.href = '../flow6-student-my/6-6-booking-detail.html?status=makeup';
+  openMakeupDateSheet();
+}
+
+function openMakeupDateSheet() {
+  const list = document.getElementById('makeup-date-list');
+  list.innerHTML = '';
+  const days = ['일','월','화','수','목','금','토'];
+  const today = new Date(2026, 3, 13); // 프로토타입 기준 오늘 4/13
+  for (let i = 1; i <= 14; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() + i);
+    const label = `${d.getMonth()+1}월 ${d.getDate()}일 (${days[d.getDay()]}) 10:00`;
+    const id = `md-${i}`;
+    list.innerHTML += `
+      <label id="label-${id}" onclick="toggleMakeupDate('${id}')"
+        style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;border:2px solid var(--gray-100);background:#fff;cursor:pointer;transition:all 0.15s;">
+        <input type="checkbox" id="${id}" value="${label}" style="width:18px;height:18px;accent-color:var(--green);flex-shrink:0;">
+        <span style="font-size:14px;font-weight:600;color:var(--navy);">${label}</span>
+      </label>`;
+  }
+  document.getElementById('makeup-date-sheet').style.display = 'block';
+}
+
+function toggleMakeupDate(id) {
+  const cb = document.getElementById(id);
+  const label = document.getElementById('label-' + id);
+  cb.checked = !cb.checked;
+  label.style.borderColor = cb.checked ? 'var(--green)' : 'var(--gray-100)';
+  label.style.background = cb.checked ? '#F0FDFA' : '#fff';
+  const anyChecked = document.querySelectorAll('#makeup-date-list input:checked').length > 0;
+  const btn = document.getElementById('makeup-propose-btn');
+  btn.disabled = !anyChecked;
+  btn.style.background = anyChecked ? 'var(--green)' : 'var(--gray-300)';
+}
+
+function closeMakeupDateSheet() {
+  document.getElementById('makeup-date-sheet').style.display = 'none';
+}
+
+function proposeMakeupDates() {
+  const checked = document.querySelectorAll('#makeup-date-list input:checked');
+  const dates = Array.from(checked).map(cb => cb.value).join('|');
+  closeMakeupDateSheet();
+  window.location.href = `../flow6-student-my/6-6-booking-detail.html?status=makeup_proposed&dates=${encodeURIComponent(dates)}`;
 }
 function handleAbsence() {
   if (confirm('결강 처리하시겠습니까?\n수강생에게 결강 안내가 발송됩니다.')) {

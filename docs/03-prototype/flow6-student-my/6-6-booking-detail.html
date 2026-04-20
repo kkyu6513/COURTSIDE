@@ -12,32 +12,28 @@
   <div class="device" style="position:relative;">
     <div class="status-bar"><span class="time">9:41</span><div class="status-icons"><span>📶</span><span>🔋</span></div></div>
     <div class="top-nav">
-      <a class="back" href="6-5-booking-list.html" onclick="history.length>1?history.back()&&false:true">←</a>
+      <a class="back" href="6-5-booking-list.html" onclick="if(history.length>1){history.back();return false;}">←</a>
       <span class="title">나의 레슨 상세</span>
       <span class="action"></span>
     </div>
     <div class="screen screen-white" style="display:flex;flex-direction:column;flex:1;overflow-y:auto;padding-bottom:0;">
       <div class="page-pad" style="flex:1;">
 
-        <!-- 상태 배지 -->
         <div style="text-align:center;margin-bottom:20px;" id="status-badge-area"></div>
 
-        <!-- 레슨 기본 정보 -->
         <div style="background:var(--gray-50);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:14px;">
           <div><div style="font-size:12px;color:var(--gray-400);">코치</div><div style="font-size:15px;font-weight:600;color:var(--navy);">김민수 코치</div></div>
-          <div><div style="font-size:12px;color:var(--gray-400);">일정</div><div style="font-size:15px;font-weight:600;color:var(--navy);">4월 13일 (일) 10:00</div></div>
+          <div><div style="font-size:12px;color:var(--gray-400);">기존 일정</div><div style="font-size:15px;font-weight:600;color:var(--navy);">4월 13일 (일) 10:00</div></div>
           <div><div style="font-size:12px;color:var(--gray-400);">레슨 유형</div><div style="font-size:15px;font-weight:600;color:var(--coral);">정규레슨 · 1:1</div></div>
           <div><div style="font-size:12px;color:var(--gray-400);">회차</div><div style="font-size:15px;font-weight:600;color:var(--info);" id="session-info">6/8회</div></div>
           <div><div style="font-size:12px;color:var(--gray-400);">결제 상태</div><div style="font-size:15px;font-weight:600;color:var(--navy);">결제 완료</div></div>
         </div>
 
-        <!-- 상태별 메시지 영역 -->
         <div id="status-message-area" style="margin-top:14px;"></div>
 
       </div>
     </div>
 
-    <!-- 하단 버튼 -->
     <div id="bottom-actions" style="padding:12px 20px 32px;background:#fff;border-top:1px solid var(--gray-100);flex-shrink:0;display:flex;gap:10px;"></div>
   </div>
 </div>
@@ -45,6 +41,39 @@
 <script>
 const params = new URLSearchParams(location.search);
 const status = params.get('status') || 'rejected';
+const rawDates = params.get('dates') || '';
+const proposedDates = rawDates ? rawDates.split('|') : [];
+
+// 보강 날짜 선택 라디오 UI 생성
+function buildDateRadios(dates) {
+  if (!dates.length) return '<div style="font-size:13px;color:var(--gray-400);">제안된 날짜가 없습니다.</div>';
+  return dates.map((d, i) => `
+    <label id="dr-label-${i}" onclick="selectMakeupDate(${i})"
+      style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;border:2px solid var(--gray-100);background:#fff;cursor:pointer;transition:all 0.15s;margin-bottom:8px;">
+      <input type="radio" name="makeup-date" id="dr-${i}" value="${d}"
+        style="width:18px;height:18px;accent-color:var(--green);flex-shrink:0;">
+      <span style="font-size:14px;font-weight:600;color:var(--navy);">${d}</span>
+    </label>`).join('');
+}
+
+function selectMakeupDate(i) {
+  document.querySelectorAll('[id^="dr-label-"]').forEach((el, j) => {
+    el.style.borderColor = j === i ? 'var(--green)' : 'var(--gray-100)';
+    el.style.background = j === i ? '#F0FDFA' : '#fff';
+  });
+  document.getElementById('dr-' + i).checked = true;
+  const btn = document.getElementById('confirm-makeup-btn');
+  if (btn) { btn.disabled = false; btn.style.background = 'var(--green)'; }
+}
+
+function confirmMakeup() {
+  const selected = document.querySelector('input[name="makeup-date"]:checked');
+  if (!selected) return;
+  const date = encodeURIComponent(selected.value);
+  window.location.href = `6-6-booking-detail.html?status=makeup_confirmed&confirmedDate=${date}`;
+}
+
+const confirmedDate = decodeURIComponent(params.get('confirmedDate') || '');
 
 const configs = {
   completed: {
@@ -76,6 +105,33 @@ const configs = {
     message: `<div style="padding:16px;background:#F0FDFA;border-radius:12px;border:1.5px dashed var(--green);">
       <div style="font-size:13px;font-weight:700;color:#065F46;margin-bottom:6px;">보강 레슨이 등록되었습니다</div>
       <div style="font-size:13px;color:var(--green);line-height:1.6;">코치가 보강 레슨을 등록했습니다.<br>보강 일정이 확정되면 카카오 알림톡으로 안내드려요.</div>
+    </div>`,
+    actions: `<a href="../flow4-chat/4-2-chat.html" class="btn-secondary" style="flex:1;display:block;text-align:center;text-decoration:none;line-height:48px;height:auto;">코치에게 문의</a>
+              <a href="6-5-booking-list.html" class="btn-primary" style="flex:1;display:block;text-align:center;text-decoration:none;line-height:52px;">목록으로</a>`
+  },
+  makeup_proposed: {
+    label: '보강 날짜 선택',
+    badge: '<span class="badge" style="font-size:14px;padding:6px 16px;background:#D1FAE5;color:#065F46;">🔄 보강 대기</span>',
+    session: '보강',
+    message: `<div style="padding:16px;background:#F0FDFA;border-radius:12px;border:1.5px dashed var(--green);margin-bottom:4px;">
+      <div style="font-size:13px;font-weight:700;color:#065F46;margin-bottom:10px;">코치가 보강 가능 날짜를 제안했어요</div>
+      <div style="font-size:12px;color:var(--gray-500);margin-bottom:10px;">원하는 날짜 1개를 선택하고 보강을 확정해 주세요.</div>
+      ${buildDateRadios(proposedDates)}
+    </div>`,
+    actions: `<a href="../flow4-chat/4-2-chat.html" class="btn-secondary" style="flex:1;display:block;text-align:center;text-decoration:none;line-height:48px;height:auto;">코치에게 문의</a>
+              <button id="confirm-makeup-btn" onclick="confirmMakeup()" disabled
+                style="flex:1;height:52px;border-radius:14px;border:none;background:var(--gray-300);color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.15s;">보강 확정</button>`
+  },
+  makeup_confirmed: {
+    label: '보강 확정',
+    badge: '<span class="badge" style="font-size:14px;padding:6px 16px;background:#D1FAE5;color:#065F46;">✅ 보강 확정</span>',
+    session: '보강',
+    message: `<div style="padding:16px;background:#F0FDFA;border-radius:12px;border:1.5px solid var(--green);">
+      <div style="font-size:13px;font-weight:700;color:#065F46;margin-bottom:6px;">보강 일정이 확정되었습니다!</div>
+      <div style="font-size:13px;color:var(--green);line-height:1.6;margin-bottom:10px;">코치에게 확정 알림이 발송되었습니다.</div>
+      <div style="padding:12px;background:#fff;border-radius:10px;border:1px solid #D1FAE5;font-size:14px;font-weight:700;color:var(--navy);text-align:center;">
+        📅 ${confirmedDate}
+      </div>
     </div>`,
     actions: `<a href="../flow4-chat/4-2-chat.html" class="btn-secondary" style="flex:1;display:block;text-align:center;text-decoration:none;line-height:48px;height:auto;">코치에게 문의</a>
               <a href="6-5-booking-list.html" class="btn-primary" style="flex:1;display:block;text-align:center;text-decoration:none;line-height:52px;">목록으로</a>`
