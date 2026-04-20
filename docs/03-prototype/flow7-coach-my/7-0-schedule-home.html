@@ -749,11 +749,25 @@
       <div style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;padding:20px 20px 32px;z-index:161;max-height:85%;overflow-y:auto;">
         <div style="width:40px;height:4px;border-radius:2px;background:var(--gray-200);margin:0 auto 16px;"></div>
         <div style="font-size:17px;font-weight:800;color:var(--navy);margin-bottom:4px;">보강 날짜 제안</div>
-        <div style="font-size:13px;color:var(--gray-500);margin-bottom:16px;">수강생에게 제안할 보강 가능 날짜를 선택하세요 (복수 선택 가능)</div>
+        <div style="font-size:13px;color:var(--gray-500);margin-bottom:14px;">레슨 가능한 요일을 선택하면 날짜를 고를 수 있어요</div>
+
+        <!-- 요일 칩 -->
+        <div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;">
+          <button onclick="toggleDayChip(this,0)" data-day="0" style="padding:8px 14px;border-radius:20px;border:1.5px solid var(--gray-200);background:#fff;color:var(--gray-500);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.15s;">일</button>
+          <button onclick="toggleDayChip(this,1)" data-day="1" style="padding:8px 14px;border-radius:20px;border:1.5px solid var(--gray-200);background:#fff;color:var(--gray-500);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.15s;">월</button>
+          <button onclick="toggleDayChip(this,2)" data-day="2" style="padding:8px 14px;border-radius:20px;border:1.5px solid var(--gray-200);background:#fff;color:var(--gray-500);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.15s;">화</button>
+          <button onclick="toggleDayChip(this,3)" data-day="3" style="padding:8px 14px;border-radius:20px;border:1.5px solid var(--gray-200);background:#fff;color:var(--gray-500);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.15s;">수</button>
+          <button onclick="toggleDayChip(this,4)" data-day="4" style="padding:8px 14px;border-radius:20px;border:1.5px solid var(--gray-200);background:#fff;color:var(--gray-500);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.15s;">목</button>
+          <button onclick="toggleDayChip(this,5)" data-day="5" style="padding:8px 14px;border-radius:20px;border:1.5px solid var(--gray-200);background:#fff;color:var(--gray-500);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.15s;">금</button>
+          <button onclick="toggleDayChip(this,6)" data-day="6" style="padding:8px 14px;border-radius:20px;border:1.5px solid var(--gray-200);background:#fff;color:var(--gray-500);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.15s;">토</button>
+        </div>
+
+        <!-- 선택된 요일의 날짜 목록 -->
         <div id="makeup-date-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;"></div>
+
         <button id="makeup-propose-btn" onclick="proposeMakeupDates()" disabled
           style="width:100%;height:50px;border-radius:14px;border:none;background:var(--gray-300);color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.15s;">
-          제안하기
+          선택 날짜 제안하기
         </button>
       </div>
     </div>
@@ -1409,36 +1423,85 @@ function handleSupplement() {
   openMakeupDateSheet();
 }
 
+const MAKEUP_DAY_NAMES = ['일','월','화','수','목','금','토'];
+let activeMakeupDays = new Set(); // 선택된 요일 인덱스
+let selectedMakeupDates = new Set(); // 선택된 날짜 문자열
+
 function openMakeupDateSheet() {
-  const list = document.getElementById('makeup-date-list');
-  list.innerHTML = '';
-  const days = ['일','월','화','수','목','금','토'];
-  const today = new Date(2026, 3, 13); // 프로토타입 기준 오늘 4/13
-  for (let i = 1; i <= 14; i++) {
-    const d = new Date(today);
-    d.setDate(today.getDate() + i);
-    const label = `${d.getMonth()+1}월 ${d.getDate()}일 (${days[d.getDay()]}) 10:00`;
-    const id = `md-${i}`;
-    list.innerHTML += `
-      <label id="label-${id}" onclick="toggleMakeupDate('${id}')"
-        style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;border:2px solid var(--gray-100);background:#fff;cursor:pointer;transition:all 0.15s;">
-        <input type="checkbox" id="${id}" value="${label}" style="width:18px;height:18px;accent-color:var(--green);flex-shrink:0;">
-        <span style="font-size:14px;font-weight:600;color:var(--navy);">${label}</span>
-      </label>`;
-  }
+  activeMakeupDays.clear();
+  selectedMakeupDates.clear();
+  // 요일 칩 초기화
+  document.querySelectorAll('#makeup-date-sheet [data-day]').forEach(btn => {
+    btn.style.background = '#fff';
+    btn.style.color = 'var(--gray-500)';
+    btn.style.borderColor = 'var(--gray-200)';
+  });
+  document.getElementById('makeup-date-list').innerHTML = '';
+  document.getElementById('makeup-propose-btn').disabled = true;
+  document.getElementById('makeup-propose-btn').style.background = 'var(--gray-300)';
   document.getElementById('makeup-date-sheet').style.display = 'block';
 }
 
-function toggleMakeupDate(id) {
-  const cb = document.getElementById(id);
-  const label = document.getElementById('label-' + id);
-  cb.checked = !cb.checked;
-  label.style.borderColor = cb.checked ? 'var(--green)' : 'var(--gray-100)';
-  label.style.background = cb.checked ? '#F0FDFA' : '#fff';
-  const anyChecked = document.querySelectorAll('#makeup-date-list input:checked').length > 0;
+function toggleDayChip(btn, dayIdx) {
+  const today = new Date(2026, 3, 13); // 프로토타입 기준 4/13
+  if (activeMakeupDays.has(dayIdx)) {
+    activeMakeupDays.delete(dayIdx);
+    btn.style.background = '#fff';
+    btn.style.color = 'var(--gray-500)';
+    btn.style.borderColor = 'var(--gray-200)';
+    // 해당 요일 날짜 카드 제거
+    document.querySelectorAll(`#makeup-date-list [data-dayidx="${dayIdx}"]`).forEach(el => {
+      selectedMakeupDates.delete(el.dataset.value);
+      el.remove();
+    });
+  } else {
+    activeMakeupDays.add(dayIdx);
+    btn.style.background = 'var(--green)';
+    btn.style.color = '#fff';
+    btn.style.borderColor = 'var(--green)';
+    // 해당 요일의 앞 2주 날짜 추가
+    const list = document.getElementById('makeup-date-list');
+    for (let i = 1; i <= 14; i++) {
+      const d = new Date(today);
+      d.setDate(today.getDate() + i);
+      if (d.getDay() !== dayIdx) continue;
+      const label = `${d.getMonth()+1}월 ${d.getDate()}일 (${MAKEUP_DAY_NAMES[d.getDay()]}) 10:00`;
+      const card = document.createElement('div');
+      card.dataset.dayidx = dayIdx;
+      card.dataset.value = label;
+      card.style.cssText = 'display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;border:2px solid var(--gray-100);background:#fff;cursor:pointer;transition:all 0.15s;';
+      card.innerHTML = `<div style="width:20px;height:20px;border-radius:50%;border:2px solid var(--gray-300);flex-shrink:0;" class="date-check-circle"></div>
+        <span style="font-size:14px;font-weight:600;color:var(--navy);">${label}</span>`;
+      card.onclick = function() { toggleMakeupDate(card, label); };
+      list.appendChild(card);
+    }
+  }
+  updateProposeBtn();
+}
+
+function toggleMakeupDate(card, label) {
+  const circle = card.querySelector('.date-check-circle');
+  if (selectedMakeupDates.has(label)) {
+    selectedMakeupDates.delete(label);
+    card.style.borderColor = 'var(--gray-100)';
+    card.style.background = '#fff';
+    circle.style.cssText = 'width:20px;height:20px;border-radius:50%;border:2px solid var(--gray-300);flex-shrink:0;';
+  } else {
+    selectedMakeupDates.add(label);
+    card.style.borderColor = 'var(--green)';
+    card.style.background = '#F0FDFA';
+    circle.style.cssText = 'width:20px;height:20px;border-radius:50%;background:var(--green);flex-shrink:0;display:flex;align-items:center;justify-content:center;';
+    circle.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg>';
+  }
+  updateProposeBtn();
+}
+
+function updateProposeBtn() {
   const btn = document.getElementById('makeup-propose-btn');
-  btn.disabled = !anyChecked;
-  btn.style.background = anyChecked ? 'var(--green)' : 'var(--gray-300)';
+  const hasSelected = selectedMakeupDates.size > 0;
+  btn.disabled = !hasSelected;
+  btn.style.background = hasSelected ? 'var(--green)' : 'var(--gray-300)';
+  btn.textContent = hasSelected ? `선택 날짜 제안하기 (${selectedMakeupDates.size}개)` : '선택 날짜 제안하기';
 }
 
 function closeMakeupDateSheet() {
@@ -1446,8 +1509,7 @@ function closeMakeupDateSheet() {
 }
 
 function proposeMakeupDates() {
-  const checked = document.querySelectorAll('#makeup-date-list input:checked');
-  const dates = Array.from(checked).map(cb => cb.value).join('|');
+  const dates = Array.from(selectedMakeupDates).join('|');
   closeMakeupDateSheet();
   window.location.href = `../flow6-student-my/6-6-booking-detail.html?status=makeup_proposed&dates=${encodeURIComponent(dates)}`;
 }
