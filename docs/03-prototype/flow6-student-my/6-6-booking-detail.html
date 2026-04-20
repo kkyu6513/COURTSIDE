@@ -1,29 +1,105 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=375, initial-scale=1.0"><title>6-6 신청 상세 (거절) — COURTSIDE</title><link rel="stylesheet" href="../common.css"></head>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=375, initial-scale=1.0">
+<title>6-6 나의 레슨 상세 — COURTSIDE</title>
+<link rel="stylesheet" href="../common.css">
+</head>
 <body>
 <div class="device-wrap">
-  <div class="device-label"><span class="device-num">24</span>신청 상세 (거절)</div>
-  <div class="device">
+  <div class="device-label" id="device-label"><span class="device-num">24</span>나의 레슨 상세</div>
+  <div class="device" style="position:relative;">
     <div class="status-bar"><span class="time">9:41</span><div class="status-icons"><span>📶</span><span>🔋</span></div></div>
-    <div class="top-nav"><a class="back" href="6-5-booking-list.html">←</a><span class="title">신청 상세</span><span class="action"></span></div>
+    <div class="top-nav">
+      <a class="back" href="6-5-booking-list.html" onclick="history.length>1?history.back()&&false:true">←</a>
+      <span class="title">나의 레슨 상세</span>
+      <span class="action"></span>
+    </div>
     <div class="screen screen-white" style="display:flex;flex-direction:column;flex:1;overflow-y:auto;padding-bottom:0;">
       <div class="page-pad" style="flex:1;">
-        <div style="text-align:center;margin-bottom:20px;"><span class="badge" style="font-size:14px;padding:6px 16px;background:#FEE2E2;color:#991B1B;">거절됨</span></div>
+
+        <!-- 상태 배지 -->
+        <div style="text-align:center;margin-bottom:20px;" id="status-badge-area"></div>
+
+        <!-- 레슨 기본 정보 -->
         <div style="background:var(--gray-50);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:14px;">
-          <div><div style="font-size:12px;color:var(--gray-400);">코치</div><div style="font-size:15px;font-weight:600;color:var(--navy);">박준호 코치</div></div>
-          <div><div style="font-size:12px;color:var(--gray-400);">유형</div><div style="font-size:15px;font-weight:600;color:var(--coral);">정규레슨 · 주 2회</div></div>
-          <div><div style="font-size:12px;color:var(--gray-400);">요일·시간</div><div style="font-size:15px;font-weight:600;color:var(--navy);">수·금 16:00</div></div>
+          <div><div style="font-size:12px;color:var(--gray-400);">코치</div><div style="font-size:15px;font-weight:600;color:var(--navy);">김민수 코치</div></div>
+          <div><div style="font-size:12px;color:var(--gray-400);">일정</div><div style="font-size:15px;font-weight:600;color:var(--navy);">4월 13일 (일) 10:00</div></div>
+          <div><div style="font-size:12px;color:var(--gray-400);">레슨 유형</div><div style="font-size:15px;font-weight:600;color:var(--coral);">정규레슨 · 1:1</div></div>
+          <div><div style="font-size:12px;color:var(--gray-400);">회차</div><div style="font-size:15px;font-weight:600;color:var(--info);" id="session-info">6/8회</div></div>
+          <div><div style="font-size:12px;color:var(--gray-400);">결제 상태</div><div style="font-size:15px;font-weight:600;color:var(--navy);">결제 완료</div></div>
         </div>
-        <div style="margin-top:16px;padding:16px;background:#FEE2E2;border-radius:12px;">
-          <div style="font-size:13px;font-weight:700;color:#991B1B;margin-bottom:6px;">거절 사유</div>
-          <div style="font-size:14px;color:#7F1D1D;line-height:1.5;">해당 시간대에 이미 다른 레슨이 예약되어 있습니다. 다른 시간대로 다시 신청해 주세요.</div>
-        </div>
+
+        <!-- 상태별 메시지 영역 -->
+        <div id="status-message-area" style="margin-top:14px;"></div>
+
       </div>
     </div>
-    <div style="padding:12px 20px 32px;background:#fff;border-top:1px solid var(--gray-100);flex-shrink:0;display:flex;gap:10px;">
-      <a href="../flow4-chat/4-2-chat.html" class="btn-secondary" style="flex:1;display:block;text-align:center;text-decoration:none;line-height:48px;height:auto;">문의하기</a>
-      <a href="../flow3-booking/3-1-type-select.html" class="btn-primary" style="flex:1;display:block;text-align:center;text-decoration:none;line-height:52px;">다시 신청</a>
-    </div>
+
+    <!-- 하단 버튼 -->
+    <div id="bottom-actions" style="padding:12px 20px 32px;background:#fff;border-top:1px solid var(--gray-100);flex-shrink:0;display:flex;gap:10px;"></div>
   </div>
 </div>
+
+<script>
+const params = new URLSearchParams(location.search);
+const status = params.get('status') || 'rejected';
+
+const configs = {
+  completed: {
+    label: '레슨 완료',
+    badge: '<span class="badge" style="font-size:14px;padding:6px 16px;background:#DBEAFE;color:#1E40AF;">🏁 레슨 완료</span>',
+    session: '6/8회 ✓',
+    message: `<div style="padding:16px;background:#EFF6FF;border-radius:12px;border:1px solid #BFDBFE;">
+      <div style="font-size:13px;font-weight:700;color:#1E40AF;margin-bottom:6px;">레슨이 완료되었습니다</div>
+      <div style="font-size:13px;color:#3B82F6;line-height:1.6;">오늘 레슨이 정상적으로 완료되었습니다.<br>누적 회차가 6회로 업데이트되었습니다.</div>
+    </div>`,
+    actions: `<a href="../flow4-chat/4-2-chat.html" class="btn-secondary" style="flex:1;display:block;text-align:center;text-decoration:none;line-height:48px;height:auto;">코치에게 문의</a>
+              <a href="6-5-booking-list.html" class="btn-primary" style="flex:1;display:block;text-align:center;text-decoration:none;line-height:52px;">목록으로</a>`
+  },
+  absent: {
+    label: '결강',
+    badge: '<span class="badge" style="font-size:14px;padding:6px 16px;background:var(--gray-100);color:var(--gray-500);">❌ 결강</span>',
+    session: '6/8회',
+    message: `<div style="padding:16px;background:#FEF2F2;border-radius:12px;border:1px solid #FECACA;">
+      <div style="font-size:13px;font-weight:700;color:#991B1B;margin-bottom:6px;">오늘 레슨이 결강 처리되었습니다</div>
+      <div style="font-size:13px;color:#EF4444;line-height:1.6;">코치 사정으로 오늘 레슨이 결강되었습니다.<br>보강 레슨 일정이 추가될 예정입니다.<br>알림톡으로 보강 일정을 안내드릴게요.</div>
+    </div>`,
+    actions: `<a href="../flow4-chat/4-2-chat.html" class="btn-secondary" style="flex:1;display:block;text-align:center;text-decoration:none;line-height:48px;height:auto;">코치에게 문의</a>
+              <a href="6-5-booking-list.html" class="btn-primary" style="flex:1;display:block;text-align:center;text-decoration:none;line-height:52px;">목록으로</a>`
+  },
+  makeup: {
+    label: '보강 대기',
+    badge: '<span class="badge" style="font-size:14px;padding:6px 16px;background:#D1FAE5;color:#065F46;">🔄 보강 대기</span>',
+    session: '보강',
+    message: `<div style="padding:16px;background:#F0FDFA;border-radius:12px;border:1.5px dashed var(--green);">
+      <div style="font-size:13px;font-weight:700;color:#065F46;margin-bottom:6px;">보강 레슨이 등록되었습니다</div>
+      <div style="font-size:13px;color:var(--green);line-height:1.6;">코치가 보강 레슨을 등록했습니다.<br>보강 일정이 확정되면 카카오 알림톡으로 안내드려요.</div>
+    </div>`,
+    actions: `<a href="../flow4-chat/4-2-chat.html" class="btn-secondary" style="flex:1;display:block;text-align:center;text-decoration:none;line-height:48px;height:auto;">코치에게 문의</a>
+              <a href="6-5-booking-list.html" class="btn-primary" style="flex:1;display:block;text-align:center;text-decoration:none;line-height:52px;">목록으로</a>`
+  },
+  rejected: {
+    label: '거절됨',
+    badge: '<span class="badge" style="font-size:14px;padding:6px 16px;background:#FEE2E2;color:#991B1B;">거절됨</span>',
+    session: '—',
+    message: `<div style="padding:16px;background:#FEE2E2;border-radius:12px;">
+      <div style="font-size:13px;font-weight:700;color:#991B1B;margin-bottom:6px;">거절 사유</div>
+      <div style="font-size:14px;color:#7F1D1D;line-height:1.5;">해당 시간대에 이미 다른 레슨이 예약되어 있습니다. 다른 시간대로 다시 신청해 주세요.</div>
+    </div>`,
+    actions: `<a href="../flow4-chat/4-2-chat.html" class="btn-secondary" style="flex:1;display:block;text-align:center;text-decoration:none;line-height:48px;height:auto;">문의하기</a>
+              <a href="../flow3-booking/3-1-type-select.html" class="btn-primary" style="flex:1;display:block;text-align:center;text-decoration:none;line-height:52px;">다시 신청</a>`
+  }
+};
+
+const cfg = configs[status] || configs.rejected;
+document.getElementById('device-label').innerHTML = `<span class="device-num">24</span>나의 레슨 상세 (${cfg.label})`;
+document.getElementById('status-badge-area').innerHTML = cfg.badge;
+document.getElementById('session-info').textContent = cfg.session;
+document.getElementById('status-message-area').innerHTML = cfg.message;
+document.getElementById('bottom-actions').innerHTML = cfg.actions;
+</script>
+<script src="../site-nav.js"></script>
+</body>
+</html>

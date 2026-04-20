@@ -1391,12 +1391,12 @@ function closeStatusActions() {
 
 function handleSupplement() {
   closeLessonDetail();
-  showStudentView('makeup');
+  window.location.href = '../flow6-student-my/6-6-booking-detail.html?status=makeup';
 }
 function handleAbsence() {
   if (confirm('결강 처리하시겠습니까?\n수강생에게 결강 안내가 발송됩니다.')) {
     closeLessonDetail();
-    showStudentView('absent');
+    window.location.href = '../flow6-student-my/6-6-booking-detail.html?status=absent';
   }
 }
 
@@ -1964,7 +1964,7 @@ function confirmSchedule() {
 function completeLesson() {
   if (confirm('레슨을 완료 처리합니다.')) {
     closeLessonDetail();
-    showStudentView('completed');
+    window.location.href = '../flow6-student-my/6-6-booking-detail.html?status=completed';
   }
 }
 
