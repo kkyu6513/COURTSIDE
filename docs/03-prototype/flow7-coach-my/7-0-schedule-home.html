@@ -746,10 +746,10 @@
     <!-- 보강 날짜 선택 바텀시트 -->
     <div id="makeup-date-sheet" style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;z-index:160;">
       <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);" onclick="closeMakeupDateSheet()"></div>
-      <div style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;padding:20px 20px 32px;z-index:161;">
+      <div style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;padding:20px 20px 32px;z-index:161;max-height:85%;overflow-y:auto;">
         <div style="width:40px;height:4px;border-radius:2px;background:var(--gray-200);margin:0 auto 16px;"></div>
         <div style="font-size:17px;font-weight:800;color:var(--navy);margin-bottom:4px;">보강 날짜 제안</div>
-        <div style="font-size:13px;color:var(--gray-500);margin-bottom:16px;">수강생에게 제안할 보강 날짜를 선택하세요</div>
+        <div style="font-size:13px;color:var(--gray-500);margin-bottom:16px;">날짜를 선택하면 가능한 시간을 고를 수 있어요</div>
 
         <!-- 주간 네비게이션 -->
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
@@ -759,10 +759,14 @@
         </div>
 
         <!-- 날짜 카드 그리드 -->
-        <div id="makeup-date-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:14px;"></div>
+        <div id="makeup-date-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:16px;"></div>
 
-        <!-- 빈 주 안내 -->
-        <div id="makeup-empty-msg" style="display:none;text-align:center;padding:14px;background:var(--gray-50);border-radius:12px;font-size:13px;color:var(--gray-400);margin-bottom:14px;">보강 가능한 날짜가 없습니다</div>
+        <!-- 시간 슬롯 섹션 -->
+        <div id="makeup-slot-section" style="display:none;margin-bottom:16px;">
+          <div id="makeup-slot-header" style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:10px;"></div>
+          <div id="makeup-slot-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;"></div>
+          <div id="makeup-slot-empty" style="display:none;padding:12px;background:var(--gray-50);border-radius:10px;font-size:13px;color:var(--gray-400);text-align:center;">이 날짜에 보강 가능한 시간이 없습니다</div>
+        </div>
 
         <button id="makeup-propose-btn" onclick="proposeMakeupDates()" disabled
           style="width:100%;height:50px;border-radius:14px;border:none;background:var(--gray-300);color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.15s;">
@@ -1423,38 +1427,81 @@ function handleSupplement() {
 }
 
 const MAKEUP_DAY_NAMES = ['일','월','화','수','목','금','토'];
-const MAKEUP_TODAY = new Date(2026, 3, 13); // 프로토타입 기준 오늘
+const MAKEUP_TODAY = new Date(2026, 3, 13);
 MAKEUP_TODAY.setHours(0,0,0,0);
-let makeupWeekOffset = 0; // 0=이번주, 1=다음주, ...
-let selectedMakeupDates = new Set();
+
+// 요일별 보강 가능 시간 슬롯 (0=일 ~ 6=토)
+const MAKEUP_SLOTS_BY_DAY = {
+  0: ['09:00','11:00','14:00'],
+  1: ['09:00','10:00','11:00','13:00','15:00'],
+  2: ['09:00','10:00','14:00','16:00'],
+  3: [],
+  4: ['09:00','11:00','13:00','16:00'],
+  5: ['10:00','14:00','16:00'],
+  6: ['09:00','10:00','11:00','14:00']
+};
+
+let makeupWeekOffset = 0;
+let activeMakeupDate = null;
+let selectedMakeupSlots = new Map(); // "4/13" → Set<"09:00">
+
+function makeDateKey(d) {
+  return `${d.getMonth()+1}/${d.getDate()}`;
+}
+function makeDateLabel(d) {
+  return `${d.getMonth()+1}월 ${d.getDate()}일 (${MAKEUP_DAY_NAMES[d.getDay()]})`;
+}
+function getMakeupSunday() {
+  const s = new Date(MAKEUP_TODAY);
+  s.setDate(MAKEUP_TODAY.getDate() - MAKEUP_TODAY.getDay() + makeupWeekOffset * 7);
+  return s;
+}
 
 function openMakeupDateSheet() {
   makeupWeekOffset = 0;
-  selectedMakeupDates.clear();
+  activeMakeupDate = null;
+  selectedMakeupSlots.clear();
   document.getElementById('makeup-date-sheet').style.display = 'block';
+  document.getElementById('makeup-slot-section').style.display = 'none';
   renderMakeupWeek();
+  selectMakeupDate(new Date(MAKEUP_TODAY));
 }
 
 function moveWeek(dir) {
   makeupWeekOffset += dir;
-  if (makeupWeekOffset < 0) makeupWeekOffset = 0; // 과거 주 이동 불가
-  selectedMakeupDates.clear();
+  if (makeupWeekOffset < 0) makeupWeekOffset = 0;
   renderMakeupWeek();
+  // 주 이동 시 active date가 새 주 범위 밖이면 슬롯 섹션 숨김
+  if (activeMakeupDate) {
+    const sunday = getMakeupSunday();
+    let inWeek = false;
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(sunday);
+      d.setDate(sunday.getDate() + i);
+      if (makeDateKey(d) === makeDateKey(activeMakeupDate)) { inWeek = true; break; }
+    }
+    if (!inWeek) {
+      activeMakeupDate = null;
+      document.getElementById('makeup-slot-section').style.display = 'none';
+    }
+  }
+}
+
+function selectMakeupDate(d) {
+  activeMakeupDate = new Date(d);
+  activeMakeupDate.setHours(0,0,0,0);
+  renderMakeupWeek();
+  renderMakeupSlots();
 }
 
 function renderMakeupWeek() {
-  // 이번 주 일요일 기준
-  const sunday = new Date(MAKEUP_TODAY);
-  sunday.setDate(MAKEUP_TODAY.getDate() - MAKEUP_TODAY.getDay() + makeupWeekOffset * 7);
-
+  const sunday = getMakeupSunday();
   const saturday = new Date(sunday);
   saturday.setDate(sunday.getDate() + 6);
 
-  // 주간 라벨
   document.getElementById('makeup-week-label').textContent =
     `${sunday.getMonth()+1}/${sunday.getDate()} ~ ${saturday.getMonth()+1}/${saturday.getDate()}`;
 
-  // 이전 주 버튼 비활성화 (현재 주 이전 불가)
   const prevBtn = document.querySelector('#makeup-date-sheet button[onclick="moveWeek(-1)"]');
   prevBtn.disabled = makeupWeekOffset === 0;
   prevBtn.style.opacity = makeupWeekOffset === 0 ? '0.35' : '1';
@@ -1462,67 +1509,109 @@ function renderMakeupWeek() {
   const grid = document.getElementById('makeup-date-grid');
   grid.innerHTML = '';
 
-  let hasAvailable = false;
-
   for (let i = 0; i < 7; i++) {
     const d = new Date(sunday);
     d.setDate(sunday.getDate() + i);
     d.setHours(0,0,0,0);
     const isPast = d < MAKEUP_TODAY;
     const isToday = d.getTime() === MAKEUP_TODAY.getTime();
-    const label = `${d.getMonth()+1}월 ${d.getDate()}일 (${MAKEUP_DAY_NAMES[d.getDay()]}) 10:00`;
-    const dayNum = d.getDate();
+    const isActive = activeMakeupDate && d.getTime() === activeMakeupDate.getTime();
+    const dateKey = makeDateKey(d);
     const dayName = MAKEUP_DAY_NAMES[d.getDay()];
+    const dayNum = d.getDate();
+    const slotCount = (selectedMakeupSlots.get(dateKey) || new Set()).size;
 
     const cell = document.createElement('div');
-    cell.dataset.value = label;
 
     if (isPast) {
-      cell.style.cssText = 'display:flex;flex-direction:column;align-items:center;padding:10px 4px;border-radius:12px;border:1.5px solid var(--gray-100);background:var(--gray-50);opacity:0.4;cursor:not-allowed;gap:4px;';
+      cell.style.cssText = 'display:flex;flex-direction:column;align-items:center;padding:10px 4px;border-radius:12px;border:1.5px solid var(--gray-100);background:var(--gray-50);opacity:0.4;cursor:not-allowed;gap:3px;';
       cell.innerHTML = `<span style="font-size:11px;color:var(--gray-400);">${dayName}</span>
-        <span style="font-size:16px;font-weight:700;color:var(--gray-400);">${dayNum}</span>`;
+        <span style="font-size:16px;font-weight:700;color:var(--gray-400);">${dayNum}</span>
+        <div style="height:14px;"></div>`;
     } else {
-      hasAvailable = true;
-      const isSel = selectedMakeupDates.has(label);
-      cell.style.cssText = `display:flex;flex-direction:column;align-items:center;padding:10px 4px;border-radius:12px;border:1.5px solid ${isSel ? 'var(--green)' : 'var(--gray-100)'};background:${isSel ? '#F0FDFA' : '#fff'};cursor:pointer;gap:4px;transition:all 0.15s;`;
-      cell.innerHTML = `<span style="font-size:11px;font-weight:600;color:${isSel ? 'var(--green)' : 'var(--gray-400)'};">${dayName}</span>
-        <span style="font-size:16px;font-weight:700;color:${isSel ? 'var(--green)' : 'var(--navy)'};">${dayNum}</span>
-        ${isToday ? `<span style="font-size:9px;font-weight:700;color:${isSel ? 'var(--green)' : 'var(--coral)'};margin-top:1px;">오늘</span>` : '<span style="font-size:9px;"> </span>'}
-        ${isSel ? '<svg width="14" height="14" viewBox="0 0 14 14"><rect width="14" height="14" rx="3" fill="var(--green)"/><polyline points="3,7 6,10 11,4" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg>' : '<div style="width:14px;height:14px;border-radius:3px;border:1.5px solid var(--gray-200);"></div>'}`;
-      cell.onclick = function() { toggleMakeupDateCell(cell, label); };
+      const border = isActive ? 'var(--navy)' : (slotCount > 0 ? 'var(--green)' : 'var(--gray-200)');
+      const bg = isActive ? '#EEF2FF' : (slotCount > 0 ? '#F0FDFA' : '#fff');
+      const dayColor = isActive ? 'var(--navy)' : (slotCount > 0 ? 'var(--green)' : 'var(--gray-400)');
+      const numColor = isActive ? 'var(--navy)' : (slotCount > 0 ? 'var(--green)' : 'var(--navy)');
+      cell.style.cssText = `display:flex;flex-direction:column;align-items:center;padding:10px 4px;border-radius:12px;border:1.5px solid ${border};background:${bg};cursor:pointer;gap:3px;transition:all 0.15s;`;
+
+      let badge = '';
+      if (slotCount > 0) {
+        badge = `<span style="font-size:9px;font-weight:700;color:var(--green);background:#D1FAE5;border-radius:4px;padding:1px 4px;">${slotCount}</span>`;
+      } else if (isToday) {
+        badge = `<span style="font-size:9px;font-weight:700;color:var(--coral);">오늘</span>`;
+      } else {
+        badge = '<div style="height:14px;"></div>';
+      }
+
+      cell.innerHTML = `<span style="font-size:11px;font-weight:600;color:${dayColor};">${dayName}</span>
+        <span style="font-size:16px;font-weight:700;color:${numColor};">${dayNum}</span>
+        ${badge}`;
+
+      const capturedD = new Date(d);
+      cell.onclick = function() { selectMakeupDate(capturedD); };
     }
     grid.appendChild(cell);
   }
+}
 
-  // 빈 주 안내
-  document.getElementById('makeup-empty-msg').style.display = hasAvailable ? 'none' : 'block';
-  grid.style.display = hasAvailable ? 'grid' : 'none';
+function renderMakeupSlots() {
+  if (!activeMakeupDate) return;
+  const section = document.getElementById('makeup-slot-section');
+  section.style.display = 'block';
 
-  // 오늘 자동 선택 (이번 주이고 아직 선택 안 됐을 때)
-  if (makeupWeekOffset === 0 && selectedMakeupDates.size === 0 && hasAvailable) {
-    const todayLabel = `${MAKEUP_TODAY.getMonth()+1}월 ${MAKEUP_TODAY.getDate()}일 (${MAKEUP_DAY_NAMES[MAKEUP_TODAY.getDay()]}) 10:00`;
-    const todayCell = Array.from(grid.children).find(c => c.dataset.value === todayLabel);
-    if (todayCell) toggleMakeupDateCell(todayCell, todayLabel);
+  document.getElementById('makeup-slot-header').textContent =
+    `${makeDateLabel(activeMakeupDate)} 가능한 시간`;
+
+  const slots = MAKEUP_SLOTS_BY_DAY[activeMakeupDate.getDay()] || [];
+  const dateKey = makeDateKey(activeMakeupDate);
+  const selectedSet = selectedMakeupSlots.get(dateKey) || new Set();
+
+  const slotGrid = document.getElementById('makeup-slot-grid');
+  const emptyMsg = document.getElementById('makeup-slot-empty');
+
+  if (slots.length === 0) {
+    slotGrid.style.display = 'none';
+    emptyMsg.style.display = 'block';
+  } else {
+    slotGrid.style.display = 'grid';
+    emptyMsg.style.display = 'none';
+    slotGrid.innerHTML = '';
+    slots.forEach(time => {
+      const isSel = selectedSet.has(time);
+      const chip = document.createElement('div');
+      chip.style.cssText = `display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 6px;border-radius:10px;border:1.5px solid ${isSel ? 'var(--green)' : 'var(--gray-200)'};background:${isSel ? '#F0FDFA' : '#fff'};cursor:pointer;gap:5px;transition:all 0.15s;`;
+      chip.innerHTML = `<span style="font-size:13px;font-weight:700;color:${isSel ? 'var(--green)' : 'var(--navy)'};">${time}</span>
+        ${isSel
+          ? '<svg width="14" height="14" viewBox="0 0 14 14"><rect width="14" height="14" rx="3" fill="var(--green)"/><polyline points="3,7 6,10 11,4" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg>'
+          : '<div style="width:14px;height:14px;border-radius:3px;border:1.5px solid var(--gray-200);"></div>'}`;
+      chip.onclick = function() { toggleMakeupSlot(dateKey, time); };
+      slotGrid.appendChild(chip);
+    });
   }
-
   updateProposeBtn();
 }
 
-function toggleMakeupDateCell(cell, label) {
-  if (selectedMakeupDates.has(label)) {
-    selectedMakeupDates.delete(label);
+function toggleMakeupSlot(dateKey, time) {
+  if (!selectedMakeupSlots.has(dateKey)) selectedMakeupSlots.set(dateKey, new Set());
+  const set = selectedMakeupSlots.get(dateKey);
+  if (set.has(time)) {
+    set.delete(time);
+    if (set.size === 0) selectedMakeupSlots.delete(dateKey);
   } else {
-    selectedMakeupDates.add(label);
+    set.add(time);
   }
   renderMakeupWeek();
+  renderMakeupSlots();
 }
 
 function updateProposeBtn() {
   const btn = document.getElementById('makeup-propose-btn');
-  const n = selectedMakeupDates.size;
-  btn.disabled = n === 0;
-  btn.style.background = n > 0 ? 'var(--green)' : 'var(--gray-300)';
-  btn.textContent = n > 0 ? `선택 날짜 제안하기 (${n}개)` : '선택 날짜 제안하기';
+  let total = 0;
+  selectedMakeupSlots.forEach(s => total += s.size);
+  btn.disabled = total === 0;
+  btn.style.background = total > 0 ? 'var(--green)' : 'var(--gray-300)';
+  btn.textContent = total > 0 ? `선택 날짜 제안하기 (${total}개)` : '선택 날짜 제안하기';
 }
 
 function closeMakeupDateSheet() {
@@ -1530,7 +1619,13 @@ function closeMakeupDateSheet() {
 }
 
 function proposeMakeupDates() {
-  const dates = Array.from(selectedMakeupDates).join('|');
+  const slots = [];
+  selectedMakeupSlots.forEach((times, dateKey) => {
+    const [month, day] = dateKey.split('/').map(Number);
+    const d = new Date(2026, month - 1, day);
+    times.forEach(time => slots.push(`${makeDateLabel(d)} ${time}`));
+  });
+  const dates = slots.join('|');
   closeMakeupDateSheet();
   window.location.href = `../flow6-student-my/6-6-booking-detail.html?status=makeup_proposed&dates=${encodeURIComponent(dates)}`;
 }
