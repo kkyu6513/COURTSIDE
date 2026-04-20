@@ -109,8 +109,15 @@
         </div>
       </div>
 
-      <!-- 오늘 레슨 / 변경 요청 탭 -->
+      <!-- 오늘 레슨 / 변경 요청 / 대기 신청 탭 -->
       <div style="padding:0 20px;">
+
+        <!-- 탭 바 -->
+        <div style="display:flex;border-bottom:2px solid var(--gray-100);margin-bottom:12px;">
+          <div id="tab-lesson" onclick="switchTab('lesson')" style="flex:1;text-align:center;padding:10px 0;font-size:13px;font-weight:700;color:var(--green);border-bottom:2px solid var(--green);margin-bottom:-2px;cursor:pointer;">오늘 레슨</div>
+          <div id="tab-reschedule" onclick="switchTab('reschedule')" style="flex:1;text-align:center;padding:10px 0;font-size:13px;font-weight:700;color:var(--gray-400);border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer;">변경 요청 <span style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:var(--coral);color:#fff;font-size:9px;font-weight:700;">7</span></div>
+          <div id="tab-pending" onclick="switchTab('pending')" style="flex:1;text-align:center;padding:10px 0;font-size:13px;font-weight:700;color:var(--gray-400);border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer;">대기 신청 <span style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:var(--warning);color:#fff;font-size:9px;font-weight:700;">5</span></div>
+        </div>
 
         <!-- 탭 콘텐츠: 오늘 레슨 -->
         <div id="content-lesson">
@@ -2292,19 +2299,6 @@ function proposeAllFromDetail(btnEl) {
   setTimeout(() => { toast.style.display = 'none'; closeLessonDetail(); }, 1500);
 }
 
-let accordionOpen = false;
-function toggleAccordion() {
-  accordionOpen = !accordionOpen;
-  const content = document.getElementById('accordion-content');
-  const arrow = document.getElementById('accordion-arrow');
-  if (accordionOpen) {
-    content.style.maxHeight = content.scrollHeight + 'px';
-    arrow.style.transform = 'rotate(180deg)';
-  } else {
-    content.style.maxHeight = '0';
-    arrow.style.transform = 'rotate(0deg)';
-  }
-}
 </script>
 <script src="../site-nav.js"></script>
 </body>
