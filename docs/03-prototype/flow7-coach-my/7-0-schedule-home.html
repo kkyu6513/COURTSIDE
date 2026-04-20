@@ -764,11 +764,9 @@
         <!-- 시간 슬롯 섹션 -->
         <div id="makeup-slot-section" style="margin-bottom:16px;">
           <div id="makeup-slot-header" style="display:none;font-size:13px;font-weight:700;color:var(--navy);margin-bottom:10px;"></div>
-          <div id="makeup-slot-box" style="border:1.5px dashed var(--gray-200);border-radius:12px;padding:16px;min-height:76px;">
-            <div id="makeup-slot-placeholder" style="display:flex;align-items:center;justify-content:center;height:44px;font-size:13px;color:var(--gray-300);">날짜를 선택해 주세요</div>
-            <div id="makeup-slot-grid" style="display:none;grid-template-columns:repeat(3,1fr);gap:8px;"></div>
-            <div id="makeup-slot-empty" style="display:none;font-size:13px;color:var(--gray-400);text-align:center;padding:8px 0;">이 날짜에 보강 가능한 시간이 없습니다</div>
-          </div>
+          <div id="makeup-slot-placeholder" style="display:flex;align-items:center;justify-content:center;height:52px;font-size:13px;color:var(--gray-300);">날짜를 선택해 주세요</div>
+          <div id="makeup-slot-grid" style="display:none;grid-template-columns:repeat(3,1fr);gap:8px;"></div>
+          <div id="makeup-slot-empty" style="display:none;font-size:13px;color:var(--gray-400);text-align:center;padding:8px 0;">이 날짜에 보강 가능한 시간이 없습니다</div>
         </div>
 
         <button id="makeup-propose-btn" onclick="proposeMakeupDates()" disabled
@@ -1559,15 +1557,12 @@ function renderMakeupWeek() {
 
 function renderMakeupSlots() {
   const header = document.getElementById('makeup-slot-header');
-  const box = document.getElementById('makeup-slot-box');
   const placeholder = document.getElementById('makeup-slot-placeholder');
   const slotGrid = document.getElementById('makeup-slot-grid');
   const emptyMsg = document.getElementById('makeup-slot-empty');
 
   if (!activeMakeupDate) {
     header.style.display = 'none';
-    box.style.borderStyle = 'dashed';
-    box.style.borderColor = 'var(--gray-200)';
     placeholder.style.display = 'flex';
     slotGrid.style.display = 'none';
     emptyMsg.style.display = 'none';
@@ -1576,8 +1571,6 @@ function renderMakeupSlots() {
 
   header.style.display = 'block';
   header.textContent = `${makeDateLabel(activeMakeupDate)} 가능한 시간`;
-  box.style.borderStyle = 'solid';
-  box.style.borderColor = 'var(--gray-100)';
   placeholder.style.display = 'none';
 
   const slots = MAKEUP_SLOTS_BY_DAY[activeMakeupDate.getDay()] || [];
@@ -1594,11 +1587,11 @@ function renderMakeupSlots() {
     slots.forEach(time => {
       const isSel = selectedSet.has(time);
       const chip = document.createElement('div');
-      chip.style.cssText = `display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 6px;border-radius:10px;border:1.5px solid ${isSel ? 'var(--green)' : 'var(--gray-200)'};background:${isSel ? '#F0FDFA' : '#fff'};cursor:pointer;gap:5px;transition:all 0.15s;`;
+      chip.style.cssText = `display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 6px;border-radius:10px;border:1.5px solid ${isSel ? 'var(--green)' : 'var(--gray-300)'};background:${isSel ? '#F0FDFA' : '#fff'};cursor:pointer;gap:5px;transition:all 0.15s;`;
       chip.innerHTML = `<span style="font-size:13px;font-weight:700;color:${isSel ? 'var(--green)' : 'var(--navy)'};">${time}</span>
         ${isSel
           ? '<svg width="14" height="14" viewBox="0 0 14 14"><rect width="14" height="14" rx="3" fill="var(--green)"/><polyline points="3,7 6,10 11,4" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg>'
-          : '<div style="width:14px;height:14px;border-radius:3px;border:1.5px solid var(--gray-200);"></div>'}`;
+          : '<div style="width:14px;height:14px;border-radius:3px;border:1.5px solid var(--gray-300);"></div>'}`;
       chip.onclick = function() { toggleMakeupSlot(dateKey, time); };
       slotGrid.appendChild(chip);
     });
