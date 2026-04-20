@@ -762,10 +762,13 @@
         <div id="makeup-date-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:16px;"></div>
 
         <!-- 시간 슬롯 섹션 -->
-        <div id="makeup-slot-section" style="display:none;margin-bottom:16px;">
-          <div id="makeup-slot-header" style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:10px;"></div>
-          <div id="makeup-slot-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;"></div>
-          <div id="makeup-slot-empty" style="display:none;padding:12px;background:var(--gray-50);border-radius:10px;font-size:13px;color:var(--gray-400);text-align:center;">이 날짜에 보강 가능한 시간이 없습니다</div>
+        <div id="makeup-slot-section" style="margin-bottom:16px;">
+          <div id="makeup-slot-header" style="display:none;font-size:13px;font-weight:700;color:var(--navy);margin-bottom:10px;"></div>
+          <div id="makeup-slot-box" style="border:1.5px dashed var(--gray-200);border-radius:12px;padding:16px;min-height:76px;">
+            <div id="makeup-slot-placeholder" style="display:flex;align-items:center;justify-content:center;height:44px;font-size:13px;color:var(--gray-300);">날짜를 선택해 주세요</div>
+            <div id="makeup-slot-grid" style="display:none;grid-template-columns:repeat(3,1fr);gap:8px;"></div>
+            <div id="makeup-slot-empty" style="display:none;font-size:13px;color:var(--gray-400);text-align:center;padding:8px 0;">이 날짜에 보강 가능한 시간이 없습니다</div>
+          </div>
         </div>
 
         <button id="makeup-propose-btn" onclick="proposeMakeupDates()" disabled
@@ -1462,9 +1465,8 @@ function openMakeupDateSheet() {
   activeMakeupDate = null;
   selectedMakeupSlots.clear();
   document.getElementById('makeup-date-sheet').style.display = 'block';
-  document.getElementById('makeup-slot-section').style.display = 'none';
   renderMakeupWeek();
-  selectMakeupDate(new Date(MAKEUP_TODAY));
+  renderMakeupSlots();
 }
 
 function moveWeek(dir) {
@@ -1556,19 +1558,31 @@ function renderMakeupWeek() {
 }
 
 function renderMakeupSlots() {
-  if (!activeMakeupDate) return;
-  const section = document.getElementById('makeup-slot-section');
-  section.style.display = 'block';
+  const header = document.getElementById('makeup-slot-header');
+  const box = document.getElementById('makeup-slot-box');
+  const placeholder = document.getElementById('makeup-slot-placeholder');
+  const slotGrid = document.getElementById('makeup-slot-grid');
+  const emptyMsg = document.getElementById('makeup-slot-empty');
 
-  document.getElementById('makeup-slot-header').textContent =
-    `${makeDateLabel(activeMakeupDate)} 가능한 시간`;
+  if (!activeMakeupDate) {
+    header.style.display = 'none';
+    box.style.borderStyle = 'dashed';
+    box.style.borderColor = 'var(--gray-200)';
+    placeholder.style.display = 'flex';
+    slotGrid.style.display = 'none';
+    emptyMsg.style.display = 'none';
+    return;
+  }
+
+  header.style.display = 'block';
+  header.textContent = `${makeDateLabel(activeMakeupDate)} 가능한 시간`;
+  box.style.borderStyle = 'solid';
+  box.style.borderColor = 'var(--gray-100)';
+  placeholder.style.display = 'none';
 
   const slots = MAKEUP_SLOTS_BY_DAY[activeMakeupDate.getDay()] || [];
   const dateKey = makeDateKey(activeMakeupDate);
   const selectedSet = selectedMakeupSlots.get(dateKey) || new Set();
-
-  const slotGrid = document.getElementById('makeup-slot-grid');
-  const emptyMsg = document.getElementById('makeup-slot-empty');
 
   if (slots.length === 0) {
     slotGrid.style.display = 'none';
