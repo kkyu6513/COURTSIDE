@@ -1444,12 +1444,12 @@ function openMakeupDateSheet() {
 
 function toggleDayChip(btn, dayIdx) {
   const today = new Date(2026, 3, 13); // 프로토타입 기준 4/13
+  today.setHours(0, 0, 0, 0);
   if (activeMakeupDays.has(dayIdx)) {
     activeMakeupDays.delete(dayIdx);
     btn.style.background = '#fff';
     btn.style.color = 'var(--gray-500)';
     btn.style.borderColor = 'var(--gray-200)';
-    // 해당 요일 날짜 카드 제거
     document.querySelectorAll(`#makeup-date-list [data-dayidx="${dayIdx}"]`).forEach(el => {
       selectedMakeupDates.delete(el.dataset.value);
       el.remove();
@@ -1459,39 +1459,50 @@ function toggleDayChip(btn, dayIdx) {
     btn.style.background = 'var(--green)';
     btn.style.color = '#fff';
     btn.style.borderColor = 'var(--green)';
-    // 해당 요일의 앞 2주 날짜 추가
     const list = document.getElementById('makeup-date-list');
-    for (let i = 1; i <= 14; i++) {
+    let firstCard = null;
+    for (let i = 0; i <= 14; i++) {
       const d = new Date(today);
       d.setDate(today.getDate() + i);
       if (d.getDay() !== dayIdx) continue;
+      const isPast = d < today;
       const label = `${d.getMonth()+1}월 ${d.getDate()}일 (${MAKEUP_DAY_NAMES[d.getDay()]}) 10:00`;
       const card = document.createElement('div');
       card.dataset.dayidx = dayIdx;
       card.dataset.value = label;
-      card.style.cssText = 'display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;border:2px solid var(--gray-100);background:#fff;cursor:pointer;transition:all 0.15s;';
-      card.innerHTML = `<div style="width:20px;height:20px;border-radius:50%;border:2px solid var(--gray-300);flex-shrink:0;" class="date-check-circle"></div>
-        <span style="font-size:14px;font-weight:600;color:var(--navy);">${label}</span>`;
-      card.onclick = function() { toggleMakeupDate(card, label); };
+      if (isPast) {
+        card.style.cssText = 'display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;border:2px solid var(--gray-100);background:var(--gray-50);opacity:0.45;cursor:not-allowed;';
+        card.innerHTML = `<div style="width:20px;height:20px;border-radius:4px;border:2px solid var(--gray-200);flex-shrink:0;background:#fff;" class="date-check-box"></div>
+          <span style="font-size:14px;font-weight:600;color:var(--gray-400);">${label}</span>`;
+      } else {
+        card.style.cssText = 'display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;border:2px solid var(--gray-100);background:#fff;cursor:pointer;transition:all 0.15s;';
+        card.innerHTML = `<div style="width:20px;height:20px;border-radius:4px;border:2px solid var(--gray-300);flex-shrink:0;background:#fff;" class="date-check-box"></div>
+          <span style="font-size:14px;font-weight:600;color:var(--navy);">${label}</span>`;
+        card.onclick = function() { toggleMakeupDate(card, label); };
+        if (!firstCard) firstCard = card;
+      }
       list.appendChild(card);
     }
+    // 첫 번째 선택 가능 날짜 자동 선택
+    if (firstCard) toggleMakeupDate(firstCard, firstCard.dataset.value);
   }
   updateProposeBtn();
 }
 
 function toggleMakeupDate(card, label) {
-  const circle = card.querySelector('.date-check-circle');
+  const box = card.querySelector('.date-check-box');
   if (selectedMakeupDates.has(label)) {
     selectedMakeupDates.delete(label);
     card.style.borderColor = 'var(--gray-100)';
     card.style.background = '#fff';
-    circle.style.cssText = 'width:20px;height:20px;border-radius:50%;border:2px solid var(--gray-300);flex-shrink:0;';
+    box.style.cssText = 'width:20px;height:20px;border-radius:4px;border:2px solid var(--gray-300);flex-shrink:0;background:#fff;';
+    box.innerHTML = '';
   } else {
     selectedMakeupDates.add(label);
     card.style.borderColor = 'var(--green)';
     card.style.background = '#F0FDFA';
-    circle.style.cssText = 'width:20px;height:20px;border-radius:50%;background:var(--green);flex-shrink:0;display:flex;align-items:center;justify-content:center;';
-    circle.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg>';
+    box.style.cssText = 'width:20px;height:20px;border-radius:4px;background:var(--green);flex-shrink:0;display:flex;align-items:center;justify-content:center;';
+    box.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg>';
   }
   updateProposeBtn();
 }
