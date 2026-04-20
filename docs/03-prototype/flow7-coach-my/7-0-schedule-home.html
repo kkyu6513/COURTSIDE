@@ -746,24 +746,23 @@
     <!-- 보강 날짜 선택 바텀시트 -->
     <div id="makeup-date-sheet" style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;z-index:160;">
       <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);" onclick="closeMakeupDateSheet()"></div>
-      <div style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;padding:20px 20px 32px;z-index:161;max-height:85%;overflow-y:auto;">
+      <div style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;padding:20px 20px 32px;z-index:161;">
         <div style="width:40px;height:4px;border-radius:2px;background:var(--gray-200);margin:0 auto 16px;"></div>
         <div style="font-size:17px;font-weight:800;color:var(--navy);margin-bottom:4px;">보강 날짜 제안</div>
-        <div style="font-size:13px;color:var(--gray-500);margin-bottom:14px;">레슨 가능한 요일을 선택하면 날짜를 고를 수 있어요</div>
+        <div style="font-size:13px;color:var(--gray-500);margin-bottom:16px;">수강생에게 제안할 보강 날짜를 선택하세요</div>
 
-        <!-- 요일 칩 -->
-        <div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;">
-          <button onclick="toggleDayChip(this,0)" data-day="0" style="padding:8px 14px;border-radius:20px;border:1.5px solid var(--gray-200);background:#fff;color:var(--gray-500);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.15s;">일</button>
-          <button onclick="toggleDayChip(this,1)" data-day="1" style="padding:8px 14px;border-radius:20px;border:1.5px solid var(--gray-200);background:#fff;color:var(--gray-500);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.15s;">월</button>
-          <button onclick="toggleDayChip(this,2)" data-day="2" style="padding:8px 14px;border-radius:20px;border:1.5px solid var(--gray-200);background:#fff;color:var(--gray-500);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.15s;">화</button>
-          <button onclick="toggleDayChip(this,3)" data-day="3" style="padding:8px 14px;border-radius:20px;border:1.5px solid var(--gray-200);background:#fff;color:var(--gray-500);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.15s;">수</button>
-          <button onclick="toggleDayChip(this,4)" data-day="4" style="padding:8px 14px;border-radius:20px;border:1.5px solid var(--gray-200);background:#fff;color:var(--gray-500);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.15s;">목</button>
-          <button onclick="toggleDayChip(this,5)" data-day="5" style="padding:8px 14px;border-radius:20px;border:1.5px solid var(--gray-200);background:#fff;color:var(--gray-500);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.15s;">금</button>
-          <button onclick="toggleDayChip(this,6)" data-day="6" style="padding:8px 14px;border-radius:20px;border:1.5px solid var(--gray-200);background:#fff;color:var(--gray-500);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.15s;">토</button>
+        <!-- 주간 네비게이션 -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <button onclick="moveWeek(-1)" style="width:32px;height:32px;border-radius:8px;border:1px solid var(--gray-200);background:#fff;color:var(--gray-500);font-size:16px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;">‹</button>
+          <span id="makeup-week-label" style="font-size:13px;font-weight:700;color:var(--navy);"></span>
+          <button onclick="moveWeek(1)" style="width:32px;height:32px;border-radius:8px;border:1px solid var(--gray-200);background:#fff;color:var(--gray-500);font-size:16px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;">›</button>
         </div>
 
-        <!-- 선택된 요일의 날짜 목록 -->
-        <div id="makeup-date-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;"></div>
+        <!-- 날짜 카드 그리드 -->
+        <div id="makeup-date-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:14px;"></div>
+
+        <!-- 빈 주 안내 -->
+        <div id="makeup-empty-msg" style="display:none;text-align:center;padding:14px;background:var(--gray-50);border-radius:12px;font-size:13px;color:var(--gray-400);margin-bottom:14px;">보강 가능한 날짜가 없습니다</div>
 
         <button id="makeup-propose-btn" onclick="proposeMakeupDates()" disabled
           style="width:100%;height:50px;border-radius:14px;border:none;background:var(--gray-300);color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.15s;">
@@ -1424,95 +1423,106 @@ function handleSupplement() {
 }
 
 const MAKEUP_DAY_NAMES = ['일','월','화','수','목','금','토'];
-let activeMakeupDays = new Set(); // 선택된 요일 인덱스
-let selectedMakeupDates = new Set(); // 선택된 날짜 문자열
+const MAKEUP_TODAY = new Date(2026, 3, 13); // 프로토타입 기준 오늘
+MAKEUP_TODAY.setHours(0,0,0,0);
+let makeupWeekOffset = 0; // 0=이번주, 1=다음주, ...
+let selectedMakeupDates = new Set();
 
 function openMakeupDateSheet() {
-  activeMakeupDays.clear();
+  makeupWeekOffset = 0;
   selectedMakeupDates.clear();
-  // 요일 칩 초기화
-  document.querySelectorAll('#makeup-date-sheet [data-day]').forEach(btn => {
-    btn.style.background = '#fff';
-    btn.style.color = 'var(--gray-500)';
-    btn.style.borderColor = 'var(--gray-200)';
-  });
-  document.getElementById('makeup-date-list').innerHTML = '';
-  document.getElementById('makeup-propose-btn').disabled = true;
-  document.getElementById('makeup-propose-btn').style.background = 'var(--gray-300)';
   document.getElementById('makeup-date-sheet').style.display = 'block';
+  renderMakeupWeek();
 }
 
-function toggleDayChip(btn, dayIdx) {
-  const today = new Date(2026, 3, 13); // 프로토타입 기준 4/13
-  today.setHours(0, 0, 0, 0);
-  if (activeMakeupDays.has(dayIdx)) {
-    activeMakeupDays.delete(dayIdx);
-    btn.style.background = '#fff';
-    btn.style.color = 'var(--gray-500)';
-    btn.style.borderColor = 'var(--gray-200)';
-    document.querySelectorAll(`#makeup-date-list [data-dayidx="${dayIdx}"]`).forEach(el => {
-      selectedMakeupDates.delete(el.dataset.value);
-      el.remove();
-    });
-  } else {
-    activeMakeupDays.add(dayIdx);
-    btn.style.background = 'var(--green)';
-    btn.style.color = '#fff';
-    btn.style.borderColor = 'var(--green)';
-    const list = document.getElementById('makeup-date-list');
-    let firstCard = null;
-    for (let i = 0; i <= 14; i++) {
-      const d = new Date(today);
-      d.setDate(today.getDate() + i);
-      if (d.getDay() !== dayIdx) continue;
-      const isPast = d < today;
-      const label = `${d.getMonth()+1}월 ${d.getDate()}일 (${MAKEUP_DAY_NAMES[d.getDay()]}) 10:00`;
-      const card = document.createElement('div');
-      card.dataset.dayidx = dayIdx;
-      card.dataset.value = label;
-      if (isPast) {
-        card.style.cssText = 'display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;border:2px solid var(--gray-100);background:var(--gray-50);opacity:0.45;cursor:not-allowed;';
-        card.innerHTML = `<div style="width:20px;height:20px;border-radius:4px;border:2px solid var(--gray-200);flex-shrink:0;background:#fff;" class="date-check-box"></div>
-          <span style="font-size:14px;font-weight:600;color:var(--gray-400);">${label}</span>`;
-      } else {
-        card.style.cssText = 'display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;border:2px solid var(--gray-100);background:#fff;cursor:pointer;transition:all 0.15s;';
-        card.innerHTML = `<div style="width:20px;height:20px;border-radius:4px;border:2px solid var(--gray-300);flex-shrink:0;background:#fff;" class="date-check-box"></div>
-          <span style="font-size:14px;font-weight:600;color:var(--navy);">${label}</span>`;
-        card.onclick = function() { toggleMakeupDate(card, label); };
-        if (!firstCard) firstCard = card;
-      }
-      list.appendChild(card);
+function moveWeek(dir) {
+  makeupWeekOffset += dir;
+  if (makeupWeekOffset < 0) makeupWeekOffset = 0; // 과거 주 이동 불가
+  selectedMakeupDates.clear();
+  renderMakeupWeek();
+}
+
+function renderMakeupWeek() {
+  // 이번 주 일요일 기준
+  const sunday = new Date(MAKEUP_TODAY);
+  sunday.setDate(MAKEUP_TODAY.getDate() - MAKEUP_TODAY.getDay() + makeupWeekOffset * 7);
+
+  const saturday = new Date(sunday);
+  saturday.setDate(sunday.getDate() + 6);
+
+  // 주간 라벨
+  document.getElementById('makeup-week-label').textContent =
+    `${sunday.getMonth()+1}/${sunday.getDate()} ~ ${saturday.getMonth()+1}/${saturday.getDate()}`;
+
+  // 이전 주 버튼 비활성화 (현재 주 이전 불가)
+  const prevBtn = document.querySelector('#makeup-date-sheet button[onclick="moveWeek(-1)"]');
+  prevBtn.disabled = makeupWeekOffset === 0;
+  prevBtn.style.opacity = makeupWeekOffset === 0 ? '0.35' : '1';
+
+  const grid = document.getElementById('makeup-date-grid');
+  grid.innerHTML = '';
+
+  let hasAvailable = false;
+
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(sunday);
+    d.setDate(sunday.getDate() + i);
+    d.setHours(0,0,0,0);
+    const isPast = d < MAKEUP_TODAY;
+    const isToday = d.getTime() === MAKEUP_TODAY.getTime();
+    const label = `${d.getMonth()+1}월 ${d.getDate()}일 (${MAKEUP_DAY_NAMES[d.getDay()]}) 10:00`;
+    const dayNum = d.getDate();
+    const dayName = MAKEUP_DAY_NAMES[d.getDay()];
+
+    const cell = document.createElement('div');
+    cell.dataset.value = label;
+
+    if (isPast) {
+      cell.style.cssText = 'display:flex;flex-direction:column;align-items:center;padding:10px 4px;border-radius:12px;border:1.5px solid var(--gray-100);background:var(--gray-50);opacity:0.4;cursor:not-allowed;gap:4px;';
+      cell.innerHTML = `<span style="font-size:11px;color:var(--gray-400);">${dayName}</span>
+        <span style="font-size:16px;font-weight:700;color:var(--gray-400);">${dayNum}</span>`;
+    } else {
+      hasAvailable = true;
+      const isSel = selectedMakeupDates.has(label);
+      cell.style.cssText = `display:flex;flex-direction:column;align-items:center;padding:10px 4px;border-radius:12px;border:1.5px solid ${isSel ? 'var(--green)' : 'var(--gray-100)'};background:${isSel ? '#F0FDFA' : '#fff'};cursor:pointer;gap:4px;transition:all 0.15s;`;
+      cell.innerHTML = `<span style="font-size:11px;font-weight:600;color:${isSel ? 'var(--green)' : 'var(--gray-400)'};">${dayName}</span>
+        <span style="font-size:16px;font-weight:700;color:${isSel ? 'var(--green)' : 'var(--navy)'};">${dayNum}</span>
+        ${isToday ? `<span style="font-size:9px;font-weight:700;color:${isSel ? 'var(--green)' : 'var(--coral)'};margin-top:1px;">오늘</span>` : '<span style="font-size:9px;"> </span>'}
+        ${isSel ? '<svg width="14" height="14" viewBox="0 0 14 14"><rect width="14" height="14" rx="3" fill="var(--green)"/><polyline points="3,7 6,10 11,4" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg>' : '<div style="width:14px;height:14px;border-radius:3px;border:1.5px solid var(--gray-200);"></div>'}`;
+      cell.onclick = function() { toggleMakeupDateCell(cell, label); };
     }
-    // 첫 번째 선택 가능 날짜 자동 선택
-    if (firstCard) toggleMakeupDate(firstCard, firstCard.dataset.value);
+    grid.appendChild(cell);
   }
+
+  // 빈 주 안내
+  document.getElementById('makeup-empty-msg').style.display = hasAvailable ? 'none' : 'block';
+  grid.style.display = hasAvailable ? 'grid' : 'none';
+
+  // 오늘 자동 선택 (이번 주이고 아직 선택 안 됐을 때)
+  if (makeupWeekOffset === 0 && selectedMakeupDates.size === 0 && hasAvailable) {
+    const todayLabel = `${MAKEUP_TODAY.getMonth()+1}월 ${MAKEUP_TODAY.getDate()}일 (${MAKEUP_DAY_NAMES[MAKEUP_TODAY.getDay()]}) 10:00`;
+    const todayCell = Array.from(grid.children).find(c => c.dataset.value === todayLabel);
+    if (todayCell) toggleMakeupDateCell(todayCell, todayLabel);
+  }
+
   updateProposeBtn();
 }
 
-function toggleMakeupDate(card, label) {
-  const box = card.querySelector('.date-check-box');
+function toggleMakeupDateCell(cell, label) {
   if (selectedMakeupDates.has(label)) {
     selectedMakeupDates.delete(label);
-    card.style.borderColor = 'var(--gray-100)';
-    card.style.background = '#fff';
-    box.style.cssText = 'width:20px;height:20px;border-radius:4px;border:2px solid var(--gray-300);flex-shrink:0;background:#fff;';
-    box.innerHTML = '';
   } else {
     selectedMakeupDates.add(label);
-    card.style.borderColor = 'var(--green)';
-    card.style.background = '#F0FDFA';
-    box.style.cssText = 'width:20px;height:20px;border-radius:4px;background:var(--green);flex-shrink:0;display:flex;align-items:center;justify-content:center;';
-    box.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg>';
   }
-  updateProposeBtn();
+  renderMakeupWeek();
 }
 
 function updateProposeBtn() {
   const btn = document.getElementById('makeup-propose-btn');
-  const hasSelected = selectedMakeupDates.size > 0;
-  btn.disabled = !hasSelected;
-  btn.style.background = hasSelected ? 'var(--green)' : 'var(--gray-300)';
-  btn.textContent = hasSelected ? `선택 날짜 제안하기 (${selectedMakeupDates.size}개)` : '선택 날짜 제안하기';
+  const n = selectedMakeupDates.size;
+  btn.disabled = n === 0;
+  btn.style.background = n > 0 ? 'var(--green)' : 'var(--gray-300)';
+  btn.textContent = n > 0 ? `선택 날짜 제안하기 (${n}개)` : '선택 날짜 제안하기';
 }
 
 function closeMakeupDateSheet() {
