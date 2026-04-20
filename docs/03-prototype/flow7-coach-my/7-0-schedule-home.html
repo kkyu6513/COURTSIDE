@@ -743,6 +743,33 @@
       </div>
     </div>
 
+    <!-- 수강생 뷰 오버레이 -->
+    <div id="student-view-overlay" style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;z-index:300;">
+      <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);" onclick="closeStudentView()"></div>
+      <div style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;padding:20px 20px 32px;z-index:301;max-height:90%;overflow-y:auto;">
+        <div style="width:40px;height:4px;border-radius:2px;background:var(--gray-200);margin:0 auto 16px;"></div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+          <span style="font-size:18px;">📱</span>
+          <span style="font-size:15px;font-weight:800;color:var(--navy);">수강생 화면에서 이렇게 보여요</span>
+        </div>
+        <div style="border:1.5px solid var(--gray-100);border-radius:16px;padding:16px;background:#fff;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <span style="font-size:13px;font-weight:700;color:var(--gray-400);">나의 레슨 상세</span>
+            <span style="font-size:11px;color:var(--gray-300);">← 뒤로</span>
+          </div>
+          <div style="text-align:center;margin-bottom:14px;" id="sv-badge"></div>
+          <div style="background:var(--gray-50);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px;font-size:13px;">
+            <div style="display:flex;justify-content:space-between;"><span style="color:var(--gray-400);">코치</span><span style="font-weight:600;color:var(--navy);">김민수 코치</span></div>
+            <div style="display:flex;justify-content:space-between;"><span style="color:var(--gray-400);">일정</span><span style="font-weight:600;color:var(--navy);">4월 13일 (일) 10:00</span></div>
+            <div style="display:flex;justify-content:space-between;"><span style="color:var(--gray-400);">레슨</span><span style="font-weight:600;color:var(--navy);">정규레슨 · 1:1</span></div>
+            <div style="display:flex;justify-content:space-between;"><span style="color:var(--gray-400);">회차</span><span style="font-weight:600;color:var(--info);">6/8회</span></div>
+          </div>
+          <div id="sv-msg"></div>
+        </div>
+        <button onclick="closeStudentView()" style="width:100%;height:50px;border-radius:14px;border:none;background:var(--green);color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:16px;">확인</button>
+      </div>
+    </div>
+
   </div>
 </div>
 <script>
@@ -1364,18 +1391,12 @@ function closeStatusActions() {
 
 function handleSupplement() {
   closeLessonDetail();
-  const toast = document.getElementById('sent-toast');
-  toast.textContent = '보강 레슨이 등록되었습니다';
-  toast.style.display = 'block';
-  setTimeout(() => { toast.style.display = 'none'; }, 2000);
+  showStudentView('makeup');
 }
 function handleAbsence() {
   if (confirm('결강 처리하시겠습니까?\n수강생에게 결강 안내가 발송됩니다.')) {
     closeLessonDetail();
-    const toast = document.getElementById('sent-toast');
-    toast.textContent = '결강 처리되었습니다';
-    toast.style.display = 'block';
-    setTimeout(() => { toast.style.display = 'none'; }, 2000);
+    showStudentView('absent');
   }
 }
 
@@ -1943,10 +1964,7 @@ function confirmSchedule() {
 function completeLesson() {
   if (confirm('레슨을 완료 처리합니다.')) {
     closeLessonDetail();
-    const toast = document.getElementById('sent-toast');
-    toast.textContent = '레슨이 완료 처리되었습니다';
-    toast.style.display = 'block';
-    setTimeout(() => { toast.style.display = 'none'; }, 2000);
+    showStudentView('completed');
   }
 }
 
@@ -2080,7 +2098,34 @@ function proposeAllFromDetail(btnEl) {
   setTimeout(() => { toast.style.display = 'none'; closeLessonDetail(); }, 1500);
 }
 
+
+// 수강생 뷰 오버레이
+function showStudentView(status) {
+  const configs = {
+    completed: {
+      badge: '<span style="display:inline-block;padding:5px 14px;border-radius:20px;background:#DBEAFE;color:#1E40AF;font-size:13px;font-weight:700;">🏁 레슨 완료</span>',
+      msg: '<div style="margin-top:10px;padding:12px;background:#EFF6FF;border-radius:10px;font-size:13px;color:#1E40AF;font-weight:600;">이번 레슨이 완료 처리되었습니다.<br><span style="font-size:12px;font-weight:400;color:#3B82F6;">6/8회 → 회차가 기록되었습니다.</span></div>'
+    },
+    absent: {
+      badge: '<span style="display:inline-block;padding:5px 14px;border-radius:20px;background:var(--gray-100);color:var(--gray-500);font-size:13px;font-weight:700;">❌ 결강</span>',
+      msg: '<div style="margin-top:10px;padding:12px;background:#FEF2F2;border-radius:10px;font-size:13px;color:var(--error);font-weight:600;">코치 사정으로 레슨이 결강 처리되었습니다.<br><span style="font-size:12px;font-weight:400;color:#EF4444;">보강 레슨이 추가될 예정입니다.</span></div>'
+    },
+    makeup: {
+      badge: '<span style="display:inline-block;padding:5px 14px;border-radius:20px;background:#D1FAE5;color:#065F46;font-size:13px;font-weight:700;">🔄 보강 대기</span>',
+      msg: '<div style="margin-top:10px;padding:12px;background:#F0FDFA;border-radius:10px;border:1.5px dashed var(--green);font-size:13px;color:#065F46;font-weight:600;">보강 레슨이 등록되었습니다.<br><span style="font-size:12px;font-weight:400;color:var(--green);">코치가 보강 일정을 확정하면 알림톡으로 안내드려요.</span></div>'
+    }
+  };
+  const cfg = configs[status];
+  if (!cfg) return;
+  document.getElementById('sv-badge').innerHTML = cfg.badge;
+  document.getElementById('sv-msg').innerHTML = cfg.msg;
+  document.getElementById('student-view-overlay').style.display = 'block';
+}
+function closeStudentView() {
+  document.getElementById('student-view-overlay').style.display = 'none';
+}
 </script>
+
 <script src="../site-nav.js"></script>
 </body>
 </html>
