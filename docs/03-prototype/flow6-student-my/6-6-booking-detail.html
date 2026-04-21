@@ -93,7 +93,18 @@ const configs = {
     session: '6/8회',
     message: `<div style="padding:16px;background:#FEF2F2;border-radius:12px;border:1px solid #FECACA;">
       <div style="font-size:13px;font-weight:700;color:#991B1B;margin-bottom:6px;">오늘 레슨이 결강 처리되었습니다</div>
-      <div style="font-size:13px;color:#EF4444;line-height:1.6;">코치 사정으로 오늘 레슨이 결강되었습니다.<br>보강 레슨 일정이 추가될 예정입니다.<br>알림톡으로 보강 일정을 안내드릴게요.</div>
+      <div style="font-size:13px;color:#EF4444;line-height:1.6;">코치 사정으로 오늘 레슨이 결강되었습니다.<br>보강이 필요하면 아래 버튼으로 요청하세요.</div>
+    </div>`,
+    actions: `<a href="../flow4-chat/4-2-chat.html" class="btn-secondary" style="flex:1;display:block;text-align:center;text-decoration:none;line-height:48px;height:auto;">코치에게 문의</a>
+              <a href="6-6-booking-detail.html?status=makeup_requested" class="btn-primary" style="flex:1;display:block;text-align:center;text-decoration:none;line-height:52px;">보강 요청하기</a>`
+  },
+  makeup_requested: {
+    label: '보강 요청중',
+    badge: '<span class="badge" style="font-size:14px;padding:6px 16px;background:#FFF7ED;color:#EA580C;">🙋 보강 요청중</span>',
+    session: '보강',
+    message: `<div style="padding:16px;background:#FFF7ED;border-radius:12px;border:1px solid #FDBA74;">
+      <div style="font-size:13px;font-weight:700;color:#EA580C;margin-bottom:6px;">코치에게 보강을 요청했습니다</div>
+      <div style="font-size:13px;color:#C2410C;line-height:1.6;">코치가 보강 가능 일정을 제안하면<br>카카오 알림톡으로 안내드립니다.</div>
     </div>`,
     actions: `<a href="../flow4-chat/4-2-chat.html" class="btn-secondary" style="flex:1;display:block;text-align:center;text-decoration:none;line-height:48px;height:auto;">코치에게 문의</a>
               <a href="6-5-booking-list.html" class="btn-primary" style="flex:1;display:block;text-align:center;text-decoration:none;line-height:52px;">목록으로</a>`

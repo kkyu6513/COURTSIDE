@@ -119,13 +119,14 @@
           <div id="original-today-content">
           <!-- 상태 필터 -->
           <div style="display:flex;align-items:center;gap:5px;margin-bottom:10px;overflow-x:auto;">
-            <span onclick="toggleFilter(this,'all')" class="f-chip active" style="padding:5px 10px;border-radius:20px;background:var(--green);color:#fff;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;">전체 12</span>
+            <span onclick="toggleFilter(this,'all')" class="f-chip active" style="padding:5px 10px;border-radius:20px;background:var(--green);color:#fff;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;">전체 13</span>
             <span onclick="toggleFilter(this,'inprogress')" class="f-chip" style="padding:5px 10px;border-radius:20px;background:var(--gray-100);color:var(--gray-500);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;">진행중 1</span>
             <span onclick="toggleFilter(this,'upcoming')" class="f-chip" style="padding:5px 10px;border-radius:20px;background:var(--gray-100);color:var(--gray-500);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;">예정 5</span>
             <span onclick="toggleFilter(this,'reschedule')" class="f-chip" style="padding:5px 10px;border-radius:20px;background:var(--gray-100);color:var(--gray-500);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;">변경 1</span>
             <span onclick="toggleFilter(this,'completed')" class="f-chip" style="padding:5px 10px;border-radius:20px;background:var(--gray-100);color:var(--gray-500);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;">완료 1</span>
             <span onclick="toggleFilter(this,'absent')" class="f-chip" style="padding:5px 10px;border-radius:20px;background:var(--gray-100);color:var(--gray-500);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;">결강 1</span>
             <span onclick="toggleFilter(this,'makeup')" class="f-chip" style="padding:5px 10px;border-radius:20px;background:var(--gray-100);color:var(--gray-500);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;">보강 2</span>
+            <span onclick="toggleFilter(this,'makeup_requested')" class="f-chip" style="padding:5px 10px;border-radius:20px;background:var(--gray-100);color:var(--gray-500);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;">보강요청 1</span>
           </div>
 
           <div class="schedule-slot" style="background:#fff;border:1px solid var(--gray-100);opacity:0.7;cursor:pointer;" data-status="completed" onclick="showLessonDetail('completed')">
@@ -163,6 +164,10 @@
           <div class="schedule-slot" style="background:#F0FDFA;border:1.5px solid var(--green);cursor:pointer;" data-status="makeup" onclick="showLessonDetail('makeup_confirmed')">
             <div><div class="time" style="color:#065F46;">17:00</div><div class="student">김태호 · 1:1 · <span style="color:var(--info);font-weight:600;">보강</span></div></div>
             <span class="badge-sm" style="background:#D1FAE5;color:#065F46;">✅ 보강확정</span>
+          </div>
+          <div class="schedule-slot" style="background:#FFF7ED;border:1.5px solid #FDBA74;cursor:pointer;" data-status="makeup_requested" onclick="showLessonDetail('makeup_requested')">
+            <div><div class="time" style="color:#EA580C;">17:30</div><div class="student">이수진 · 1:1 · <span style="color:var(--info);font-weight:600;">보강요청</span></div></div>
+            <span class="badge-sm" style="background:#FFF7ED;color:#EA580C;">🙋 보강요청</span>
           </div>
           <div class="schedule-slot" style="background:#fff;border:1px solid var(--gray-100);cursor:pointer;" data-status="upcoming" onclick="showLessonDetail('upcoming')">
             <div><div class="time">18:00</div><div class="student">한지우 · 그룹 · <span style="color:var(--info);font-weight:600;">1/4회</span> · <span style="color:var(--error);font-weight:600;">미결제</span></div></div>
@@ -1686,6 +1691,17 @@ function showLessonDetail(status) {
   const actions = document.getElementById('detail-actions');
 
   const data = {
+    makeup_requested: {
+      name: '이수진', age: '30대', gender: '여성', ntrp: 'NTRP 2.5',
+      type: '정규레슨', format: '1:1 개인',
+      schedule: [{ day: '일', date: '4/13', slot: 'T1000', label: '10:00' }],
+      session: '4/8회', lastPayment: '3/18', nextPayment: '4/18',
+      paymentStatus: 'paid', paid: true, price: '55,000원',
+      badge: '<span style="display:inline-block;padding:4px 12px;border-radius:8px;background:#FFF7ED;color:#EA580C;font-size:13px;font-weight:700;">🙋 보강요청</span>',
+      statusMsg: '',
+      requestReason: '코치 사정 결강',
+      requestDetail: '4/13 레슨이 결강되어 보강을 요청합니다.'
+    },
     absent: {
       name: '강민서', age: '20대', gender: '여성', ntrp: 'NTRP 2.0',
       type: '정규레슨', format: '그룹 (3인)',
@@ -1904,8 +1920,25 @@ function showLessonDetail(status) {
 
   const isAbsent = (status === 'absent');
   const isMakeup = (status === 'makeup' || status === 'makeup_confirmed');
+  const isMakeupRequested = (status === 'makeup_requested');
 
-  if (isAbsent) {
+  if (isMakeupRequested) {
+    lesson.innerHTML = `
+      <div style="margin-top:4px;padding:16px;background:#FFF7ED;border-radius:14px;border:1.5px solid #FDBA74;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+          <span style="font-size:16px;">🙋</span>
+          <span style="font-size:15px;font-weight:800;color:#C2410C;">보강 요청</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#fff;border-radius:10px;margin-bottom:10px;">
+          <span style="font-size:14px;">❌</span>
+          <span style="font-size:14px;font-weight:600;color:var(--gray-400);text-decoration:line-through;">${d.schedule[0].date} (${d.schedule[0].day}) ${d.schedule[0].label}</span>
+        </div>
+        <div style="height:1px;background:#FDBA74;opacity:0.4;margin-bottom:10px;"></div>
+        <div style="font-size:12px;color:#92400E;margin-bottom:4px;">요청 사유</div>
+        <div style="font-size:14px;font-weight:600;color:#C2410C;margin-bottom:4px;">${d.requestReason}</div>
+        <div style="font-size:12px;color:#92400E;line-height:1.6;">${d.requestDetail}</div>
+      </div>`;
+  } else if (isAbsent) {
     lesson.innerHTML = `
       <div style="margin-top:4px;padding:16px;background:var(--gray-50);border-radius:14px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
@@ -2010,7 +2043,11 @@ function showLessonDetail(status) {
 
   const statusBtn = `<button onclick="showStatusActions('${status}')" style="width:100%;height:48px;border-radius:12px;border:none;background:var(--green);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:8px;">상태처리하기</button>`;
 
-  if (status === 'absent' || status === 'makeup' || status === 'makeup_confirmed') {
+  if (status === 'makeup_requested') {
+    actions.innerHTML = `
+      <button onclick="handleSupplement()" style="width:100%;height:48px;border-radius:12px;border:none;background:var(--green);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:8px;">보강 날짜 제안하기</button>
+      <button onclick="closeLessonDetail()" style="width:100%;height:48px;border-radius:12px;border:1.5px solid var(--gray-200);background:#fff;color:var(--gray-500);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">거절</button>`;
+  } else if (status === 'absent' || status === 'makeup' || status === 'makeup_confirmed') {
     actions.innerHTML = statusBtn + '<button onclick="closeLessonDetail()" style="width:100%;height:48px;border-radius:12px;border:1.5px solid var(--gray-200);background:#fff;color:var(--gray-500);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">닫기</button>';
   } else if (status === 'reschedule') {
     actions.innerHTML = statusBtn + `
