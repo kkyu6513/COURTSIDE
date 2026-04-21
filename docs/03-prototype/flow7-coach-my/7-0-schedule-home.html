@@ -1465,6 +1465,7 @@ function openMakeupDateSheet() {
   document.getElementById('makeup-date-sheet').style.display = 'block';
   renderMakeupWeek();
   renderMakeupSlots();
+  selectMakeupDate(new Date(MAKEUP_TODAY));
 }
 
 function moveWeek(dir) {
