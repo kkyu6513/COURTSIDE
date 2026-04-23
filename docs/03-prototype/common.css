@@ -91,14 +91,41 @@ body {
 .nav-item.active { color: var(--green); }
 .nav-item .icon { font-size: 20px; }
 
-/* ── Checkbox & Radio (사각형 통일 — 디자인 가이드 6.5a) ── */
+/* ── Toast (공통, 하단 노출) ── */
+.toast {
+  position: absolute;
+  left: 50%;
+  bottom: 100px;
+  transform: translateX(-50%) translateY(20px);
+  background: rgba(30, 58, 95, 0.95);
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  z-index: 999;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s, transform 0.2s;
+  max-width: 320px;
+}
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+.toast.toast-error { background: rgba(239, 68, 68, 0.95); }
+.toast.toast-success { background: rgba(34, 197, 94, 0.95); }
+.toast.toast-warning { background: rgba(245, 158, 11, 0.95); }
+
+/* ── Checkbox (사각형) & Radio (동그라미) — 디자인 가이드 6.5a ── */
 input[type="checkbox"],
 input[type="radio"] {
   -webkit-appearance: none;
   appearance: none;
   width: 18px;
   height: 18px;
-  border-radius: 4px;       /* 사각형 (동그라미 금지) */
   border: 1.5px solid var(--gray-300);
   background: #fff;
   cursor: pointer;
@@ -108,13 +135,13 @@ input[type="radio"] {
   margin: 0;
   vertical-align: middle;
 }
-input[type="checkbox"]:checked,
-input[type="radio"]:checked {
+/* Checkbox: 사각형 + ✓ 체크 아이콘 */
+input[type="checkbox"] { border-radius: 4px; }
+input[type="checkbox"]:checked {
   background: var(--green);
   border-color: var(--green);
 }
-input[type="checkbox"]:checked::after,
-input[type="radio"]:checked::after {
+input[type="checkbox"]:checked::after {
   content: '';
   position: absolute;
   left: 4px;
@@ -124,6 +151,24 @@ input[type="radio"]:checked::after {
   border: solid #fff;
   border-width: 0 2px 2px 0;
   transform: rotate(45deg);
+}
+/* Radio: 동그라미 + 가운데 점 */
+input[type="radio"] { border-radius: 50%; }
+input[type="radio"]:checked {
+  border-color: var(--green);
+  border-width: 2px;
+  background: #fff;
+}
+input[type="radio"]:checked::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--green);
 }
 input[type="checkbox"]:disabled,
 input[type="radio"]:disabled {

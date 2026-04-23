@@ -93,7 +93,6 @@
         { label: '7-1 코치마이', path: 'flow7-coach-my/7-1-coach-mypage.html' },
         { label: '7-2 신청수신', path: 'flow7-coach-my/7-2-booking-inbox.html' },
         { label: '7-3 수락거절', path: 'flow7-coach-my/7-3-booking-action.html' },
-        { label: '7-4 스케줄', path: 'flow7-coach-my/7-4-schedule.html' },
         { label: '7-5 구독관리', path: 'flow7-coach-my/7-5-subscription.html' },
         { label: '7-6 예약현황', path: 'flow7-coach-my/7-6-bookings.html' },
         { label: '7-7 리뷰현황', path: 'flow7-coach-my/7-7-reviews.html' },

@@ -28,15 +28,20 @@
           <div style="font-size:20px;font-weight:800;color:var(--navy);">나의 스케줄</div>
           <div style="font-size:12px;color:var(--gray-400);margin-top:6px;">안녕하세요, 김민수 코치님</div>
         </div>
-        <a href="7-4-schedule.html" style="padding:6px 14px;border-radius:20px;background:var(--green);color:#fff;font-size:12px;font-weight:600;text-decoration:none;">스케줄 관리 ›</a>
-      </div>
-
-      <!-- 전체 스케줄 보기 -->
-      <div style="padding:8px 20px 0;display:flex;justify-content:flex-end;">
-        <button onclick="showWeeklySchedule()" style="padding:5px 12px;border-radius:16px;border:1px solid var(--gray-100);background:#fff;color:var(--navy);font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:4px;">
+        <button onclick="showWeeklySchedule()" style="padding:6px 14px;border-radius:20px;border:none;background:var(--green);color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:4px;">
           <span style="font-size:12px;">📋</span> 전체 스케줄 보기
         </button>
       </div>
+
+      <!-- 레슨 신청 안내 (PENDING 1건 이상일 때만 노출) -->
+      <a href="7-2-booking-inbox.html" id="pending-banner" style="display:flex;align-items:center;gap:10px;margin:14px 20px 0;padding:12px 14px;background:#FFFBEB;border:1.5px solid #FDE68A;border-radius:12px;text-decoration:none;cursor:pointer;">
+        <div style="width:36px;height:36px;border-radius:10px;background:#FEF3C7;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">⏳</div>
+        <div style="flex:1;">
+          <div style="font-size:13px;font-weight:700;color:#92400E;">새로운 레슨 신청이 <span id="pending-count">1</span>건 있어요</div>
+          <div style="font-size:11px;color:#92400E;opacity:0.8;margin-top:2px;">수강생 응답을 기다리고 있어요. 빠른 확인을 부탁드려요.</div>
+        </div>
+        <span style="font-size:14px;color:#92400E;flex-shrink:0;">›</span>
+      </a>
 
       <!-- 선택 날짜 -->
       <div style="padding:16px 20px 8px;display:flex;align-items:center;justify-content:space-between;">
@@ -46,7 +51,7 @@
           <div id="cal-legend-tooltip" style="display:none;position:absolute;top:28px;right:0;background:var(--navy);color:#fff;border-radius:10px;padding:10px 14px;width:140px;z-index:10;box-shadow:0 4px 12px rgba(0,0,0,0.2);">
             <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:11px;"><div style="width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0;"></div>레슨 있는 날</div>
             <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:11px;"><div style="width:6px;height:6px;border-radius:50%;background:var(--purple);flex-shrink:0;"></div>변경 요청</div>
-            <div style="display:flex;align-items:center;gap:6px;font-size:11px;"><div style="width:6px;height:6px;border-radius:50%;background:var(--warning);flex-shrink:0;"></div>대기 중 신청</div>
+            <div style="display:flex;align-items:center;gap:6px;font-size:11px;"><div style="width:6px;height:6px;border-radius:50%;background:var(--warning);flex-shrink:0;"></div>레슨 신청</div>
           </div>
         </div>
       </div>
@@ -119,14 +124,22 @@
           <div id="original-today-content">
           <!-- 상태 필터 -->
           <div style="display:flex;align-items:center;gap:5px;margin-bottom:10px;overflow-x:auto;">
-            <span onclick="toggleFilter(this,'all')" class="f-chip active" style="padding:5px 10px;border-radius:20px;background:var(--green);color:#fff;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;">전체 13</span>
+            <span onclick="toggleFilter(this,'all')" class="f-chip active" style="padding:5px 10px;border-radius:20px;background:var(--green);color:#fff;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;">전체 15</span>
+            <span onclick="toggleFilter(this,'pending')" class="f-chip" style="padding:5px 10px;border-radius:20px;background:var(--gray-100);color:var(--gray-500);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;">레슨 신청 1</span>
             <span onclick="toggleFilter(this,'inprogress')" class="f-chip" style="padding:5px 10px;border-radius:20px;background:var(--gray-100);color:var(--gray-500);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;">진행중 1</span>
             <span onclick="toggleFilter(this,'upcoming')" class="f-chip" style="padding:5px 10px;border-radius:20px;background:var(--gray-100);color:var(--gray-500);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;">예정 5</span>
             <span onclick="toggleFilter(this,'reschedule')" class="f-chip" style="padding:5px 10px;border-radius:20px;background:var(--gray-100);color:var(--gray-500);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;">변경 1</span>
+            <span onclick="toggleFilter(this,'reschedule_completed')" class="f-chip" style="padding:5px 10px;border-radius:20px;background:var(--gray-100);color:var(--gray-500);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;">변경완료 1</span>
             <span onclick="toggleFilter(this,'completed')" class="f-chip" style="padding:5px 10px;border-radius:20px;background:var(--gray-100);color:var(--gray-500);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;">완료 1</span>
             <span onclick="toggleFilter(this,'absent')" class="f-chip" style="padding:5px 10px;border-radius:20px;background:var(--gray-100);color:var(--gray-500);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;">결강 1</span>
             <span onclick="toggleFilter(this,'makeup')" class="f-chip" style="padding:5px 10px;border-radius:20px;background:var(--gray-100);color:var(--gray-500);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;">보강 2</span>
-            <span onclick="toggleFilter(this,'makeup_requested')" class="f-chip" style="padding:5px 10px;border-radius:20px;background:var(--gray-100);color:var(--gray-500);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;">보강요청 1</span>
+            <span onclick="toggleFilter(this,'makeup_requested')" class="f-chip" style="padding:5px 10px;border-radius:20px;background:var(--gray-100);color:var(--gray-500);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;">보강 요청 1</span>
+          </div>
+
+          <!-- 레슨 신청 (PENDING) — 오늘 신청 들어온 건만 노출 -->
+          <div class="schedule-slot" style="background:#FFFBEB;border:1.5px solid #FDE68A;cursor:pointer;" data-status="pending" onclick="showLessonDetail('pending')">
+            <div><div class="time" style="color:#92400E;font-size:12px;">신청 09:15</div><div class="student">박민호 · 정규 1:1 · <span style="color:#92400E;font-weight:600;">화·목 10:00 희망</span></div></div>
+            <span class="badge-sm" style="background:#FEF3C7;color:#92400E;">⏳ 레슨 신청</span>
           </div>
 
           <div class="schedule-slot" style="background:#fff;border:1px solid var(--gray-100);opacity:0.7;cursor:pointer;" data-status="completed" onclick="showLessonDetail('completed')">
@@ -157,17 +170,24 @@
             <div><div class="time" style="color:var(--orange);">16:00</div><div class="student">박지수 · 1:1 · <span style="color:var(--info);font-weight:600;">3/8회</span></div></div>
             <span class="badge-sm" style="background:#FFF7ED;color:#EA580C;">🔄 변경 요청</span>
           </div>
+          <div class="schedule-slot" style="background:#EFF6FF;border:1.5px solid #BFDBFE;cursor:pointer;" data-status="reschedule_completed" onclick="showLessonDetail('reschedule_completed')">
+            <div>
+              <div class="time" style="color:#1E40AF;">16:00 <span style="font-size:11px;color:var(--gray-400);font-weight:400;text-decoration:line-through;margin-left:4px;">10:00</span></div>
+              <div class="student">한지원 · 1:1 · <span style="color:var(--info);font-weight:600;">5/8회</span></div>
+            </div>
+            <span class="badge-sm" style="background:#DBEAFE;color:#1E40AF;">✅ 변경완료</span>
+          </div>
           <div class="schedule-slot" style="background:#F0FDFA;border:1.5px dashed var(--green);cursor:pointer;" data-status="makeup" onclick="showLessonDetail('makeup')">
             <div><div class="time" style="color:var(--green);">16:30</div><div class="student">강민서 · 그룹 · <span style="color:var(--info);font-weight:600;">보강</span></div></div>
-            <span class="badge-sm" style="background:#D1FAE5;color:#065F46;">🔄 보강대기</span>
+            <span class="badge-sm" style="background:#D1FAE5;color:#065F46;">🔄 보강 일정 선택중</span>
           </div>
           <div class="schedule-slot" style="background:#F0FDFA;border:1.5px solid var(--green);cursor:pointer;" data-status="makeup" onclick="showLessonDetail('makeup_confirmed')">
             <div><div class="time" style="color:#065F46;">17:00</div><div class="student">김태호 · 1:1 · <span style="color:var(--info);font-weight:600;">보강</span></div></div>
             <span class="badge-sm" style="background:#D1FAE5;color:#065F46;">✅ 보강확정</span>
           </div>
           <div class="schedule-slot" style="background:#FFF7ED;border:1.5px solid #FDBA74;cursor:pointer;" data-status="makeup_requested" onclick="showLessonDetail('makeup_requested')">
-            <div><div class="time" style="color:#EA580C;">17:30</div><div class="student">이수진 · 1:1 · <span style="color:var(--info);font-weight:600;">보강요청</span></div></div>
-            <span class="badge-sm" style="background:#FFF7ED;color:#EA580C;">🙋 보강요청</span>
+            <div><div class="time" style="color:#EA580C;">17:30</div><div class="student">이수진 · 1:1 · <span style="color:var(--info);font-weight:600;">보강 요청</span></div></div>
+            <span class="badge-sm" style="background:#FFF7ED;color:#EA580C;">🙋 보강 요청</span>
           </div>
           <div class="schedule-slot" style="background:#fff;border:1px solid var(--gray-100);cursor:pointer;" data-status="upcoming" onclick="showLessonDetail('upcoming')">
             <div><div class="time">18:00</div><div class="student">한지우 · 그룹 · <span style="color:var(--info);font-weight:600;">1/4회</span> · <span style="color:var(--error);font-weight:600;">미결제</span></div></div>
@@ -417,7 +437,7 @@
         <div style="width:40px;height:4px;border-radius:2px;background:var(--gray-200);margin:0 auto 16px;"></div>
         <div style="font-size:16px;font-weight:800;color:var(--navy);margin-bottom:16px;">상태 처리하기</div>
 
-        <button onclick="closeStatusActions();completeLesson()" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--gray-50);border-radius:12px;border:none;cursor:pointer;margin-bottom:8px;font-family:inherit;text-align:left;">
+        <button id="btn-complete-action" onclick="closeStatusActions();completeLesson()" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--gray-50);border-radius:12px;border:none;cursor:pointer;margin-bottom:8px;font-family:inherit;text-align:left;">
           <div style="width:40px;height:40px;border-radius:10px;background:#DBEAFE;display:flex;align-items:center;justify-content:center;font-size:18px;">🏁</div>
           <div>
             <div style="font-size:14px;font-weight:700;color:var(--navy);">레슨 완료</div>
@@ -425,7 +445,15 @@
           </div>
         </button>
 
-        <button onclick="closeStatusActions();handleSupplement()" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--gray-50);border-radius:12px;border:none;cursor:pointer;margin-bottom:8px;font-family:inherit;text-align:left;">
+        <button id="btn-revert-action" onclick="closeStatusActions();revertToUpcoming()" style="display:none;width:100%;align-items:center;gap:12px;padding:14px 16px;background:var(--gray-50);border-radius:12px;border:none;cursor:pointer;margin-bottom:8px;font-family:inherit;text-align:left;">
+          <div style="width:40px;height:40px;border-radius:10px;background:#F3E8FF;display:flex;align-items:center;justify-content:center;font-size:18px;">↩️</div>
+          <div>
+            <div style="font-size:14px;font-weight:700;color:#7C5CBF;">진행 예정으로 되돌리기</div>
+            <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">보강 일정 선택중을 취소하고 원래 일정으로 복원합니다</div>
+          </div>
+        </button>
+
+        <button id="btn-supplement-action" onclick="closeStatusActions();handleSupplement()" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--gray-50);border-radius:12px;border:none;cursor:pointer;margin-bottom:8px;font-family:inherit;text-align:left;">
           <div style="width:40px;height:40px;border-radius:10px;background:#D1FAE5;display:flex;align-items:center;justify-content:center;font-size:18px;">➕</div>
           <div>
             <div style="font-size:14px;font-weight:700;color:var(--green);">보강 처리</div>
@@ -662,6 +690,40 @@
       </div>
     </div>
 
+    <!-- 스케줄 확정 — 결제 확인 모달 (3지선다) -->
+    <div id="confirm-schedule-modal" style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;z-index:160;">
+      <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);" onclick="closeConfirmScheduleModal()"></div>
+      <div style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;padding:20px;z-index:161;">
+        <div style="width:40px;height:4px;border-radius:2px;background:var(--gray-200);margin:0 auto 16px;"></div>
+        <div style="font-size:17px;font-weight:800;color:var(--navy);margin-bottom:6px;">스케줄을 확정하기 전에</div>
+        <div style="font-size:13px;color:var(--gray-500);line-height:1.5;margin-bottom:14px;"><span id="confirm-pay-student-name">박지수</span>님으로부터 <strong style="color:var(--navy);">결제를 받으셨나요?</strong><br>선택한 결제 상태로 확정되며, 미결제 시에도 나중에 결제 확인이 가능해요.</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <button onclick="confirmScheduleWithPayment('paid')" style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:#F0FDFA;border:1.5px solid #D1FAE5;border-radius:12px;cursor:pointer;font-family:inherit;text-align:left;width:100%;">
+            <div style="width:36px;height:36px;border-radius:10px;background:#D1FAE5;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">✅</div>
+            <div style="flex:1;">
+              <div style="font-size:14px;font-weight:700;color:#065F46;">전액 받음</div>
+              <div style="font-size:11px;color:var(--gray-500);margin-top:2px;">결제완료 상태로 확정</div>
+            </div>
+          </button>
+          <button onclick="confirmScheduleWithPayment('deposit')" style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:#FFF7ED;border:1.5px solid #FED7AA;border-radius:12px;cursor:pointer;font-family:inherit;text-align:left;width:100%;">
+            <div style="width:36px;height:36px;border-radius:10px;background:#FED7AA;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">💵</div>
+            <div style="flex:1;">
+              <div style="font-size:14px;font-weight:700;color:#92400E;">예약금만 받음</div>
+              <div style="font-size:11px;color:var(--gray-500);margin-top:2px;">예약금 표시 + 잔액 안내 알림 발송</div>
+            </div>
+          </button>
+          <button onclick="confirmScheduleWithPayment('unpaid')" style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:#FEF2F2;border:1.5px solid #FECACA;border-radius:12px;cursor:pointer;font-family:inherit;text-align:left;width:100%;">
+            <div style="width:36px;height:36px;border-radius:10px;background:#FEE2E2;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">⏳</div>
+            <div style="flex:1;">
+              <div style="font-size:14px;font-weight:700;color:#991B1B;">아직 미결제</div>
+              <div style="font-size:11px;color:var(--gray-500);margin-top:2px;">미결제 상태로 확정 (나중에 결제 확인 가능)</div>
+            </div>
+          </button>
+        </div>
+        <button onclick="closeConfirmScheduleModal()" style="width:100%;height:46px;border-radius:12px;border:1px solid var(--gray-100);background:#fff;color:var(--gray-500);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:12px;">취소</button>
+      </div>
+    </div>
+
     <!-- 더보기 팝업 (보류/거절) -->
     <div id="more-actions-popup" style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;z-index:110;">
       <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);" onclick="closeMoreActions()"></div>
@@ -727,14 +789,62 @@
         <!-- 상태별 헤더 -->
         <div id="detail-header"></div>
 
-        <!-- 공통 수강생 정보 -->
+        <!-- 공통 수강생 정보 (레슨 기본정보) -->
         <div id="detail-student"></div>
 
-        <!-- 레슨 정보 -->
-        <div id="detail-lesson"></div>
+        <!-- 상태 변경 히스토리 (레슨 기본정보 하단) -->
+        <div id="detail-history" style="margin-top:14px;"></div>
+
+        <!-- 레슨 정보 (상태별 영역: 변경요청/보강 등) -->
+        <div id="detail-lesson" style="margin-top:14px;"></div>
 
         <!-- 상태별 하단 버튼 -->
         <div id="detail-actions" style="margin-top:20px;padding-bottom:20px;"></div>
+      </div>
+
+      <!-- 희망 일정 확정하기 확인 모달 -->
+      <div id="rc-confirm-desired" style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;z-index:200;">
+        <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);" onclick="hideConfirmDesired()"></div>
+        <div style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;padding:20px;z-index:201;">
+          <div style="width:40px;height:4px;border-radius:2px;background:var(--gray-200);margin:0 auto 16px;"></div>
+          <div style="font-size:17px;font-weight:800;color:var(--navy);margin-bottom:6px;">희망 일정으로 확정하시겠어요?</div>
+          <div style="font-size:12px;color:var(--gray-500);margin-bottom:14px;" id="rc-confirm-desired-recipient">박지수님의 희망 변경 일정을 확정합니다</div>
+          <div id="rc-confirm-desired-summary" style="padding:14px;background:#FFF7ED;border-radius:10px;border:1px solid #FED7AA;margin-bottom:12px;">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <span style="font-size:13px;color:var(--gray-400);text-decoration:line-through;" id="rc-confirm-desired-from">4/14 (월) 16:00</span>
+              <span style="font-size:14px;color:var(--gray-400);">→</span>
+              <span style="font-size:13px;font-weight:700;color:#92400E;" id="rc-confirm-desired-to">4/16 (수) 16:00</span>
+            </div>
+          </div>
+          <div style="padding:12px;background:var(--gray-50);border-radius:10px;font-size:11px;color:var(--gray-500);line-height:1.6;margin-bottom:14px;">
+            기존 일정은 자동 해제되며,<br>
+            수강생에게 <strong style="color:var(--navy);">변경 확정 알림톡</strong>이 발송됩니다.
+          </div>
+          <div style="display:flex;gap:10px;">
+            <button onclick="hideConfirmDesired()" style="flex:1;height:48px;border-radius:12px;border:1.5px solid var(--gray-200);background:#fff;color:var(--gray-500);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">취소</button>
+            <button onclick="executeConfirmDesired()" style="flex:1.6;height:48px;border-radius:12px;border:none;background:var(--coral);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 2px 6px rgba(255,107,107,0.3);">확정하기</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 제안하기 확인 모달 -->
+      <div id="rc-propose-confirm" style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;z-index:200;">
+        <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);" onclick="hideProposeConfirm()"></div>
+        <div style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;padding:20px;z-index:201;max-height:80%;display:flex;flex-direction:column;">
+          <div style="width:40px;height:4px;border-radius:2px;background:var(--gray-200);margin:0 auto 16px;flex-shrink:0;"></div>
+          <div style="font-size:17px;font-weight:800;color:var(--navy);margin-bottom:6px;flex-shrink:0;" id="rc-confirm-title">다음 N개 일정을 제안합니다</div>
+          <div style="font-size:12px;color:var(--gray-500);margin-bottom:12px;flex-shrink:0;" id="rc-confirm-recipient">박지수님에게 전송됩니다</div>
+          <div id="rc-confirm-list" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:6px;margin-bottom:12px;min-height:0;"></div>
+          <div style="padding:12px;background:var(--gray-50);border-radius:10px;font-size:11px;color:var(--gray-500);line-height:1.6;margin-bottom:12px;flex-shrink:0;">
+            수강생에게 카카오 알림톡이 발송되며,<br>
+            해당 시간은 <strong style="color:var(--navy);">12시간 동안 임시 홀드</strong>됩니다.<br>
+            12시간 내 미응답 시 자동 해제됩니다.
+          </div>
+          <div style="display:flex;gap:10px;flex-shrink:0;">
+            <button onclick="hideProposeConfirm()" style="flex:1;height:48px;border-radius:12px;border:1.5px solid var(--gray-200);background:#fff;color:var(--gray-500);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">취소</button>
+            <button onclick="confirmProposeRc()" style="flex:1.6;height:48px;border-radius:12px;border:none;background:var(--green);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">제안하기</button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -1415,8 +1525,25 @@ let currentDetailStatus = '';
 let currentDetailData = null;
 function showStatusActions(currentStatus) {
   currentDetailStatus = currentStatus;
+  const isMakeupPending = (currentStatus === 'makeup' || currentStatus === 'makeup_pending');
+
+  // 결강 처리: 이미 결강 상태에서만 비노출 (보강 일정 선택중에서는 노출 — 보강 일정도 결강 처리 가능)
   const absentBtn = document.getElementById('btn-absent-action');
   if (absentBtn) absentBtn.style.display = currentStatus === 'absent' ? 'none' : 'flex';
+
+  // 보강 처리: 변경요청/보강 일정 선택중/보강확정 상태에서 비노출
+  // (보강확정은 이미 보강 일정 잡힘 → 추가 보강은 수강생 재요청 시 상태 전환으로 처리)
+  const supplementBtn = document.getElementById('btn-supplement-action');
+  if (supplementBtn) supplementBtn.style.display = (currentStatus === 'reschedule' || isMakeupPending || currentStatus === 'makeup_confirmed') ? 'none' : 'flex';
+
+  // 레슨 완료: 보강 일정 선택중 상태에서 비노출 (보강 일정 확정 전이므로 완료 불가)
+  const completeBtn = document.getElementById('btn-complete-action');
+  if (completeBtn) completeBtn.style.display = isMakeupPending ? 'none' : 'flex';
+
+  // 진행 예정으로 되돌리기: 보강 일정 선택중 상태에서만 노출
+  const revertBtn = document.getElementById('btn-revert-action');
+  if (revertBtn) revertBtn.style.display = isMakeupPending ? 'flex' : 'none';
+
   const payBtn = document.getElementById('btn-payment-action');
   if (payBtn) {
     const d = currentDetailData;
@@ -1429,8 +1556,15 @@ function closeStatusActions() {
 }
 
 function handleSupplement() {
-  closeLessonDetail();
-  openMakeupDateSheet();
+  // 레슨 예정/진행중/대기 상태에서는 "결강 + 보강" 동시 안내, 결강 상태에서는 보강만
+  const isFromAbsent = (currentDetailStatus === 'absent');
+  const msg = isFromAbsent
+    ? '보강 일정을 등록할까요?\n\n다음 화면에서 가능한 보강 날짜를 선택할 수 있어요.\n선택한 일정은 수강생에게 카카오 알림톡으로 제안되며,\n수강생이 1개를 선택하면 보강이 확정됩니다.'
+    : '이 레슨을 결강 처리하고\n보강 일정을 등록하시겠어요?\n\n· 원래 일정은 결강 처리됩니다 (회차 보존)\n· 다음 화면에서 보강 가능 날짜를 선택해요\n· 수강생에게 알림톡으로 제안됩니다';
+  if (confirm(msg)) {
+    closeLessonDetail();
+    openMakeupDateSheet();
+  }
 }
 
 const MAKEUP_DAY_NAMES = ['일','월','화','수','목','금','토'];
@@ -1663,7 +1797,8 @@ function proposeMakeupDates() {
   window.location.href = `../flow6-student-my/6-6-booking-detail.html?status=makeup_proposed&dates=${encodeURIComponent(dates)}`;
 }
 function handleAbsence() {
-  if (confirm('결강 처리하시겠습니까?\n수강생에게 결강 안내가 발송됩니다.')) {
+  const msg = '이 레슨을 결강 처리하시겠어요?\n\n· 회차는 차감되지 않습니다 (보존)\n· 수강생에게 결강 사유와 함께 알림이 발송돼요\n· 결강 후 보강 일정을 등록할 수 있어요\n\n다음 화면에서 결강 사유를 입력해 주세요.';
+  if (confirm(msg)) {
     closeLessonDetail();
     window.location.href = '../flow6-student-my/6-6-booking-detail.html?status=absent';
   }
@@ -1717,7 +1852,7 @@ function showLessonDetail(status) {
       schedule: [{ day: '일', date: '4/13', slot: 'T1000', label: '10:00' }],
       session: '4/8회', lastPayment: '3/18', nextPayment: '4/18',
       paymentStatus: 'paid', paid: true, price: '55,000원',
-      badge: '<span style="display:inline-block;padding:4px 12px;border-radius:8px;background:#FFF7ED;color:#EA580C;font-size:13px;font-weight:700;">🙋 보강요청</span>',
+      badge: '<span style="display:inline-block;padding:4px 12px;border-radius:8px;background:#FFF7ED;color:#EA580C;font-size:13px;font-weight:700;">🙋 보강 요청</span>',
       statusMsg: '',
       requestReason: '코치 사정 결강',
       requestDetail: '4/13 레슨이 결강되어 보강을 요청합니다.'
@@ -1739,7 +1874,7 @@ function showLessonDetail(status) {
       schedule: [{ day: '일', date: '4/13', slot: 'T1630', label: '16:30' }],
       session: '보강', lastPayment: '3/15', nextPayment: '4/15',
       paymentStatus: 'paid', paid: true, price: '50,000원',
-      badge: '<span style="display:inline-block;padding:4px 12px;border-radius:8px;background:#D1FAE5;color:#065F46;font-size:13px;font-weight:700;">🔄 보강대기</span>',
+      badge: '<span style="display:inline-block;padding:4px 12px;border-radius:8px;background:#D1FAE5;color:#065F46;font-size:13px;font-weight:700;">🔄 보강 일정 선택중</span>',
       statusMsg: '',
       originalDate: '4/13 (일) 09:30',
       proposedSlots: ['4/16 (수) 10:00', '4/17 (목) 14:00'],
@@ -1823,6 +1958,20 @@ function showLessonDetail(status) {
       badge: '<span style="display:inline-block;padding:4px 12px;border-radius:8px;background:#F3E8FF;color:#7C5CBF;font-size:13px;font-weight:700;">📌 레슨 예정</span>',
       statusMsg: '<div style="padding:12px;background:#FAF5FF;border-radius:10px;font-size:12px;color:#7C5CBF;line-height:1.6;margin-top:12px;">오늘 14:00에 레슨이 예정되어 있어요.<br>시간에 맞춰 준비해 주세요!</div>'
     },
+    reschedule_completed: {
+      name: '한지원', age: '30대', gender: '여성', ntrp: 'NTRP 3.0',
+      type: '정규레슨', format: '1:1 개인', goal: '발리 교정',
+      schedule: [
+        { day: '일', date: '4/13', slot: 'T1600', label: '16:00' }
+      ],
+      originalSchedule: '4/13 (일) 10:00',
+      confirmedSchedule: '4/13 (일) 16:00',
+      reason: '개인 사정',
+      session: '5/8회', lastPayment: '3/30', nextPayment: '4/30',
+      paymentStatus: 'paid', paid: true, price: '60,000원',
+      badge: '<span style="display:inline-block;padding:4px 12px;border-radius:8px;background:#DBEAFE;color:#1E40AF;font-size:13px;font-weight:700;">✅ 변경 완료</span>',
+      statusMsg: '<div style="padding:14px;background:#EFF6FF;border-radius:10px;border:1px solid #BFDBFE;margin-top:12px;"><div style="font-size:12px;font-weight:700;color:#1E40AF;margin-bottom:6px;">레슨 일정이 변경되었습니다</div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;padding:10px;background:#fff;border-radius:8px;border:1px solid #BFDBFE;margin-bottom:8px;"><span style="font-size:12px;color:var(--gray-400);text-decoration:line-through;">4/13 (일) 10:00</span><span style="font-size:14px;color:var(--gray-400);">→</span><span style="font-size:13px;font-weight:800;color:#1E40AF;">4/13 (일) 16:00</span></div><div style="display:flex;justify-content:space-between;padding:8px 12px;background:#fff;border-radius:8px;border:1px solid #BFDBFE;font-size:11px;color:var(--gray-500);"><span>변경 사유</span><span style="font-weight:600;color:var(--navy);">개인 사정 (수강생 요청)</span></div></div>'
+    },
     confirmed: {
       name: '이철수', age: '40대', gender: '남성', ntrp: 'NTRP 3.5',
       type: '쿠폰레슨', format: '1:1 개인', goal: '백핸드 교정',
@@ -1865,6 +2014,7 @@ function showLessonDetail(status) {
         <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-top:1px solid var(--gray-100);"><span style="font-size:12px;color:var(--gray-400);">결제</span><div style="display:flex;align-items:center;gap:6px;"><span style="font-size:12px;font-weight:600;color:${d.paid ? 'var(--navy)' : 'var(--coral)'};">${d.price}</span>${paymentBadge}</div></div>
         ${d.lastPayment ? '<div style="display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid var(--gray-100);"><span style="font-size:12px;color:var(--gray-400);">최근 결제일</span><span style="font-size:12px;font-weight:600;color:var(--navy);">' + d.lastPayment + '</span></div>' : ''}
         ${d.nextPayment ? '<div style="display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid var(--gray-100);"><span style="font-size:12px;color:var(--gray-400);">다음 결제일</span><span style="font-size:12px;font-weight:600;color:var(--navy);">' + d.nextPayment + '</span></div>' : ''}
+        <div style="display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid var(--gray-100);"><span style="font-size:12px;color:var(--gray-400);">이번 달 변경 요청</span><span style="font-size:12px;font-weight:600;color:#92400E;">2 / 3회</span></div>
       </div>
     </div>`;
 
@@ -1993,61 +2143,45 @@ function showLessonDetail(status) {
         ${!isConfirmedMakeup ? '<div style="height:1px;background:var(--gray-200);margin-bottom:10px;"></div><div style="font-size:12px;color:var(--gray-400);margin-bottom:6px;">제안된 보강 일정 <span style="color:var(--gray-400);">(수강생 선택 대기)</span></div>' + slotsHtml + '<div style="margin-top:8px;display:flex;align-items:center;gap:6px;padding:8px 10px;background:#FFFBEB;border-radius:8px;"><span style="font-size:14px;">⏳</span><span style="font-size:12px;font-weight:600;color:#92400E;">홀드 남은 시간 ' + d.holdRemaining + '</span></div>' : ''}
       </div>`;
   } else if (isReschedule) {
-    const filteredSlots = d.desiredAvailable ? d.recommendedSlots.filter(s => s !== d.desiredSchedule) : d.recommendedSlots;
-    const slotsHtml = filteredSlots.map((s, i) => {
-      return `<label class="rc-slot" onclick="selectRcSlot(this)" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:#D1FAE5;color:#065F46;cursor:pointer;border:2px solid transparent;transition:all 0.15s;">
-        <input type="checkbox" style="width:18px;height:18px;accent-color:var(--green);flex-shrink:0;cursor:pointer;">
-        <span style="font-size:13px;font-weight:600;flex:1;">${s}</span>
-      </label>`;
-    }).join('');
     const slotsTitle = d.desiredAvailable ? '변경 가능한 다른 날짜' : '변경 가능한 날짜';
     lesson.innerHTML = `
-      <div style="display:flex;flex-direction:column;gap:10px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:0 4px;">
-          <span style="font-size:13px;color:var(--gray-400);">레슨 유형</span>
-          <span style="font-size:14px;font-weight:600;color:var(--navy);">${d.type}</span>
-        </div>
-        <div style="height:1px;background:var(--gray-100);"></div>
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:0 4px;">
-          <span style="font-size:13px;color:var(--gray-400);">레슨 형태</span>
-          <span style="font-size:14px;font-weight:600;color:var(--navy);">${d.format}</span>
-        </div>
-        <div style="height:1px;background:var(--gray-100);"></div>
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:0 4px;">
-          <span style="font-size:13px;color:var(--gray-400);">현재 회차</span>
-          <span style="font-size:14px;font-weight:600;color:var(--navy);">${d.session}</span>
-        </div>
-        <div style="height:1px;background:var(--gray-100);"></div>
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:0 4px;">
-          <span style="font-size:13px;color:var(--gray-400);">결제</span>
+      <div style="padding:14px;background:var(--gray-50);border-radius:14px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
           <div style="display:flex;align-items:center;gap:6px;">
-            <span style="font-size:14px;font-weight:600;color:var(--navy);">${d.price}</span>
-            ${d.paymentStatus === 'paid' ? '<span style="padding:2px 6px;border-radius:4px;background:#D1FAE5;color:#065F46;font-size:10px;font-weight:700;">결제완료</span>' : d.paymentStatus === 'external' ? '<span style="padding:2px 6px;border-radius:4px;background:#DBEAFE;color:#1E40AF;font-size:10px;font-weight:700;">외부결제</span>' : '<span style="padding:2px 6px;border-radius:4px;background:#FEE2E2;color:#EF4444;font-size:10px;font-weight:700;">미결제</span>'}
+            <span style="font-size:16px;">🔄</span>
+            <span style="font-size:15px;font-weight:800;color:var(--navy);">변경 요청</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;padding:4px 10px;background:#fff;border-radius:8px;border:1px solid var(--gray-100);">
+            <span style="font-size:11px;color:var(--gray-400);">수강생 이번 달</span>
+            <span style="font-size:12px;font-weight:700;color:#92400E;">2 / 3회</span>
           </div>
         </div>
-        ${d.lastPayment ? '<div style="height:1px;background:var(--gray-100);"></div><div style="display:flex;justify-content:space-between;align-items:center;padding:0 4px;"><span style="font-size:13px;color:var(--gray-400);">최근 결제일</span><span style="font-size:14px;font-weight:600;color:var(--navy);">' + d.lastPayment + '</span></div>' : ''}
-        ${d.nextPayment ? '<div style="height:1px;background:var(--gray-100);"></div><div style="display:flex;justify-content:space-between;align-items:center;padding:0 4px;"><span style="font-size:13px;color:var(--gray-400);">다음 결제일</span><span style="font-size:14px;font-weight:600;color:var(--navy);">' + d.nextPayment + '</span></div>' : ''}
-      </div>
-      <div style="margin-top:16px;">
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:12px;">
-          <span style="font-size:16px;">🔄</span>
-          <span style="font-size:15px;font-weight:800;color:var(--navy);">변경 요청</span>
-        </div>
         <div style="display:flex;flex-direction:column;gap:8px;">
-          <div style="padding:12px;background:#FFF7ED;border-radius:10px;">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <div style="padding:12px;background:#FFF7ED;border-radius:10px;border:1px solid #FED7AA;">
+            <div style="font-size:11px;font-weight:700;color:#92400E;margin-bottom:8px;">수강생 희망 변경</div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
               <span style="font-size:13px;color:var(--gray-400);text-decoration:line-through;">${d.originalSchedule}</span>
               <span style="font-size:14px;color:var(--gray-400);">→</span>
               <span style="font-size:13px;font-weight:700;color:#92400E;">${d.desiredSchedule}</span>
             </div>
-            <div style="display:flex;justify-content:space-between;align-items:center;">
-              <span style="font-size:11px;color:#92400E;">수강생 희망 변경</span>
-              ${d.desiredAvailable ? '<button onclick="confirmDesiredSchedule()" style="padding:6px 14px;border-radius:8px;border:none;background:var(--coral);color:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;box-shadow:0 2px 6px rgba(255,107,107,0.4);">확정하기</button>' : ''}
-            </div>
+            ${d.desiredAvailable ? '<button onclick="confirmDesiredSchedule()" style="width:100%;height:36px;border-radius:8px;border:none;background:var(--coral);color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 2px 6px rgba(255,107,107,0.3);">희망 일정으로 확정하기</button>' : '<div style="padding:8px 10px;background:#fff;border-radius:6px;font-size:11px;color:var(--gray-500);text-align:center;">희망 일정에 가용 시간이 없어요. 아래에서 다른 날짜를 제안해 주세요</div>'}
           </div>
-          <div style="padding:10px;background:#F0FDFA;border-radius:8px;border:1px solid #D1FAE5;">
-            <div style="font-size:11px;color:#065F46;margin-bottom:6px;">🤖 ${slotsTitle} (자동 추천)</div>
-            <div style="display:flex;flex-direction:column;gap:6px;">${slotsHtml}</div>
+          <!-- 변경 가능한 날짜 영역 (일/주 토글) -->
+          <div style="padding:12px;background:#F0FDFA;border-radius:10px;border:1px solid #D1FAE5;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+              <div style="font-size:12px;font-weight:700;color:#065F46;">${slotsTitle}</div>
+              <div style="display:flex;background:#fff;border-radius:8px;padding:2px;gap:2px;border:1px solid #D1FAE5;">
+                <button id="rc-tab-day" onclick="setRcViewMode('day')" style="padding:4px 12px;border-radius:6px;border:none;background:var(--green);color:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">일</button>
+                <button id="rc-tab-week" onclick="setRcViewMode('week')" style="padding:4px 12px;border-radius:6px;border:none;background:transparent;color:var(--gray-500);font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">주</button>
+              </div>
+            </div>
+            <!-- 전체선택 -->
+            <label id="rc-select-all-wrap" style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:#fff;border-radius:8px;margin-bottom:8px;cursor:pointer;border:1px solid #D1FAE5;">
+              <input type="checkbox" id="rc-select-all" onchange="toggleRcSelectAll(this.checked)" style="width:16px;height:16px;accent-color:var(--green);cursor:pointer;">
+              <span style="font-size:12px;font-weight:700;color:#065F46;">가능 날짜 전체 선택</span>
+              <span id="rc-select-all-count" style="font-size:11px;color:var(--gray-400);margin-left:auto;"></span>
+            </label>
+            <div id="rc-slots-container"></div>
           </div>
         </div>
       </div>`;
@@ -2070,20 +2204,22 @@ function showLessonDetail(status) {
   } else if (status === 'absent' || status === 'makeup' || status === 'makeup_confirmed') {
     actions.innerHTML = statusBtn + '<button onclick="closeLessonDetail()" style="width:100%;height:48px;border-radius:12px;border:1.5px solid var(--gray-200);background:#fff;color:var(--gray-500);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">닫기</button>';
   } else if (status === 'reschedule') {
-    actions.innerHTML = statusBtn + `
+    actions.innerHTML = `
       <div style="display:flex;gap:10px;">
-        <button id="btn-propose-selected" onclick="proposeSelectedFromDetail(this)" disabled style="flex:1;height:48px;border-radius:12px;border:2px solid var(--gray-200);background:#fff;color:var(--gray-400);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.15s;">선택 제안하기</button>
-        <button onclick="proposeAllFromDetail(this)" style="flex:1;height:48px;border-radius:12px;border:none;background:var(--green);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">모두 제안하기</button>
+        <button onclick="showStatusActions('reschedule')" style="flex:1;height:48px;border-radius:12px;border:1.5px solid var(--gray-200);background:#fff;color:var(--navy);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">상태처리하기</button>
+        <button id="btn-propose-rc" onclick="proposeRcFromDetail()" disabled style="flex:1;height:48px;border-radius:12px;border:none;background:var(--gray-300);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.15s;">제안하기</button>
       </div>
       <div style="margin-top:12px;padding:14px;background:var(--gray-50);border-radius:12px;">
         <div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:6px;">💡 제안하기란?</div>
         <div style="font-size:11px;color:var(--gray-500);line-height:1.7;">
-          코치님이 선택한 날짜를 수강생에게 제안하는 기능이에요.<br>
-          · 제안하면 해당 시간이 <strong style="color:var(--navy);">12시간 동안 임시 홀드</strong>되어 다른 변경 요청에서 추천되지 않아요.<br>
+          선택한 날짜를 수강생에게 제안하는 기능이에요.<br>
+          · 제안 시 해당 시간이 <strong style="color:var(--navy);">12시간 임시 홀드</strong>됩니다.<br>
           · 수강생에게 <strong style="color:var(--navy);">카카오 알림톡</strong>으로 제안 내용이 발송돼요.<br>
-          · 12시간 내 수강생이 응답하지 않으면 홀드가 자동 해제돼요.
+          · 12시간 내 미응답 시 홀드 자동 해제.
         </div>
       </div>`;
+    // 변경요청 슬롯 렌더링 (오늘 날짜 기준 일 모드)
+    setTimeout(() => initRcView(d), 0);
   } else if (status === 'inprogress' || status === 'upcoming') {
     actions.innerHTML = statusBtn;
   } else if (status === 'completed') {
@@ -2151,15 +2287,15 @@ function showLessonDetail(status) {
         <button onclick="showProposalModal()" style="flex:2;height:48px;border-radius:12px;border:none;background:var(--green);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">제안하기</button>
       </div>`;
   } else if (status === 'pending') {
-    actions.innerHTML = statusBtn + `
+    actions.innerHTML = `
       <div style="padding:10px 12px;background:#F0FDFA;border-radius:10px;margin-bottom:10px;font-size:12px;color:#065F46;line-height:1.6;">
         <strong>스케줄 확정 안내</strong><br>
         수강생의 희망 일정으로 스케줄이 확정됩니다.<br>
-        확정 후 수강생에게 알림이 발송됩니다.
+        확정 전, 결제 상태를 함께 확인해 주세요.
       </div>
       <div style="display:flex;gap:10px;">
         <button onclick="showMoreActions()" style="flex:1;height:48px;border-radius:12px;border:1px solid var(--gray-100);background:#fff;color:var(--gray-500);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">더보기</button>
-        <button style="flex:2;height:48px;border-radius:12px;border:none;background:var(--green);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">스케줄 확정하기</button>
+        <button onclick="showConfirmScheduleModal()" style="flex:2;height:48px;border-radius:12px;border:none;background:var(--green);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">스케줄 확정하기</button>
       </div>`;
   } else {
     actions.innerHTML = `
@@ -2169,13 +2305,144 @@ function showLessonDetail(status) {
       </div>`;
   }
 
+  // 상태 변경 히스토리 렌더링
+  renderDetailHistory(status);
+
   modal.style.display = 'block';
 }
 function closeLessonDetail() {
   document.getElementById('lesson-detail-modal').style.display = 'none';
 }
 
+// ── 상태 변경 히스토리 ──────────────────────────────
+const STATUS_HISTORY_DATA = {
+  inprogress: [
+    { time: '오늘 10:00', actor: 'system', action: '레슨 진행중 자동 전환', detail: '예정 시간 도래' },
+    { time: '4/13 09:30', actor: 'system', action: '레슨 예정 알림 발송', detail: 'D-DAY 알림' },
+    { time: '4/8 14:00', actor: 'coach', action: '레슨 확정', detail: '코치 김민수' },
+    { time: '4/8 13:50', actor: 'student', action: '레슨 신청', detail: '정규레슨 1:1' }
+  ],
+  upcoming: [
+    { time: '4/8 14:00', actor: 'coach', action: '레슨 확정', detail: '코치 김민수' },
+    { time: '4/8 13:50', actor: 'student', action: '레슨 신청', detail: '정규레슨 1:1' }
+  ],
+  pending: [
+    { time: '오늘 09:15', actor: 'student', action: '레슨 신청', detail: '쿠폰레슨 4회 그룹' }
+  ],
+  reschedule: [
+    { time: '오늘 14:30', actor: 'student', action: '변경 요청 제출', detail: '희망 3개 일정 (사유: 개인 사정)' },
+    { time: '4/8 14:00', actor: 'coach', action: '레슨 확정', detail: '4/15 (화) 10:00' },
+    { time: '4/8 13:50', actor: 'student', action: '레슨 신청', detail: '정규레슨 1:1' }
+  ],
+  reschedule_completed: [
+    { time: '오늘 15:00', actor: 'student', action: '변경 일정 확정', detail: '4/13 (일) 16:00 선택' },
+    { time: '오늘 14:30', actor: 'coach', action: '변경 가능 일정 3개 제안', detail: '12시간 홀드' },
+    { time: '4/12 09:00', actor: 'student', action: '변경 요청 제출', detail: '사유: 개인 사정' },
+    { time: '4/8 14:00', actor: 'coach', action: '레슨 확정', detail: '4/13 (일) 10:00' }
+  ],
+  completed: [
+    { time: '오늘 11:00', actor: 'coach', action: '레슨 완료 처리', detail: '6/8회 카운트' },
+    { time: '오늘 10:00', actor: 'system', action: '레슨 진행중 자동 전환', detail: '' },
+    { time: '4/8 14:00', actor: 'coach', action: '레슨 확정', detail: '' }
+  ],
+  absent: [
+    { time: '오늘 09:30', actor: 'coach', action: '결강 처리', detail: '사유: 코치 개인 사정 (병가)' },
+    { time: '4/8 14:00', actor: 'coach', action: '레슨 확정', detail: '4/13 (일) 10:00' }
+  ],
+  makeup: [
+    { time: '오늘 11:00', actor: 'coach', action: '보강 일정 3개 제안', detail: '12시간 홀드' },
+    { time: '오늘 10:00', actor: 'coach', action: '결강 처리', detail: '사유: 코치 개인 사정' },
+    { time: '4/8 14:00', actor: 'coach', action: '레슨 확정', detail: '' }
+  ],
+  makeup_confirmed: [
+    { time: '어제 16:00', actor: 'student', action: '보강 일정 확정', detail: '4/16 (수) 10:00 선택' },
+    { time: '어제 14:00', actor: 'coach', action: '보강 일정 3개 제안', detail: '' },
+    { time: '4/13 10:00', actor: 'coach', action: '결강 처리', detail: '사유: 코치 사정' },
+    { time: '4/8 14:00', actor: 'coach', action: '레슨 확정', detail: '' }
+  ],
+  makeup_requested: [
+    { time: '오늘 09:00', actor: 'student', action: '보강 요청 제출', detail: '코치 일정 제안 대기' },
+    { time: '4/13 11:00', actor: 'coach', action: '결강 처리', detail: '사유: 코치 사정' },
+    { time: '4/8 14:00', actor: 'coach', action: '레슨 확정', detail: '' }
+  ]
+};
+const ACTOR_INFO = {
+  student: { label: '수강생', color: '#7C5CBF', bg: '#F3E8FF' },
+  coach:   { label: '코치',   color: '#065F46', bg: '#D1FAE5' },
+  system:  { label: '시스템', color: '#6B7280', bg: '#F5F5F7' },
+  admin:   { label: '관리자', color: '#1E40AF', bg: '#DBEAFE' }
+};
+function renderDetailHistory(status) {
+  const c = document.getElementById('detail-history');
+  if (!c) return;
+  const items = STATUS_HISTORY_DATA[status];
+  if (!items || items.length === 0) {
+    c.innerHTML = '';
+    return;
+  }
+  const itemsHtml = items.map((it, i) => {
+    const a = ACTOR_INFO[it.actor] || ACTOR_INFO.system;
+    const isLast = i === items.length - 1;
+    return `<div style="display:flex;gap:10px;position:relative;${isLast ? '' : 'padding-bottom:12px;'}">
+      <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;">
+        <div style="width:8px;height:8px;border-radius:50%;background:${a.color};margin-top:5px;"></div>
+        ${isLast ? '' : `<div style="flex:1;width:1px;background:var(--gray-100);margin-top:4px;"></div>`}
+      </div>
+      <div style="flex:1;padding-bottom:${isLast ? '0' : '4px'};">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+          <span style="font-size:11px;color:var(--gray-400);">${it.time}</span>
+          <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:4px;background:${a.bg};color:${a.color};">${a.label}</span>
+        </div>
+        <div style="font-size:13px;font-weight:600;color:var(--navy);margin-top:2px;">${it.action}</div>
+        ${it.detail ? `<div style="font-size:11px;color:var(--gray-500);margin-top:1px;">${it.detail}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+  c.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:12px 14px;background:var(--gray-50);border-radius:12px;" onclick="toggleHistoryAccordion()">
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span style="font-size:14px;">📜</span>
+        <span style="font-size:13px;font-weight:700;color:var(--navy);">상태 변경 히스토리</span>
+        <span style="font-size:11px;color:var(--gray-400);">${items.length}건</span>
+      </div>
+      <span id="history-arrow" style="font-size:11px;color:var(--gray-400);transition:transform 0.2s;">▼</span>
+    </div>
+    <div id="history-content" style="display:none;padding:14px;background:#fff;border:1px solid var(--gray-100);border-top:none;border-radius:0 0 12px 12px;margin-top:-1px;">
+      ${itemsHtml}
+    </div>`;
+}
+function toggleHistoryAccordion() {
+  const content = document.getElementById('history-content');
+  const arrow = document.getElementById('history-arrow');
+  if (!content) return;
+  const isOpen = content.style.display === 'block';
+  content.style.display = isOpen ? 'none' : 'block';
+  if (arrow) arrow.style.transform = isOpen ? '' : 'rotate(180deg)';
+}
+
 let currentReasonAction = '';
+// 스케줄 확정 — 결제 확인 모달
+function showConfirmScheduleModal() {
+  const d = currentDetailData;
+  const nameEl = document.getElementById('confirm-pay-student-name');
+  if (nameEl && d && d.name) nameEl.textContent = d.name;
+  document.getElementById('confirm-schedule-modal').style.display = 'block';
+}
+function closeConfirmScheduleModal() {
+  document.getElementById('confirm-schedule-modal').style.display = 'none';
+}
+function confirmScheduleWithPayment(paymentStatus) {
+  closeConfirmScheduleModal();
+  closeLessonDetail();
+  const labels = { paid: '전액 결제완료', deposit: '예약금 받음', unpaid: '미결제' };
+  const toast = document.getElementById('sent-toast');
+  if (toast) {
+    toast.textContent = `스케줄이 확정되었습니다 (${labels[paymentStatus]})`;
+    toast.style.display = 'block';
+    setTimeout(() => { toast.style.display = 'none'; }, 2000);
+  }
+}
+
 function showMoreActions() {
   document.getElementById('more-actions-popup').style.display = 'block';
 }
@@ -2263,9 +2530,25 @@ function confirmSchedule() {
 
 // 레슨 완료 처리
 function completeLesson() {
-  if (confirm('레슨을 완료 처리합니다.')) {
+  const d = currentDetailData;
+  const sessionInfo = (d && d.session) ? `\n\n· 회차가 +1 카운트됩니다 (현재 ${d.session})` : '\n\n· 회차가 +1 카운트됩니다';
+  const msg = `이 레슨을 완료 처리하시겠어요?${sessionInfo}\n· 수강생에게 완료 알림이 발송됩니다\n· 완료 후에는 되돌릴 수 없습니다`;
+  if (confirm(msg)) {
     closeLessonDetail();
     window.location.href = '../flow6-student-my/6-6-booking-detail.html?status=completed';
+  }
+}
+
+// 보강 일정 선택중 → 진행 예정(upcoming/confirmed)으로 되돌리기
+function revertToUpcoming() {
+  if (confirm('보강 일정 선택중 상태를 취소하고 원래 일정(진행 예정)으로 되돌립니다.\n수강생에게 알림이 발송됩니다.\n계속 진행할까요?')) {
+    closeLessonDetail();
+    const toast = document.getElementById('sent-toast');
+    if (toast) {
+      toast.textContent = '진행 예정 상태로 되돌렸습니다';
+      toast.style.display = 'block';
+      setTimeout(() => { toast.style.display = 'none'; }, 2000);
+    }
   }
 }
 
@@ -2343,13 +2626,30 @@ function proposeSelectedTab(btnEl) {
 }
 
 function confirmDesiredSchedule() {
-  if (confirm('수강생 희망 날짜로 일정을 확정합니다.\n기존 일정은 해제되고 수강생에게 알림이 발송됩니다.')) {
-    closeLessonDetail();
-    const toast = document.getElementById('sent-toast');
-    toast.textContent = '희망 날짜로 변경이 확정되었습니다';
-    toast.style.display = 'block';
-    setTimeout(() => { toast.style.display = 'none'; }, 2000);
-  }
+  const d = currentDetailData;
+  if (!d) return;
+  // 모달에 정보 채우기
+  document.getElementById('rc-confirm-desired-recipient').textContent = `${d.name}님의 희망 변경 일정을 확정합니다`;
+  document.getElementById('rc-confirm-desired-from').textContent = d.originalSchedule || '';
+  document.getElementById('rc-confirm-desired-to').textContent = d.desiredSchedule || '';
+  document.getElementById('rc-confirm-desired').style.display = 'block';
+}
+
+function hideConfirmDesired() {
+  document.getElementById('rc-confirm-desired').style.display = 'none';
+}
+
+function executeConfirmDesired() {
+  const d = currentDetailData;
+  hideConfirmDesired();
+  // 토스트 잠깐 노출 후 수강생 레슨 상세 화면으로 이동 (테스트 플로우)
+  const toast = document.getElementById('sent-toast');
+  toast.textContent = '희망 일정으로 확정되었습니다';
+  toast.style.display = 'block';
+  setTimeout(() => {
+    const confirmedDate = encodeURIComponent(d && d.desiredSchedule ? d.desiredSchedule : '');
+    window.location.href = `../flow6-student-my/6-6-booking-detail.html?status=reschedule_confirmed&confirmedDate=${confirmedDate}`;
+  }, 1200);
 }
 
 function selectRcSlot(el) {
@@ -2399,6 +2699,254 @@ function proposeAllFromDetail(btnEl) {
   setTimeout(() => { toast.style.display = 'none'; closeLessonDetail(); }, 1500);
 }
 
+// ── 변경 가능한 날짜 영역 (일/주 토글) ──────────────────────────────
+const RC_DAY_NAMES = ['일','월','화','수','목','금','토'];
+// 코치 요일별 가용 시간 (실제로는 서버 데이터)
+const RC_SLOTS_BY_DAY = {
+  0: ['09:00','11:00','14:00'],
+  1: ['09:00','10:00','15:00','19:00'],
+  2: ['09:00','14:00','17:00'],
+  3: [],   // 수요일 휴무
+  4: ['09:00','11:00','14:00','17:00'],
+  5: ['10:00','14:00','19:00'],
+  6: ['09:00','10:00','11:00','14:00']
+};
+let rcViewMode = 'day';            // 'day' | 'week'
+let rcActiveDate = null;           // 일 모드 선택 날짜
+let rcWeekOffset = 0;              // 주 모드 주 오프셋
+let rcSelectedSlots = new Set();   // "M/D HH:MM"
+let rcDesiredSchedule = null;      // 수강생 희망 (확정하기로 분리됨)
+
+function rcDateKey(d) { return `${d.getMonth()+1}/${d.getDate()}`; }
+function rcDateLabel(d) { return `${d.getMonth()+1}월 ${d.getDate()}일 (${RC_DAY_NAMES[d.getDay()]})`; }
+function rcSlotsForDate(d) { return RC_SLOTS_BY_DAY[d.getDay()] || []; }
+
+function findFirstAvailableDate() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  for (let i = 0; i < 14; i++) {
+    const d = new Date(today); d.setDate(today.getDate() + i);
+    if (rcSlotsForDate(d).length > 0) return d;
+  }
+  return today;
+}
+
+function initRcView(d) {
+  rcViewMode = 'day';
+  rcWeekOffset = 0;
+  rcSelectedSlots = new Set();
+  rcDesiredSchedule = d.desiredSchedule || null;
+  rcActiveDate = findFirstAvailableDate();
+  setRcViewMode('day');
+}
+
+function setRcViewMode(mode) {
+  rcViewMode = mode;
+  const dayTab = document.getElementById('rc-tab-day');
+  const weekTab = document.getElementById('rc-tab-week');
+  if (dayTab && weekTab) {
+    if (mode === 'day') {
+      dayTab.style.background = 'var(--green)'; dayTab.style.color = '#fff';
+      weekTab.style.background = 'transparent'; weekTab.style.color = 'var(--gray-500)';
+    } else {
+      weekTab.style.background = 'var(--green)'; weekTab.style.color = '#fff';
+      dayTab.style.background = 'transparent'; dayTab.style.color = 'var(--gray-500)';
+    }
+  }
+  renderRcSlots();
+}
+
+function renderRcSlots() {
+  const c = document.getElementById('rc-slots-container');
+  if (!c) return;
+  if (rcViewMode === 'day') {
+    renderRcDayView(c);
+  } else {
+    renderRcWeekView(c);
+  }
+  updateRcSelectAllState();
+  updateRcProposeBtn();
+}
+
+// 전체 가능 날짜 슬롯 키 목록 (오늘 포함 14일치 전부)
+function getRcAllAvailableSlotKeys() {
+  const keys = [];
+  const today = new Date(); today.setHours(0,0,0,0);
+  for (let i = 0; i < 14; i++) {
+    const d = new Date(today); d.setDate(today.getDate() + i);
+    rcSlotsForDate(d).forEach(time => {
+      keys.push(`${rcDateKey(d)} ${time}`);
+    });
+  }
+  return keys;
+}
+
+function toggleRcSelectAll(checked) {
+  const all = getRcAllAvailableSlotKeys();
+  if (checked) {
+    all.forEach(k => rcSelectedSlots.add(k));
+  } else {
+    all.forEach(k => rcSelectedSlots.delete(k));
+  }
+  renderRcSlots();
+}
+
+function updateRcSelectAllState() {
+  const all = getRcAllAvailableSlotKeys();
+  const cb = document.getElementById('rc-select-all');
+  const cnt = document.getElementById('rc-select-all-count');
+  const wrap = document.getElementById('rc-select-all-wrap');
+  if (!cb) return;
+  if (all.length === 0) {
+    cb.checked = false;
+    cb.disabled = true;
+    if (wrap) wrap.style.opacity = '0.5';
+    if (cnt) cnt.textContent = '';
+    return;
+  }
+  cb.disabled = false;
+  if (wrap) wrap.style.opacity = '1';
+  const selectedTotal = all.filter(k => rcSelectedSlots.has(k)).length;
+  cb.checked = selectedTotal === all.length;
+  if (cnt) cnt.textContent = `${selectedTotal}/${all.length}`;
+}
+
+function renderRcDayView(c) {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const isPrevDisabled = rcActiveDate <= today;
+  c.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+      <button onclick="rcMoveDay(-1)" ${isPrevDisabled?'disabled':''} style="width:28px;height:28px;border-radius:8px;border:1px solid var(--gray-200);background:#fff;color:${isPrevDisabled?'var(--gray-300)':'var(--navy)'};font-size:13px;font-weight:700;cursor:${isPrevDisabled?'not-allowed':'pointer'};font-family:inherit;">‹</button>
+      <span style="font-size:13px;font-weight:700;color:var(--navy);">${rcDateLabel(rcActiveDate)}</span>
+      <button onclick="rcMoveDay(1)" style="width:28px;height:28px;border-radius:8px;border:1px solid var(--gray-200);background:#fff;color:var(--navy);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">›</button>
+    </div>
+    <div id="rc-day-slots" style="display:flex;flex-direction:column;gap:6px;"></div>`;
+  const grid = document.getElementById('rc-day-slots');
+  const slots = rcSlotsForDate(rcActiveDate);
+  if (slots.length === 0) {
+    grid.innerHTML = '<div style="padding:14px;text-align:center;font-size:12px;color:var(--gray-400);background:#fff;border-radius:8px;">이 날짜에 변경 가능한 시간이 없습니다</div>';
+    return;
+  }
+  slots.forEach(time => {
+    const slotKey = `${rcDateKey(rcActiveDate)} ${time}`;
+    const isSel = rcSelectedSlots.has(slotKey);
+    const item = document.createElement('label');
+    item.style.cssText = `display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:${isSel?'#B6F5E6':'#fff'};border:1.5px solid ${isSel?'var(--green)':'transparent'};color:#065F46;cursor:pointer;transition:all 0.15s;`;
+    item.innerHTML = `<input type="checkbox" ${isSel?'checked':''} style="width:18px;height:18px;accent-color:var(--green);flex-shrink:0;cursor:pointer;"><span style="font-size:13px;font-weight:600;flex:1;">${time}</span>`;
+    item.onclick = function(e) {
+      e.preventDefault();
+      if (rcSelectedSlots.has(slotKey)) rcSelectedSlots.delete(slotKey);
+      else rcSelectedSlots.add(slotKey);
+      renderRcSlots();
+    };
+    grid.appendChild(item);
+  });
+}
+
+function renderRcWeekView(c) {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const start = new Date(today); start.setDate(today.getDate() + rcWeekOffset * 7);
+  const end = new Date(start); end.setDate(start.getDate() + 6);
+  const isPrevDisabled = rcWeekOffset === 0;
+  c.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+      <button onclick="rcMoveWeek(-1)" ${isPrevDisabled?'disabled':''} style="width:28px;height:28px;border-radius:8px;border:1px solid var(--gray-200);background:#fff;color:${isPrevDisabled?'var(--gray-300)':'var(--navy)'};font-size:13px;font-weight:700;cursor:${isPrevDisabled?'not-allowed':'pointer'};font-family:inherit;">‹</button>
+      <span style="font-size:13px;font-weight:700;color:var(--navy);">${start.getMonth()+1}/${start.getDate()} ~ ${end.getMonth()+1}/${end.getDate()}</span>
+      <button onclick="rcMoveWeek(1)" style="width:28px;height:28px;border-radius:8px;border:1px solid var(--gray-200);background:#fff;color:var(--navy);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">›</button>
+    </div>
+    <div id="rc-week-list" style="display:flex;flex-direction:column;gap:8px;"></div>`;
+  const list = document.getElementById('rc-week-list');
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(start); d.setDate(start.getDate() + i);
+    const slots = rcSlotsForDate(d);
+    if (slots.length === 0) continue;
+    const dateLabel = `${d.getMonth()+1}/${d.getDate()} (${RC_DAY_NAMES[d.getDay()]})`;
+    const card = document.createElement('div');
+    card.style.cssText = 'background:#fff;border-radius:10px;padding:10px 12px;border:1px solid #D1FAE5;';
+    let chips = '';
+    slots.forEach(time => {
+      const slotKey = `${rcDateKey(d)} ${time}`;
+      const isSel = rcSelectedSlots.has(slotKey);
+      chips += `<label data-key="${slotKey}" style="display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:8px;background:${isSel?'#B6F5E6':'var(--gray-50)'};border:1.5px solid ${isSel?'var(--green)':'transparent'};font-size:12px;font-weight:600;color:#065F46;cursor:pointer;margin:2px;">
+        <input type="checkbox" ${isSel?'checked':''} style="width:14px;height:14px;accent-color:var(--green);cursor:pointer;">${time}
+      </label>`;
+    });
+    card.innerHTML = `<div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:6px;">${dateLabel}</div><div style="display:flex;flex-wrap:wrap;gap:0;">${chips}</div>`;
+    card.querySelectorAll('label').forEach(lbl => {
+      lbl.onclick = function(e) {
+        e.preventDefault();
+        const k = lbl.dataset.key;
+        if (rcSelectedSlots.has(k)) rcSelectedSlots.delete(k);
+        else rcSelectedSlots.add(k);
+        renderRcSlots();
+      };
+    });
+    list.appendChild(card);
+  }
+  if (list.children.length === 0) {
+    list.innerHTML = '<div style="padding:14px;text-align:center;font-size:12px;color:var(--gray-400);background:#fff;border-radius:8px;">이번 주에 변경 가능한 시간이 없습니다</div>';
+  }
+}
+
+function rcMoveDay(dir) {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const next = new Date(rcActiveDate); next.setDate(rcActiveDate.getDate() + dir);
+  if (next < today) return;
+  rcActiveDate = next;
+  renderRcSlots();
+}
+function rcMoveWeek(dir) {
+  if (rcWeekOffset + dir < 0) return;
+  rcWeekOffset += dir;
+  renderRcSlots();
+}
+
+function updateRcProposeBtn() {
+  const btn = document.getElementById('btn-propose-rc');
+  if (!btn) return;
+  const n = rcSelectedSlots.size;
+  btn.disabled = n === 0;
+  btn.style.background = n > 0 ? 'var(--green)' : 'var(--gray-300)';
+  btn.textContent = n > 0 ? `제안하기 (${n}개)` : '제안하기';
+}
+
+function proposeRcFromDetail() {
+  if (rcSelectedSlots.size === 0) return;
+  // 일정 정렬 (날짜 오름차순)
+  const today = new Date(); today.setHours(0,0,0,0);
+  const sorted = Array.from(rcSelectedSlots).map(k => {
+    const [dateStr, time] = k.split(' ');
+    const [m, day] = dateStr.split('/').map(Number);
+    const d = new Date(today); d.setMonth(m - 1, day); if (d < today) d.setFullYear(d.getFullYear() + 1);
+    return { key: k, dateStr, time, sortKey: d.getTime() + parseInt(time.replace(':',''), 10), dayName: RC_DAY_NAMES[d.getDay()] };
+  }).sort((a, b) => a.sortKey - b.sortKey);
+
+  document.getElementById('rc-confirm-title').textContent = `다음 ${rcSelectedSlots.size}개 일정을 제안합니다`;
+  const recipient = (currentDetailData && currentDetailData.name) ? `${currentDetailData.name}님에게 전송됩니다` : '수강생에게 전송됩니다';
+  document.getElementById('rc-confirm-recipient').textContent = recipient;
+
+  const listHtml = sorted.map(s =>
+    `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--gray-50);border-radius:10px;">
+      <span style="font-size:14px;">📅</span>
+      <span style="font-size:13px;font-weight:600;color:var(--navy);">${s.dateStr} (${s.dayName}) ${s.time}</span>
+    </div>`
+  ).join('');
+  document.getElementById('rc-confirm-list').innerHTML = listHtml;
+
+  document.getElementById('rc-propose-confirm').style.display = 'block';
+}
+
+function hideProposeConfirm() {
+  document.getElementById('rc-propose-confirm').style.display = 'none';
+}
+
+function confirmProposeRc() {
+  hideProposeConfirm();
+  const toast = document.getElementById('sent-toast');
+  toast.textContent = `${rcSelectedSlots.size}개 일정이 제안되었습니다`;
+  toast.style.display = 'block';
+  setTimeout(() => { toast.style.display = 'none'; closeLessonDetail(); }, 1500);
+}
+
 
 // 수강생 뷰 오버레이
 function showStudentView(status) {
@@ -2412,7 +2960,7 @@ function showStudentView(status) {
       msg: '<div style="margin-top:10px;padding:12px;background:#FEF2F2;border-radius:10px;font-size:13px;color:var(--error);font-weight:600;">코치 사정으로 레슨이 결강 처리되었습니다.<br><span style="font-size:12px;font-weight:400;color:#EF4444;">보강 레슨이 추가될 예정입니다.</span></div>'
     },
     makeup: {
-      badge: '<span style="display:inline-block;padding:5px 14px;border-radius:20px;background:#D1FAE5;color:#065F46;font-size:13px;font-weight:700;">🔄 보강 대기</span>',
+      badge: '<span style="display:inline-block;padding:5px 14px;border-radius:20px;background:#D1FAE5;color:#065F46;font-size:13px;font-weight:700;">🔄 보강 일정 선택중</span>',
       msg: '<div style="margin-top:10px;padding:12px;background:#F0FDFA;border-radius:10px;border:1.5px dashed var(--green);font-size:13px;color:#065F46;font-weight:600;">보강 레슨이 등록되었습니다.<br><span style="font-size:12px;font-weight:400;color:var(--green);">코치가 보강 일정을 확정하면 알림톡으로 안내드려요.</span></div>'
     }
   };

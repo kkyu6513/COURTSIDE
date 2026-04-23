@@ -81,8 +81,8 @@ enum BookingStatus {
   CANCELLED
   REJECTED
   ABSENT
-  MAKEUP_REQUESTED  // 보강요청 — 수강생이 직접 보강 요청, 코치 수락 전
-  MAKEUP_PENDING    // 보강대기 — 코치가 보강 등록, 수강생 수락 전
+  MAKEUP_REQUESTED  // 보강 요청 — 수강생이 직접 보강 요청, 코치 수락 전
+  MAKEUP_PENDING    // 보강 일정 선택중 — 코치가 보강 등록, 수강생 수락 전
   MAKEUP_CONFIRMED  // 보강확정 — 수강생이 보강 일정 수락 완료
 }
 

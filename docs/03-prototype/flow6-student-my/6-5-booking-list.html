@@ -1,33 +1,251 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=375, initial-scale=1.0"><title>6-5 신청 내역 — COURTSIDE</title><link rel="stylesheet" href="../common.css"></head>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=375, initial-scale=1.0">
+<title>6-5 나의 레슨 — COURTSIDE</title>
+<link rel="stylesheet" href="../common.css">
+<style>
+  .booking-card {
+    background: #fff;
+    border: 1px solid var(--gray-100);
+    border-radius: 14px;
+    padding: 14px 16px;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    transition: all 0.15s;
+  }
+  .booking-card:hover { border-color: var(--gray-200); box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+  .booking-card .row1 { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+  .booking-card .coach-name { font-size:15px; font-weight:700; color:var(--navy); }
+  .booking-card .meta { font-size:12px; color:var(--gray-500); margin-top:2px; }
+  .booking-card .schedule { font-size:13px; color:var(--navy); margin-top:8px; padding-top:8px; border-top:1px solid var(--gray-50); }
+  .booking-card .session { font-size:12px; color:var(--info); font-weight:600; margin-top:4px; }
+  .booking-card.disabled { opacity:0.6; }
+
+  .status-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 6px;
+    white-space: nowrap;
+  }
+
+  .filter-chips {
+    display: flex; gap: 6px; padding: 12px 20px 8px; overflow-x: auto;
+    border-bottom: 1px solid var(--gray-100);
+  }
+  .filter-chips::-webkit-scrollbar { display:none; }
+  .f-chip {
+    padding: 5px 12px; border-radius: 16px; font-size: 12px; font-weight: 600;
+    background: var(--gray-50); color: var(--gray-500);
+    border: 1px solid var(--gray-100);
+    cursor: pointer; white-space: nowrap; flex-shrink:0;
+  }
+  .f-chip.active { background: var(--navy); color: #fff; border-color: var(--navy); }
+
+  .group-title {
+    font-size: 11px; font-weight: 700; color: var(--gray-400);
+    padding: 4px 0; margin-top: 4px;
+    text-transform: uppercase; letter-spacing: 0.3px;
+  }
+</style>
+</head>
 <body>
 <div class="device-wrap">
-  <div class="device-label"><span class="device-num">23</span>신청 내역</div>
+  <div class="device-label"><span class="device-num">23</span>나의 레슨</div>
   <div class="device">
     <div class="status-bar"><span class="time">9:41</span><div class="status-icons"><span>📶</span><span>🔋</span></div></div>
-    <div class="top-nav"><a class="back" href="6-2-mypage.html">←</a><span class="title">신청한 레슨</span><span class="action"></span></div>
-    <div class="screen">
-      <div style="padding:16px 20px;display:flex;flex-direction:column;gap:12px;">
-        <div style="border-radius:16px;padding:16px;color:#fff;position:relative;background:linear-gradient(135deg,var(--coral),#ff8787);">
-          <span style="position:absolute;top:14px;right:14px;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;background:rgba(255,255,255,0.25);">대기중</span>
-          <div style="font-size:11px;font-weight:600;opacity:0.85;">정규레슨 · 주 1회</div>
-          <div style="font-size:17px;font-weight:700;margin-top:4px;">김민수 코치</div>
-          <div style="font-size:13px;opacity:0.9;margin-top:8px;">화·목 10:00 · 1:1 개인</div>
-        </div>
-        <div style="border-radius:16px;padding:16px;color:#fff;position:relative;background:linear-gradient(135deg,var(--orange),#ffb86c);">
-          <span style="position:absolute;top:14px;right:14px;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;background:rgba(255,255,255,0.25);">수락됨</span>
-          <div style="font-size:11px;font-weight:600;opacity:0.85;">쿠폰레슨 · 8회</div>
-          <div style="font-size:17px;font-weight:700;margin-top:4px;">이서연 코치</div>
-          <div style="font-size:13px;opacity:0.9;margin-top:8px;">월·수 14:00 · 그룹</div>
-        </div>
-        <a href="6-6-booking-detail.html" style="text-decoration:none;border-radius:16px;padding:16px;color:#fff;position:relative;background:linear-gradient(135deg,var(--coral),#ff8787);opacity:0.6;display:block;">
-          <span style="position:absolute;top:14px;right:14px;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;background:rgba(255,255,255,0.25);">거절됨</span>
-          <div style="font-size:11px;font-weight:600;opacity:0.85;">정규레슨 · 주 2회</div>
-          <div style="font-size:17px;font-weight:700;margin-top:4px;">박준호 코치</div>
-          <div style="font-size:13px;opacity:0.9;margin-top:8px;">수·금 16:00 · 1:1 개인</div>
+    <div class="top-nav"><a class="back" href="6-2-mypage.html">←</a><span class="title">나의 레슨</span><span class="action"></span></div>
+
+    <!-- 필터 칩 -->
+    <div class="filter-chips">
+      <span class="f-chip active">전체 13</span>
+      <span class="f-chip">예정 2</span>
+      <span class="f-chip">대기 1</span>
+      <span class="f-chip">변경요청 2</span>
+      <span class="f-chip">완료 2</span>
+      <span class="f-chip">결강/보강 3</span>
+      <span class="f-chip">취소/거절 3</span>
+    </div>
+
+    <div class="screen" style="padding:16px 20px;">
+      <div style="display:flex;flex-direction:column;gap:8px;">
+
+        <!-- 1. 레슨 예정 -->
+        <a href="6-6-booking-detail.html?status=confirmed" class="booking-card">
+          <div class="row1">
+            <div>
+              <div class="coach-name">김민수 코치</div>
+              <div class="meta">정규레슨 · 1:1 개인</div>
+            </div>
+            <span class="status-badge" style="background:#F3E8FF;color:#7C5CBF;">📌 레슨 예정</span>
+          </div>
+          <div class="schedule">📅 4월 26일 (토) 10:00</div>
+          <div class="session">6/8회</div>
         </a>
+
+        <!-- 2. 레슨 예정 (오늘) -->
+        <a href="6-6-booking-detail.html?status=confirmed&isToday=1" class="booking-card">
+          <div class="row1">
+            <div>
+              <div class="coach-name">이서연 코치</div>
+              <div class="meta">정규레슨 · 1:1 개인</div>
+            </div>
+            <span class="status-badge" style="background:#F3E8FF;color:#7C5CBF;">📌 레슨 예정</span>
+          </div>
+          <div class="schedule">📅 오늘 14:00 <span style="color:var(--coral);font-size:11px;font-weight:700;margin-left:4px;">D-DAY</span></div>
+          <div class="session">3/8회</div>
+        </a>
+
+        <!-- 3. 대기 중 -->
+        <a href="6-6-booking-detail.html?status=pending" class="booking-card">
+          <div class="row1">
+            <div>
+              <div class="coach-name">박준호 코치</div>
+              <div class="meta">쿠폰레슨 · 4회 · 그룹</div>
+            </div>
+            <span class="status-badge" style="background:#FEF3C7;color:#92400E;">⏳ 대기 중</span>
+          </div>
+          <div class="schedule">📅 4월 28일 (월)부터 시작</div>
+          <div class="session" style="color:var(--gray-400);">코치 수락 대기</div>
+        </a>
+
+        <!-- 4. 변경 요청 중 -->
+        <a href="6-6-booking-detail.html?status=reschedule_pending" class="booking-card">
+          <div class="row1">
+            <div>
+              <div class="coach-name">김민수 코치</div>
+              <div class="meta">정규레슨 · 1:1 개인</div>
+            </div>
+            <span class="status-badge" style="background:#FEF3C7;color:#92400E;">🔄 변경 요청 중</span>
+          </div>
+          <div class="schedule"><span style="text-decoration:line-through;color:var(--gray-400);">4월 13일 (일) 10:00</span> → 희망 3개</div>
+          <div class="session" style="color:#92400E;">코치 응답 대기 · 8h 32m 남음</div>
+        </a>
+
+        <!-- 5. 변경 완료 -->
+        <a href="6-6-booking-detail.html?status=reschedule_completed&original=4%2F13%20(%EC%9D%BC)%2010%3A00&confirmedDate=4%2F16%20(%EC%88%98)%2016%3A00&reason=%EA%B0%9C%EC%9D%B8%20%EC%82%AC%EC%A0%95" class="booking-card">
+          <div class="row1">
+            <div>
+              <div class="coach-name">한지원 코치</div>
+              <div class="meta">정규레슨 · 1:1 개인</div>
+            </div>
+            <span class="status-badge" style="background:#DBEAFE;color:#1E40AF;">✅ 변경 완료</span>
+          </div>
+          <div class="schedule"><span style="text-decoration:line-through;color:var(--gray-400);">4/13 (일) 10:00</span> → 4/16 (수) 16:00</div>
+          <div class="session">5/8회</div>
+        </a>
+
+        <!-- 6. 레슨 완료 -->
+        <a href="6-6-booking-detail.html?status=completed" class="booking-card">
+          <div class="row1">
+            <div>
+              <div class="coach-name">김민수 코치</div>
+              <div class="meta">정규레슨 · 1:1 개인</div>
+            </div>
+            <span class="status-badge" style="background:#DBEAFE;color:#1E40AF;">🏁 레슨 완료</span>
+          </div>
+          <div class="schedule">📅 4월 21일 (월) 10:00</div>
+          <div class="session">6/8회 ✓</div>
+        </a>
+
+        <!-- 7. 레슨 완료 (리뷰 작성 가능) -->
+        <a href="6-6-booking-detail.html?status=completed" class="booking-card">
+          <div class="row1">
+            <div>
+              <div class="coach-name">이서연 코치</div>
+              <div class="meta">쿠폰레슨 · 그룹</div>
+            </div>
+            <span class="status-badge" style="background:#DBEAFE;color:#1E40AF;">🏁 레슨 완료</span>
+          </div>
+          <div class="schedule">📅 4월 18일 (금) 14:00</div>
+          <div class="session">★ 리뷰 미작성</div>
+        </a>
+
+        <!-- 8. 결강 -->
+        <a href="6-6-booking-detail.html?status=absent" class="booking-card">
+          <div class="row1">
+            <div>
+              <div class="coach-name">박준호 코치</div>
+              <div class="meta">정규레슨 · 1:1 개인</div>
+            </div>
+            <span class="status-badge" style="background:var(--gray-100);color:var(--gray-500);">❌ 결강</span>
+          </div>
+          <div class="schedule">📅 4월 20일 (일) 16:00</div>
+          <div class="session" style="color:var(--gray-400);">코치 사정 · 보강 가능</div>
+        </a>
+
+        <!-- 9. 보강 요청 -->
+        <a href="6-6-booking-detail.html?status=makeup_requested" class="booking-card">
+          <div class="row1">
+            <div>
+              <div class="coach-name">박준호 코치</div>
+              <div class="meta">정규레슨 · 1:1 개인</div>
+            </div>
+            <span class="status-badge" style="background:#FFF7ED;color:#EA580C;">🙋 보강 요청</span>
+          </div>
+          <div class="schedule">📅 4월 19일 (토) 16:00 결강</div>
+          <div class="session" style="color:#EA580C;">코치 일정 제안 대기</div>
+        </a>
+
+        <!-- 10. 보강 일정 선택중 (코치 제안 받은 상태) -->
+        <a href="6-6-booking-detail.html?status=makeup_proposed&dates=4%2F24%20(%EB%AA%A9)%2016%3A00%7C4%2F25%20(%EA%B8%88)%2010%3A00%7C4%2F26%20(%ED%86%A0)%2014%3A00" class="booking-card">
+          <div class="row1">
+            <div>
+              <div class="coach-name">한지원 코치</div>
+              <div class="meta">정규레슨 · 1:1 개인</div>
+            </div>
+            <span class="status-badge" style="background:#D1FAE5;color:#065F46;">🔄 보강 일정 선택중</span>
+          </div>
+          <div class="schedule">📅 4월 17일 (목) 결강 → 3개 일정 제안</div>
+          <div class="session" style="color:#065F46;">날짜 선택 필요</div>
+        </a>
+
+        <!-- 11. 보강 확정 -->
+        <a href="6-6-booking-detail.html?status=makeup_confirmed&confirmedDate=4%2F25%20(%EA%B8%88)%2010%3A00" class="booking-card">
+          <div class="row1">
+            <div>
+              <div class="coach-name">한지원 코치</div>
+              <div class="meta">정규레슨 · 1:1 개인</div>
+            </div>
+            <span class="status-badge" style="background:#D1FAE5;color:#065F46;">✅ 보강 확정</span>
+          </div>
+          <div class="schedule">📅 4월 25일 (금) 10:00 (보강)</div>
+          <div class="session">보강 1/1회</div>
+        </a>
+
+        <!-- 12. 거절됨 -->
+        <a href="6-6-booking-detail.html?status=rejected" class="booking-card disabled">
+          <div class="row1">
+            <div>
+              <div class="coach-name">정민수 코치</div>
+              <div class="meta">정규레슨 · 주 2회</div>
+            </div>
+            <span class="status-badge" style="background:#FEE2E2;color:#991B1B;">거절됨</span>
+          </div>
+          <div class="schedule">📅 수·금 16:00 희망</div>
+          <div class="session" style="color:var(--gray-400);">시간대 충돌</div>
+        </a>
+
+        <!-- 13. 취소 -->
+        <a href="6-6-booking-detail.html?status=rejected" class="booking-card disabled">
+          <div class="row1">
+            <div>
+              <div class="coach-name">이정훈 코치</div>
+              <div class="meta">쿠폰레슨 · 8회</div>
+            </div>
+            <span class="status-badge" style="background:var(--gray-100);color:var(--gray-500);">취소됨</span>
+          </div>
+          <div class="schedule">📅 4월 10일 (목) 10:00</div>
+          <div class="session" style="color:var(--gray-400);">수강생 취소</div>
+        </a>
+
       </div>
     </div>
   </div>
 </div>
+<script src="../site-nav.js"></script>
+</body>
+</html>

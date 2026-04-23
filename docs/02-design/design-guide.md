@@ -205,45 +205,72 @@ border-radius: 12px (radius-md)
 
 ### 6.5a 체크박스 & 라디오 (Checkbox & Radio)
 
-**모든 선택형 입력 컨트롤은 사각형 형태로 통일** (동그라미 사용 금지)
+**의미별 형태 분리**:
+- **체크박스 (다중 선택)** → 사각형 (`border-radius: 4px`) + 흰색 ✓ 체크 아이콘
+- **라디오 (단일 선택)** → 동그라미 (`border-radius: 50%`) + 가운데 초록 점
 
 ```
 공통:
-  크기: 18x18px (네이티브 input)
-  보더 레이디어스: 4px (radius-xs, 사각형)
-  accent-color: var(--green) (#2DD4BF)
-  cursor: pointer
-
-기본 상태:
+  크기: 18x18px
   보더: 1.5px solid #D1D5DB (gray-300)
   배경: #fff
+  cursor: pointer
 
 선택 상태:
-  보더: var(--green)
-  배경: var(--green)
-  체크 아이콘: White
+  체크박스: 배경 var(--green) + 흰색 ✓
+  라디오: 보더 var(--green) 2px + 가운데 8x8px 초록 점 (배경은 흰색 유지)
 ```
 
-**HTML 구현 (네이티브 input 사용 권장)**:
+**HTML 구현 (네이티브 input 사용 — 글로벌 CSS가 처리)**:
 ```html
-<input type="checkbox" style="width:18px;height:18px;accent-color:var(--green);cursor:pointer;">
-<input type="radio" style="width:18px;height:18px;accent-color:var(--green);cursor:pointer;">
+<!-- 다중 선택: 사각형 -->
+<input type="checkbox">
+<input type="checkbox">
+
+<!-- 단일 선택: 동그라미 -->
+<input type="radio" name="reason">
+<input type="radio" name="reason">
 ```
 
-**SVG 커스텀 체크박스 (시각 강조 시)**:
-```html
-<!-- 선택됨 -->
-<svg width="18" height="18" viewBox="0 0 14 14">
-  <rect width="14" height="14" rx="3" fill="var(--green)"/>
-  <polyline points="3,7 6,10 11,4" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/>
-</svg>
-<!-- 미선택 -->
-<div style="width:18px;height:18px;border-radius:4px;border:1.5px solid var(--gray-300);"></div>
+**구분 원칙**:
+- "여러 개 선택" → `<input type="checkbox">` (사각형)
+- "하나만 선택" → `<input type="radio">` (동그라미)
+- 토글 스위치(on/off)는 `.toggle` 컴포넌트 사용 (별도)
+
+**구현 위치**: `common.css` 및 `common-admin.css` 글로벌 스타일 (별도 인라인 스타일 불필요)
+
+### 6.5b 토스트 (Toast)
+
+**공통 토스트 정의** — 화면 하단 중앙에 일정 시간(2초) 노출 후 자동 사라짐
+
+```
+위치: position: absolute / 화면 하단 중앙 (bottom: 100px, 풀팝업 내부일 때 120px)
+배경: rgba(30, 58, 95, 0.95) — 기본 (Navy)
+텍스트: #fff, 13px, SemiBold
+패딩: 12px 20px
+보더 레이디어스: 12px (radius-md)
+그림자: 0 4px 16px rgba(0,0,0,0.2)
+최대 너비: 320px (긴 문구는 wrap)
+표시 시간: 2초 후 페이드아웃
+애니메이션: opacity + translateY(20px → 0) 0.2s
+중복 호출: 기존 타이머 clear 후 재시작 (마지막 메시지 우선)
 ```
 
-**금지 사항**:
-- `border-radius: 50%` (동그라미 라디오 버튼) 사용 금지
-- 원형 토글 스타일은 토글 스위치(.toggle) 컴포넌트에만 사용 (on/off 명확한 경우)
+**타입별 배경색**:
+| 타입 | 배경 | 용도 |
+|------|------|------|
+| 기본 | Navy `rgba(30, 58, 95, 0.95)` | 일반 안내 |
+| `error` | Red `rgba(239, 68, 68, 0.95)` | 검증 실패 / 필수 입력 누락 |
+| `warning` | Orange `rgba(245, 158, 11, 0.95)` | 주의 안내 |
+| `success` | Green `rgba(34, 197, 94, 0.95)` | 성공 처리 완료 |
+
+**사용 예시 (필수 입력 검증)**:
+- 시간 미선택: `showToast('가능한 시간을 1개 이상 선택해 주세요', 'error')`
+- 사유 미선택: `showToast('변경 사유를 선택해 주세요', 'error')`
+- 한도 초과: `showToast('이번 달 변경 요청 횟수를 모두 사용했어요', 'warning')`
+- 완료: `showToast('변경 요청이 전송되었습니다', 'success')`
+
+**구현 (common.css)**: `.toast` 클래스 + `.show` modifier + `.toast-error/.toast-warning/.toast-success`
 
 ### 6.6 동기부여 배너 (Motivation Banner)
 > Habitz 보라색 배너 스타일 참고
@@ -359,3 +386,4 @@ MVP에서는 **라이트 모드만** 지원. 다크모드는 v2 이후 검토.
 |---------|------|---------|
 | 0.1 | 2026-04-09 | Habitz 레퍼런스 분석 기반 초안 작성 |
 | 0.2 | 2026-04-21 | 6.5a 체크박스/라디오 규칙 추가 — **사각형 형태로 통일** (동그라미 사용 금지) |
+| 0.3 | 2026-04-23 | 6.5a 의미별 분리 — 체크박스 사각형(다중선택) / 라디오 동그라미(단일선택). 6.5b 토스트 공통 컴포넌트 추가. |

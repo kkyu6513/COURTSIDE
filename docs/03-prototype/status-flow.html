@@ -102,7 +102,7 @@
                 <div class="fc-arrow-down">↓</div>
                 <div class="fc-node n-absent">결강</div>
                 <div class="fc-arrow-down">↓</div>
-                <div class="fc-node n-makeup">보강대기</div>
+                <div class="fc-node n-makeup">보강 일정 선택중</div>
                 <div class="fc-arrow-down">↓</div>
                 <div class="fc-node n-makeup-c">보강확정</div>
                 <div class="fc-arrow-down">↓</div>
@@ -229,7 +229,7 @@
     <div class="acc-body">
       <div class="acc-row"><div class="acc-col1"><span class="actor-coach">코치</span></div><div class="acc-col2">상태처리하기 > 레슨 완료</div><div class="acc-col3" style="color:#1E40AF;">완료</div><div class="acc-col4 next-triggers">종료</div></div>
       <div class="acc-row"><div class="acc-col1"><span class="actor-coach">코치</span></div><div class="acc-col2">상태처리하기 > 결강 처리</div><div class="acc-col3" style="color:#6B7280;">결강</div><div class="acc-col4 next-triggers"><span>보강 처리</span></div></div>
-      <div class="acc-row"><div class="acc-col1"><span class="actor-coach">코치</span></div><div class="acc-col2">상태처리하기 > 보강 처리</div><div class="acc-col3" style="color:#065F46;">보강대기</div><div class="acc-col4 next-triggers"><span>일정 선택</span> <span>홀드 만료</span></div></div>
+      <div class="acc-row"><div class="acc-col1"><span class="actor-coach">코치</span></div><div class="acc-col2">상태처리하기 > 보강 처리</div><div class="acc-col3" style="color:#065F46;">보강 일정 선택중</div><div class="acc-col4 next-triggers"><span>일정 선택</span> <span>홀드 만료</span></div></div>
       <div class="acc-row"><div class="acc-col1"><span class="actor-coach">코치</span></div><div class="acc-col2">상태처리하기 > 결제 확인</div><div class="acc-col3" style="color:#1E40AF;">외부결제</div><div class="acc-col4 next-triggers">결제 전환</div></div>
       <div class="acc-row"><div class="acc-col1"><span class="actor-student">수강생</span></div><div class="acc-col2">일정 변경 요청</div><div class="acc-col3" style="color:#EA580C;">변경요청</div><div class="acc-col4 next-triggers"><span>확정하기</span> <span>제안하기</span> <span>불가 알림</span></div></div>
       <div class="acc-row"><div class="acc-col1"><span class="actor-coach">코치</span> <span class="actor-student">수강생</span></div><div class="acc-col2">취소</div><div class="acc-col3 end-state">취소</div><div class="acc-col4 next-triggers">종료 (환불)</div></div>
@@ -241,7 +241,7 @@
     <div class="acc-body">
       <div class="acc-row"><div class="acc-col1"><span class="actor-coach">코치</span></div><div class="acc-col2">상태처리하기 > 레슨 완료</div><div class="acc-col3" style="color:#1E40AF;">완료</div><div class="acc-col4 next-triggers">종료</div></div>
       <div class="acc-row"><div class="acc-col1"><span class="actor-coach">코치</span></div><div class="acc-col2">상태처리하기 > 결강 처리</div><div class="acc-col3" style="color:#6B7280;">결강</div><div class="acc-col4 next-triggers"><span>보강 처리</span></div></div>
-      <div class="acc-row"><div class="acc-col1"><span class="actor-coach">코치</span></div><div class="acc-col2">상태처리하기 > 보강 처리</div><div class="acc-col3" style="color:#065F46;">보강대기</div><div class="acc-col4 next-triggers"><span>일정 선택</span> <span>홀드 만료</span></div></div>
+      <div class="acc-row"><div class="acc-col1"><span class="actor-coach">코치</span></div><div class="acc-col2">상태처리하기 > 보강 처리</div><div class="acc-col3" style="color:#065F46;">보강 일정 선택중</div><div class="acc-col4 next-triggers"><span>일정 선택</span> <span>홀드 만료</span></div></div>
       <div class="acc-row"><div class="acc-col1"><span class="actor-system">시스템</span></div><div class="acc-col2">다음 레슨 시작 (자동 완료)</div><div class="acc-col3" style="color:#1E40AF;">완료</div><div class="acc-col4 next-triggers">종료</div></div>
     </div>
 
@@ -252,14 +252,14 @@
     <!-- 결강 -->
     <div class="acc-header" style="background:#F5F5F7;color:#6B7280;" onclick="toggleAcc(this)">결강 (ABSENT) <span class="arrow">›</span></div>
     <div class="acc-body">
-      <div class="acc-row"><div class="acc-col1"><span class="actor-coach">코치</span></div><div class="acc-col2">상태처리하기 > 보강 처리</div><div class="acc-col3" style="color:#065F46;">보강대기</div><div class="acc-col4 next-triggers"><span>일정 선택</span> <span>홀드 만료</span></div></div>
+      <div class="acc-row"><div class="acc-col1"><span class="actor-coach">코치</span></div><div class="acc-col2">상태처리하기 > 보강 처리</div><div class="acc-col3" style="color:#065F46;">보강 일정 선택중</div><div class="acc-col4 next-triggers"><span>일정 선택</span> <span>홀드 만료</span></div></div>
     </div>
 
-    <!-- 보강대기 -->
-    <div class="acc-header" style="background:#F0FDFA;color:#065F46;" onclick="toggleAcc(this)">보강대기 (MAKEUP_PENDING) <span class="arrow">›</span></div>
+    <!-- 보강 일정 선택중 -->
+    <div class="acc-header" style="background:#F0FDFA;color:#065F46;" onclick="toggleAcc(this)">보강 일정 선택중 (MAKEUP_PENDING) <span class="arrow">›</span></div>
     <div class="acc-body">
       <div class="acc-row"><div class="acc-col1"><span class="actor-student">수강생</span></div><div class="acc-col2">보강 일정 선택</div><div class="acc-col3" style="color:#065F46;">보강확정</div><div class="acc-col4 next-triggers"><span>상태처리하기</span></div></div>
-      <div class="acc-row"><div class="acc-col1"><span class="actor-system">시스템</span></div><div class="acc-col2">홀드 만료 (12시간)</div><div class="acc-col3" style="color:#065F46;">보강대기</div><div class="acc-col4 next-triggers"><span>코치 재제안</span></div></div>
+      <div class="acc-row"><div class="acc-col1"><span class="actor-system">시스템</span></div><div class="acc-col2">홀드 만료 (12시간)</div><div class="acc-col3" style="color:#065F46;">보강 일정 선택중</div><div class="acc-col4 next-triggers"><span>코치 재제안</span></div></div>
     </div>
 
     <!-- 보강확정 -->
@@ -331,7 +331,7 @@
         <tr><td class="st">변경 요청</td><td>오늘 레슨 → 변경 요청 배지</td><td>신청내역 → 변경 요청 중</td></tr>
         <tr><td class="st">완료</td><td>오늘 레슨 → 레슨완료 배지</td><td>신청내역 → 완료 + 리뷰 작성</td></tr>
         <tr><td class="st">결강</td><td>오늘 레슨 → 결강 배지 (취소선)</td><td>알림톡 → 결강 안내</td></tr>
-        <tr><td class="st">보강대기</td><td>오늘 레슨 → 보강대기 배지 (점선)</td><td>알림톡 → 보강 일정 선택</td></tr>
+        <tr><td class="st">보강 일정 선택중</td><td>오늘 레슨 → 보강 일정 선택중 배지 (점선)</td><td>알림톡 → 보강 일정 선택</td></tr>
         <tr><td class="st">보강확정</td><td>오늘 레슨 → 보강확정 배지 (실선)</td><td>신청내역 → 보강 확정 표시</td></tr>
         <tr><td class="st">거절</td><td>-</td><td>알림톡 → 거절 사유 확인</td></tr>
         <tr><td class="st">취소</td><td>-</td><td>신청내역 → 취소 + 환불</td></tr>

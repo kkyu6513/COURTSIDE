@@ -312,14 +312,13 @@ body {
   border-radius: 4px;
 }
 
-/* ── Checkbox & Radio (사각형 통일 — 디자인 가이드 6.5a) ── */
+/* ── Checkbox (사각형) & Radio (동그라미) — 디자인 가이드 6.5a ── */
 input[type="checkbox"],
 input[type="radio"] {
   -webkit-appearance: none;
   appearance: none;
   width: 18px;
   height: 18px;
-  border-radius: 4px;       /* 사각형 (동그라미 금지) */
   border: 1.5px solid var(--gray-300);
   background: #fff;
   cursor: pointer;
@@ -329,13 +328,12 @@ input[type="radio"] {
   margin: 0;
   vertical-align: middle;
 }
-input[type="checkbox"]:checked,
-input[type="radio"]:checked {
+input[type="checkbox"] { border-radius: 4px; }
+input[type="checkbox"]:checked {
   background: var(--green);
   border-color: var(--green);
 }
-input[type="checkbox"]:checked::after,
-input[type="radio"]:checked::after {
+input[type="checkbox"]:checked::after {
   content: '';
   position: absolute;
   left: 4px;
@@ -345,6 +343,23 @@ input[type="radio"]:checked::after {
   border: solid #fff;
   border-width: 0 2px 2px 0;
   transform: rotate(45deg);
+}
+input[type="radio"] { border-radius: 50%; }
+input[type="radio"]:checked {
+  border-color: var(--green);
+  border-width: 2px;
+  background: #fff;
+}
+input[type="radio"]:checked::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--green);
 }
 input[type="checkbox"]:disabled,
 input[type="radio"]:disabled {

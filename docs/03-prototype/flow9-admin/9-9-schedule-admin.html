@@ -49,6 +49,7 @@
       <a href="9-4-banners.html" class="nav-link"><span class="icon">🖼️</span>배너 관리</a>
       <a href="9-8-reports.html" class="nav-link"><span class="icon">🚨</span>신고 관리</a>
       <a href="9-9-schedule-admin.html" class="nav-link active"><span class="icon">📅</span>스케줄 관리<span class="count">5</span></a>
+      <a href="9-10-proposal-admin.html" class="nav-link"><span class="icon">📨</span>제안 관리</a>
     </div>
     <div class="nav-group"><div class="nav-group-title">설정</div>
       <a href="9-5-subscription-plans.html" class="nav-link"><span class="icon">💎</span>구독 플랜</a>
@@ -497,6 +498,29 @@
           <div style="height:1px;background:var(--gray-100);"></div>
           <div style="display:flex;align-items:center;justify-content:space-between;">
             <div>
+              <div style="font-size:14px;font-weight:600;color:var(--navy);">수강생 월 변경 요청 횟수 한도</div>
+              <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">수강생 1인이 한 달에 신청 가능한 최대 변경 요청 횟수 (매월 1일 00:00 리셋)</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <input class="input-field" type="number" value="3" min="1" max="10" style="width:80px;text-align:center;">
+              <span style="font-size:14px;color:var(--gray-500);">회 / 월</span>
+            </div>
+          </div>
+          <div style="height:1px;background:var(--gray-100);"></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div>
+              <div style="font-size:14px;font-weight:600;color:var(--navy);">희망 일정 선택 범위 (당월 제한)</div>
+              <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">수강생이 희망 날짜로 선택 가능한 최대 범위 (당월/익월/3개월)</div>
+            </div>
+            <select class="action-select" style="width:120px;">
+              <option value="this_month" selected>당월까지</option>
+              <option value="next_month">익월까지</option>
+              <option value="3_months">3개월까지</option>
+            </select>
+          </div>
+          <div style="height:1px;background:var(--gray-100);"></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div>
               <div style="font-size:14px;font-weight:600;color:var(--navy);">자동 추천 최대 슬롯 수</div>
               <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">시스템이 자동 추천하는 변경 가능 날짜 최대 개수</div>
             </div>
@@ -534,6 +558,100 @@
             <div style="display:flex;align-items:center;gap:8px;">
               <input class="input-field" type="number" value="1" style="width:80px;text-align:center;">
               <span style="font-size:14px;color:var(--gray-500);">일</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="admin-card">
+        <div class="card-title">결강 정책 (노쇼)</div>
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <!-- 사전 통보 기준일 -->
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div>
+              <div style="font-size:14px;font-weight:600;color:var(--navy);">사전 통보 기준일</div>
+              <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">레슨일 N일 전까지의 통보를 "사전 통보"로 분류 (이후는 임박 통보)</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:14px;color:var(--gray-500);">D-</span>
+              <input class="input-field" type="number" value="2" min="1" max="7" style="width:70px;text-align:center;">
+              <span style="font-size:14px;color:var(--gray-500);">일</span>
+            </div>
+          </div>
+          <div style="height:1px;background:var(--gray-100);"></div>
+
+          <!-- 결강 유형별 매트릭스 -->
+          <div>
+            <div style="font-size:14px;font-weight:600;color:var(--navy);margin-bottom:4px;">결강 유형별 정책</div>
+            <div style="font-size:12px;color:var(--gray-400);margin-bottom:12px;">결강 유형마다 회차 차감/보강 가능/환불 가능 여부를 설정합니다</div>
+            <table style="width:100%;border-collapse:collapse;font-size:13px;">
+              <thead>
+                <tr style="background:var(--gray-50);">
+                  <th style="padding:10px 12px;text-align:left;font-size:12px;font-weight:700;color:var(--gray-500);border-bottom:1px solid var(--gray-100);">결강 유형</th>
+                  <th style="padding:10px 8px;text-align:center;font-size:12px;font-weight:700;color:var(--gray-500);border-bottom:1px solid var(--gray-100);width:90px;">회차 차감</th>
+                  <th style="padding:10px 8px;text-align:center;font-size:12px;font-weight:700;color:var(--gray-500);border-bottom:1px solid var(--gray-100);width:90px;">보강 가능</th>
+                  <th style="padding:10px 8px;text-align:center;font-size:12px;font-weight:700;color:var(--gray-500);border-bottom:1px solid var(--gray-100);width:90px;">환불 가능</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style="padding:12px;border-bottom:1px solid var(--gray-100);"><div style="font-weight:600;color:var(--navy);">수강생 노쇼</div><div style="font-size:11px;color:var(--gray-400);margin-top:2px;">무단결석</div></td>
+                  <td style="padding:12px;text-align:center;border-bottom:1px solid var(--gray-100);"><div class="toggle on" onclick="this.classList.toggle('on')" style="margin:0 auto;"></div></td>
+                  <td style="padding:12px;text-align:center;border-bottom:1px solid var(--gray-100);"><div class="toggle" onclick="this.classList.toggle('on')" style="margin:0 auto;"></div></td>
+                  <td style="padding:12px;text-align:center;border-bottom:1px solid var(--gray-100);"><div class="toggle" onclick="this.classList.toggle('on')" style="margin:0 auto;"></div></td>
+                </tr>
+                <tr>
+                  <td style="padding:12px;border-bottom:1px solid var(--gray-100);"><div style="font-weight:600;color:var(--navy);">수강생 사전 통보 (D-1 이후)</div><div style="font-size:11px;color:var(--gray-400);margin-top:2px;">기준일 이후 임박 통보</div></td>
+                  <td style="padding:12px;text-align:center;border-bottom:1px solid var(--gray-100);"><div class="toggle on" onclick="this.classList.toggle('on')" style="margin:0 auto;"></div></td>
+                  <td style="padding:12px;text-align:center;border-bottom:1px solid var(--gray-100);"><div class="toggle" onclick="this.classList.toggle('on')" style="margin:0 auto;"></div></td>
+                  <td style="padding:12px;text-align:center;border-bottom:1px solid var(--gray-100);"><div class="toggle" onclick="this.classList.toggle('on')" style="margin:0 auto;"></div></td>
+                </tr>
+                <tr style="background:#F0FDFA;">
+                  <td style="padding:12px;border-bottom:1px solid var(--gray-100);"><div style="font-weight:600;color:var(--navy);">수강생 사전 통보 (D-2 이전)</div><div style="font-size:11px;color:var(--gray-400);margin-top:2px;">기준일 이전 충분한 통보</div></td>
+                  <td style="padding:12px;text-align:center;border-bottom:1px solid var(--gray-100);"><div class="toggle" onclick="this.classList.toggle('on')" style="margin:0 auto;"></div></td>
+                  <td style="padding:12px;text-align:center;border-bottom:1px solid var(--gray-100);"><div class="toggle on" onclick="this.classList.toggle('on')" style="margin:0 auto;"></div></td>
+                  <td style="padding:12px;text-align:center;border-bottom:1px solid var(--gray-100);"><div class="toggle" onclick="this.classList.toggle('on')" style="margin:0 auto;"></div></td>
+                </tr>
+                <tr>
+                  <td style="padding:12px;border-bottom:1px solid var(--gray-100);"><div style="font-weight:600;color:var(--navy);">코치 사정</div><div style="font-size:11px;color:var(--gray-400);margin-top:2px;">코치 개인 사정/병가 등</div></td>
+                  <td style="padding:12px;text-align:center;border-bottom:1px solid var(--gray-100);"><div class="toggle" onclick="this.classList.toggle('on')" style="margin:0 auto;"></div></td>
+                  <td style="padding:12px;text-align:center;border-bottom:1px solid var(--gray-100);"><div class="toggle on" onclick="this.classList.toggle('on')" style="margin:0 auto;"></div></td>
+                  <td style="padding:12px;text-align:center;border-bottom:1px solid var(--gray-100);"><div class="toggle" onclick="this.classList.toggle('on')" style="margin:0 auto;"></div></td>
+                </tr>
+                <tr>
+                  <td style="padding:12px;"><div style="font-weight:600;color:var(--navy);">천재지변/공동 휴무</div><div style="font-size:11px;color:var(--gray-400);margin-top:2px;">자연재해/공휴일 등</div></td>
+                  <td style="padding:12px;text-align:center;"><div class="toggle" onclick="this.classList.toggle('on')" style="margin:0 auto;"></div></td>
+                  <td style="padding:12px;text-align:center;"><div class="toggle on" onclick="this.classList.toggle('on')" style="margin:0 auto;"></div></td>
+                  <td style="padding:12px;text-align:center;"><div class="toggle on" onclick="this.classList.toggle('on')" style="margin:0 auto;"></div></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div style="height:1px;background:var(--gray-100);"></div>
+
+          <!-- 보강 일정 가능 범위 -->
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div>
+              <div style="font-size:14px;font-weight:600;color:var(--navy);">보강 일정 가능 범위</div>
+              <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">결강일 기준 ±N일 내에서 보강 일정 등록 가능</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:14px;color:var(--gray-500);">±</span>
+              <input class="input-field" type="number" value="30" min="7" max="90" style="width:70px;text-align:center;">
+              <span style="font-size:14px;color:var(--gray-500);">일</span>
+            </div>
+          </div>
+          <div style="height:1px;background:var(--gray-100);"></div>
+
+          <!-- 수강생 보강 요청 자동 활성 -->
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div>
+              <div style="font-size:14px;font-weight:600;color:var(--navy);">수강생 보강 요청 자동 활성</div>
+              <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">코치가 N시간 내 보강 미등록 시 수강생 측에 "보강 요청" 버튼 활성</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <input class="input-field" type="number" value="24" min="1" max="72" style="width:70px;text-align:center;">
+              <span style="font-size:14px;color:var(--gray-500);">시간</span>
             </div>
           </div>
         </div>

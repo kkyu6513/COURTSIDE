@@ -64,21 +64,158 @@
               <span style="padding:2px 6px;border-radius:4px;background:#D1FAE5;color:#065F46;font-size:10px;font-weight:700;">결제완료</span>
             </div>
           </div>
+          <div style="height:1px;background:var(--gray-100);"></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:0 4px;">
+            <span style="font-size:13px;color:var(--gray-400);">최근 결제일</span>
+            <span style="font-size:14px;font-weight:600;color:var(--navy);">3/25</span>
+          </div>
+          <div style="height:1px;background:var(--gray-100);"></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:0 4px;">
+            <span style="font-size:13px;color:var(--gray-400);">다음 결제일 <span style="color:var(--gray-300);font-weight:400;">(예정)</span></span>
+            <span style="font-size:14px;font-weight:600;color:var(--navy);">4/25</span>
+          </div>
+          <div style="height:1px;background:var(--gray-100);"></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:0 4px;">
+            <span style="font-size:13px;color:var(--gray-400);">이번 달 변경 요청</span>
+            <span style="font-size:14px;font-weight:600;color:#92400E;">1 / 3회</span>
+          </div>
         </div>
 
+        <!-- 상태 변경 히스토리 (레슨 기본정보 하단) -->
+        <div id="status-history-area" style="margin-top:14px;"></div>
+
         <!-- 상태별 메시지 -->
-        <div id="status-message-area" style="margin-top:16px;"></div>
+        <div id="status-message-area" style="margin-top:14px;"></div>
 
       </div>
     </div>
 
     <div id="bottom-actions" style="padding:12px 20px 32px;background:#fff;border-top:1px solid var(--gray-100);flex-shrink:0;display:flex;gap:10px;"></div>
+
+    <!-- 변경 요청 풀팝업 -->
+    <div id="rs-sheet" style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;z-index:200;background:#fff;flex-direction:column;">
+      <div class="top-nav">
+        <a class="back" onclick="confirmExitReschedule()" style="cursor:pointer;">←</a>
+        <span class="title">변경 요청</span>
+        <span class="action"></span>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:20px;">
+        <!-- 현재 일정 -->
+        <div style="padding:14px;background:var(--gray-50);border-radius:12px;margin-bottom:14px;">
+          <div style="font-size:11px;color:var(--gray-400);margin-bottom:4px;">현재 일정</div>
+          <div style="font-size:14px;font-weight:600;color:var(--gray-500);text-decoration:line-through;">4월 13일 (일) 10:00</div>
+          <div style="font-size:11px;color:var(--gray-400);margin-top:2px;">김민수 코치 · 정규레슨 1:1</div>
+        </div>
+
+        <!-- 이번 달 변경 요청 횟수 -->
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:#FFFBEB;border-radius:10px;margin-bottom:14px;border:1px solid #FDE68A;">
+          <span style="font-size:12px;color:#92400E;">이번 달 변경 요청</span>
+          <span style="font-size:13px;font-weight:700;color:#92400E;"><span id="rs-this-month-count">1</span> / 3회</span>
+        </div>
+
+        <!-- 희망 날짜 + 시간 통합 영역 (박싱) -->
+        <div style="padding:14px;background:#F0FDFA;border-radius:12px;border:1px solid #D1FAE5;margin-bottom:14px;">
+          <!-- 헤더 -->
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <div style="font-size:13px;font-weight:700;color:#065F46;">희망 일정 <span style="color:var(--coral);">*</span> <span style="font-size:11px;color:var(--gray-400);font-weight:400;">(이번 달까지)</span></div>
+            <div style="display:flex;background:#fff;border-radius:8px;padding:2px;gap:2px;border:1px solid #D1FAE5;">
+              <button id="rs-tab-day" onclick="setRsViewMode('day')" style="padding:4px 12px;border-radius:6px;border:none;background:var(--green);color:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">일</button>
+              <button id="rs-tab-week" onclick="setRsViewMode('week')" style="padding:4px 12px;border-radius:6px;border:none;background:transparent;color:var(--gray-500);font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">주</button>
+            </div>
+          </div>
+          <!-- 날짜 네비게이션/그리드 -->
+          <div id="rs-view-container" style="margin-bottom:12px;"></div>
+          <!-- 구분선 -->
+          <div style="height:1px;background:#D1FAE5;margin-bottom:12px;"></div>
+          <!-- 시간 선택 (체크박스 다중 선택) -->
+          <div style="font-size:12px;font-weight:700;color:#065F46;margin-bottom:8px;" id="rs-time-section-title">가능한 시간 (중복 선택)</div>
+          <div id="rs-time-container">
+            <div style="padding:14px;text-align:center;font-size:12px;color:var(--gray-400);background:#fff;border-radius:10px;">날짜를 선택해 주세요</div>
+          </div>
+        </div>
+
+        <!-- 변경 사유 (박싱) -->
+        <div style="padding:14px;background:var(--gray-50);border-radius:12px;border:1px solid var(--gray-100);margin-bottom:14px;">
+          <div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:10px;">변경 사유 <span style="color:var(--coral);">*</span></div>
+          <div style="display:flex;flex-direction:column;gap:6px;" id="rs-reason-list">
+            <label class="rs-reason" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;border:1.5px solid var(--gray-200);background:#fff;cursor:pointer;">
+              <input type="radio" name="rs-reason" value="개인 사정" onchange="updateRsBtn()">
+              <span style="font-size:13px;color:var(--navy);">개인 사정</span>
+            </label>
+            <label class="rs-reason" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;border:1.5px solid var(--gray-200);background:#fff;cursor:pointer;">
+              <input type="radio" name="rs-reason" value="일정 충돌" onchange="updateRsBtn()">
+              <span style="font-size:13px;color:var(--navy);">일정 충돌</span>
+            </label>
+            <label class="rs-reason" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;border:1.5px solid var(--gray-200);background:#fff;cursor:pointer;">
+              <input type="radio" name="rs-reason" value="컨디션" onchange="updateRsBtn()">
+              <span style="font-size:13px;color:var(--navy);">컨디션 난조</span>
+            </label>
+            <label class="rs-reason" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;border:1.5px solid var(--gray-200);background:#fff;cursor:pointer;">
+              <input type="radio" name="rs-reason" value="기타" onchange="updateRsBtn()">
+              <span style="font-size:13px;color:var(--navy);">기타</span>
+            </label>
+          </div>
+          <div style="height:1px;background:var(--gray-100);margin:12px 0;"></div>
+          <div style="font-size:11px;font-weight:700;color:var(--gray-500);margin-bottom:6px;">추가 메모 <span style="color:var(--gray-400);font-weight:400;">(선택)</span></div>
+          <textarea id="rs-reason-detail" placeholder="코치님께 전달할 메모를 입력해 주세요" style="width:100%;height:60px;border-radius:10px;border:1.5px solid var(--gray-200);padding:10px;font-size:13px;font-family:inherit;resize:none;box-sizing:border-box;background:#fff;" oninput="updateRsBtn()"></textarea>
+        </div>
+
+        <!-- 안내 -->
+        <div style="padding:12px;background:var(--gray-50);border-radius:10px;font-size:11px;color:var(--gray-500);line-height:1.6;">
+          💡 코치님이 검토 후 응답해 드립니다.<br>
+          요청하신 일정 중 가능한 시간으로 확정되며, <strong style="color:var(--navy);">모두 어려운 경우 코치님이 다른 가능한 일정을 제안해 드릴 수 있어요.</strong><br>
+          코치 응답은 카카오 알림톡으로 안내드립니다.
+        </div>
+      </div>
+      <div style="padding:12px 20px 32px;background:#fff;border-top:1px solid var(--gray-100);flex-shrink:0;display:flex;gap:10px;">
+        <button onclick="confirmExitReschedule()" class="btn-secondary" style="flex:1;line-height:48px;height:auto;">취소</button>
+        <button id="rs-submit-btn" onclick="submitRescheduleRequest()" disabled class="btn-primary" style="flex:1.6;background:var(--gray-300);">변경 요청 보내기</button>
+      </div>
+
+      <!-- 풀팝업 내부 토스트 -->
+      <div id="rs-toast" class="toast" style="bottom:120px;"></div>
+
+      <!-- 변경요청 취소 확인 얼럿 -->
+      <div id="rs-exit-modal" style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;z-index:220;">
+        <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);" onclick="hideExitModal()"></div>
+        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:calc(100% - 48px);background:#fff;border-radius:16px;padding:20px;z-index:221;text-align:center;">
+          <div style="font-size:15px;font-weight:700;color:var(--navy);line-height:1.5;margin-bottom:6px;">변경요청을 취소하시고<br>현재화면을 나가시겠어요?</div>
+          <div style="font-size:12px;color:var(--gray-500);line-height:1.5;margin-bottom:18px;">입력하신 내용은 저장되지 않습니다.</div>
+          <div style="display:flex;gap:10px;">
+            <button onclick="hideExitModal()" style="flex:1;height:44px;border-radius:10px;border:1.5px solid var(--gray-200);background:#fff;color:var(--navy);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">취소</button>
+            <button onclick="exitRescheduleSheet()" style="flex:1;height:44px;border-radius:10px;border:none;background:var(--error);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">나가기</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 변경 요청 확인 모달 -->
+    <div id="rs-confirm-modal" style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;z-index:210;">
+      <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);" onclick="closeRsConfirm()"></div>
+      <div style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;padding:20px;z-index:211;">
+        <div style="width:40px;height:4px;border-radius:2px;background:var(--gray-200);margin:0 auto 16px;"></div>
+        <div style="font-size:17px;font-weight:800;color:var(--navy);margin-bottom:6px;">변경 요청을 보낼까요?</div>
+        <div style="font-size:12px;color:var(--gray-500);margin-bottom:14px;">김민수 코치님께 카카오 알림톡으로 전달됩니다</div>
+        <div id="rs-confirm-summary" style="padding:12px;background:#FFF7ED;border-radius:10px;border:1px solid #FED7AA;margin-bottom:12px;max-height:240px;overflow-y:auto;">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+            <span style="font-size:12px;color:var(--gray-400);text-decoration:line-through;">기존: 4/13 (일) 10:00</span>
+          </div>
+          <div style="font-size:11px;font-weight:700;color:#92400E;margin-bottom:4px;">희망 일정 목록</div>
+          <div id="rs-confirm-desired"></div>
+          <div style="font-size:11px;color:#92400E;margin-top:8px;" id="rs-confirm-reason">사유: —</div>
+        </div>
+        <div style="display:flex;gap:10px;">
+          <button onclick="closeRsConfirm()" style="flex:1;height:48px;border-radius:12px;border:1.5px solid var(--gray-200);background:#fff;color:var(--gray-500);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">취소</button>
+          <button onclick="executeRescheduleSubmit()" style="flex:1.6;height:48px;border-radius:12px;border:none;background:var(--green);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">요청 보내기</button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
 <script>
 const params = new URLSearchParams(location.search);
-const status = params.get('status') || 'rejected';
+const status = params.get('status') || 'confirmed';
 const rawDates = params.get('dates') || '';
 const proposedDates = rawDates ? rawDates.split('|') : [];
 
@@ -112,8 +249,85 @@ function confirmMakeup() {
 }
 
 const confirmedDate = decodeURIComponent(params.get('confirmedDate') || '');
+const isToday = params.get('isToday') === '1';
+
+// 당일 변경 요청 정책 안내 박스
+const sameDayPolicyMsg = `<div style="display:flex;align-items:flex-start;gap:8px;padding:12px;background:#FEF2F2;border-radius:10px;border:1px solid #FECACA;">
+  <span style="font-size:14px;line-height:1.4;flex-shrink:0;">⚠️</span>
+  <div style="font-size:12px;color:#991B1B;line-height:1.6;">
+    <strong>당일 변경 요청은 불가합니다.</strong><br>
+    레슨일 <strong>1일 전(D-1)</strong>까지만 변경 요청이 가능해요.<br>
+    급한 일정 조율이 필요하시면 채팅으로 코치님과 직접 상의해 주세요.
+  </div>
+</div>`;
 
 const configs = {
+  confirmed: {
+    label: '레슨 예정',
+    badge: '<span class="badge" style="font-size:14px;padding:6px 16px;background:#F3E8FF;color:#7C5CBF;">📌 레슨 예정</span>',
+    session: '6/8회',
+    message: isToday ? sameDayPolicyMsg : `<div style="padding:16px;background:#F0FDFA;border-radius:12px;border:1px solid #D1FAE5;">
+      <div style="font-size:13px;font-weight:700;color:#065F46;margin-bottom:6px;">예정된 레슨이에요</div>
+      <div style="font-size:13px;color:var(--green);line-height:1.6;">레슨 시간에 맞춰 준비해 주세요!<br>변경이 필요하면 D-1까지 변경 요청이 가능합니다.</div>
+    </div>`,
+    actions: isToday
+      ? `<a href="../flow4-chat/4-2-chat.html" class="btn-secondary" style="flex:1;display:block;text-align:center;text-decoration:none;line-height:48px;height:auto;">코치에게 문의</a>
+         <a href="6-5-booking-list.html" class="btn-primary" style="flex:1;display:block;text-align:center;text-decoration:none;line-height:52px;">목록으로</a>`
+      : `<a href="../flow4-chat/4-2-chat.html" class="btn-secondary" style="flex:1;display:block;text-align:center;text-decoration:none;line-height:48px;height:auto;">코치에게 문의</a>
+         <button onclick="openRescheduleSheet()" class="btn-primary" style="flex:1;line-height:52px;">변경 요청</button>`
+  },
+  reschedule_pending: {
+    label: '변경 요청 중',
+    badge: '<span class="badge" style="font-size:14px;padding:6px 16px;background:#FEF3C7;color:#92400E;">⏳ 변경 요청 중</span>',
+    session: '6/8회',
+    message: (function(){
+      const all = decodeURIComponent(params.get('allDesired') || params.get('desired') || '4/26 (토) 10:00').split(' | ');
+      // 날짜별 그룹핑: "M/D (요일) HH:MM" → { dateKey: [time, ...] }
+      const groups = new Map();
+      all.forEach(s => {
+        const m = s.match(/^(\d+\/\d+\s*\([^)]+\))\s+(\d+:\d+)$/);
+        if (!m) return;
+        const dateLabel = m[1];
+        const time = m[2];
+        if (!groups.has(dateLabel)) groups.set(dateLabel, []);
+        groups.get(dateLabel).push(time);
+      });
+      // 시간 정렬
+      groups.forEach(times => times.sort());
+      // 그룹별 HTML
+      const groupHtml = Array.from(groups.entries()).map(([dateLabel, times]) => {
+        const chips = times.map(t => `<span style="display:inline-block;padding:3px 8px;border-radius:6px;background:#fff;border:1px solid #FDE68A;font-size:12px;font-weight:700;color:#92400E;margin:2px;">${t}</span>`).join('');
+        return `<div style="padding:8px 10px;background:#FFFBEB;border-radius:8px;margin-top:6px;border:1px solid #FDE68A;">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+            <span style="font-size:13px;">📅</span>
+            <span style="font-size:12px;font-weight:700;color:#92400E;">${dateLabel}</span>
+            <span style="font-size:10px;color:var(--gray-400);font-weight:400;margin-left:auto;">${times.length}개</span>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:0;margin-left:20px;">${chips}</div>
+        </div>`;
+      }).join('');
+      // 4개 이상이면 max-height + 스크롤
+      const needScroll = all.length >= 4;
+      const listStyle = needScroll ? 'max-height:180px;overflow-y:auto;padding-right:4px;' : '';
+      return `<div style="padding:16px;background:#FFFBEB;border-radius:12px;border:1px solid #FDE68A;">
+      <div style="font-size:13px;font-weight:700;color:#92400E;margin-bottom:6px;">코치에게 변경 요청을 보냈어요</div>
+      <div style="font-size:13px;color:#92400E;line-height:1.6;margin-bottom:10px;">코치가 응답하면 카카오 알림톡으로 안내드려요.<br>요청한 일정 중 가능한 시간으로 확정되며, 모두 어려우면 코치님이 다른 일정을 제안할 수 있어요.</div>
+      <div style="padding:12px;background:#fff;border-radius:10px;border:1px solid #FDE68A;margin-bottom:8px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <span style="font-size:11px;color:var(--gray-400);">희망 변경 일정 <strong style="color:#92400E;">${all.length}개</strong> · ${groups.size}일</span>
+          ${needScroll ? '<span style="font-size:10px;color:var(--gray-400);">↓ 스크롤</span>' : ''}
+        </div>
+        <div style="${listStyle}">${groupHtml}</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#fff;border-radius:8px;border:1px solid #FDE68A;">
+        <span style="font-size:11px;color:#92400E;">이번 달 변경 요청</span>
+        <span style="font-size:12px;font-weight:700;color:#92400E;">2 / 3회</span>
+      </div>
+    </div>`;
+    })(),
+    actions: `<a href="../flow4-chat/4-2-chat.html" class="btn-secondary" style="flex:1;display:block;text-align:center;text-decoration:none;line-height:48px;height:auto;">코치에게 문의</a>
+              <a href="6-5-booking-list.html" class="btn-primary" style="flex:1;display:block;text-align:center;text-decoration:none;line-height:52px;">목록으로</a>`
+  },
   completed: {
     label: '레슨 완료',
     badge: '<span class="badge" style="font-size:14px;padding:6px 16px;background:#DBEAFE;color:#1E40AF;">🏁 레슨 완료</span>',
@@ -137,8 +351,8 @@ const configs = {
               <a href="6-6-booking-detail.html?status=makeup_requested" class="btn-primary" style="flex:1;display:block;text-align:center;text-decoration:none;line-height:52px;">보강 요청하기</a>`
   },
   makeup_requested: {
-    label: '보강 요청중',
-    badge: '<span class="badge" style="font-size:14px;padding:6px 16px;background:#FFF7ED;color:#EA580C;">🙋 보강 요청중</span>',
+    label: '보강 요청',
+    badge: '<span class="badge" style="font-size:14px;padding:6px 16px;background:#FFF7ED;color:#EA580C;">🙋 보강 요청</span>',
     session: '보강',
     message: `<div style="padding:16px;background:#FFF7ED;border-radius:12px;border:1px solid #FDBA74;">
       <div style="font-size:13px;font-weight:700;color:#EA580C;margin-bottom:6px;">코치에게 보강을 요청했습니다</div>
@@ -148,8 +362,8 @@ const configs = {
               <a href="6-5-booking-list.html" class="btn-primary" style="flex:1;display:block;text-align:center;text-decoration:none;line-height:52px;">목록으로</a>`
   },
   makeup: {
-    label: '보강 대기',
-    badge: '<span class="badge" style="font-size:14px;padding:6px 16px;background:#D1FAE5;color:#065F46;">🔄 보강 대기</span>',
+    label: '보강 일정 선택중',
+    badge: '<span class="badge" style="font-size:14px;padding:6px 16px;background:#D1FAE5;color:#065F46;">🔄 보강 일정 선택중</span>',
     session: '보강',
     message: `<div style="padding:16px;background:#F0FDFA;border-radius:12px;border:1.5px dashed var(--green);">
       <div style="font-size:13px;font-weight:700;color:#065F46;margin-bottom:6px;">보강 레슨이 등록되었습니다</div>
@@ -160,7 +374,7 @@ const configs = {
   },
   makeup_proposed: {
     label: '보강 날짜 선택',
-    badge: '<span class="badge" style="font-size:14px;padding:6px 16px;background:#D1FAE5;color:#065F46;">🔄 보강 대기</span>',
+    badge: '<span class="badge" style="font-size:14px;padding:6px 16px;background:#D1FAE5;color:#065F46;">🔄 보강 일정 선택중</span>',
     session: '보강',
     message: `<div style="padding:16px;background:#F0FDFA;border-radius:12px;border:1.5px dashed var(--green);margin-bottom:4px;">
       <div style="font-size:13px;font-weight:700;color:#065F46;margin-bottom:10px;">코치가 보강 가능 날짜를 제안했어요</div>
@@ -185,6 +399,66 @@ const configs = {
     actions: `<a href="../flow4-chat/4-2-chat.html" class="btn-secondary" style="flex:1;display:block;text-align:center;text-decoration:none;line-height:48px;height:auto;">코치에게 문의</a>
               <a href="6-5-booking-list.html" class="btn-primary" style="flex:1;display:block;text-align:center;text-decoration:none;line-height:52px;">목록으로</a>`
   },
+  reschedule_confirmed: {
+    label: '변경 확정',
+    badge: '<span class="badge" style="font-size:14px;padding:6px 16px;background:#FFF7ED;color:#EA580C;">🔄 변경 확정</span>',
+    session: '6/8회',
+    message: `<div style="padding:16px;background:#F0FDFA;border-radius:12px;border:1.5px solid var(--green);">
+      <div style="font-size:13px;font-weight:700;color:#065F46;margin-bottom:6px;">변경 요청이 확정되었습니다!</div>
+      <div style="font-size:13px;color:var(--green);line-height:1.6;margin-bottom:10px;">희망하셨던 일정으로 레슨이 변경되었습니다.<br>코치에게 확정 알림이 발송되었습니다.</div>
+      <div style="padding:12px;background:#fff;border-radius:10px;border:1px solid #D1FAE5;font-size:14px;font-weight:700;color:var(--navy);text-align:center;">
+        📅 ${decodeURIComponent(params.get('confirmedDate') || '4/16 (수) 16:00')}
+      </div>
+    </div>`,
+    actions: `<a href="../flow4-chat/4-2-chat.html" class="btn-secondary" style="flex:1;display:block;text-align:center;text-decoration:none;line-height:48px;height:auto;">코치에게 문의</a>
+              <a href="6-5-booking-list.html" class="btn-primary" style="flex:1;display:block;text-align:center;text-decoration:none;line-height:52px;">목록으로</a>`
+  },
+  reschedule_completed: {
+    label: '변경 완료',
+    badge: '<span class="badge" style="font-size:14px;padding:6px 16px;background:#DBEAFE;color:#1E40AF;">✅ 변경 완료</span>',
+    session: '6/8회',
+    message: (function(){
+      const original = decodeURIComponent(params.get('original') || '4/13 (일) 10:00');
+      const confirmed = decodeURIComponent(params.get('confirmedDate') || '4/16 (수) 16:00');
+      const reason = decodeURIComponent(params.get('reason') || '개인 사정');
+      const coachMsg = decodeURIComponent(params.get('coachMsg') || '');
+      const coachMsgHtml = coachMsg ? `<div style="margin-top:10px;padding:10px 12px;background:#F0FDFA;border-radius:10px;border:1px solid #D1FAE5;">
+        <div style="font-size:11px;color:#065F46;margin-bottom:4px;">💬 코치 메시지</div>
+        <div style="font-size:13px;color:var(--navy);line-height:1.5;">${coachMsg}</div>
+      </div>` : '';
+      return `<div style="padding:16px;background:#EFF6FF;border-radius:12px;border:1.5px solid #BFDBFE;">
+        <div style="font-size:13px;font-weight:700;color:#1E40AF;margin-bottom:6px;">레슨 일정 변경이 완료되었습니다 ✓</div>
+        <div style="font-size:13px;color:#3B82F6;line-height:1.6;margin-bottom:12px;">코치님이 새 일정을 확정해 주셨어요.<br>변경된 일정에 맞춰 준비해 주세요!</div>
+
+        <!-- 변경 전/후 비교 -->
+        <div style="padding:12px;background:#fff;border-radius:10px;border:1px solid #BFDBFE;margin-bottom:8px;">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;">
+            <span style="font-size:13px;color:var(--gray-400);text-decoration:line-through;">${original}</span>
+            <span style="font-size:14px;color:var(--gray-400);">→</span>
+            <span style="font-size:14px;font-weight:800;color:#1E40AF;">${confirmed}</span>
+          </div>
+          <div style="text-align:center;margin-top:6px;">
+            <span style="font-size:10px;font-weight:700;background:#1E40AF;color:#fff;padding:2px 8px;border-radius:6px;">확정</span>
+          </div>
+        </div>
+
+        <!-- 변경 사유 -->
+        <div style="padding:8px 12px;background:#fff;border-radius:8px;border:1px solid #BFDBFE;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:11px;color:var(--gray-400);">변경 사유</span>
+          <span style="font-size:12px;font-weight:600;color:var(--navy);">${reason}</span>
+        </div>
+
+        ${coachMsgHtml}
+
+        <!-- 안내 -->
+        <div style="margin-top:10px;padding:10px 12px;background:#fff;border-radius:8px;border:1px solid #BFDBFE;font-size:11px;color:var(--gray-500);line-height:1.5;">
+          💡 변경된 일정은 회차에 영향을 주지 않으며, 결제일도 변경되지 않습니다.
+        </div>
+      </div>`;
+    })(),
+    actions: `<a href="../flow4-chat/4-2-chat.html" class="btn-secondary" style="flex:1;display:block;text-align:center;text-decoration:none;line-height:48px;height:auto;">코치에게 문의</a>
+              <a href="6-5-booking-list.html" class="btn-primary" style="flex:1;display:block;text-align:center;text-decoration:none;line-height:52px;">목록으로</a>`
+  },
   rejected: {
     label: '거절됨',
     badge: '<span class="badge" style="font-size:14px;padding:6px 16px;background:#FEE2E2;color:#991B1B;">거절됨</span>',
@@ -204,6 +478,449 @@ document.getElementById('status-badge-area').innerHTML = cfg.badge;
 document.getElementById('session-info').textContent = cfg.session;
 document.getElementById('status-message-area').innerHTML = cfg.message;
 document.getElementById('bottom-actions').innerHTML = cfg.actions;
+
+// ── 상태 변경 히스토리 ──────────────────────────────
+const STATUS_HISTORY_DATA = {
+  confirmed: [
+    { time: '4/20 14:00', actor: 'coach', action: '레슨 확정', detail: '코치 김민수' },
+    { time: '4/20 13:50', actor: 'student', action: '레슨 신청', detail: '정규레슨 1:1' }
+  ],
+  pending: [
+    { time: '오늘 09:15', actor: 'student', action: '레슨 신청', detail: '쿠폰레슨 4회 그룹' }
+  ],
+  reschedule_pending: [
+    { time: '오늘 14:30', actor: 'student', action: '변경 요청 제출', detail: '희망 3개 일정 (사유: 개인 사정)' },
+    { time: '4/8 14:00', actor: 'coach', action: '레슨 확정', detail: '4/13 (일) 10:00' }
+  ],
+  reschedule_confirmed: [
+    { time: '오늘 15:00', actor: 'coach', action: '희망 일정으로 확정', detail: '4/16 (수) 16:00' },
+    { time: '오늘 14:00', actor: 'student', action: '변경 요청 제출', detail: '사유: 개인 사정' },
+    { time: '4/8 14:00', actor: 'coach', action: '레슨 확정', detail: '' }
+  ],
+  reschedule_completed: [
+    { time: '오늘 15:00', actor: 'student', action: '변경 일정 확정', detail: '4/16 (수) 16:00 선택' },
+    { time: '오늘 14:30', actor: 'coach', action: '변경 가능 일정 3개 제안', detail: '12시간 홀드' },
+    { time: '4/12 09:00', actor: 'student', action: '변경 요청 제출', detail: '사유: 개인 사정' },
+    { time: '4/8 14:00', actor: 'coach', action: '레슨 확정', detail: '' }
+  ],
+  completed: [
+    { time: '오늘 11:00', actor: 'coach', action: '레슨 완료 처리', detail: '6회차 카운트' },
+    { time: '오늘 10:00', actor: 'system', action: '레슨 시작', detail: '' },
+    { time: '4/8 14:00', actor: 'coach', action: '레슨 확정', detail: '' }
+  ],
+  absent: [
+    { time: '오늘 09:30', actor: 'coach', action: '결강 처리', detail: '사유: 코치 개인 사정 (병가)' },
+    { time: '4/8 14:00', actor: 'coach', action: '레슨 확정', detail: '4/13 (일) 10:00' }
+  ],
+  makeup_requested: [
+    { time: '오늘 09:00', actor: 'student', action: '보강 요청 제출', detail: '코치 일정 제안 대기' },
+    { time: '4/13 11:00', actor: 'coach', action: '결강 처리', detail: '사유: 코치 사정' },
+    { time: '4/8 14:00', actor: 'coach', action: '레슨 확정', detail: '' }
+  ],
+  makeup: [
+    { time: '오늘 11:00', actor: 'coach', action: '보강 일정 등록', detail: '12시간 홀드' },
+    { time: '오늘 10:00', actor: 'coach', action: '결강 처리', detail: '사유: 코치 사정' },
+    { time: '4/8 14:00', actor: 'coach', action: '레슨 확정', detail: '' }
+  ],
+  makeup_proposed: [
+    { time: '오늘 11:00', actor: 'coach', action: '보강 일정 3개 제안', detail: '12시간 홀드' },
+    { time: '오늘 10:00', actor: 'coach', action: '결강 처리', detail: '사유: 코치 사정' },
+    { time: '4/8 14:00', actor: 'coach', action: '레슨 확정', detail: '' }
+  ],
+  makeup_confirmed: [
+    { time: '어제 16:00', actor: 'student', action: '보강 일정 확정', detail: '4/25 (금) 10:00 선택' },
+    { time: '어제 14:00', actor: 'coach', action: '보강 일정 3개 제안', detail: '' },
+    { time: '4/13 10:00', actor: 'coach', action: '결강 처리', detail: '사유: 코치 사정' },
+    { time: '4/8 14:00', actor: 'coach', action: '레슨 확정', detail: '' }
+  ],
+  rejected: [
+    { time: '오늘 11:30', actor: 'coach', action: '레슨 신청 거절', detail: '사유: 시간대 충돌' },
+    { time: '오늘 10:00', actor: 'student', action: '레슨 신청', detail: '' }
+  ]
+};
+const ACTOR_INFO = {
+  student: { label: '수강생', color: '#7C5CBF', bg: '#F3E8FF' },
+  coach:   { label: '코치',   color: '#065F46', bg: '#D1FAE5' },
+  system:  { label: '시스템', color: '#6B7280', bg: '#F5F5F7' },
+  admin:   { label: '관리자', color: '#1E40AF', bg: '#DBEAFE' }
+};
+function renderStatusHistory(s) {
+  const c = document.getElementById('status-history-area');
+  if (!c) return;
+  const items = STATUS_HISTORY_DATA[s];
+  if (!items || items.length === 0) { c.innerHTML = ''; return; }
+  const itemsHtml = items.map((it, i) => {
+    const a = ACTOR_INFO[it.actor] || ACTOR_INFO.system;
+    const isLast = i === items.length - 1;
+    return `<div style="display:flex;gap:10px;${isLast ? '' : 'padding-bottom:12px;'}">
+      <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;">
+        <div style="width:8px;height:8px;border-radius:50%;background:${a.color};margin-top:5px;"></div>
+        ${isLast ? '' : `<div style="flex:1;width:1px;background:var(--gray-100);margin-top:4px;"></div>`}
+      </div>
+      <div style="flex:1;">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+          <span style="font-size:11px;color:var(--gray-400);">${it.time}</span>
+          <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:4px;background:${a.bg};color:${a.color};">${a.label}</span>
+        </div>
+        <div style="font-size:13px;font-weight:600;color:var(--navy);margin-top:2px;">${it.action}</div>
+        ${it.detail ? `<div style="font-size:11px;color:var(--gray-500);margin-top:1px;">${it.detail}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+  c.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:12px 14px;background:var(--gray-50);border-radius:12px;" onclick="toggleHistoryAccordion()">
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span style="font-size:14px;">📜</span>
+        <span style="font-size:13px;font-weight:700;color:var(--navy);">상태 변경 히스토리</span>
+        <span style="font-size:11px;color:var(--gray-400);">${items.length}건</span>
+      </div>
+      <span id="history-arrow" style="font-size:11px;color:var(--gray-400);transition:transform 0.2s;">▼</span>
+    </div>
+    <div id="history-content" style="display:none;padding:14px;background:#fff;border:1px solid var(--gray-100);border-top:none;border-radius:0 0 12px 12px;margin-top:-1px;">
+      ${itemsHtml}
+    </div>`;
+}
+function toggleHistoryAccordion() {
+  const content = document.getElementById('history-content');
+  const arrow = document.getElementById('history-arrow');
+  if (!content) return;
+  const isOpen = content.style.display === 'block';
+  content.style.display = isOpen ? 'none' : 'block';
+  if (arrow) arrow.style.transform = isOpen ? '' : 'rotate(180deg)';
+}
+renderStatusHistory(status);
+
+// ── 변경 요청 풀팝업 (일/주 토글, 당월 제한) ──────────────────────────────
+const RS_DAY_NAMES = ['일','월','화','수','목','금','토'];
+// 코치가 등록한 시간대 (요일별 전체 가용 시간)
+const RS_COACH_REGISTERED_SLOTS = {
+  0: ['09:00','11:00','14:00'],
+  1: ['09:00','10:00','15:00','19:00'],
+  2: ['09:00','14:00','17:00'],
+  3: [],
+  4: ['09:00','11:00','14:00','17:00'],
+  5: ['10:00','14:00','19:00'],
+  6: ['09:00','10:00','11:00','14:00']
+};
+// 이미 다른 레슨이 잡혀 예약 불가인 슬롯 (M/D HH:MM 형태) — 데모 데이터
+const RS_BOOKED_SLOTS = (function(){
+  const today = new Date(); today.setHours(0,0,0,0);
+  const k = (d) => `${d.getMonth()+1}/${d.getDate()}`;
+  const d1 = new Date(today); // 오늘
+  const d2 = new Date(today); d2.setDate(today.getDate() + 1);
+  const d3 = new Date(today); d3.setDate(today.getDate() + 3);
+  return new Set([
+    `${k(d1)} 09:00`, `${k(d1)} 11:00`,
+    `${k(d2)} 09:00`,
+    `${k(d3)} 14:00`
+  ]);
+})();
+const RS_TODAY = (function(){ const d = new Date(); d.setHours(0,0,0,0); return d; })();
+const RS_MONTH_END = (function(){ const d = new Date(RS_TODAY.getFullYear(), RS_TODAY.getMonth() + 1, 0); d.setHours(0,0,0,0); return d; })();
+// 디폴트 시작일: 오늘 (리얼타임)
+const RS_MIN_DATE = new Date(RS_TODAY);
+let rsViewMode = 'day';
+let rsActiveDate = null;
+// 다중 시간 선택: Map<dateKey, Set<time>>
+let rsSelectedTimes = new Map();
+
+function rsDateKey(d) { return `${d.getMonth()+1}/${d.getDate()}`; }
+function rsDateLabelFull(d) { return `${d.getMonth()+1}월 ${d.getDate()}일 (${RS_DAY_NAMES[d.getDay()]})`; }
+// 코치 등록 시간 중 예약되지 않은(가용) 시간만 반환
+function rsSlotsForDate(d) {
+  const registered = RS_COACH_REGISTERED_SLOTS[d.getDay()] || [];
+  const dateKey = `${d.getMonth()+1}/${d.getDate()}`;
+  return registered.filter(t => !RS_BOOKED_SLOTS.has(`${dateKey} ${t}`));
+}
+
+function findFirstRsAvailableDate() {
+  for (let cur = new Date(RS_MIN_DATE); cur <= RS_MONTH_END; cur.setDate(cur.getDate() + 1)) {
+    if (rsSlotsForDate(cur).length > 0) return new Date(cur);
+  }
+  return new Date(RS_MIN_DATE);
+}
+
+function openRescheduleSheet() {
+  rsViewMode = 'day';
+  rsActiveDate = findFirstRsAvailableDate();
+  rsSelectedTimes = new Map();
+  document.getElementById('rs-sheet').style.display = 'flex';
+  document.querySelectorAll('.rs-reason').forEach(l => { l.style.borderColor = 'var(--gray-100)'; l.style.background = '#fff'; });
+  document.querySelectorAll('input[name="rs-reason"]').forEach(r => r.checked = false);
+  document.getElementById('rs-reason-detail').value = '';
+  setRsViewMode('day');
+}
+
+function rsTotalSelected() {
+  let n = 0; rsSelectedTimes.forEach(s => n += s.size); return n;
+}
+function rsToggleTime(dateKey, time) {
+  if (!rsSelectedTimes.has(dateKey)) rsSelectedTimes.set(dateKey, new Set());
+  const set = rsSelectedTimes.get(dateKey);
+  if (set.has(time)) {
+    set.delete(time);
+    if (set.size === 0) rsSelectedTimes.delete(dateKey);
+  } else {
+    set.add(time);
+  }
+  renderRsView();
+}
+function closeRescheduleSheet() {
+  document.getElementById('rs-sheet').style.display = 'none';
+}
+
+// 취소/뒤로 클릭 시 확인 모달 — 입력 내용 있을 때만 노출
+function confirmExitReschedule() {
+  const hasInput = rsTotalSelected() > 0 || getRsReason() || (document.getElementById('rs-reason-detail') && document.getElementById('rs-reason-detail').value.trim());
+  if (!hasInput) {
+    closeRescheduleSheet();
+    return;
+  }
+  document.getElementById('rs-exit-modal').style.display = 'block';
+}
+function hideExitModal() {
+  document.getElementById('rs-exit-modal').style.display = 'none';
+}
+function exitRescheduleSheet() {
+  hideExitModal();
+  closeRescheduleSheet();
+}
+
+function setRsViewMode(mode) {
+  rsViewMode = mode;
+  const dayTab = document.getElementById('rs-tab-day');
+  const weekTab = document.getElementById('rs-tab-week');
+  if (mode === 'day') {
+    dayTab.style.background = 'var(--green)'; dayTab.style.color = '#fff';
+    weekTab.style.background = 'transparent'; weekTab.style.color = 'var(--gray-500)';
+  } else {
+    weekTab.style.background = 'var(--green)'; weekTab.style.color = '#fff';
+    dayTab.style.background = 'transparent'; dayTab.style.color = 'var(--gray-500)';
+  }
+  renderRsView();
+}
+
+function renderRsView() {
+  const c = document.getElementById('rs-view-container');
+  if (rsViewMode === 'day') renderRsDayView(c);
+  else renderRsWeekView(c);
+  renderRsTimeBox();
+  updateRsBtn();
+}
+
+function renderRsTimeBox() {
+  const titleEl = document.getElementById('rs-time-section-title');
+  const c = document.getElementById('rs-time-container');
+  if (!c) return;
+  const total = rsTotalSelected();
+  if (!rsActiveDate) {
+    titleEl.innerHTML = `레슨 변경 가능 시간 <span style="font-size:11px;color:var(--gray-400);font-weight:400;">(중복 선택)</span>`;
+    c.innerHTML = '<div style="padding:14px;text-align:center;font-size:12px;color:var(--gray-400);background:#fff;border-radius:10px;">날짜를 선택해 주세요</div>';
+    return;
+  }
+  titleEl.innerHTML = `${rsDateLabelFull(rsActiveDate)} 레슨 변경 가능 시간 <span style="font-size:11px;color:var(--gray-400);font-weight:400;">(중복 선택 · 총 ${total}개)</span>`;
+  const slots = rsSlotsForDate(rsActiveDate);
+  if (slots.length === 0) {
+    c.innerHTML = '<div style="padding:14px;text-align:center;font-size:12px;color:#92400E;background:#fff;border-radius:10px;border:1px dashed #FED7AA;">⚠️ 이 날짜에는 코치님의 가능한 시간이 없습니다.<br>다른 날짜를 선택해 주세요.</div>';
+    return;
+  }
+  c.innerHTML = '<div id="rs-slot-grid" style="display:flex;flex-direction:column;gap:6px;"></div>';
+  const grid = c.querySelector('#rs-slot-grid');
+  const dateKey = rsDateKey(rsActiveDate);
+  const selSet = rsSelectedTimes.get(dateKey) || new Set();
+  slots.forEach(t => {
+    const isSel = selSet.has(t);
+    const item = document.createElement('label');
+    item.style.cssText = `display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:${isSel?'#B6F5E6':'#fff'};border:1.5px solid ${isSel?'var(--green)':'var(--gray-200)'};color:#065F46;cursor:pointer;`;
+    item.innerHTML = `<input type="checkbox" ${isSel?'checked':''} style="width:18px;height:18px;accent-color:var(--green);cursor:pointer;"><span style="font-size:13px;font-weight:600;flex:1;">${t}</span>`;
+    item.onclick = function(e) { e.preventDefault(); rsToggleTime(dateKey, t); };
+    grid.appendChild(item);
+  });
+}
+
+function rsCanGoPrevDay() {
+  if (!rsActiveDate) return false;
+  const prev = new Date(rsActiveDate); prev.setDate(rsActiveDate.getDate() - 1);
+  return prev >= RS_MIN_DATE;
+}
+function rsCanGoNextDay() {
+  if (!rsActiveDate) return false;
+  const next = new Date(rsActiveDate); next.setDate(rsActiveDate.getDate() + 1);
+  return next <= RS_MONTH_END;
+}
+
+function rsMoveDay(dir) {
+  const next = new Date(rsActiveDate); next.setDate(rsActiveDate.getDate() + dir);
+  if (next < RS_MIN_DATE || next > RS_MONTH_END) return;
+  rsActiveDate = next;
+  renderRsView();
+}
+
+function renderRsDayView(c) {
+  const prevDisabled = !rsCanGoPrevDay();
+  const nextDisabled = !rsCanGoNextDay();
+  c.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;background:#fff;border-radius:10px;padding:8px 10px;border:1px solid #D1FAE5;">
+      <button onclick="rsMoveDay(-1)" ${prevDisabled?'disabled':''} style="width:28px;height:28px;border-radius:8px;border:1px solid var(--gray-200);background:#fff;color:${prevDisabled?'var(--gray-300)':'var(--navy)'};font-size:13px;font-weight:700;cursor:${prevDisabled?'not-allowed':'pointer'};font-family:inherit;">‹</button>
+      <span style="font-size:14px;font-weight:700;color:#065F46;">${rsDateLabelFull(rsActiveDate)}</span>
+      <button onclick="rsMoveDay(1)" ${nextDisabled?'disabled':''} style="width:28px;height:28px;border-radius:8px;border:1px solid var(--gray-200);background:#fff;color:${nextDisabled?'var(--gray-300)':'var(--navy)'};font-size:13px;font-weight:700;cursor:${nextDisabled?'not-allowed':'pointer'};font-family:inherit;">›</button>
+    </div>`;
+}
+
+function rsCanGoPrevWeek() {
+  if (!rsCurrentWeekStart) return false;
+  const prev = new Date(rsCurrentWeekStart); prev.setDate(rsCurrentWeekStart.getDate() - 7);
+  // 이전 주 끝일이 RS_MIN_DATE 이상이어야 함
+  const prevEnd = new Date(prev); prevEnd.setDate(prev.getDate() + 6);
+  return prevEnd >= RS_MIN_DATE;
+}
+function rsCanGoNextWeek() {
+  if (!rsCurrentWeekStart) return false;
+  const next = new Date(rsCurrentWeekStart); next.setDate(rsCurrentWeekStart.getDate() + 7);
+  return next <= RS_MONTH_END;
+}
+let rsCurrentWeekStart = null;
+
+function rsMoveWeek(dir) {
+  if (dir < 0 && !rsCanGoPrevWeek()) return;
+  if (dir > 0 && !rsCanGoNextWeek()) return;
+  rsCurrentWeekStart.setDate(rsCurrentWeekStart.getDate() + dir * 7);
+  renderRsView();
+}
+
+function renderRsWeekView(c) {
+  if (!rsCurrentWeekStart) {
+    rsCurrentWeekStart = new Date(RS_MIN_DATE);
+  }
+  const start = new Date(rsCurrentWeekStart);
+  const end = new Date(start); end.setDate(start.getDate() + 6);
+  const prevDisabled = !rsCanGoPrevWeek();
+  const nextDisabled = !rsCanGoNextWeek();
+  c.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;background:#fff;border-radius:10px;padding:8px 10px;border:1px solid #D1FAE5;">
+      <button onclick="rsMoveWeek(-1)" ${prevDisabled?'disabled':''} style="width:28px;height:28px;border-radius:8px;border:1px solid var(--gray-200);background:#fff;color:${prevDisabled?'var(--gray-300)':'var(--navy)'};font-size:13px;font-weight:700;cursor:${prevDisabled?'not-allowed':'pointer'};font-family:inherit;">‹</button>
+      <span style="font-size:13px;font-weight:700;color:#065F46;">${start.getMonth()+1}/${start.getDate()} ~ ${end.getMonth()+1}/${end.getDate()}</span>
+      <button onclick="rsMoveWeek(1)" ${nextDisabled?'disabled':''} style="width:28px;height:28px;border-radius:8px;border:1px solid var(--gray-200);background:#fff;color:${nextDisabled?'var(--gray-300)':'var(--navy)'};font-size:13px;font-weight:700;cursor:${nextDisabled?'not-allowed':'pointer'};font-family:inherit;">›</button>
+    </div>
+    <div id="rs-week-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;"></div>`;
+  const grid = document.getElementById('rs-week-grid');
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(start); d.setDate(start.getDate() + i);
+    const inRange = d >= RS_MIN_DATE && d <= RS_MONTH_END;
+    const slots = inRange ? rsSlotsForDate(d) : [];
+    const isActive = rsActiveDate && inRange && rsDateKey(d) === rsDateKey(rsActiveDate);
+    const noSlot = !inRange || slots.length === 0;
+    const cell = document.createElement('div');
+    if (noSlot) {
+      cell.style.cssText = 'display:flex;flex-direction:column;align-items:center;padding:8px 4px;border-radius:10px;border:1.5px solid var(--gray-100);background:var(--gray-50);opacity:0.4;cursor:not-allowed;gap:2px;';
+    } else {
+      cell.style.cssText = `display:flex;flex-direction:column;align-items:center;padding:8px 4px;border-radius:10px;border:1.5px solid ${isActive?'var(--green)':'var(--gray-100)'};background:${isActive?'#F0FDFA':'#fff'};cursor:pointer;gap:2px;`;
+      const captured = new Date(d);
+      cell.onclick = () => { rsActiveDate = captured; rsActiveTime = null; renderRsView(); };
+    }
+    cell.innerHTML = `<span style="font-size:10px;color:${isActive?'var(--green)':'var(--gray-400)'};font-weight:600;">${RS_DAY_NAMES[d.getDay()]}</span>
+      <span style="font-size:14px;font-weight:700;color:${noSlot?'var(--gray-400)':(isActive?'var(--green)':'var(--navy)')};">${d.getDate()}</span>`;
+    grid.appendChild(cell);
+  }
+}
+
+function getRsReason() {
+  const r = document.querySelector('input[name="rs-reason"]:checked');
+  return r ? r.value : null;
+}
+
+function updateRsBtn() {
+  document.querySelectorAll('.rs-reason').forEach(l => {
+    const r = l.querySelector('input[type="radio"]');
+    if (r && r.checked) { l.style.borderColor = 'var(--green)'; l.style.background = '#F0FDFA'; }
+    else { l.style.borderColor = 'var(--gray-200)'; l.style.background = '#fff'; }
+  });
+  const total = rsTotalSelected();
+  // 버튼은 항상 활성 — 검증은 클릭 시 토스트로 안내
+  const btn = document.getElementById('rs-submit-btn');
+  btn.disabled = false;
+  btn.style.background = 'var(--green)';
+  btn.textContent = total > 0 ? `변경 요청 보내기 (${total}개)` : '변경 요청 보내기';
+}
+
+// 공통 토스트 (Container element + message)
+function showToast(message, type) {
+  const t = document.getElementById('rs-toast');
+  if (!t) return;
+  t.textContent = message;
+  t.className = 'toast' + (type ? ' toast-' + type : '');
+  // 강제 reflow 후 show
+  void t.offsetWidth;
+  t.classList.add('show');
+  clearTimeout(window._rsToastTimer);
+  window._rsToastTimer = setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+function rsBuildSelectedList() {
+  // dateKey → Set<time> → 정렬된 ['M/D (요일) HH:MM', ...]
+  const arr = [];
+  rsSelectedTimes.forEach((set, dateKey) => {
+    const [m, day] = dateKey.split('/').map(Number);
+    set.forEach(time => {
+      const d = new Date(RS_TODAY); d.setMonth(m - 1, day);
+      arr.push({ sortKey: d.getTime() + parseInt(time.replace(':',''), 10), label: `${m}/${day} (${RS_DAY_NAMES[d.getDay()]}) ${time}` });
+    });
+  });
+  arr.sort((a, b) => a.sortKey - b.sortKey);
+  return arr.map(x => x.label);
+}
+
+function submitRescheduleRequest() {
+  const total = rsTotalSelected();
+  // 시간 미선택
+  if (total === 0) {
+    showToast('가능한 시간을 1개 이상 선택해 주세요', 'error');
+    return;
+  }
+  // 사유 미선택
+  if (!getRsReason()) {
+    showToast('변경 사유를 선택해 주세요', 'error');
+    // 사유 영역으로 스크롤
+    const reasonEl = document.getElementById('rs-reason-list');
+    if (reasonEl) reasonEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+  const list = rsBuildSelectedList();
+  // 날짜별 그룹핑
+  const groups = new Map();
+  list.forEach(s => {
+    const m = s.match(/^(\d+\/\d+\s*\([^)]+\))\s+(\d+:\d+)$/);
+    if (!m) return;
+    if (!groups.has(m[1])) groups.set(m[1], []);
+    groups.get(m[1]).push(m[2]);
+  });
+  groups.forEach(times => times.sort());
+  const html = Array.from(groups.entries()).map(([dateLabel, times]) => {
+    const chips = times.map(t => `<span style="display:inline-block;padding:2px 7px;border-radius:5px;background:#fff;border:1px solid #FED7AA;font-size:11px;font-weight:700;color:#92400E;margin:2px;">${t}</span>`).join('');
+    return `<div style="padding:8px 10px;background:#fff;border-radius:8px;border:1px solid #FED7AA;margin-top:4px;">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+        <span style="font-size:12px;">📅</span>
+        <span style="font-size:12px;font-weight:700;color:#92400E;">${dateLabel}</span>
+        <span style="font-size:10px;color:var(--gray-400);font-weight:400;margin-left:auto;">${times.length}개</span>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:0;margin-left:18px;">${chips}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('rs-confirm-desired').innerHTML = html;
+  document.getElementById('rs-confirm-reason').textContent = `사유: ${getRsReason()}`;
+  document.getElementById('rs-confirm-modal').style.display = 'block';
+}
+function closeRsConfirm() {
+  document.getElementById('rs-confirm-modal').style.display = 'none';
+}
+function executeRescheduleSubmit() {
+  closeRsConfirm();
+  closeRescheduleSheet();
+  const list = rsBuildSelectedList();
+  const desired = encodeURIComponent(list[0]); // 첫 번째 일정으로 표시 (다중일 경우 별도 표기)
+  const allDesired = encodeURIComponent(list.join(' | '));
+  window.location.href = `6-6-booking-detail.html?status=reschedule_pending&desired=${desired}&allDesired=${allDesired}`;
+}
 </script>
 <script src="../site-nav.js"></script>
 </body>
