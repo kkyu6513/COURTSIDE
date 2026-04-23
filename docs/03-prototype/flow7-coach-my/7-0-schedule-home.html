@@ -771,6 +771,7 @@
           <div id="makeup-slot-header" style="display:none;font-size:13px;font-weight:700;color:var(--navy);margin-bottom:10px;"></div>
           <div id="makeup-slot-placeholder" style="display:flex;align-items:center;justify-content:center;height:52px;font-size:13px;color:var(--gray-300);">날짜를 선택해 주세요</div>
           <div id="makeup-slot-grid" style="display:none;grid-template-columns:repeat(3,1fr);gap:8px;"></div>
+          <div id="makeup-slot-scroll-hint" style="display:none;text-align:center;font-size:11px;color:var(--gray-400);margin-top:6px;">↓ 스크롤하여 더 보기</div>
           <div id="makeup-slot-empty" style="display:none;font-size:13px;color:var(--gray-400);text-align:center;padding:8px 0;">이 날짜에 보강 가능한 시간이 없습니다</div>
         </div>
 
@@ -1433,13 +1434,13 @@ function handleSupplement() {
 }
 
 const MAKEUP_DAY_NAMES = ['일','월','화','수','목','금','토'];
-const MAKEUP_TODAY = new Date(2026, 3, 13);
+const MAKEUP_TODAY = new Date();
 MAKEUP_TODAY.setHours(0,0,0,0);
 
 // 요일별 보강 가능 시간 슬롯 (0=일 ~ 6=토)
 const MAKEUP_SLOTS_BY_DAY = {
   0: ['09:00','11:00','14:00'],
-  1: ['09:00','10:00','11:00','13:00','15:00'],
+  1: ['09:00','10:00','11:00','13:00','15:00','17:00','18:00','19:00','20:00'],
   2: ['09:00','10:00','14:00','16:00'],
   3: [],
   4: ['09:00','11:00','13:00','16:00'],
@@ -1458,14 +1459,16 @@ function makeDateLabel(d) {
   return `${d.getMonth()+1}월 ${d.getDate()}일 (${MAKEUP_DAY_NAMES[d.getDay()]})`;
 }
 function getMakeupSunday() {
+  // 오늘부터 시작하는 7일 윈도우 (주 단위 이동)
   const s = new Date(MAKEUP_TODAY);
-  s.setDate(MAKEUP_TODAY.getDate() - MAKEUP_TODAY.getDay() + makeupWeekOffset * 7);
+  s.setDate(MAKEUP_TODAY.getDate() + makeupWeekOffset * 7);
   return s;
 }
 
 function openMakeupDateSheet() {
   makeupWeekOffset = 0;
-  activeMakeupDate = null;
+  activeMakeupDate = new Date(MAKEUP_TODAY);
+  activeMakeupDate.setHours(0,0,0,0);
   selectedMakeupSlots.clear();
   document.getElementById('makeup-date-sheet').style.display = 'block';
   renderMakeupWeek();
@@ -1496,6 +1499,8 @@ function moveWeek(dir) {
 function selectMakeupDate(d) {
   activeMakeupDate = new Date(d);
   activeMakeupDate.setHours(0,0,0,0);
+  // moveWeek에서 숨겼을 수 있는 슬롯 섹션 다시 표시
+  document.getElementById('makeup-slot-section').style.display = 'block';
   renderMakeupWeek();
   renderMakeupSlots();
 }
@@ -1583,12 +1588,27 @@ function renderMakeupSlots() {
   const dateKey = makeDateKey(activeMakeupDate);
   const selectedSet = selectedMakeupSlots.get(dateKey) || new Set();
 
+  const scrollHint = document.getElementById('makeup-slot-scroll-hint');
+
   if (slots.length === 0) {
     slotGrid.style.display = 'none';
     emptyMsg.style.display = 'block';
+    scrollHint.style.display = 'none';
   } else {
     slotGrid.style.display = 'grid';
     emptyMsg.style.display = 'none';
+    // 6개 초과 시 스크롤 처리 (3열 × 2행 = 6칸 + 다음 행 일부 노출 → 더 있음 인지)
+    if (slots.length > 6) {
+      slotGrid.style.maxHeight = '160px';
+      slotGrid.style.overflowY = 'auto';
+      slotGrid.style.paddingRight = '4px';
+      scrollHint.style.display = 'block';
+    } else {
+      slotGrid.style.maxHeight = '';
+      slotGrid.style.overflowY = '';
+      slotGrid.style.paddingRight = '';
+      scrollHint.style.display = 'none';
+    }
     slotGrid.innerHTML = '';
     slots.forEach(time => {
       const isSel = selectedSet.has(time);

@@ -203,6 +203,48 @@ border-radius: 12px (radius-md)
 플레이스홀더: #9CA3AF
 ```
 
+### 6.5a 체크박스 & 라디오 (Checkbox & Radio)
+
+**모든 선택형 입력 컨트롤은 사각형 형태로 통일** (동그라미 사용 금지)
+
+```
+공통:
+  크기: 18x18px (네이티브 input)
+  보더 레이디어스: 4px (radius-xs, 사각형)
+  accent-color: var(--green) (#2DD4BF)
+  cursor: pointer
+
+기본 상태:
+  보더: 1.5px solid #D1D5DB (gray-300)
+  배경: #fff
+
+선택 상태:
+  보더: var(--green)
+  배경: var(--green)
+  체크 아이콘: White
+```
+
+**HTML 구현 (네이티브 input 사용 권장)**:
+```html
+<input type="checkbox" style="width:18px;height:18px;accent-color:var(--green);cursor:pointer;">
+<input type="radio" style="width:18px;height:18px;accent-color:var(--green);cursor:pointer;">
+```
+
+**SVG 커스텀 체크박스 (시각 강조 시)**:
+```html
+<!-- 선택됨 -->
+<svg width="18" height="18" viewBox="0 0 14 14">
+  <rect width="14" height="14" rx="3" fill="var(--green)"/>
+  <polyline points="3,7 6,10 11,4" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/>
+</svg>
+<!-- 미선택 -->
+<div style="width:18px;height:18px;border-radius:4px;border:1.5px solid var(--gray-300);"></div>
+```
+
+**금지 사항**:
+- `border-radius: 50%` (동그라미 라디오 버튼) 사용 금지
+- 원형 토글 스타일은 토글 스위치(.toggle) 컴포넌트에만 사용 (on/off 명확한 경우)
+
 ### 6.6 동기부여 배너 (Motivation Banner)
 > Habitz 보라색 배너 스타일 참고
 
@@ -316,3 +358,4 @@ MVP에서는 **라이트 모드만** 지원. 다크모드는 v2 이후 검토.
 | Version | Date | Changes |
 |---------|------|---------|
 | 0.1 | 2026-04-09 | Habitz 레퍼런스 분석 기반 초안 작성 |
+| 0.2 | 2026-04-21 | 6.5a 체크박스/라디오 규칙 추가 — **사각형 형태로 통일** (동그라미 사용 금지) |

@@ -312,6 +312,46 @@ body {
   border-radius: 4px;
 }
 
+/* ── Checkbox & Radio (사각형 통일 — 디자인 가이드 6.5a) ── */
+input[type="checkbox"],
+input[type="radio"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;       /* 사각형 (동그라미 금지) */
+  border: 1.5px solid var(--gray-300);
+  background: #fff;
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+  transition: all 0.15s;
+  margin: 0;
+  vertical-align: middle;
+}
+input[type="checkbox"]:checked,
+input[type="radio"]:checked {
+  background: var(--green);
+  border-color: var(--green);
+}
+input[type="checkbox"]:checked::after,
+input[type="radio"]:checked::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 0px;
+  width: 6px;
+  height: 11px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+input[type="checkbox"]:disabled,
+input[type="radio"]:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 /* ── Input ── */
 .input-field {
   height: 40px;
