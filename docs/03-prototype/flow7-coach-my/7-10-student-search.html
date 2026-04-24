@@ -52,21 +52,17 @@
         </div>
       </div>
 
-      <!-- 필터 칩 -->
+      <!-- 정렬 칩 -->
       <div style="display:flex;gap:8px;padding:12px 20px 0;overflow-x:auto;scrollbar-width:none;">
-        <button class="f-chip active-chip" onclick="setFilter(this,'all')" style="padding:5px 12px;border-radius:20px;border:none;background:var(--navy);color:#fff;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit;">전체 <span id="cnt-all">8</span></button>
-        <button class="f-chip" onclick="setFilter(this,'regular')" style="padding:5px 12px;border-radius:20px;border:1px solid var(--gray-200);background:#fff;color:var(--gray-500);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit;">정규레슨 <span id="cnt-regular">5</span></button>
-        <button class="f-chip" onclick="setFilter(this,'coupon')" style="padding:5px 12px;border-radius:20px;border:1px solid var(--gray-200);background:#fff;color:var(--gray-500);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit;">쿠폰레슨 <span id="cnt-coupon">1</span></button>
-        <button class="f-chip" onclick="setFilter(this,'external')" style="padding:5px 12px;border-radius:20px;border:1px solid var(--gray-200);background:#fff;color:var(--gray-500);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit;">외부수강생 <span id="cnt-external">2</span></button>
-        <button class="f-chip" onclick="setFilter(this,'unpaid')" style="padding:5px 12px;border-radius:20px;border:1px solid #FECACA;background:#FEF2F2;color:#EF4444;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit;">미결제 <span id="cnt-unpaid">2</span></button>
+        <button class="s-chip" onclick="applySort(this,'default')" style="padding:5px 14px;border-radius:20px;border:none;background:var(--navy);color:#fff;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit;">기본순</button>
+        <button class="s-chip" onclick="applySort(this,'name')"    style="padding:5px 14px;border-radius:20px;border:1px solid var(--gray-200);background:#fff;color:var(--gray-500);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit;">이름순</button>
+        <button class="s-chip" onclick="applySort(this,'recent')"  style="padding:5px 14px;border-radius:20px;border:1px solid var(--gray-200);background:#fff;color:var(--gray-500);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit;">최근 레슨순</button>
+        <button class="s-chip" onclick="applySort(this,'unpaid')"  style="padding:5px 14px;border-radius:20px;border:1px solid #FECACA;background:#FEF2F2;color:#EF4444;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit;">미결제 우선</button>
       </div>
 
-      <!-- 결과 카운트 + 정렬 -->
-      <div style="padding:12px 20px 6px;display:flex;justify-content:space-between;align-items:center;">
+      <!-- 결과 카운트 -->
+      <div style="padding:12px 20px 6px;">
         <span id="result-count" style="font-size:12px;color:var(--gray-400);">수강생 8명</span>
-        <button id="sort-btn" onclick="openSortSheet()" style="display:flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;border:1px solid var(--gray-200);background:#fff;font-size:12px;font-weight:600;color:var(--navy);cursor:pointer;font-family:inherit;">
-          <span id="sort-label">기본순</span> ▾
-        </button>
       </div>
 
       <!-- 수강생 목록 -->
@@ -91,17 +87,6 @@
           <div id="detail-student"></div>
           <div id="detail-actions"></div>
         </div>
-      </div>
-    </div>
-
-    <!-- 정렬 바텀시트 -->
-    <div id="sort-sheet" style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;z-index:110;">
-      <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);" onclick="closeSortSheet()"></div>
-      <div style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;padding:20px;z-index:111;">
-        <div style="width:40px;height:4px;border-radius:2px;background:var(--gray-200);margin:0 auto 16px;"></div>
-        <div style="font-size:15px;font-weight:800;color:var(--navy);margin-bottom:14px;">정렬</div>
-        <div id="sort-options"></div>
-        <button onclick="closeSortSheet()" style="width:100%;height:46px;border-radius:12px;border:1px solid var(--gray-100);background:#fff;color:var(--gray-500);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:8px;">닫기</button>
       </div>
     </div>
 
@@ -201,9 +186,8 @@ function getSorted(students, sortKey) {
   return arr;
 }
 
-let currentFilter = 'all';
-let currentQuery  = '';
-let currentSort   = 'default';
+let currentQuery = '';
+let currentSort  = 'default';
 
 function paymentBadgeHtml(status) {
   if (status === 'paid')     return '<span class="badge-sm" style="background:#D1FAE5;color:#065F46;">결제완료</span>';
@@ -254,22 +238,17 @@ function renderList(students) {
   `).join('');
 }
 
-function getProcessed(query, filter, sort) {
-  const filtered = STUDENTS.filter(s => {
-    const matchQuery = !query ||
-      s.name.includes(query) ||
-      s.phone.replace(/-/g,'').includes(query.replace(/-/g,''));
-    const matchFilter =
-      filter === 'all'    ? true :
-      filter === 'unpaid' ? s.paymentStatus === 'unpaid' :
-      s.lessonType === filter;
-    return matchQuery && matchFilter;
-  });
+function getProcessed(query, sort) {
+  const filtered = STUDENTS.filter(s =>
+    !query ||
+    s.name.includes(query) ||
+    s.phone.replace(/-/g,'').includes(query.replace(/-/g,''))
+  );
   return getSorted(filtered, sort);
 }
 
 function refresh() {
-  renderList(getProcessed(currentQuery, currentFilter, currentSort));
+  renderList(getProcessed(currentQuery, currentSort));
 }
 
 function filterStudents(query) {
@@ -278,44 +257,22 @@ function filterStudents(query) {
   refresh();
 }
 
-function setFilter(btn, filter) {
-  currentFilter = filter;
-  document.querySelectorAll('.f-chip').forEach(b => {
+function applySort(btn, sortKey) {
+  currentSort = sortKey;
+  document.querySelectorAll('.s-chip').forEach(b => {
     b.style.background = '#fff';
     b.style.color = 'var(--gray-500)';
     b.style.border = '1px solid var(--gray-200)';
   });
-  btn.style.background = filter === 'unpaid' ? '#FEF2F2' : 'var(--navy)';
-  btn.style.color = filter === 'unpaid' ? '#EF4444' : '#fff';
-  btn.style.border = filter === 'unpaid' ? '1px solid #FECACA' : 'none';
-  refresh();
-}
-
-function openSortSheet() {
-  const opts = SORT_OPTIONS.map(o => `
-    <button onclick="applySort('${o.key}')" style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:${currentSort===o.key?'#F0FDFA':'var(--gray-50)'};border-radius:12px;border:${currentSort===o.key?'1.5px solid var(--green)':'1px solid transparent'};cursor:pointer;margin-bottom:8px;font-family:inherit;">
-      <div style="text-align:left;">
-        <div style="font-size:14px;font-weight:700;color:${currentSort===o.key?'var(--green)':'var(--navy)'};">${o.label}</div>
-        <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">${o.desc}</div>
-      </div>
-      ${currentSort===o.key?'<span style="color:var(--green);font-size:16px;">✓</span>':''}
-    </button>`).join('');
-  document.getElementById('sort-options').innerHTML = opts;
-  document.getElementById('sort-sheet').style.display = 'block';
-}
-
-function closeSortSheet() {
-  document.getElementById('sort-sheet').style.display = 'none';
-}
-
-function applySort(sortKey) {
-  currentSort = sortKey;
-  const label = SORT_OPTIONS.find(o => o.key === sortKey)?.label || '기본순';
-  document.getElementById('sort-label').textContent = label;
-  const isCustom = sortKey !== 'default';
-  document.getElementById('sort-btn').style.color = isCustom ? 'var(--green)' : 'var(--navy)';
-  document.getElementById('sort-btn').style.borderColor = isCustom ? 'var(--green)' : 'var(--gray-200)';
-  closeSortSheet();
+  if (sortKey === 'unpaid') {
+    btn.style.background = '#FEF2F2';
+    btn.style.color = '#EF4444';
+    btn.style.border = '1px solid #FECACA';
+  } else {
+    btn.style.background = 'var(--navy)';
+    btn.style.color = '#fff';
+    btn.style.border = 'none';
+  }
   refresh();
 }
 
