@@ -2514,11 +2514,6 @@ function showScheduleConfirmAlert(paymentStatus) {
   btn.onclick = function() {
     if (paymentStatus === 'deposit') {
       const depositAmt = parseInt(document.getElementById('sca-deposit-amount').value) || 0;
-      if (depositAmt <= 0) {
-        document.getElementById('sca-deposit-remaining').textContent = '⚠️ 예약금 금액을 입력해 주세요';
-        document.getElementById('sca-deposit-remaining').style.color = '#DC2626';
-        return;
-      }
       closeScheduleConfirmAlert();
       confirmScheduleWithPayment('deposit', depositAmt);
     } else {
