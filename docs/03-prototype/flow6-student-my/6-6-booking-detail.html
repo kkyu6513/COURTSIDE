@@ -60,14 +60,19 @@
           <div style="display:flex;justify-content:space-between;align-items:center;padding:0 4px;">
             <span style="font-size:13px;color:var(--gray-400);">결제</span>
             <div style="display:flex;align-items:center;gap:6px;">
-              <span style="font-size:14px;font-weight:600;color:var(--navy);">60,000원</span>
+              <span id="payment-amount" style="font-size:14px;font-weight:600;color:var(--navy);">60,000원</span>
               <span id="payment-status-badge" style="padding:2px 6px;border-radius:4px;background:#D1FAE5;color:#065F46;font-size:10px;font-weight:700;">결제완료</span>
+            </div>
+          </div>
+          <div id="payment-deposit-notice" style="display:none;padding:10px 4px 4px;">
+            <div style="display:flex;align-items:flex-start;gap:6px;padding:10px 12px;background:#FEF3C7;border-radius:10px;border:1px solid #FDE68A;">
+              <span style="font-size:13px;line-height:1.5;color:#92400E;">💡 잔액은 코치와 협의된 일정에 납부해 주세요.</span>
             </div>
           </div>
           <div style="height:1px;background:var(--gray-100);"></div>
           <div style="display:flex;justify-content:space-between;align-items:center;padding:0 4px;">
-            <span style="font-size:13px;color:var(--gray-400);">최근 결제일</span>
-            <span style="font-size:14px;font-weight:600;color:var(--navy);">3/25</span>
+            <span style="font-size:13px;color:var(--gray-400);">결제일</span>
+            <span id="payment-date" style="font-size:14px;font-weight:600;color:var(--navy);">3/25</span>
           </div>
           <div style="height:1px;background:var(--gray-100);"></div>
           <div style="display:flex;justify-content:space-between;align-items:center;padding:0 4px;">
@@ -223,18 +228,41 @@ const proposedDates = rawDates ? rawDates.split('|') : [];
 (function() {
   const paymentParam = params.get('payment');
   if (!paymentParam) return;
-  const badge = document.getElementById('payment-status-badge');
-  if (!badge) return;
+
+  const PRICE = 60000; // 프로토타입 고정값 (실제: Booking.price)
+  const PAID_AT = '4/13'; // 프로토타입 고정값 (실제: Payment.paidAt)
+
   const paymentConfigs = {
-    paid:    { label: '결제완료',   bg: '#D1FAE5', color: '#065F46' },
-    deposit: { label: '예약금 받음', bg: '#FEF3C7', color: '#92400E' },
-    unpaid:  { label: '미결제',     bg: '#FEE2E2', color: '#991B1B' }
+    paid:    { label: '결제완료',   bg: '#D1FAE5', color: '#065F46', date: PAID_AT,  showDeposit: false },
+    deposit: { label: '예약금 수령', bg: '#FEF3C7', color: '#92400E', date: PAID_AT,  showDeposit: true  },
+    unpaid:  { label: '미결제',     bg: '#FEE2E2', color: '#991B1B', date: '—',      showDeposit: false }
   };
+
   const cfg = paymentConfigs[paymentParam];
   if (!cfg) return;
-  badge.textContent = cfg.label;
-  badge.style.background = cfg.bg;
-  badge.style.color = cfg.color;
+
+  // 배지
+  const badge = document.getElementById('payment-status-badge');
+  if (badge) {
+    badge.textContent = cfg.label;
+    badge.style.background = cfg.bg;
+    badge.style.color = cfg.color;
+  }
+
+  // 금액: 항상 총액(Booking.price) 표시
+  const amountEl = document.getElementById('payment-amount');
+  if (amountEl) amountEl.textContent = PRICE.toLocaleString() + '원';
+
+  // 결제일: 완료/예약금은 날짜, 미결제는 "—"
+  const dateEl = document.getElementById('payment-date');
+  if (dateEl) {
+    dateEl.textContent = cfg.date;
+    if (paymentParam === 'unpaid') dateEl.style.color = '#9CA3AF';
+  }
+
+  // 예약금 안내 배너
+  const notice = document.getElementById('payment-deposit-notice');
+  if (notice) notice.style.display = cfg.showDeposit ? 'block' : 'none';
 })();
 
 // 보강 날짜 선택 라디오 UI 생성
