@@ -698,21 +698,21 @@
         <div style="font-size:17px;font-weight:800;color:var(--navy);margin-bottom:6px;">스케줄을 확정하기 전에</div>
         <div style="font-size:13px;color:var(--gray-500);line-height:1.5;margin-bottom:14px;"><span id="confirm-pay-student-name">박지수</span>님으로부터 <strong style="color:var(--navy);">결제를 받으셨나요?</strong><br>선택한 결제 상태로 확정되며, 미결제 시에도 나중에 결제 확인이 가능해요.</div>
         <div style="display:flex;flex-direction:column;gap:8px;">
-          <button onclick="confirmScheduleWithPayment('paid')" style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:#F0FDFA;border:1.5px solid #D1FAE5;border-radius:12px;cursor:pointer;font-family:inherit;text-align:left;width:100%;">
+          <button onclick="showScheduleConfirmAlert('paid')" style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:#F0FDFA;border:1.5px solid #D1FAE5;border-radius:12px;cursor:pointer;font-family:inherit;text-align:left;width:100%;">
             <div style="width:36px;height:36px;border-radius:10px;background:#D1FAE5;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">✅</div>
             <div style="flex:1;">
               <div style="font-size:14px;font-weight:700;color:#065F46;">전액 받음</div>
               <div style="font-size:11px;color:var(--gray-500);margin-top:2px;">결제완료 상태로 확정</div>
             </div>
           </button>
-          <button onclick="confirmScheduleWithPayment('deposit')" style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:#FFF7ED;border:1.5px solid #FED7AA;border-radius:12px;cursor:pointer;font-family:inherit;text-align:left;width:100%;">
+          <button onclick="showScheduleConfirmAlert('deposit')" style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:#FFF7ED;border:1.5px solid #FED7AA;border-radius:12px;cursor:pointer;font-family:inherit;text-align:left;width:100%;">
             <div style="width:36px;height:36px;border-radius:10px;background:#FED7AA;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">💵</div>
             <div style="flex:1;">
               <div style="font-size:14px;font-weight:700;color:#92400E;">예약금만 받음</div>
               <div style="font-size:11px;color:var(--gray-500);margin-top:2px;">예약금 표시 + 잔액 안내 알림 발송</div>
             </div>
           </button>
-          <button onclick="confirmScheduleWithPayment('unpaid')" style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:#FEF2F2;border:1.5px solid #FECACA;border-radius:12px;cursor:pointer;font-family:inherit;text-align:left;width:100%;">
+          <button onclick="showScheduleConfirmAlert('unpaid')" style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:#FEF2F2;border:1.5px solid #FECACA;border-radius:12px;cursor:pointer;font-family:inherit;text-align:left;width:100%;">
             <div style="width:36px;height:36px;border-radius:10px;background:#FEE2E2;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">⏳</div>
             <div style="flex:1;">
               <div style="font-size:14px;font-weight:700;color:#991B1B;">아직 미결제</div>
@@ -721,6 +721,20 @@
           </button>
         </div>
         <button onclick="closeConfirmScheduleModal()" style="width:100%;height:46px;border-radius:12px;border:1px solid var(--gray-100);background:#fff;color:var(--gray-500);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:12px;">취소</button>
+      </div>
+    </div>
+
+    <!-- 스케줄 확정 2차 확인 얼럿 -->
+    <div id="schedule-confirm-alert" style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;z-index:170;align-items:center;justify-content:center;">
+      <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.55);" onclick="closeScheduleConfirmAlert()"></div>
+      <div style="position:relative;background:#fff;border-radius:20px;padding:24px 20px;margin:0 24px;z-index:171;">
+        <div id="sca-icon" style="font-size:36px;text-align:center;margin-bottom:12px;"></div>
+        <div id="sca-title" style="font-size:16px;font-weight:800;color:var(--navy);text-align:center;margin-bottom:8px;"></div>
+        <div id="sca-desc" style="font-size:13px;color:var(--gray-500);text-align:center;line-height:1.7;margin-bottom:20px;"></div>
+        <div style="display:flex;gap:8px;">
+          <button onclick="closeScheduleConfirmAlert()" style="flex:1;height:46px;border-radius:12px;border:1.5px solid var(--gray-200);background:#fff;color:var(--gray-500);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">취소</button>
+          <button id="sca-confirm-btn" style="flex:2;height:46px;border-radius:12px;border:none;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;"></button>
+        </div>
       </div>
     </div>
 
@@ -2430,6 +2444,50 @@ function showConfirmScheduleModal() {
 }
 function closeConfirmScheduleModal() {
   document.getElementById('confirm-schedule-modal').style.display = 'none';
+}
+
+let _pendingPaymentStatus = '';
+function showScheduleConfirmAlert(paymentStatus) {
+  _pendingPaymentStatus = paymentStatus;
+  const configs = {
+    paid: {
+      icon: '✅',
+      title: '전액 결제를 확인하셨나요?',
+      desc: '결제완료 상태로 스케줄이 확정됩니다.\n수강생에게 확정 알림톡이 발송됩니다.',
+      btnText: '확정하기',
+      btnColor: 'var(--green)'
+    },
+    deposit: {
+      icon: '💵',
+      title: '예약금 받음으로 확정할까요?',
+      desc: '예약금 수령 상태로 확정되며\n잔액 납부 안내가 수강생에게 발송됩니다.',
+      btnText: '확정하기',
+      btnColor: '#D97706'
+    },
+    unpaid: {
+      icon: '⏳',
+      title: '미결제 상태로 확정할까요?',
+      desc: '미결제 상태로 스케줄이 확정됩니다.\n나중에 레슨 상세에서 결제 확인이 가능해요.',
+      btnText: '그래도 확정',
+      btnColor: '#991B1B'
+    }
+  };
+  const cfg = configs[paymentStatus];
+  document.getElementById('sca-icon').textContent = cfg.icon;
+  document.getElementById('sca-title').textContent = cfg.title;
+  document.getElementById('sca-desc').textContent = cfg.desc;
+  const btn = document.getElementById('sca-confirm-btn');
+  btn.textContent = cfg.btnText;
+  btn.style.background = cfg.btnColor;
+  btn.onclick = function() {
+    closeScheduleConfirmAlert();
+    confirmScheduleWithPayment(_pendingPaymentStatus);
+  };
+  const el = document.getElementById('schedule-confirm-alert');
+  el.style.display = 'flex';
+}
+function closeScheduleConfirmAlert() {
+  document.getElementById('schedule-confirm-alert').style.display = 'none';
 }
 function confirmScheduleWithPayment(paymentStatus) {
   closeConfirmScheduleModal();
