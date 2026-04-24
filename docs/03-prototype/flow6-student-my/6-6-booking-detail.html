@@ -61,7 +61,7 @@
             <span style="font-size:13px;color:var(--gray-400);">결제</span>
             <div style="display:flex;align-items:center;gap:6px;">
               <span style="font-size:14px;font-weight:600;color:var(--navy);">60,000원</span>
-              <span style="padding:2px 6px;border-radius:4px;background:#D1FAE5;color:#065F46;font-size:10px;font-weight:700;">결제완료</span>
+              <span id="payment-status-badge" style="padding:2px 6px;border-radius:4px;background:#D1FAE5;color:#065F46;font-size:10px;font-weight:700;">결제완료</span>
             </div>
           </div>
           <div style="height:1px;background:var(--gray-100);"></div>
@@ -218,6 +218,24 @@ const params = new URLSearchParams(location.search);
 const status = params.get('status') || 'confirmed';
 const rawDates = params.get('dates') || '';
 const proposedDates = rawDates ? rawDates.split('|') : [];
+
+// 결제 상태 배지 업데이트
+(function() {
+  const paymentParam = params.get('payment');
+  if (!paymentParam) return;
+  const badge = document.getElementById('payment-status-badge');
+  if (!badge) return;
+  const paymentConfigs = {
+    paid:    { label: '결제완료',   bg: '#D1FAE5', color: '#065F46' },
+    deposit: { label: '예약금 받음', bg: '#FEF3C7', color: '#92400E' },
+    unpaid:  { label: '미결제',     bg: '#FEE2E2', color: '#991B1B' }
+  };
+  const cfg = paymentConfigs[paymentParam];
+  if (!cfg) return;
+  badge.textContent = cfg.label;
+  badge.style.background = cfg.bg;
+  badge.style.color = cfg.color;
+})();
 
 // 보강 날짜 선택 라디오 UI 생성
 function buildDateRadios(dates) {

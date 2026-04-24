@@ -2492,7 +2492,7 @@ function closeScheduleConfirmAlert() {
 function confirmScheduleWithPayment(paymentStatus) {
   closeConfirmScheduleModal();
   closeLessonDetail();
-  const studentDetailUrl = '../flow6-student-my/6-6-booking-detail.html?status=scheduled&payment=' + paymentStatus;
+  const studentDetailUrl = '../flow6-student-my/6-6-booking-detail.html?status=confirmed&payment=' + paymentStatus;
   window.location.href = studentDetailUrl;
 }
 
