@@ -73,7 +73,7 @@ body {
 .top-nav .action { font-size: 18px; color: var(--navy); width: 24px; text-align: right; }
 
 /* ── Screen ── */
-.screen { flex: 1; overflow-y: auto; background: var(--gray-50); padding-bottom: 80px; }
+.screen { flex: 1; min-height: 0; overflow-y: auto; background: var(--gray-50); padding-bottom: 80px; }
 .screen::-webkit-scrollbar { display: none; }
 .screen-white { background: #fff; }
 
