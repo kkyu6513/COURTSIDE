@@ -87,9 +87,10 @@ enum BookingStatus {
 }
 
 enum PaymentStatus {
-  PENDING
-  PAID
-  REFUNDED
+  PENDING           // 미결제 (스케줄 확정됐으나 결제 전)
+  DEPOSIT_RECEIVED  // 예약금 수령 (코치가 현금/계좌이체로 일부 수령 확인)
+  PAID              // 전액 결제 완료
+  REFUNDED          // 환불
 }
 
 enum PaymentType {
@@ -322,7 +323,7 @@ Response: { "images": [
 | cancellationReason | String? | Nullable | 취소 사유 (취소 시 필수) | FR-05c |
 | price | Int? | Nullable | 결제 금액 | FR-07a |
 | paymentId | Int? | FK → Payment, Nullable | 결제 FK | FR-07a |
-| isPaid | Boolean | Default: false | 결제 여부. true=결제 후 신청 (바로 CONFIRMED + 스케줄 관리 가능), false=미결제 신청 (코치 수락 대기) | FR-05b |
+| isPaid | Boolean | Default: false | 결제 여부. true=결제 후 신청 (바로 CONFIRMED + 스케줄 관리 가능), false=미결제 신청 (코치 수락 대기). 실제 결제 상태는 Payment.status로 관리 | FR-05b |
 | isExternal | Boolean | Default: false | 외부 수강생 여부. true=코치가 직접 등록한 외부 수강생 레슨 | FR-13a |
 | externalStudentId | Int? | FK → ExternalStudent, Nullable | 외부 수강생 FK (isExternal=true일 때) | FR-13a |
 | bookingType | String | Default: 'REGULAR_BOOKING' | 예약 유형 — `REGULAR_BOOKING`(일반) / `SUPPLEMENTARY`(보강) | FR-13a |
@@ -384,12 +385,14 @@ Response: { "images": [
 | id | Int | PK, Auto Increment | 결제 ID | |
 | userId | Int | FK → User | 결제자 FK | FR-07a |
 | paymentType | PaymentType | Not Null | 결제 유형 (LESSON / SUBSCRIPTION) | FR-07 |
-| amount | Int | Not Null | 결제 금액 (원) | FR-07a |
-| method | String? | Nullable | 결제 수단 | FR-07a |
-| pgTransactionId | String? | Unique, Nullable | 토스페이먼츠 거래 ID | FR-07a |
-| pgOrderId | String? | Unique, Nullable | 토스페이먼츠 주문 ID | FR-07a |
+| amount | Int | Not Null | 총 결제 금액 (원) — 계약 기준 전액 | FR-07a |
+| depositAmount | Int? | Nullable | 예약금 금액 (원) — status=DEPOSIT_RECEIVED일 때 코치가 수령한 금액. 잔액 = amount - depositAmount | FR-07a |
+| depositReceivedAt | DateTime? | Nullable | 예약금 수령 확인 일시 | FR-07a |
+| method | String? | Nullable | 결제 수단 — `CARD`(카드/PG) / `CASH`(현금) / `TRANSFER`(계좌이체) / `OTHER`(기타) | FR-07a |
+| pgTransactionId | String? | Unique, Nullable | 토스페이먼츠 거래 ID (PG 결제 시) | FR-07a |
+| pgOrderId | String? | Unique, Nullable | 토스페이먼츠 주문 ID (PG 결제 시) | FR-07a |
 | status | PaymentStatus | Not Null, Default: PENDING | 결제 상태 | FR-07a |
-| paidAt | DateTime? | Nullable | 결제 완료 일시 | FR-07a |
+| paidAt | DateTime? | Nullable | 전액 결제 완료 일시 | FR-07a |
 | refundAmount | Int? | Nullable | 환불 금액 (부분 환불 시 결제 금액과 다를 수 있음) | FR-07b |
 | refundReason | String? | Nullable | 환불 사유 | FR-07b |
 | refundType | String? | Nullable | 환불 유형 — `FULL`(전액) / `PARTIAL`(부분) / `COACH_FAULT`(코치 책임 전액) | FR-07b |
