@@ -61,9 +61,12 @@
         <button class="f-chip" onclick="setFilter(this,'unpaid')" style="padding:5px 12px;border-radius:20px;border:1px solid #FECACA;background:#FEF2F2;color:#EF4444;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit;">미결제 <span id="cnt-unpaid">2</span></button>
       </div>
 
-      <!-- 결과 카운트 -->
+      <!-- 결과 카운트 + 정렬 -->
       <div style="padding:12px 20px 6px;display:flex;justify-content:space-between;align-items:center;">
         <span id="result-count" style="font-size:12px;color:var(--gray-400);">수강생 8명</span>
+        <button id="sort-btn" onclick="openSortSheet()" style="display:flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;border:1px solid var(--gray-200);background:#fff;font-size:12px;font-weight:600;color:var(--navy);cursor:pointer;font-family:inherit;">
+          <span id="sort-label">기본순</span> ▾
+        </button>
       </div>
 
       <!-- 수강생 목록 -->
@@ -91,6 +94,17 @@
       </div>
     </div>
 
+    <!-- 정렬 바텀시트 -->
+    <div id="sort-sheet" style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;z-index:110;">
+      <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);" onclick="closeSortSheet()"></div>
+      <div style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;padding:20px;z-index:111;">
+        <div style="width:40px;height:4px;border-radius:2px;background:var(--gray-200);margin:0 auto 16px;"></div>
+        <div style="font-size:15px;font-weight:800;color:var(--navy);margin-bottom:14px;">정렬</div>
+        <div id="sort-options"></div>
+        <button onclick="closeSortSheet()" style="width:100%;height:46px;border-radius:12px;border:1px solid var(--gray-100);background:#fff;color:var(--gray-500);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:8px;">닫기</button>
+      </div>
+    </div>
+
     <!-- 토스트 -->
     <div id="toast" style="display:none;position:absolute;bottom:100px;left:20px;right:20px;background:var(--navy);color:#fff;border-radius:12px;padding:12px 16px;font-size:13px;font-weight:600;text-align:center;z-index:200;"></div>
 
@@ -105,51 +119,91 @@
 </div>
 
 <script>
+// nextLessonTs: 다음 레슨 타임스탬프 (없으면 9999999999로 맨 뒤)
+// lastLessonTs: 가장 최근 완료 레슨 타임스탬프 (클수록 최신)
 const STUDENTS = [
   {
     id: 1, name: '이민호', initial: '이', age: '30대', gender: '남성', ntrp: 'NTRP 4.0',
     lessonType: 'regular', lessonLabel: '정규레슨', format: '1:1 개인', phone: '010-1234-5678',
-    session: '6/8회', nextLesson: '4/13 (일) 10:00', paymentStatus: 'paid', avatarColor: '#10B981'
+    session: '6/8회', nextLesson: '4/13 (일) 10:00', paymentStatus: 'paid', avatarColor: '#10B981',
+    nextLessonTs: new Date(2026,3,13,10,0).getTime(), lastLessonTs: new Date(2026,3,6,10,0).getTime()
   },
   {
     id: 2, name: '박수진', initial: '박', age: '30대', gender: '여성', ntrp: 'NTRP 2.5',
     lessonType: 'regular', lessonLabel: '정규레슨', format: '그룹 (3인)', phone: '010-2345-6789',
-    session: '2/4회', nextLesson: '4/13 (일) 13:00', paymentStatus: 'paid', avatarColor: '#8B5CF6'
+    session: '2/4회', nextLesson: '4/13 (일) 13:00', paymentStatus: 'paid', avatarColor: '#8B5CF6',
+    nextLessonTs: new Date(2026,3,13,13,0).getTime(), lastLessonTs: new Date(2026,3,6,13,0).getTime()
   },
   {
     id: 3, name: '김영희', initial: '김', age: '20대', gender: '여성', ntrp: 'NTRP 2.5',
     lessonType: 'regular', lessonLabel: '정규레슨', format: '1:1 개인', phone: '010-3456-7890',
-    session: '4/8회', nextLesson: '4/13 (일) 14:00', paymentStatus: 'deposit', avatarColor: '#F59E0B'
+    session: '4/8회', nextLesson: '4/13 (일) 14:00', paymentStatus: 'deposit', avatarColor: '#F59E0B',
+    nextLessonTs: new Date(2026,3,13,14,0).getTime(), lastLessonTs: new Date(2026,3,6,14,0).getTime()
   },
   {
     id: 4, name: '흥길동', initial: '홍', age: '40대', gender: '남성', ntrp: 'NTRP 3.0',
     lessonType: 'regular', lessonLabel: '정규레슨', format: '1:1 개인', phone: '010-4567-8901',
-    session: '5/8회', nextLesson: '4/13 (일) 09:00', paymentStatus: 'paid', avatarColor: '#3B82F6'
+    session: '5/8회', nextLesson: '4/13 (일) 09:00', paymentStatus: 'paid', avatarColor: '#3B82F6',
+    nextLessonTs: new Date(2026,3,13,9,0).getTime(), lastLessonTs: new Date(2026,3,6,9,0).getTime()
   },
   {
     id: 5, name: '강민서', initial: '강', age: '20대', gender: '여성', ntrp: 'NTRP 2.0',
     lessonType: 'regular', lessonLabel: '정규레슨', format: '그룹 (3인)', phone: '010-5678-9012',
-    session: '3/8회', nextLesson: '없음 (결강)', paymentStatus: 'paid', avatarColor: '#EC4899'
+    session: '3/8회', nextLesson: '없음 (결강)', paymentStatus: 'paid', avatarColor: '#EC4899',
+    nextLessonTs: 9999999999999, lastLessonTs: new Date(2026,3,9,10,0).getTime()
   },
   {
     id: 6, name: '이수진', initial: '이', age: '30대', gender: '여성', ntrp: 'NTRP 2.5',
     lessonType: 'coupon', lessonLabel: '쿠폰레슨', format: '1:1 개인', phone: '010-6789-0123',
-    session: '4/10회', nextLesson: '4/15 (화) 11:00', paymentStatus: 'paid', avatarColor: '#10B981'
+    session: '4/10회', nextLesson: '4/15 (화) 11:00', paymentStatus: 'paid', avatarColor: '#10B981',
+    nextLessonTs: new Date(2026,3,15,11,0).getTime(), lastLessonTs: new Date(2026,3,8,11,0).getTime()
   },
   {
     id: 7, name: '최준혁', initial: '최', age: '20대', gender: '남성', ntrp: 'NTRP 3.5',
     lessonType: 'external', lessonLabel: '외부수강생', format: '1:1 개인', phone: '010-7890-1234',
-    session: '2/10회', nextLesson: '4/14 (월) 19:00', paymentStatus: 'external', avatarColor: '#6366F1'
+    session: '2/10회', nextLesson: '4/14 (월) 19:00', paymentStatus: 'external', avatarColor: '#6366F1',
+    nextLessonTs: new Date(2026,3,14,19,0).getTime(), lastLessonTs: new Date(2026,3,7,19,0).getTime()
   },
   {
     id: 8, name: '한지우', initial: '한', age: '20대', gender: '여성', ntrp: 'NTRP 2.0',
     lessonType: 'external', lessonLabel: '외부수강생', format: '그룹 (3인)', phone: '010-8901-2345',
-    session: '1/4회', nextLesson: '4/14 (월) 18:00', paymentStatus: 'unpaid', avatarColor: '#F97316'
+    session: '1/4회', nextLesson: '4/14 (월) 18:00', paymentStatus: 'unpaid', avatarColor: '#F97316',
+    nextLessonTs: new Date(2026,3,14,18,0).getTime(), lastLessonTs: new Date(2026,3,7,18,0).getTime()
   },
 ];
 
+const SORT_OPTIONS = [
+  { key: 'default', label: '기본순',       desc: '다음 레슨 일정순 · 미결제 우선' },
+  { key: 'name',    label: '이름순',       desc: '가나다순' },
+  { key: 'recent',  label: '최근 레슨순',  desc: '가장 최근에 레슨한 수강생 먼저' },
+  { key: 'unpaid',  label: '미결제 우선',  desc: '미결제 · 예약금 수령 순으로 정렬' },
+];
+
+const UNPAID_ORDER = { unpaid: 0, deposit: 1, external: 2, paid: 3 };
+
+function getSorted(students, sortKey) {
+  const arr = [...students];
+  if (sortKey === 'default') {
+    arr.sort((a, b) => {
+      if (a.nextLessonTs !== b.nextLessonTs) return a.nextLessonTs - b.nextLessonTs;
+      return (UNPAID_ORDER[a.paymentStatus] ?? 3) - (UNPAID_ORDER[b.paymentStatus] ?? 3);
+    });
+  } else if (sortKey === 'name') {
+    arr.sort((a, b) => a.name.localeCompare(b.name, 'ko'));
+  } else if (sortKey === 'recent') {
+    arr.sort((a, b) => b.lastLessonTs - a.lastLessonTs);
+  } else if (sortKey === 'unpaid') {
+    arr.sort((a, b) => {
+      const pd = (UNPAID_ORDER[a.paymentStatus] ?? 3) - (UNPAID_ORDER[b.paymentStatus] ?? 3);
+      return pd !== 0 ? pd : a.nextLessonTs - b.nextLessonTs;
+    });
+  }
+  return arr;
+}
+
 let currentFilter = 'all';
-let currentQuery = '';
+let currentQuery  = '';
+let currentSort   = 'default';
 
 function paymentBadgeHtml(status) {
   if (status === 'paid')     return '<span class="badge-sm" style="background:#D1FAE5;color:#065F46;">결제완료</span>';
@@ -200,23 +254,28 @@ function renderList(students) {
   `).join('');
 }
 
-function getFiltered(query, filter) {
-  return STUDENTS.filter(s => {
+function getProcessed(query, filter, sort) {
+  const filtered = STUDENTS.filter(s => {
     const matchQuery = !query ||
       s.name.includes(query) ||
       s.phone.replace(/-/g,'').includes(query.replace(/-/g,''));
     const matchFilter =
-      filter === 'all' ? true :
+      filter === 'all'    ? true :
       filter === 'unpaid' ? s.paymentStatus === 'unpaid' :
       s.lessonType === filter;
     return matchQuery && matchFilter;
   });
+  return getSorted(filtered, sort);
+}
+
+function refresh() {
+  renderList(getProcessed(currentQuery, currentFilter, currentSort));
 }
 
 function filterStudents(query) {
   currentQuery = query.trim();
   document.getElementById('clear-btn').style.display = currentQuery ? 'block' : 'none';
-  renderList(getFiltered(currentQuery, currentFilter));
+  refresh();
 }
 
 function setFilter(btn, filter) {
@@ -229,7 +288,35 @@ function setFilter(btn, filter) {
   btn.style.background = filter === 'unpaid' ? '#FEF2F2' : 'var(--navy)';
   btn.style.color = filter === 'unpaid' ? '#EF4444' : '#fff';
   btn.style.border = filter === 'unpaid' ? '1px solid #FECACA' : 'none';
-  renderList(getFiltered(currentQuery, currentFilter));
+  refresh();
+}
+
+function openSortSheet() {
+  const opts = SORT_OPTIONS.map(o => `
+    <button onclick="applySort('${o.key}')" style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:${currentSort===o.key?'#F0FDFA':'var(--gray-50)'};border-radius:12px;border:${currentSort===o.key?'1.5px solid var(--green)':'1px solid transparent'};cursor:pointer;margin-bottom:8px;font-family:inherit;">
+      <div style="text-align:left;">
+        <div style="font-size:14px;font-weight:700;color:${currentSort===o.key?'var(--green)':'var(--navy)'};">${o.label}</div>
+        <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">${o.desc}</div>
+      </div>
+      ${currentSort===o.key?'<span style="color:var(--green);font-size:16px;">✓</span>':''}
+    </button>`).join('');
+  document.getElementById('sort-options').innerHTML = opts;
+  document.getElementById('sort-sheet').style.display = 'block';
+}
+
+function closeSortSheet() {
+  document.getElementById('sort-sheet').style.display = 'none';
+}
+
+function applySort(sortKey) {
+  currentSort = sortKey;
+  const label = SORT_OPTIONS.find(o => o.key === sortKey)?.label || '기본순';
+  document.getElementById('sort-label').textContent = label;
+  const isCustom = sortKey !== 'default';
+  document.getElementById('sort-btn').style.color = isCustom ? 'var(--green)' : 'var(--navy)';
+  document.getElementById('sort-btn').style.borderColor = isCustom ? 'var(--green)' : 'var(--gray-200)';
+  closeSortSheet();
+  refresh();
 }
 
 function clearSearch() {
@@ -297,7 +384,7 @@ function closeLessonDetail() {
 }
 
 // 초기 렌더링
-renderList(STUDENTS);
+refresh();
 </script>
 </body>
 </html>
