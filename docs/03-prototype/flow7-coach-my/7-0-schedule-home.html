@@ -888,77 +888,14 @@
       </div>
     </div>
 
-    <!-- 코치 전용 Bottom Nav (absolute 플로팅) -->
+
+
+    <!-- 코치 전용 Bottom Nav -->
     <div style="position:absolute;bottom:20px;left:16px;right:16px;z-index:50;">
       <div style="display:flex;align-items:center;justify-content:space-around;height:60px;background:#fff;border-radius:30px;box-shadow:0 2px 16px rgba(0,0,0,0.1);border:1px solid var(--gray-100);">
-        <a href="7-0-schedule-home.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;padding:8px 16px;border-radius:20px;"><span style="font-size:18px;">📅</span><span style="font-size:9px;font-weight:700;color:var(--green);">스케줄</span></a>
-        <a href="../flow4-chat/4-1-chat-list.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;padding:8px 16px;"><span style="font-size:18px;">💬</span><span style="font-size:9px;font-weight:600;color:var(--gray-400);">메시지</span></a>
-        <a href="../flow2-home/2-2-coach-list.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;padding:8px 16px;"><span style="font-size:18px;">🔍</span><span style="font-size:9px;font-weight:600;color:var(--gray-400);">검색</span></a>
-        <a href="7-1-coach-mypage.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;padding:8px 16px;"><span style="font-size:18px;">👤</span><span style="font-size:9px;font-weight:600;color:var(--gray-400);">마이</span></a>
+        <a href="7-0-schedule-home.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;padding:8px 14px;"><span style="font-size:18px;">📅</span><span style="font-size:9px;font-weight:700;color:var(--green);">스케줄</span></a><a href="7-2-booking-inbox.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;padding:8px 14px;"><span style="font-size:18px;">📬</span><span style="font-size:9px;font-weight:600;color:var(--gray-400);">신청함</span></a><a href="../flow4-chat/4-1-chat-list.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;padding:8px 14px;"><span style="font-size:18px;">💬</span><span style="font-size:9px;font-weight:600;color:var(--gray-400);">메시지</span></a><a href="7-10-student-search.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;padding:8px 14px;"><span style="font-size:18px;">🔍</span><span style="font-size:9px;font-weight:600;color:var(--gray-400);">검색</span></a><a href="7-1-coach-mypage.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;padding:8px 14px;"><span style="font-size:18px;">👤</span><span style="font-size:9px;font-weight:600;color:var(--gray-400);">마이</span></a>
       </div>
     </div>
-
-    <!-- 보강 날짜 선택 바텀시트 -->
-    <div id="makeup-date-sheet" style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;z-index:160;">
-      <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);" onclick="closeMakeupDateSheet()"></div>
-      <div style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;padding:20px 20px 32px;z-index:161;max-height:85%;overflow-y:auto;">
-        <div style="width:40px;height:4px;border-radius:2px;background:var(--gray-200);margin:0 auto 16px;"></div>
-        <div style="font-size:17px;font-weight:800;color:var(--navy);margin-bottom:4px;">보강 날짜 제안</div>
-        <div style="font-size:13px;color:var(--gray-500);margin-bottom:16px;">날짜를 선택하면 가능한 시간을 고를 수 있어요</div>
-
-        <!-- 주간 네비게이션 -->
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-          <button onclick="moveWeek(-1)" style="width:32px;height:32px;border-radius:8px;border:1px solid var(--gray-200);background:#fff;color:var(--gray-500);font-size:16px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;">‹</button>
-          <span id="makeup-week-label" style="font-size:13px;font-weight:700;color:var(--navy);"></span>
-          <button onclick="moveWeek(1)" style="width:32px;height:32px;border-radius:8px;border:1px solid var(--gray-200);background:#fff;color:var(--gray-500);font-size:16px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;">›</button>
-        </div>
-
-        <!-- 날짜 카드 그리드 -->
-        <div id="makeup-date-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:16px;"></div>
-
-        <!-- 시간 슬롯 섹션 -->
-        <div id="makeup-slot-section" style="margin-bottom:16px;">
-          <div id="makeup-slot-header" style="display:none;font-size:13px;font-weight:700;color:var(--navy);margin-bottom:10px;"></div>
-          <div id="makeup-slot-placeholder" style="display:flex;align-items:center;justify-content:center;height:52px;font-size:13px;color:var(--gray-300);">날짜를 선택해 주세요</div>
-          <div id="makeup-slot-grid" style="display:none;grid-template-columns:repeat(3,1fr);gap:8px;"></div>
-          <div id="makeup-slot-scroll-hint" style="display:none;text-align:center;font-size:11px;color:var(--gray-400);margin-top:6px;">↓ 스크롤하여 더 보기</div>
-          <div id="makeup-slot-empty" style="display:none;font-size:13px;color:var(--gray-400);text-align:center;padding:8px 0;">이 날짜에 보강 가능한 시간이 없습니다</div>
-        </div>
-
-        <button id="makeup-propose-btn" onclick="proposeMakeupDates()" disabled
-          style="width:100%;height:50px;border-radius:14px;border:none;background:var(--gray-300);color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.15s;">
-          선택 날짜 제안하기
-        </button>
-      </div>
-    </div>
-
-    <!-- 수강생 뷰 오버레이 -->
-    <div id="student-view-overlay" style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;z-index:300;">
-      <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);" onclick="closeStudentView()"></div>
-      <div style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;padding:20px 20px 32px;z-index:301;max-height:90%;overflow-y:auto;">
-        <div style="width:40px;height:4px;border-radius:2px;background:var(--gray-200);margin:0 auto 16px;"></div>
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
-          <span style="font-size:18px;">📱</span>
-          <span style="font-size:15px;font-weight:800;color:var(--navy);">수강생 화면에서 이렇게 보여요</span>
-        </div>
-        <div style="border:1.5px solid var(--gray-100);border-radius:16px;padding:16px;background:#fff;">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-            <span style="font-size:13px;font-weight:700;color:var(--gray-400);">나의 레슨 상세</span>
-            <span style="font-size:11px;color:var(--gray-300);">← 뒤로</span>
-          </div>
-          <div style="text-align:center;margin-bottom:14px;" id="sv-badge"></div>
-          <div style="background:var(--gray-50);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px;font-size:13px;">
-            <div style="display:flex;justify-content:space-between;"><span style="color:var(--gray-400);">코치</span><span style="font-weight:600;color:var(--navy);">김민수 코치</span></div>
-            <div style="display:flex;justify-content:space-between;"><span style="color:var(--gray-400);">일정</span><span style="font-weight:600;color:var(--navy);">4월 13일 (일) 10:00</span></div>
-            <div style="display:flex;justify-content:space-between;"><span style="color:var(--gray-400);">레슨</span><span style="font-weight:600;color:var(--navy);">정규레슨 · 1:1</span></div>
-            <div style="display:flex;justify-content:space-between;"><span style="color:var(--gray-400);">회차</span><span style="font-weight:600;color:var(--info);">6/8회</span></div>
-          </div>
-          <div id="sv-msg"></div>
-        </div>
-        <button onclick="closeStudentView()" style="width:100%;height:50px;border-radius:14px;border:none;background:var(--green);color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:16px;">확인</button>
-      </div>
-    </div>
-
   </div>
 </div>
 <script>
