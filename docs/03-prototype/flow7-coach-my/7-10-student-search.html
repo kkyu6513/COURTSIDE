@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=375, initial-scale=1.0">
+<title>회원 검색 — COURTSIDE</title>
+<link rel="stylesheet" href="../common.css">
+<style>
+  .student-card {
+    display:flex;align-items:center;gap:12px;padding:14px 16px;
+    background:#fff;border-radius:14px;border:1px solid var(--gray-100);
+    margin-bottom:10px;cursor:pointer;transition:background 0.15s;
+  }
+  .student-card:active { background:var(--gray-50); }
+  .avatar {
+    width:44px;height:44px;border-radius:50%;background:var(--green);
+    color:#fff;display:flex;align-items:center;justify-content:center;
+    font-size:16px;font-weight:700;flex-shrink:0;
+  }
+  .search-input-wrap {
+    display:flex;align-items:center;gap:10px;
+    background:#fff;border:1.5px solid var(--gray-200);border-radius:14px;
+    padding:0 14px;height:48px;
+  }
+  .search-input-wrap:focus-within { border-color:var(--green); }
+  .search-input-wrap input {
+    flex:1;border:none;outline:none;font-size:15px;font-family:inherit;color:var(--navy);
+  }
+  .badge-sm { font-size:10px;padding:2px 6px;border-radius:4px;font-weight:700; }
+</style>
+</head>
+<body>
+<div class="device-wrap">
+  <div class="device-label"><span class="device-num">C10</span>회원 검색</div>
+  <div class="device" style="position:relative;overflow:hidden;background:var(--gray-50);">
+    <div class="status-bar"><span class="time">9:41</span><div class="status-icons"><span>📶</span><span>🔋</span></div></div>
+    <div class="screen" style="padding-bottom:100px;">
+
+      <!-- 헤더 -->
+      <div style="display:flex;align-items:center;gap:12px;padding:14px 20px 0;">
+        <a href="7-0-schedule-home.html" style="width:36px;height:36px;border-radius:50%;background:#fff;border:1.5px solid var(--gray-100);display:flex;align-items:center;justify-content:center;text-decoration:none;font-size:18px;flex-shrink:0;">←</a>
+        <div style="font-size:18px;font-weight:800;color:var(--navy);">회원 검색</div>
+      </div>
+
+      <!-- 검색창 -->
+      <div style="padding:14px 20px 0;">
+        <div class="search-input-wrap">
+          <span style="font-size:17px;">🔍</span>
+          <input id="search-input" type="text" placeholder="이름 또는 연락처로 검색"
+            oninput="filterStudents(this.value)" autocomplete="off">
+          <button id="clear-btn" onclick="clearSearch()" style="display:none;background:none;border:none;cursor:pointer;font-size:18px;color:var(--gray-400);padding:0;font-family:inherit;">✕</button>
+        </div>
+      </div>
+
+      <!-- 필터 칩 -->
+      <div style="display:flex;gap:8px;padding:12px 20px 0;overflow-x:auto;scrollbar-width:none;">
+        <button class="f-chip active-chip" onclick="setFilter(this,'all')" style="padding:5px 12px;border-radius:20px;border:none;background:var(--navy);color:#fff;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit;">전체 <span id="cnt-all">8</span></button>
+        <button class="f-chip" onclick="setFilter(this,'regular')" style="padding:5px 12px;border-radius:20px;border:1px solid var(--gray-200);background:#fff;color:var(--gray-500);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit;">정규레슨 <span id="cnt-regular">5</span></button>
+        <button class="f-chip" onclick="setFilter(this,'coupon')" style="padding:5px 12px;border-radius:20px;border:1px solid var(--gray-200);background:#fff;color:var(--gray-500);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit;">쿠폰레슨 <span id="cnt-coupon">1</span></button>
+        <button class="f-chip" onclick="setFilter(this,'external')" style="padding:5px 12px;border-radius:20px;border:1px solid var(--gray-200);background:#fff;color:var(--gray-500);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit;">외부수강생 <span id="cnt-external">2</span></button>
+        <button class="f-chip" onclick="setFilter(this,'unpaid')" style="padding:5px 12px;border-radius:20px;border:1px solid #FECACA;background:#FEF2F2;color:#EF4444;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit;">미결제 <span id="cnt-unpaid">2</span></button>
+      </div>
+
+      <!-- 결과 카운트 -->
+      <div style="padding:12px 20px 6px;display:flex;justify-content:space-between;align-items:center;">
+        <span id="result-count" style="font-size:12px;color:var(--gray-400);">수강생 8명</span>
+      </div>
+
+      <!-- 수강생 목록 -->
+      <div id="student-list" style="padding:0 20px;"></div>
+
+      <!-- 빈 상태 -->
+      <div id="empty-state" style="display:none;text-align:center;padding:60px 20px;">
+        <div style="font-size:40px;margin-bottom:12px;">🔍</div>
+        <div style="font-size:15px;font-weight:700;color:var(--navy);margin-bottom:6px;">검색 결과가 없어요</div>
+        <div style="font-size:13px;color:var(--gray-400);">다른 이름이나 연락처로 검색해보세요</div>
+      </div>
+
+    </div>
+
+    <!-- 레슨 상세 풀팝업 (7-0과 동일한 구조) -->
+    <div id="lesson-detail-modal" style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;z-index:100;">
+      <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);" onclick="closeLessonDetail()"></div>
+      <div style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;max-height:90%;overflow-y:auto;z-index:101;">
+        <div style="width:40px;height:4px;border-radius:2px;background:var(--gray-200);margin:12px auto 0;"></div>
+        <div style="padding:16px 20px 32px;">
+          <div id="detail-header"></div>
+          <div id="detail-student"></div>
+          <div id="detail-actions"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 토스트 -->
+    <div id="toast" style="display:none;position:absolute;bottom:100px;left:20px;right:20px;background:var(--navy);color:#fff;border-radius:12px;padding:12px 16px;font-size:13px;font-weight:600;text-align:center;z-index:200;"></div>
+
+    <!-- 코치 전용 Bottom Nav -->
+    <div style="position:absolute;bottom:20px;left:16px;right:16px;z-index:50;">
+      <div style="background:#fff;border-radius:20px;padding:8px 4px;display:flex;justify-content:space-around;align-items:center;box-shadow:0 4px 20px rgba(0,0,0,0.08);border:1px solid var(--gray-100);">
+        <a href="7-0-schedule-home.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;padding:8px 16px;"><span style="font-size:18px;">📅</span><span style="font-size:9px;font-weight:600;color:var(--gray-400);">스케줄</span></a>
+        <a href="7-2-booking-inbox.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;padding:8px 16px;"><span style="font-size:18px;">📬</span><span style="font-size:9px;font-weight:600;color:var(--gray-400);">신청함</span></a>
+        <a href="../flow4-chat/4-2-chat.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;padding:8px 16px;"><span style="font-size:18px;">💬</span><span style="font-size:9px;font-weight:600;color:var(--gray-400);">채팅</span></a>
+        <a href="7-10-student-search.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;padding:8px 16px;"><span style="font-size:18px;">🔍</span><span style="font-size:9px;font-weight:600;color:var(--green);">검색</span></a>
+        <a href="7-1-coach-mypage.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;padding:8px 16px;"><span style="font-size:18px;">👤</span><span style="font-size:9px;font-weight:600;color:var(--gray-400);">MY</span></a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const STUDENTS = [
+  {
+    id: 1, name: '이민호', initial: '이', age: '30대', gender: '남성', ntrp: 'NTRP 4.0',
+    lessonType: 'regular', lessonLabel: '정규레슨', format: '1:1 개인', phone: '010-1234-5678',
+    session: '6/8회', nextLesson: '4/13 (일) 10:00', paymentStatus: 'paid', avatarColor: '#10B981'
+  },
+  {
+    id: 2, name: '박수진', initial: '박', age: '30대', gender: '여성', ntrp: 'NTRP 2.5',
+    lessonType: 'regular', lessonLabel: '정규레슨', format: '그룹 (3인)', phone: '010-2345-6789',
+    session: '2/4회', nextLesson: '4/13 (일) 13:00', paymentStatus: 'paid', avatarColor: '#8B5CF6'
+  },
+  {
+    id: 3, name: '김영희', initial: '김', age: '20대', gender: '여성', ntrp: 'NTRP 2.5',
+    lessonType: 'regular', lessonLabel: '정규레슨', format: '1:1 개인', phone: '010-3456-7890',
+    session: '4/8회', nextLesson: '4/13 (일) 14:00', paymentStatus: 'deposit', avatarColor: '#F59E0B'
+  },
+  {
+    id: 4, name: '흥길동', initial: '홍', age: '40대', gender: '남성', ntrp: 'NTRP 3.0',
+    lessonType: 'regular', lessonLabel: '정규레슨', format: '1:1 개인', phone: '010-4567-8901',
+    session: '5/8회', nextLesson: '4/13 (일) 09:00', paymentStatus: 'paid', avatarColor: '#3B82F6'
+  },
+  {
+    id: 5, name: '강민서', initial: '강', age: '20대', gender: '여성', ntrp: 'NTRP 2.0',
+    lessonType: 'regular', lessonLabel: '정규레슨', format: '그룹 (3인)', phone: '010-5678-9012',
+    session: '3/8회', nextLesson: '없음 (결강)', paymentStatus: 'paid', avatarColor: '#EC4899'
+  },
+  {
+    id: 6, name: '이수진', initial: '이', age: '30대', gender: '여성', ntrp: 'NTRP 2.5',
+    lessonType: 'coupon', lessonLabel: '쿠폰레슨', format: '1:1 개인', phone: '010-6789-0123',
+    session: '4/10회', nextLesson: '4/15 (화) 11:00', paymentStatus: 'paid', avatarColor: '#10B981'
+  },
+  {
+    id: 7, name: '최준혁', initial: '최', age: '20대', gender: '남성', ntrp: 'NTRP 3.5',
+    lessonType: 'external', lessonLabel: '외부수강생', format: '1:1 개인', phone: '010-7890-1234',
+    session: '2/10회', nextLesson: '4/14 (월) 19:00', paymentStatus: 'external', avatarColor: '#6366F1'
+  },
+  {
+    id: 8, name: '한지우', initial: '한', age: '20대', gender: '여성', ntrp: 'NTRP 2.0',
+    lessonType: 'external', lessonLabel: '외부수강생', format: '그룹 (3인)', phone: '010-8901-2345',
+    session: '1/4회', nextLesson: '4/14 (월) 18:00', paymentStatus: 'unpaid', avatarColor: '#F97316'
+  },
+];
+
+let currentFilter = 'all';
+let currentQuery = '';
+
+function paymentBadgeHtml(status) {
+  if (status === 'paid')     return '<span class="badge-sm" style="background:#D1FAE5;color:#065F46;">결제완료</span>';
+  if (status === 'deposit')  return '<span class="badge-sm" style="background:#FEF3C7;color:#92400E;">예약금 수령</span>';
+  if (status === 'unpaid')   return '<span class="badge-sm" style="background:#FEE2E2;color:#EF4444;">미결제</span>';
+  if (status === 'external') return '<span class="badge-sm" style="background:#DBEAFE;color:#1E40AF;">외부결제</span>';
+  return '';
+}
+
+function lessonTypeBadgeHtml(type) {
+  if (type === 'regular')  return '<span class="badge-sm" style="background:#F0FDFA;color:var(--green);">정규</span>';
+  if (type === 'coupon')   return '<span class="badge-sm" style="background:#EDE9FE;color:#7C3AED;">쿠폰</span>';
+  if (type === 'external') return '<span class="badge-sm" style="background:#EFF6FF;color:#2563EB;">외부</span>';
+  return '';
+}
+
+function renderList(students) {
+  const list = document.getElementById('student-list');
+  const empty = document.getElementById('empty-state');
+  const count = document.getElementById('result-count');
+
+  if (!students.length) {
+    list.innerHTML = '';
+    empty.style.display = 'block';
+    count.textContent = '검색 결과 없음';
+    return;
+  }
+
+  empty.style.display = 'none';
+  count.textContent = `수강생 ${students.length}명`;
+  list.innerHTML = students.map(s => `
+    <div class="student-card" onclick="showDetail(${s.id})">
+      <div class="avatar" style="background:${s.avatarColor};">${s.initial}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+          <span style="font-size:15px;font-weight:700;color:var(--navy);">${s.name}</span>
+          ${lessonTypeBadgeHtml(s.lessonType)}
+          ${paymentBadgeHtml(s.paymentStatus)}
+        </div>
+        <div style="font-size:12px;color:var(--gray-400);">${s.age} · ${s.gender} · ${s.ntrp} · ${s.format}</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;">
+          <span style="font-size:12px;color:var(--gray-500);">회차 <strong style="color:var(--navy);">${s.session}</strong></span>
+          <span style="font-size:11px;color:var(--gray-400);">다음 레슨 ${s.nextLesson}</span>
+        </div>
+      </div>
+      <span style="font-size:16px;color:var(--gray-300);">›</span>
+    </div>
+  `).join('');
+}
+
+function getFiltered(query, filter) {
+  return STUDENTS.filter(s => {
+    const matchQuery = !query ||
+      s.name.includes(query) ||
+      s.phone.replace(/-/g,'').includes(query.replace(/-/g,''));
+    const matchFilter =
+      filter === 'all' ? true :
+      filter === 'unpaid' ? s.paymentStatus === 'unpaid' :
+      s.lessonType === filter;
+    return matchQuery && matchFilter;
+  });
+}
+
+function filterStudents(query) {
+  currentQuery = query.trim();
+  document.getElementById('clear-btn').style.display = currentQuery ? 'block' : 'none';
+  renderList(getFiltered(currentQuery, currentFilter));
+}
+
+function setFilter(btn, filter) {
+  currentFilter = filter;
+  document.querySelectorAll('.f-chip').forEach(b => {
+    b.style.background = '#fff';
+    b.style.color = 'var(--gray-500)';
+    b.style.border = '1px solid var(--gray-200)';
+  });
+  btn.style.background = filter === 'unpaid' ? '#FEF2F2' : 'var(--navy)';
+  btn.style.color = filter === 'unpaid' ? '#EF4444' : '#fff';
+  btn.style.border = filter === 'unpaid' ? '1px solid #FECACA' : 'none';
+  renderList(getFiltered(currentQuery, currentFilter));
+}
+
+function clearSearch() {
+  document.getElementById('search-input').value = '';
+  document.getElementById('clear-btn').style.display = 'none';
+  currentQuery = '';
+  renderList(getFiltered('', currentFilter));
+}
+
+function showDetail(id) {
+  const s = STUDENTS.find(x => x.id === id);
+  if (!s) return;
+  const modal = document.getElementById('lesson-detail-modal');
+  const header = document.getElementById('detail-header');
+  const student = document.getElementById('detail-student');
+  const actions = document.getElementById('detail-actions');
+
+  const statusBadge =
+    s.paymentStatus === 'unpaid' ? '<span style="display:inline-block;padding:4px 12px;border-radius:8px;background:#FEF3C7;color:#92400E;font-size:13px;font-weight:700;">⏳ 미결제</span>'
+    : s.paymentStatus === 'deposit' ? '<span style="display:inline-block;padding:4px 12px;border-radius:8px;background:#FEF3C7;color:#92400E;font-size:13px;font-weight:700;">💵 예약금 수령</span>'
+    : '<span style="display:inline-block;padding:4px 12px;border-radius:8px;background:#D1FAE5;color:#065F46;font-size:13px;font-weight:700;">✅ 레슨 예정</span>';
+
+  header.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+    <div style="font-size:18px;font-weight:800;color:var(--navy);">레슨 상세</div>
+    ${statusBadge}
+  </div>`;
+
+  student.innerHTML = `
+    <div style="padding:14px;background:var(--gray-50);border-radius:14px;margin-bottom:14px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <div style="width:44px;height:44px;border-radius:50%;background:${s.avatarColor};color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;">${s.initial}</div>
+        <div style="flex:1;">
+          <div style="font-size:15px;font-weight:700;color:var(--navy);">${s.name}</div>
+          <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">${s.age} · ${s.gender} · ${s.ntrp}</div>
+        </div>
+        <a href="../flow4-chat/4-2-chat.html" style="padding:6px 14px;border-radius:20px;background:#fff;border:1px solid var(--gray-100);text-decoration:none;font-size:12px;font-weight:600;color:var(--navy);">대화하기</a>
+      </div>
+      <div style="display:flex;flex-direction:column;">
+        <div style="display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid var(--gray-100);"><span style="font-size:12px;color:var(--gray-400);">레슨 유형</span><span style="font-size:12px;font-weight:600;color:var(--navy);">${s.lessonLabel}</span></div>
+        <div style="display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid var(--gray-100);"><span style="font-size:12px;color:var(--gray-400);">레슨 형태</span><span style="font-size:12px;font-weight:600;color:var(--navy);">${s.format}</span></div>
+        <div style="display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid var(--gray-100);"><span style="font-size:12px;color:var(--gray-400);">현재 회차</span><span style="font-size:12px;font-weight:600;color:var(--navy);">${s.session}</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-top:1px solid var(--gray-100);">
+          <span style="font-size:12px;color:var(--gray-400);">결제</span>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:12px;font-weight:600;color:var(--navy);">60,000원</span>
+            ${paymentBadgeHtml(s.paymentStatus)}
+          </div>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid var(--gray-100);"><span style="font-size:12px;color:var(--gray-400);">연락처</span><span style="font-size:12px;font-weight:600;color:var(--navy);">${s.phone}</span></div>
+        <div style="display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid var(--gray-100);"><span style="font-size:12px;color:var(--gray-400);">다음 레슨</span><span style="font-size:12px;font-weight:600;color:var(--navy);">${s.nextLesson}</span></div>
+      </div>
+    </div>`;
+
+  actions.innerHTML = `
+    <div style="display:flex;gap:8px;margin-top:4px;">
+      <a href="../flow4-chat/4-2-chat.html" style="flex:1;height:48px;border-radius:14px;background:var(--gray-50);border:1px solid var(--gray-100);display:flex;align-items:center;justify-content:center;text-decoration:none;font-size:14px;font-weight:600;color:var(--navy);">💬 대화하기</a>
+      <a href="7-0-schedule-home.html" style="flex:2;height:48px;border-radius:14px;background:var(--green);display:flex;align-items:center;justify-content:center;text-decoration:none;font-size:14px;font-weight:700;color:#fff;">스케줄 홈으로</a>
+    </div>`;
+
+  modal.style.display = 'block';
+}
+
+function closeLessonDetail() {
+  document.getElementById('lesson-detail-modal').style.display = 'none';
+}
+
+// 초기 렌더링
+renderList(STUDENTS);
+</script>
+</body>
+</html>
