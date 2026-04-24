@@ -730,7 +730,16 @@
       <div style="position:relative;background:#fff;border-radius:20px;padding:24px 20px;margin:0 24px;z-index:171;">
         <div id="sca-icon" style="font-size:36px;text-align:center;margin-bottom:12px;"></div>
         <div id="sca-title" style="font-size:16px;font-weight:800;color:var(--navy);text-align:center;margin-bottom:8px;"></div>
-        <div id="sca-desc" style="font-size:13px;color:var(--gray-500);text-align:center;line-height:1.7;margin-bottom:20px;"></div>
+        <div id="sca-desc" style="font-size:13px;color:var(--gray-500);text-align:center;line-height:1.7;margin-bottom:16px;"></div>
+        <div id="sca-deposit-input" style="display:none;margin-bottom:16px;">
+          <div style="font-size:12px;color:var(--gray-500);margin-bottom:6px;">예약금 금액</div>
+          <div style="display:flex;align-items:center;gap:8px;border:1.5px solid #FDE68A;border-radius:12px;padding:0 14px;height:48px;background:#FFFBEB;">
+            <input id="sca-deposit-amount" type="number" min="0" placeholder="0"
+              style="flex:1;border:none;outline:none;font-size:17px;font-weight:700;color:var(--navy);font-family:inherit;background:transparent;width:100%;">
+            <span style="font-size:14px;color:var(--gray-400);flex-shrink:0;">원</span>
+          </div>
+          <div id="sca-deposit-remaining" style="font-size:12px;color:#92400E;margin-top:6px;text-align:right;"></div>
+        </div>
         <div style="display:flex;gap:8px;">
           <button onclick="closeScheduleConfirmAlert()" style="flex:1;height:46px;border-radius:12px;border:1.5px solid var(--gray-200);background:#fff;color:var(--gray-500);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">취소</button>
           <button id="sca-confirm-btn" style="flex:2;height:46px;border-radius:12px;border:none;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;"></button>
@@ -2447,6 +2456,8 @@ function closeConfirmScheduleModal() {
 }
 
 let _pendingPaymentStatus = '';
+const LESSON_PRICE = 60000; // 프로토타입 고정값 (실제: Booking.price)
+
 function showScheduleConfirmAlert(paymentStatus) {
   _pendingPaymentStatus = paymentStatus;
   const configs = {
@@ -2460,7 +2471,7 @@ function showScheduleConfirmAlert(paymentStatus) {
     deposit: {
       icon: '💵',
       title: '예약금 받음으로 확정할까요?',
-      desc: '예약금 수령 상태로 확정되며\n잔액 납부 안내가 수강생에게 발송됩니다.',
+      desc: '받으신 예약금 금액을 입력해 주세요.',
       btnText: '확정하기',
       btnColor: '#D97706'
     },
@@ -2476,24 +2487,58 @@ function showScheduleConfirmAlert(paymentStatus) {
   document.getElementById('sca-icon').textContent = cfg.icon;
   document.getElementById('sca-title').textContent = cfg.title;
   document.getElementById('sca-desc').textContent = cfg.desc;
+
+  // 예약금 입력 필드: deposit일 때만 노출
+  const depositInput = document.getElementById('sca-deposit-input');
+  const depositAmountEl = document.getElementById('sca-deposit-amount');
+  const depositRemaining = document.getElementById('sca-deposit-remaining');
+  if (paymentStatus === 'deposit') {
+    depositInput.style.display = 'block';
+    depositAmountEl.value = '';
+    depositRemaining.textContent = '';
+    depositAmountEl.oninput = function() {
+      const v = parseInt(this.value) || 0;
+      const remaining = LESSON_PRICE - v;
+      depositRemaining.textContent = remaining > 0
+        ? `잔액 ${remaining.toLocaleString()}원`
+        : remaining === 0 ? '잔액 없음 (전액 수령)' : '⚠️ 총액 초과';
+      depositRemaining.style.color = remaining < 0 ? '#DC2626' : '#92400E';
+    };
+  } else {
+    depositInput.style.display = 'none';
+  }
+
   const btn = document.getElementById('sca-confirm-btn');
   btn.textContent = cfg.btnText;
   btn.style.background = cfg.btnColor;
   btn.onclick = function() {
-    closeScheduleConfirmAlert();
-    confirmScheduleWithPayment(_pendingPaymentStatus);
+    if (paymentStatus === 'deposit') {
+      const depositAmt = parseInt(document.getElementById('sca-deposit-amount').value) || 0;
+      if (depositAmt <= 0) {
+        document.getElementById('sca-deposit-remaining').textContent = '⚠️ 예약금 금액을 입력해 주세요';
+        document.getElementById('sca-deposit-remaining').style.color = '#DC2626';
+        return;
+      }
+      closeScheduleConfirmAlert();
+      confirmScheduleWithPayment('deposit', depositAmt);
+    } else {
+      closeScheduleConfirmAlert();
+      confirmScheduleWithPayment(_pendingPaymentStatus, 0);
+    }
   };
-  const el = document.getElementById('schedule-confirm-alert');
-  el.style.display = 'flex';
+  document.getElementById('schedule-confirm-alert').style.display = 'flex';
 }
 function closeScheduleConfirmAlert() {
   document.getElementById('schedule-confirm-alert').style.display = 'none';
 }
-function confirmScheduleWithPayment(paymentStatus) {
+function confirmScheduleWithPayment(paymentStatus, depositAmount) {
   closeConfirmScheduleModal();
   closeLessonDetail();
-  const studentDetailUrl = '../flow6-student-my/6-6-booking-detail.html?status=confirmed&payment=' + paymentStatus;
-  window.location.href = studentDetailUrl;
+  let url = '../flow6-student-my/6-6-booking-detail.html?status=confirmed&payment=' + paymentStatus;
+  if (paymentStatus === 'deposit' && depositAmount > 0) {
+    url += '&depositAmount=' + depositAmount + '&totalAmount=' + LESSON_PRICE;
+  }
+  window.location.href = url;
 }
 
 function showMoreActions() {
