@@ -50,7 +50,7 @@ body {
 .device {
   width: 375px; height: 812px; background: #fff; border-radius: 44px;
   box-shadow: 0 8px 40px rgba(0,0,0,0.18), inset 0 0 0 2px rgba(0,0,0,0.08);
-  overflow: hidden; display: flex; flex-direction: column;
+  overflow: hidden; display: flex; flex-direction: column; position: relative;
 }
 
 /* ── Status Bar ── */
