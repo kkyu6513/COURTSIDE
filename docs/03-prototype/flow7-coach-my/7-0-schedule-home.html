@@ -2492,13 +2492,8 @@ function closeScheduleConfirmAlert() {
 function confirmScheduleWithPayment(paymentStatus) {
   closeConfirmScheduleModal();
   closeLessonDetail();
-  const labels = { paid: '전액 결제완료', deposit: '예약금 받음', unpaid: '미결제' };
-  const toast = document.getElementById('sent-toast');
-  if (toast) {
-    toast.textContent = `스케줄이 확정되었습니다 (${labels[paymentStatus]})`;
-    toast.style.display = 'block';
-    setTimeout(() => { toast.style.display = 'none'; }, 2000);
-  }
+  const studentDetailUrl = '../flow6-student-my/6-6-booking-detail.html?status=scheduled&payment=' + paymentStatus;
+  window.location.href = studentDetailUrl;
 }
 
 function showMoreActions() {
