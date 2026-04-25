@@ -895,11 +895,17 @@
         <div style="font-size:17px;font-weight:800;color:var(--navy);margin-bottom:4px;">보강 처리</div>
         <div style="font-size:13px;color:var(--gray-500);margin-bottom:20px;">보강 사유를 선택하고 날짜를 제안해 주세요</div>
 
-        <!-- 사유 선택 -->
-        <div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:8px;">사유 선택 <span style="color:var(--coral);">*</span></div>
-        <div style="display:flex;gap:8px;margin-bottom:16px;">
-          <button id="mkr-btn-student" onclick="toggleMakeupReason('student')" style="flex:1;height:48px;border-radius:12px;border:1.5px solid var(--gray-200);background:#fff;font-size:14px;font-weight:600;color:var(--gray-500);cursor:pointer;font-family:inherit;transition:all 0.15s;">🙋 고객 사정</button>
-          <button id="mkr-btn-coach" onclick="toggleMakeupReason('coach')" style="flex:1;height:48px;border-radius:12px;border:1.5px solid var(--gray-200);background:#fff;font-size:14px;font-weight:600;color:var(--gray-500);cursor:pointer;font-family:inherit;transition:all 0.15s;">🧑‍🏫 코치 사정</button>
+        <!-- 사유 선택 (다중 선택) -->
+        <div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:8px;">사유 선택 <span style="color:var(--coral);">*</span> <span style="font-size:11px;font-weight:400;color:var(--gray-400);">중복 선택 가능</span></div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">
+          <div id="mkr-btn-student" onclick="toggleMakeupReason('student')" style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:12px;border:1.5px solid var(--gray-200);background:#fff;cursor:pointer;transition:all 0.15s;">
+            <div id="mkr-chk-student" style="width:20px;height:20px;border-radius:5px;border:1.5px solid var(--gray-300);background:#fff;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all 0.15s;"></div>
+            <span style="font-size:14px;font-weight:600;color:var(--gray-500);">🙋 고객 사정</span>
+          </div>
+          <div id="mkr-btn-coach" onclick="toggleMakeupReason('coach')" style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:12px;border:1.5px solid var(--gray-200);background:#fff;cursor:pointer;transition:all 0.15s;">
+            <div id="mkr-chk-coach" style="width:20px;height:20px;border-radius:5px;border:1.5px solid var(--gray-300);background:#fff;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all 0.15s;"></div>
+            <span style="font-size:14px;font-weight:600;color:var(--gray-500);">🧑‍🏫 코치 사정</span>
+          </div>
         </div>
 
         <!-- 상세 입력 -->
@@ -1604,33 +1610,41 @@ function closeStatusActions() {
 
 const _makeupReasons = new Set(); // 'student' | 'coach' 다중 선택
 
+function _applyMakeupReasonUI() {
+  ['student','coach'].forEach(type => {
+    const row = document.getElementById('mkr-btn-' + type);
+    const chk = document.getElementById('mkr-chk-' + type);
+    const txt = row.querySelector('span');
+    const on = _makeupReasons.has(type);
+    row.style.borderColor = on ? 'var(--green)' : 'var(--gray-200)';
+    row.style.background = on ? '#F0FDFA' : '#fff';
+    chk.style.background = on ? 'var(--green)' : '#fff';
+    chk.style.borderColor = on ? 'var(--green)' : 'var(--gray-300)';
+    chk.innerHTML = on ? '<svg width="12" height="10" viewBox="0 0 12 10" fill="none"><path d="M1 5l3.5 3.5L11 1" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' : '';
+    txt.style.color = on ? 'var(--navy)' : 'var(--gray-500)';
+    txt.style.fontWeight = on ? '700' : '600';
+  });
+  const hasAny = _makeupReasons.size > 0;
+  document.getElementById('mkr-next-btn').disabled = !hasAny;
+  document.getElementById('mkr-next-btn').style.background = hasAny ? 'var(--navy)' : 'var(--gray-300)';
+  document.getElementById('mkr-next-btn').style.cursor = hasAny ? 'pointer' : 'not-allowed';
+}
+
 function handleSupplement() {
   closeLessonDetail();
   _makeupReasons.clear();
-  const inactiveStyle = 'flex:1;height:48px;border-radius:12px;border:1.5px solid var(--gray-200);background:#fff;font-size:14px;font-weight:600;color:var(--gray-500);cursor:pointer;font-family:inherit;transition:all 0.15s;';
-  document.getElementById('mkr-btn-student').style.cssText = inactiveStyle;
-  document.getElementById('mkr-btn-coach').style.cssText = inactiveStyle;
   document.getElementById('mkr-detail').value = '';
-  document.getElementById('mkr-next-btn').disabled = true;
-  document.getElementById('mkr-next-btn').style.background = 'var(--gray-300)';
-  document.getElementById('mkr-next-btn').style.cursor = 'not-allowed';
+  _applyMakeupReasonUI();
   document.getElementById('makeup-reason-sheet').style.display = 'block';
 }
 
 function toggleMakeupReason(type) {
-  const activeStyle = 'flex:1;height:48px;border-radius:12px;border:1.5px solid var(--navy);background:#EEF2FF;font-size:14px;font-weight:700;color:var(--navy);cursor:pointer;font-family:inherit;transition:all 0.15s;';
-  const inactiveStyle = 'flex:1;height:48px;border-radius:12px;border:1.5px solid var(--gray-200);background:#fff;font-size:14px;font-weight:600;color:var(--gray-500);cursor:pointer;font-family:inherit;transition:all 0.15s;';
   if (_makeupReasons.has(type)) {
     _makeupReasons.delete(type);
   } else {
     _makeupReasons.add(type);
   }
-  document.getElementById('mkr-btn-student').style.cssText = _makeupReasons.has('student') ? activeStyle : inactiveStyle;
-  document.getElementById('mkr-btn-coach').style.cssText = _makeupReasons.has('coach') ? activeStyle : inactiveStyle;
-  const hasAny = _makeupReasons.size > 0;
-  document.getElementById('mkr-next-btn').disabled = !hasAny;
-  document.getElementById('mkr-next-btn').style.background = hasAny ? 'var(--navy)' : 'var(--gray-300)';
-  document.getElementById('mkr-next-btn').style.cursor = hasAny ? 'pointer' : 'not-allowed';
+  _applyMakeupReasonUI();
 }
 
 function closeMakeupReasonSheet() {
