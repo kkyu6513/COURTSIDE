@@ -895,56 +895,30 @@
         <div style="font-size:17px;font-weight:800;color:var(--navy);margin-bottom:4px;">보강 처리</div>
         <div style="font-size:13px;color:var(--gray-500);margin-bottom:20px;">보강 사유를 선택하고 날짜를 제안해 주세요</div>
 
-        <!-- 사유 선택 (객관식 다중 선택) -->
-        <div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:10px;">보강 사유 <span style="color:var(--coral);">*</span> <span style="font-size:11px;font-weight:400;color:var(--gray-400);">복수 선택 가능</span></div>
+        <!-- 보강 사유 콤보박스 -->
+        <div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:8px;">보강 사유 <span style="color:var(--coral);">*</span></div>
+        <div style="position:relative;margin-bottom:12px;">
+          <select id="mkr-select" onchange="onMakeupReasonChange()" style="width:100%;height:48px;border-radius:12px;border:1.5px solid var(--gray-200);background:#fff;padding:0 40px 0 14px;font-size:14px;font-family:inherit;color:var(--gray-400);appearance:none;-webkit-appearance:none;outline:none;cursor:pointer;">
+            <option value="" disabled selected>사유를 선택해 주세요</option>
+            <optgroup label="🙋 고객 사정">
+              <option value="student_schedule">고객 사정 — 개인 일정</option>
+              <option value="student_health">고객 사정 — 건강·부상</option>
+              <option value="student_travel">고객 사정 — 여행·출장</option>
+              <option value="student_etc">고객 사정 — 기타 (직접 입력)</option>
+            </optgroup>
+            <optgroup label="🧑‍🏫 코치 사정">
+              <option value="coach_schedule">코치 사정 — 개인 일정</option>
+              <option value="coach_health">코치 사정 — 건강·부상</option>
+              <option value="coach_court">코치 사정 — 코트·시설 사정</option>
+              <option value="coach_event">코치 사정 — 대회·행사</option>
+              <option value="coach_etc">코치 사정 — 기타 (직접 입력)</option>
+            </optgroup>
+          </select>
+          <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--gray-400);pointer-events:none;">▼</span>
+        </div>
+        <textarea id="mkr-etc-input" placeholder="기타 사유를 직접 입력해 주세요" style="display:none;width:100%;height:72px;border-radius:12px;border:1.5px solid var(--green);padding:12px 14px;font-size:13px;font-family:inherit;resize:none;box-sizing:border-box;outline:none;color:var(--navy);background:#F0FDFA;margin-bottom:4px;" onfocus="this.style.borderColor='var(--navy)'" onblur="this.style.borderColor='var(--green)'"></textarea>
 
-        <!-- 고객 사정 그룹 -->
-        <div style="font-size:11px;font-weight:700;color:var(--gray-400);letter-spacing:0.5px;margin-bottom:6px;">🙋 고객 사정</div>
-        <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px;">
-          <div class="mkr-option" onclick="toggleMakeupOption(this,'student_schedule')" data-key="student_schedule" style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:10px;border:1.5px solid var(--gray-100);background:#fff;cursor:pointer;">
-            <div class="mkr-chk" style="width:18px;height:18px;border-radius:4px;border:1.5px solid var(--gray-300);background:#fff;flex-shrink:0;display:flex;align-items:center;justify-content:center;"></div>
-            <span style="font-size:14px;color:var(--gray-500);">개인 일정</span>
-          </div>
-          <div class="mkr-option" onclick="toggleMakeupOption(this,'student_health')" data-key="student_health" style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:10px;border:1.5px solid var(--gray-100);background:#fff;cursor:pointer;">
-            <div class="mkr-chk" style="width:18px;height:18px;border-radius:4px;border:1.5px solid var(--gray-300);background:#fff;flex-shrink:0;display:flex;align-items:center;justify-content:center;"></div>
-            <span style="font-size:14px;color:var(--gray-500);">건강·부상</span>
-          </div>
-          <div class="mkr-option" onclick="toggleMakeupOption(this,'student_travel')" data-key="student_travel" style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:10px;border:1.5px solid var(--gray-100);background:#fff;cursor:pointer;">
-            <div class="mkr-chk" style="width:18px;height:18px;border-radius:4px;border:1.5px solid var(--gray-300);background:#fff;flex-shrink:0;display:flex;align-items:center;justify-content:center;"></div>
-            <span style="font-size:14px;color:var(--gray-500);">여행·출장</span>
-          </div>
-          <div class="mkr-option" onclick="toggleMakeupOption(this,'student_etc')" data-key="student_etc" style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:10px;border:1.5px solid var(--gray-100);background:#fff;cursor:pointer;">
-            <div class="mkr-chk" style="width:18px;height:18px;border-radius:4px;border:1.5px solid var(--gray-300);background:#fff;flex-shrink:0;display:flex;align-items:center;justify-content:center;"></div>
-            <span style="font-size:14px;color:var(--gray-500);">기타</span>
-          </div>
-          <textarea id="mkr-etc-student" placeholder="기타 사유를 직접 입력해 주세요" style="display:none;width:100%;height:68px;border-radius:10px;border:1.5px solid var(--green);padding:10px 12px;font-size:13px;font-family:inherit;resize:none;box-sizing:border-box;outline:none;color:var(--navy);background:#F0FDFA;" onfocus="this.style.borderColor='var(--navy)'" onblur="this.style.borderColor='var(--green)'"></textarea>
-
-        <!-- 코치 사정 그룹 -->
-        <div style="font-size:11px;font-weight:700;color:var(--gray-400);letter-spacing:0.5px;margin-bottom:6px;">🧑‍🏫 코치 사정</div>
-        <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px;">
-          <div class="mkr-option" onclick="toggleMakeupOption(this,'coach_schedule')" data-key="coach_schedule" style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:10px;border:1.5px solid var(--gray-100);background:#fff;cursor:pointer;">
-            <div class="mkr-chk" style="width:18px;height:18px;border-radius:4px;border:1.5px solid var(--gray-300);background:#fff;flex-shrink:0;display:flex;align-items:center;justify-content:center;"></div>
-            <span style="font-size:14px;color:var(--gray-500);">개인 일정</span>
-          </div>
-          <div class="mkr-option" onclick="toggleMakeupOption(this,'coach_health')" data-key="coach_health" style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:10px;border:1.5px solid var(--gray-100);background:#fff;cursor:pointer;">
-            <div class="mkr-chk" style="width:18px;height:18px;border-radius:4px;border:1.5px solid var(--gray-300);background:#fff;flex-shrink:0;display:flex;align-items:center;justify-content:center;"></div>
-            <span style="font-size:14px;color:var(--gray-500);">건강·부상</span>
-          </div>
-          <div class="mkr-option" onclick="toggleMakeupOption(this,'coach_court')" data-key="coach_court" style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:10px;border:1.5px solid var(--gray-100);background:#fff;cursor:pointer;">
-            <div class="mkr-chk" style="width:18px;height:18px;border-radius:4px;border:1.5px solid var(--gray-300);background:#fff;flex-shrink:0;display:flex;align-items:center;justify-content:center;"></div>
-            <span style="font-size:14px;color:var(--gray-500);">코트·시설 사정</span>
-          </div>
-          <div class="mkr-option" onclick="toggleMakeupOption(this,'coach_event')" data-key="coach_event" style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:10px;border:1.5px solid var(--gray-100);background:#fff;cursor:pointer;">
-            <div class="mkr-chk" style="width:18px;height:18px;border-radius:4px;border:1.5px solid var(--gray-300);background:#fff;flex-shrink:0;display:flex;align-items:center;justify-content:center;"></div>
-            <span style="font-size:14px;color:var(--gray-500);">대회·행사</span>
-          </div>
-          <div class="mkr-option" onclick="toggleMakeupOption(this,'coach_etc')" data-key="coach_etc" style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:10px;border:1.5px solid var(--gray-100);background:#fff;cursor:pointer;">
-            <div class="mkr-chk" style="width:18px;height:18px;border-radius:4px;border:1.5px solid var(--gray-300);background:#fff;flex-shrink:0;display:flex;align-items:center;justify-content:center;"></div>
-            <span style="font-size:14px;color:var(--gray-500);">기타</span>
-          </div>
-          <textarea id="mkr-etc-coach" placeholder="기타 사유를 직접 입력해 주세요" style="display:none;width:100%;height:68px;border-radius:10px;border:1.5px solid var(--green);padding:10px 12px;font-size:13px;font-family:inherit;resize:none;box-sizing:border-box;outline:none;color:var(--navy);background:#F0FDFA;" onfocus="this.style.borderColor='var(--navy)'" onblur="this.style.borderColor='var(--green)'"></textarea>
-
-        <div style="padding:12px;background:#F0FDFA;border-radius:10px;margin-bottom:16px;">
+        <div style="padding:12px;background:#F0FDFA;border-radius:10px;margin-bottom:16px;margin-top:12px;">
           <div style="font-size:12px;color:#065F46;line-height:1.6;">
             ✅ <strong>회차는 차감되지 않습니다</strong><br>
             다음 화면에서 보강 가능 날짜를 선택하면<br>
@@ -1640,60 +1614,30 @@ function closeStatusActions() {
   document.getElementById('status-actions-overlay').style.display = 'none';
 }
 
-const _makeupReasons = new Set(); // 선택된 사유 key 집합
-
-const CHK_SVG = '<svg width="11" height="9" viewBox="0 0 11 9" fill="none"><path d="M1 4.5l3 3L10 1" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-
-function toggleMakeupOption(el, key) {
-  const chk = el.querySelector('.mkr-chk');
-  const txt = el.querySelector('span');
-  if (_makeupReasons.has(key)) {
-    _makeupReasons.delete(key);
-    el.style.borderColor = 'var(--gray-100)';
-    el.style.background = '#fff';
-    chk.style.background = '#fff';
-    chk.style.borderColor = 'var(--gray-300)';
-    chk.innerHTML = '';
-    txt.style.color = 'var(--gray-500)';
-    txt.style.fontWeight = '400';
-    if (key === 'student_etc') { const ta = document.getElementById('mkr-etc-student'); ta.style.display='none'; ta.value=''; }
-    if (key === 'coach_etc')   { const ta = document.getElementById('mkr-etc-coach');   ta.style.display='none'; ta.value=''; }
-  } else {
-    _makeupReasons.add(key);
-    el.style.borderColor = 'var(--green)';
-    el.style.background = '#F0FDFA';
-    chk.style.background = 'var(--green)';
-    chk.style.borderColor = 'var(--green)';
-    chk.innerHTML = CHK_SVG;
-    txt.style.color = 'var(--navy)';
-    txt.style.fontWeight = '600';
-    if (key === 'student_etc') document.getElementById('mkr-etc-student').style.display = 'block';
-    if (key === 'coach_etc')   document.getElementById('mkr-etc-coach').style.display   = 'block';
-  }
-  const hasAny = _makeupReasons.size > 0;
-  document.getElementById('mkr-next-btn').disabled = !hasAny;
-  document.getElementById('mkr-next-btn').style.background = hasAny ? 'var(--navy)' : 'var(--gray-300)';
-  document.getElementById('mkr-next-btn').style.cursor = hasAny ? 'pointer' : 'not-allowed';
+function onMakeupReasonChange() {
+  const sel = document.getElementById('mkr-select');
+  const val = sel.value;
+  const isEtc = val === 'student_etc' || val === 'coach_etc';
+  const ta = document.getElementById('mkr-etc-input');
+  ta.style.display = isEtc ? 'block' : 'none';
+  if (!isEtc) ta.value = '';
+  sel.style.color = val ? 'var(--navy)' : 'var(--gray-400)';
+  sel.style.borderColor = val ? 'var(--green)' : 'var(--gray-200)';
+  const btn = document.getElementById('mkr-next-btn');
+  btn.disabled = !val;
+  btn.style.background = val ? 'var(--navy)' : 'var(--gray-300)';
+  btn.style.cursor = val ? 'pointer' : 'not-allowed';
 }
 
 function handleSupplement() {
   closeLessonDetail();
-  _makeupReasons.clear();
-  document.getElementById('mkr-etc-student').style.display = 'none';
-  document.getElementById('mkr-etc-student').value = '';
-  document.getElementById('mkr-etc-coach').style.display = 'none';
-  document.getElementById('mkr-etc-coach').value = '';
-  document.querySelectorAll('.mkr-option').forEach(el => {
-    el.style.borderColor = 'var(--gray-100)';
-    el.style.background = '#fff';
-    const chk = el.querySelector('.mkr-chk');
-    chk.style.background = '#fff';
-    chk.style.borderColor = 'var(--gray-300)';
-    chk.innerHTML = '';
-    const txt = el.querySelector('span');
-    txt.style.color = 'var(--gray-500)';
-    txt.style.fontWeight = '400';
-  });
+  const sel = document.getElementById('mkr-select');
+  sel.value = '';
+  sel.style.color = 'var(--gray-400)';
+  sel.style.borderColor = 'var(--gray-200)';
+  const ta = document.getElementById('mkr-etc-input');
+  ta.style.display = 'none';
+  ta.value = '';
   const btn = document.getElementById('mkr-next-btn');
   btn.disabled = true;
   btn.style.background = 'var(--gray-300)';
