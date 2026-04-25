@@ -54,9 +54,8 @@
 - GitHub Pages: `https://kkyu6513.github.io/COURTSIDE/docs/03-prototype/flow7-coach-my/7-0-schedule-home.html`
 
 ### GitHub push 방법
-- git push 권한 없음 → GitHub API (Contents API) 또는 Python urllib로 push
-- GitHub 토큰: device flow로 발급 (세션마다 재발급 필요할 수 있음)
-- 큰 파일은 base64 → Python script로 push
+- git push 가능 (main 브랜치 직접 push)
+- GitHub Pages → main 브랜치 서빙
 
 ### 완료된 기능 (7-0 코치 스케줄 홈)
 1. 주간 미니 캘린더 (날짜 클릭 전환 + ? 툴팁 범례)
@@ -72,7 +71,13 @@
 11. 변경요청 탭: 4종 카드(제안됨/변경가능/변경불가/변경완료)
 12. 상태 흐름도 페이지 (표/차트 모드 전환 + 아코디언)
 13. LNB 사이트맵에 작업현황표/상태흐름도 링크
+14. 코치 전용 5탭 하단 네비바 — 9개 화면 통일 (7-0~7-9, 7-10)
+15. 수강생 레슨 상세 (6-6): 결제상태 뱃지 URL 파라미터 연동 (payment, depositAmount, totalAmount)
+16. 예약금 수령 (DEPOSIT_RECEIVED): 코치가 금액 입력 → 수강생 화면에 예약금/잔액 분리 표시
+17. 잔액 수령 확인: 코치 레슨 상세 내 [잔액 수령 확인] 버튼 → PAID 전환
+18. 회원 검색 (7-10): 실시간 검색 + 4종 정렬 (기본순/이름순/최근레슨순/미결제우선) + 수강생 카드
 
 ### 진행 예정
-- 수강생 화면 프로토타입
+- 수강생 화면 프로토타입 고도화
+- 결강처리 바텀시트 UI 개선 (보강처리와 동일한 패턴으로)
 - 프론트엔드/백엔드 개발 (Sprint 계획은 이전 세션에서 정의)
