@@ -917,7 +917,7 @@
             <div class="mkr-chk" style="width:18px;height:18px;border-radius:4px;border:1.5px solid var(--gray-300);background:#fff;flex-shrink:0;display:flex;align-items:center;justify-content:center;"></div>
             <span style="font-size:14px;color:var(--gray-500);">기타</span>
           </div>
-        </div>
+          <textarea id="mkr-etc-student" placeholder="기타 사유를 직접 입력해 주세요" style="display:none;width:100%;height:68px;border-radius:10px;border:1.5px solid var(--green);padding:10px 12px;font-size:13px;font-family:inherit;resize:none;box-sizing:border-box;outline:none;color:var(--navy);background:#F0FDFA;" onfocus="this.style.borderColor='var(--navy)'" onblur="this.style.borderColor='var(--green)'"></textarea>
 
         <!-- 코치 사정 그룹 -->
         <div style="font-size:11px;font-weight:700;color:var(--gray-400);letter-spacing:0.5px;margin-bottom:6px;">🧑‍🏫 코치 사정</div>
@@ -942,7 +942,7 @@
             <div class="mkr-chk" style="width:18px;height:18px;border-radius:4px;border:1.5px solid var(--gray-300);background:#fff;flex-shrink:0;display:flex;align-items:center;justify-content:center;"></div>
             <span style="font-size:14px;color:var(--gray-500);">기타</span>
           </div>
-        </div>
+          <textarea id="mkr-etc-coach" placeholder="기타 사유를 직접 입력해 주세요" style="display:none;width:100%;height:68px;border-radius:10px;border:1.5px solid var(--green);padding:10px 12px;font-size:13px;font-family:inherit;resize:none;box-sizing:border-box;outline:none;color:var(--navy);background:#F0FDFA;" onfocus="this.style.borderColor='var(--navy)'" onblur="this.style.borderColor='var(--green)'"></textarea>
 
         <div style="padding:12px;background:#F0FDFA;border-radius:10px;margin-bottom:16px;">
           <div style="font-size:12px;color:#065F46;line-height:1.6;">
@@ -1656,6 +1656,8 @@ function toggleMakeupOption(el, key) {
     chk.innerHTML = '';
     txt.style.color = 'var(--gray-500)';
     txt.style.fontWeight = '400';
+    if (key === 'student_etc') { const ta = document.getElementById('mkr-etc-student'); ta.style.display='none'; ta.value=''; }
+    if (key === 'coach_etc')   { const ta = document.getElementById('mkr-etc-coach');   ta.style.display='none'; ta.value=''; }
   } else {
     _makeupReasons.add(key);
     el.style.borderColor = 'var(--green)';
@@ -1665,6 +1667,8 @@ function toggleMakeupOption(el, key) {
     chk.innerHTML = CHK_SVG;
     txt.style.color = 'var(--navy)';
     txt.style.fontWeight = '600';
+    if (key === 'student_etc') document.getElementById('mkr-etc-student').style.display = 'block';
+    if (key === 'coach_etc')   document.getElementById('mkr-etc-coach').style.display   = 'block';
   }
   const hasAny = _makeupReasons.size > 0;
   document.getElementById('mkr-next-btn').disabled = !hasAny;
@@ -1675,6 +1679,10 @@ function toggleMakeupOption(el, key) {
 function handleSupplement() {
   closeLessonDetail();
   _makeupReasons.clear();
+  document.getElementById('mkr-etc-student').style.display = 'none';
+  document.getElementById('mkr-etc-student').value = '';
+  document.getElementById('mkr-etc-coach').style.display = 'none';
+  document.getElementById('mkr-etc-coach').value = '';
   document.querySelectorAll('.mkr-option').forEach(el => {
     el.style.borderColor = 'var(--gray-100)';
     el.style.background = '#fff';
