@@ -61,11 +61,53 @@
 .preview-row .value { font-weight:700;color:var(--navy); }
 .preview-row .value.highlight { color:var(--green); }
 .save-bar {
-  position:sticky;bottom:0;left:0;right:0;
+  position:sticky;bottom:0;
   background:#fff;border-top:1px solid var(--gray-100);
   padding:16px 32px;display:flex;align-items:center;
   justify-content:space-between;z-index:50;
   box-shadow:0 -4px 16px rgba(0,0,0,0.06);
+  margin:24px -40px -40px;
+}
+@media (max-width:768px) {
+  .save-bar {
+    margin:24px -16px -32px;
+    padding:14px 16px;
+    flex-direction:column;
+    gap:12px;
+    align-items:stretch;
+  }
+  .save-bar .save-warning {
+    font-size:12px;
+    text-align:center;
+  }
+  .save-bar .save-btns {
+    display:flex;gap:10px;
+  }
+  .save-bar .save-btns button {
+    flex:1;
+  }
+  .policy-row {
+    flex-wrap:wrap;
+    gap:12px;
+  }
+  .policy-control {
+    margin-left:auto;
+  }
+  .policy-input { width:80px; }
+  .exception-row {
+    flex-wrap:wrap;
+  }
+  .history-row {
+    flex-wrap:wrap;
+    gap:4px;
+  }
+  .history-row > span:first-child {
+    width:auto !important;
+    font-size:11px;
+  }
+  .preview-box .preview-row {
+    font-size:12px;
+  }
 }
 </style>
 </head>
@@ -103,7 +145,7 @@
   </nav>
 
   <!-- Main -->
-  <main class="admin-main" style="padding-bottom:100px;">
+  <main class="admin-main">
     <div class="admin-header">
       <div class="breadcrumb">COURTSIDE Admin › 정산 정책</div>
       <h1>정산 정책 관리</h1>
@@ -325,16 +367,16 @@
       </div>
     </div>
 
-  </main>
-
-  <!-- 저장 바 -->
-  <div class="save-bar">
-    <div style="font-size:13px;color:var(--gray-400);">⚠️ 저장 즉시 적용됩니다. 기존 정산 건에는 소급 적용되지 않습니다.</div>
-    <div style="display:flex;gap:10px;">
-      <button onclick="resetPolicy()" style="height:40px;padding:0 20px;border-radius:8px;border:1.5px solid var(--gray-200);background:#fff;font-size:14px;font-weight:600;color:var(--gray-500);cursor:pointer;">초기화</button>
-      <button onclick="savePolicy()" style="height:40px;padding:0 24px;border-radius:8px;border:none;background:var(--navy);color:#fff;font-size:14px;font-weight:700;cursor:pointer;">정책 저장</button>
+    <!-- 저장 바 -->
+    <div class="save-bar">
+      <div class="save-warning" style="font-size:13px;color:var(--gray-400);">⚠️ 저장 즉시 적용됩니다. 기존 정산 건에는 소급 적용되지 않습니다.</div>
+      <div class="save-btns" style="display:flex;gap:10px;">
+        <button onclick="resetPolicy()" style="height:40px;padding:0 20px;border-radius:8px;border:1.5px solid var(--gray-200);background:#fff;font-size:14px;font-weight:600;color:var(--gray-500);cursor:pointer;">초기화</button>
+        <button onclick="savePolicy()" style="height:40px;padding:0 24px;border-radius:8px;border:none;background:var(--navy);color:#fff;font-size:14px;font-weight:700;cursor:pointer;">정책 저장</button>
+      </div>
     </div>
-  </div>
+
+  </main>
 </div>
 
 <!-- 예외 코치 추가 모달 -->
