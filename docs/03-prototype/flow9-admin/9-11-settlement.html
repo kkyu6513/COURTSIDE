@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>정산 관리 — COURTSIDE Admin</title>
+<link rel="stylesheet" href="../common-admin.css">
+<style>
+.section-title { font-size:16px;font-weight:700;color:var(--navy);margin-bottom:16px; }
+.tab-bar { display:flex;gap:4px;background:var(--gray-100);border-radius:10px;padding:4px;margin-bottom:20px;width:fit-content; }
+.tab { padding:8px 18px;border-radius:8px;font-size:13px;font-weight:600;color:var(--gray-500);cursor:pointer; }
+.tab.active { background:#fff;color:var(--navy);box-shadow:0 1px 4px rgba(0,0,0,0.1); }
+.bar-row { display:flex;align-items:center;gap:12px;margin-bottom:10px; }
+.bar-label { width:36px;font-size:12px;color:var(--gray-500);text-align:right;flex-shrink:0; }
+.bar-track { flex:1;height:22px;background:var(--gray-100);border-radius:6px;overflow:hidden; }
+.bar-fill { height:100%;border-radius:6px;display:flex;align-items:center;padding-left:8px;font-size:11px;font-weight:700;color:#fff; }
+.status-badge { display:inline-block;padding:3px 9px;border-radius:6px;font-size:11px;font-weight:700; }
+.badge-active { background:#dcfce7;color:#16a34a; }
+.badge-expired { background:#fee2e2;color:#dc2626; }
+.badge-pending { background:#fef9c3;color:#ca8a04; }
+.badge-grace { background:#ffedd5;color:#ea580c; }
+.filter-bar { display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap; }
+.filter-bar select,.filter-bar input { height:36px;border-radius:8px;border:1px solid var(--gray-200);padding:0 10px;font-size:13px;font-family:inherit;color:var(--navy);background:#fff;outline:none; }
+</style>
+</head>
+<body>
+<div class="admin-layout">
+
+  <!-- Sidebar -->
+  <nav class="admin-sidebar">
+    <div class="logo">🎾 COURTSIDE <span style="font-size:11px;opacity:0.5;font-weight:400;">Admin</span></div>
+    <div class="nav-group">
+      <div class="nav-group-title">Overview</div>
+      <a href="9-1-dashboard.html" class="nav-link"><span class="icon">📊</span>대시보드</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-title">관리</div>
+      <a href="9-2-users.html" class="nav-link"><span class="icon">👥</span>회원 관리</a>
+      <a href="9-3-coach-verify.html" class="nav-link"><span class="icon">✅</span>코치 검증<span class="count">5</span></a>
+      <a href="9-4-banners.html" class="nav-link"><span class="icon">🖼️</span>배너 관리</a>
+      <a href="9-8-reports.html" class="nav-link"><span class="icon">🚨</span>신고 관리</a>
+      <a href="9-9-schedule-admin.html" class="nav-link"><span class="icon">📅</span>스케줄 관리</a>
+      <a href="9-10-proposal-admin.html" class="nav-link"><span class="icon">📨</span>제안 관리</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-title">수익</div>
+      <a href="9-11-settlement.html" class="nav-link active"><span class="icon">💰</span>정산 관리</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-title">설정</div>
+      <a href="9-5-subscription-plans.html" class="nav-link"><span class="icon">💎</span>구독 플랜</a>
+      <a href="9-6-code-manage.html" class="nav-link"><span class="icon">⚙️</span>코드 관리</a>
+      <a href="9-7-terms.html" class="nav-link"><span class="icon">📜</span>약관 관리</a>
+    </div>
+  </nav>
+
+  <!-- Main -->
+  <main class="admin-main">
+    <div class="admin-header">
+      <div class="breadcrumb">COURTSIDE Admin › 정산 관리</div>
+      <h1>정산 관리</h1>
+      <div class="subtitle">코치 구독 수익 및 결제 내역을 관리합니다</div>
+    </div>
+
+    <!-- 이번 달 수익 KPI -->
+    <div class="stat-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:24px;">
+      <div class="stat-card">
+        <div class="stat-value" style="color:var(--green);">₩2,380,000</div>
+        <div class="stat-label">이번 달 구독 수입</div>
+        <div style="font-size:12px;color:var(--success);margin-top:4px;">▲ 12% 전월 대비</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" style="color:var(--purple);">6</div>
+        <div class="stat-label">연간 PRO 구독 중</div>
+        <div style="font-size:12px;color:var(--gray-400);margin-top:4px;">₩990,000/인 · 연</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" style="color:var(--info);">14</div>
+        <div class="stat-label">월간 PRO 구독 중</div>
+        <div style="font-size:12px;color:var(--gray-400);margin-top:4px;">₩99,000/인 · 월</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" style="color:var(--coral);">2</div>
+        <div class="stat-label">결제 실패 (유예 중)</div>
+        <div style="font-size:12px;color:var(--error);margin-top:4px;">3일 유예 후 EXPIRED</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;">
+
+      <!-- 월별 구독 수입 추이 -->
+      <div class="admin-card">
+        <div class="section-title">월별 구독 수입 추이</div>
+        <div class="bar-row"><span class="bar-label">11월</span><div class="bar-track"><div class="bar-fill" style="width:68%;background:var(--purple);">₩1,683K</div></div></div>
+        <div class="bar-row"><span class="bar-label">12월</span><div class="bar-track"><div class="bar-fill" style="width:72%;background:var(--purple);">₩1,782K</div></div></div>
+        <div class="bar-row"><span class="bar-label">1월</span><div class="bar-track"><div class="bar-fill" style="width:80%;background:var(--purple);">₩1,980K</div></div></div>
+        <div class="bar-row"><span class="bar-label">2월</span><div class="bar-track"><div class="bar-fill" style="width:86%;background:var(--purple);">₩2,128K</div></div></div>
+        <div class="bar-row"><span class="bar-label">3월</span><div class="bar-track"><div class="bar-fill" style="width:92%;background:var(--purple);">₩2,277K</div></div></div>
+        <div class="bar-row"><span class="bar-label">4월</span><div class="bar-track"><div class="bar-fill" style="width:96%;background:var(--green);">₩2,380K ◀ 이번달</div></div></div>
+        <div style="margin-top:14px;display:flex;gap:16px;font-size:12px;color:var(--gray-500);">
+          <span>MRR (월간 반복 수익)</span>
+          <span style="font-weight:700;color:var(--navy);">₩2,380,000</span>
+          <span style="color:var(--success);">▲ 4.5%</span>
+        </div>
+      </div>
+
+      <!-- 플랜별 구성 -->
+      <div class="admin-card">
+        <div class="section-title">플랜별 구성</div>
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+              <span style="font-size:13px;color:var(--gray-500);">연간 PRO <span style="font-size:11px;">(₩990,000/인)</span></span>
+              <span style="font-size:14px;font-weight:700;color:var(--purple);">6명 · ₩495,000/월환산</span>
+            </div>
+            <div class="progress-bar"><div class="fill" style="width:30%;background:var(--purple);"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+              <span style="font-size:13px;color:var(--gray-500);">월간 PRO <span style="font-size:11px;">(₩99,000/인)</span></span>
+              <span style="font-size:14px;font-weight:700;color:var(--info);">14명 · ₩1,386,000</span>
+            </div>
+            <div class="progress-bar"><div class="fill" style="width:58%;background:var(--info);"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+              <span style="font-size:13px;color:var(--gray-500);">무료 플랜</span>
+              <span style="font-size:14px;font-weight:700;color:var(--gray-400);">20명 · ₩0</span>
+            </div>
+            <div class="progress-bar"><div class="fill" style="width:50%;background:var(--gray-300);"></div></div>
+          </div>
+        </div>
+        <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--gray-100);font-size:12px;color:var(--gray-500);">
+          * 연간 PRO는 월환산(₩82,500) 기준. 결제는 연 1회 일시납.
+        </div>
+      </div>
+    </div>
+
+    <!-- 결제 내역 테이블 -->
+    <div class="admin-card" style="margin-bottom:24px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <div class="section-title" style="margin-bottom:0;">구독 결제 내역</div>
+        <button style="height:34px;padding:0 14px;border-radius:8px;border:1px solid var(--gray-200);background:#fff;font-size:13px;font-weight:600;color:var(--navy);cursor:pointer;">CSV 내보내기</button>
+      </div>
+      <div class="filter-bar">
+        <select onchange="filterTable()">
+          <option value="">전체 플랜</option>
+          <option value="YEARLY">연간 PRO</option>
+          <option value="MONTHLY">월간 PRO</option>
+          <option value="FREE">무료</option>
+        </select>
+        <select onchange="filterTable()">
+          <option value="">전체 상태</option>
+          <option value="ACTIVE">ACTIVE</option>
+          <option value="EXPIRED">EXPIRED</option>
+          <option value="GRACE">유예 중</option>
+        </select>
+        <select onchange="filterTable()">
+          <option value="2026-04">2026년 4월</option>
+          <option value="2026-03">2026년 3월</option>
+          <option value="2026-02">2026년 2월</option>
+          <option value="2026-01">2026년 1월</option>
+        </select>
+        <input type="text" placeholder="코치명 검색" oninput="filterTable()" style="width:140px;">
+      </div>
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>코치명</th>
+            <th>플랜</th>
+            <th>결제 금액</th>
+            <th>결제일</th>
+            <th>다음 갱신일</th>
+            <th>자동갱신</th>
+            <th>상태</th>
+            <th>처리</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>김민준</strong></td>
+            <td><span style="font-size:12px;font-weight:700;background:#f3e8ff;color:var(--purple);padding:2px 8px;border-radius:5px;">연간 PRO</span></td>
+            <td>₩990,000</td>
+            <td>2026-01-15</td>
+            <td>2027-01-15</td>
+            <td>✅ ON</td>
+            <td><span class="status-badge badge-active">ACTIVE</span></td>
+            <td><button onclick="alert('결제 상세 보기')" style="font-size:12px;padding:4px 10px;border-radius:6px;border:1px solid var(--gray-200);background:#fff;cursor:pointer;">상세</button></td>
+          </tr>
+          <tr>
+            <td><strong>박지훈</strong></td>
+            <td><span style="font-size:12px;font-weight:700;background:#eff6ff;color:var(--info);padding:2px 8px;border-radius:5px;">월간 PRO</span></td>
+            <td>₩99,000</td>
+            <td>2026-04-03</td>
+            <td>2026-05-03</td>
+            <td>✅ ON</td>
+            <td><span class="status-badge badge-active">ACTIVE</span></td>
+            <td><button onclick="alert('결제 상세 보기')" style="font-size:12px;padding:4px 10px;border-radius:6px;border:1px solid var(--gray-200);background:#fff;cursor:pointer;">상세</button></td>
+          </tr>
+          <tr>
+            <td><strong>이소연</strong></td>
+            <td><span style="font-size:12px;font-weight:700;background:#eff6ff;color:var(--info);padding:2px 8px;border-radius:5px;">월간 PRO</span></td>
+            <td>₩99,000</td>
+            <td>2026-04-10</td>
+            <td>2026-05-10</td>
+            <td>✅ ON</td>
+            <td><span class="status-badge badge-active">ACTIVE</span></td>
+            <td><button onclick="alert('결제 상세 보기')" style="font-size:12px;padding:4px 10px;border-radius:6px;border:1px solid var(--gray-200);background:#fff;cursor:pointer;">상세</button></td>
+          </tr>
+          <tr style="background:#fffbeb;">
+            <td><strong>최동현</strong></td>
+            <td><span style="font-size:12px;font-weight:700;background:#eff6ff;color:var(--info);padding:2px 8px;border-radius:5px;">월간 PRO</span></td>
+            <td>₩99,000</td>
+            <td style="color:var(--error);">실패</td>
+            <td>2026-04-22</td>
+            <td>✅ ON</td>
+            <td><span class="status-badge badge-grace">유예 D-2</span></td>
+            <td>
+              <button onclick="showRetryConfirm('최동현')" style="font-size:12px;padding:4px 10px;border-radius:6px;border:none;background:var(--warning);color:#fff;cursor:pointer;font-weight:600;">재시도</button>
+            </td>
+          </tr>
+          <tr style="background:#fffbeb;">
+            <td><strong>정수빈</strong></td>
+            <td><span style="font-size:12px;font-weight:700;background:#eff6ff;color:var(--info);padding:2px 8px;border-radius:5px;">월간 PRO</span></td>
+            <td>₩99,000</td>
+            <td style="color:var(--error);">실패</td>
+            <td>2026-04-24</td>
+            <td>✅ ON</td>
+            <td><span class="status-badge badge-grace">유예 D-0</span></td>
+            <td>
+              <button onclick="showRetryConfirm('정수빈')" style="font-size:12px;padding:4px 10px;border-radius:6px;border:none;background:var(--error);color:#fff;cursor:pointer;font-weight:600;">즉시 재시도</button>
+            </td>
+          </tr>
+          <tr style="opacity:0.65;">
+            <td><strong>한재원</strong></td>
+            <td><span style="font-size:12px;font-weight:700;background:#f3f4f6;color:var(--gray-400);padding:2px 8px;border-radius:5px;">월간 PRO</span></td>
+            <td>₩99,000</td>
+            <td>2026-03-18</td>
+            <td>—</td>
+            <td>❌ OFF</td>
+            <td><span class="status-badge badge-expired">EXPIRED</span></td>
+            <td><button onclick="alert('결제 상세 보기')" style="font-size:12px;padding:4px 10px;border-radius:6px;border:1px solid var(--gray-200);background:#fff;cursor:pointer;">상세</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 결제 실패 관리 -->
+    <div class="admin-card">
+      <div class="section-title">결제 실패 유예 관리</div>
+      <div style="padding:14px;background:#fef2f2;border-radius:10px;border:1px solid #fecaca;margin-bottom:16px;">
+        <div style="font-size:13px;font-weight:600;color:var(--error);margin-bottom:4px;">⚠️ 유예 중인 코치 2명 — 오늘 자정 기준 EXPIRED 전환</div>
+        <div style="font-size:12px;color:#991b1b;line-height:1.6;">
+          결제 실패 시 3일 유예(D-0 당일 자정 자동 EXPIRED) → 무료 플랜 전환.<br>
+          관리자가 수동으로 '재시도' 버튼을 눌러 즉시 재결제 요청할 수 있습니다.
+        </div>
+      </div>
+      <table class="admin-table">
+        <thead>
+          <tr><th>코치명</th><th>플랜</th><th>실패 사유</th><th>실패일</th><th>EXPIRED 예정</th><th>처리</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>최동현</strong></td>
+            <td>월간 PRO</td>
+            <td style="color:var(--error);">카드 한도 초과</td>
+            <td>2026-04-22</td>
+            <td>2026-04-25 00:00</td>
+            <td><button onclick="showRetryConfirm('최동현')" style="font-size:12px;padding:4px 10px;border-radius:6px;border:none;background:var(--warning);color:#fff;cursor:pointer;font-weight:600;">재시도</button></td>
+          </tr>
+          <tr style="background:#fef2f2;">
+            <td><strong>정수빈</strong></td>
+            <td>월간 PRO</td>
+            <td style="color:var(--error);">카드 분실·정지</td>
+            <td>2026-04-24</td>
+            <td style="color:var(--error);font-weight:700;">2026-04-25 00:00 ← 오늘!</td>
+            <td><button onclick="showRetryConfirm('정수빈')" style="font-size:12px;padding:4px 10px;border-radius:6px;border:none;background:var(--error);color:#fff;cursor:pointer;font-weight:600;">즉시 재시도</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </main>
+</div>
+
+<!-- 재시도 확인 모달 -->
+<div id="retry-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);z-index:100;display:none;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:16px;padding:28px;width:380px;box-shadow:0 8px 40px rgba(0,0,0,0.2);">
+    <div style="font-size:17px;font-weight:800;color:var(--navy);margin-bottom:8px;">결제 재시도 확인</div>
+    <div id="retry-modal-msg" style="font-size:14px;color:var(--gray-500);margin-bottom:20px;line-height:1.6;"></div>
+    <div style="display:flex;gap:8px;">
+      <button onclick="closeRetryModal()" style="flex:1;height:42px;border-radius:10px;border:1px solid var(--gray-200);background:#fff;font-size:14px;font-weight:600;cursor:pointer;color:var(--gray-500);">취소</button>
+      <button onclick="doRetry()" style="flex:1;height:42px;border-radius:10px;border:none;background:var(--navy);color:#fff;font-size:14px;font-weight:700;cursor:pointer;">재시도 실행</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let _retryTarget = '';
+
+function filterTable() { /* prototype: no-op */ }
+
+function showRetryConfirm(name) {
+  _retryTarget = name;
+  document.getElementById('retry-modal-msg').textContent =
+    name + ' 코치의 구독 결제를 즉시 재시도합니다. 토스페이먼츠로 재결제 요청이 발송됩니다.';
+  const m = document.getElementById('retry-modal');
+  m.style.display = 'flex';
+}
+
+function closeRetryModal() {
+  document.getElementById('retry-modal').style.display = 'none';
+}
+
+function doRetry() {
+  closeRetryModal();
+  alert('✅ ' + _retryTarget + ' 코치 재결제 요청 완료\n결과는 수 초 내로 반영됩니다.');
+}
+</script>
+</body>
+</html>
