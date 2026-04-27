@@ -682,7 +682,7 @@ const RS_MIN_DATE = new Date(RS_TODAY);
 let rsViewMode = 'day';
 let rsActiveDate = null;
 // 다중 시간 선택: Map<dateKey, Set<time>>
-let rsSelectedTimes = new Map();
+let rsSelectedSlot = null; // { dateKey, time } — 단일 선택
 
 function rsDateKey(d) { return `${d.getMonth()+1}/${d.getDate()}`; }
 function rsDateLabelFull(d) { return `${d.getMonth()+1}월 ${d.getDate()}일 (${RS_DAY_NAMES[d.getDay()]})`; }
@@ -703,7 +703,7 @@ function findFirstRsAvailableDate() {
 function openRescheduleSheet() {
   rsViewMode = 'day';
   rsActiveDate = findFirstRsAvailableDate();
-  rsSelectedTimes = new Map();
+  rsSelectedSlot = null;
   document.getElementById('rs-sheet').style.display = 'flex';
   document.querySelectorAll('.rs-reason').forEach(l => { l.style.borderColor = 'var(--gray-100)'; l.style.background = '#fff'; });
   document.querySelectorAll('input[name="rs-reason"]').forEach(r => r.checked = false);
@@ -712,16 +712,13 @@ function openRescheduleSheet() {
 }
 
 function rsTotalSelected() {
-  let n = 0; rsSelectedTimes.forEach(s => n += s.size); return n;
+  return rsSelectedSlot ? 1 : 0;
 }
 function rsToggleTime(dateKey, time) {
-  if (!rsSelectedTimes.has(dateKey)) rsSelectedTimes.set(dateKey, new Set());
-  const set = rsSelectedTimes.get(dateKey);
-  if (set.has(time)) {
-    set.delete(time);
-    if (set.size === 0) rsSelectedTimes.delete(dateKey);
+  if (rsSelectedSlot && rsSelectedSlot.dateKey === dateKey && rsSelectedSlot.time === time) {
+    rsSelectedSlot = null; // 같은 슬롯 재클릭 시 해제
   } else {
-    set.add(time);
+    rsSelectedSlot = { dateKey, time };
   }
   renderRsView();
 }
@@ -774,11 +771,12 @@ function renderRsTimeBox() {
   if (!c) return;
   const total = rsTotalSelected();
   if (!rsActiveDate) {
-    titleEl.innerHTML = `레슨 변경 가능 시간 <span style="font-size:11px;color:var(--gray-400);font-weight:400;">(중복 선택)</span>`;
+    titleEl.innerHTML = `레슨 변경 가능 시간 <span style="font-size:11px;color:var(--gray-400);font-weight:400;">(단일 선택)</span>`;
     c.innerHTML = '<div style="padding:14px;text-align:center;font-size:12px;color:var(--gray-400);background:#fff;border-radius:10px;">날짜를 선택해 주세요</div>';
     return;
   }
-  titleEl.innerHTML = `${rsDateLabelFull(rsActiveDate)} 레슨 변경 가능 시간 <span style="font-size:11px;color:var(--gray-400);font-weight:400;">(중복 선택 · 총 ${total}개)</span>`;
+  const selLabel = rsSelectedSlot ? ` <span style="font-size:11px;color:var(--green);font-weight:600;">✓ ${rsSelectedSlot.time} 선택됨</span>` : `<span style="font-size:11px;color:var(--gray-400);font-weight:400;"> (단일 선택)</span>`;
+  titleEl.innerHTML = `${rsDateLabelFull(rsActiveDate)} 레슨 변경 가능 시간` + selLabel;
   const slots = rsSlotsForDate(rsActiveDate);
   if (slots.length === 0) {
     c.innerHTML = '<div style="padding:14px;text-align:center;font-size:12px;color:#92400E;background:#fff;border-radius:10px;border:1px dashed #FED7AA;">⚠️ 이 날짜에는 코치님의 가능한 시간이 없습니다.<br>다른 날짜를 선택해 주세요.</div>';
@@ -787,12 +785,11 @@ function renderRsTimeBox() {
   c.innerHTML = '<div id="rs-slot-grid" style="display:flex;flex-direction:column;gap:6px;"></div>';
   const grid = c.querySelector('#rs-slot-grid');
   const dateKey = rsDateKey(rsActiveDate);
-  const selSet = rsSelectedTimes.get(dateKey) || new Set();
   slots.forEach(t => {
-    const isSel = selSet.has(t);
+    const isSel = rsSelectedSlot && rsSelectedSlot.dateKey === dateKey && rsSelectedSlot.time === t;
     const item = document.createElement('label');
     item.style.cssText = `display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:${isSel?'#B6F5E6':'#fff'};border:1.5px solid ${isSel?'var(--green)':'var(--gray-200)'};color:#065F46;cursor:pointer;`;
-    item.innerHTML = `<input type="checkbox" ${isSel?'checked':''} style="width:18px;height:18px;accent-color:var(--green);cursor:pointer;"><span style="font-size:13px;font-weight:600;flex:1;">${t}</span>`;
+    item.innerHTML = `<input type="radio" name="rs-slot" ${isSel?'checked':''} style="width:18px;height:18px;accent-color:var(--green);cursor:pointer;"><span style="font-size:13px;font-weight:600;flex:1;">${t}</span>`;
     item.onclick = function(e) { e.preventDefault(); rsToggleTime(dateKey, t); };
     grid.appendChild(item);
   });
@@ -900,7 +897,7 @@ function updateRsBtn() {
   const btn = document.getElementById('rs-submit-btn');
   btn.disabled = false;
   btn.style.background = 'var(--green)';
-  btn.textContent = total > 0 ? `변경 요청 보내기 (${total}개)` : '변경 요청 보내기';
+  btn.textContent = '변경 요청 보내기';
 }
 
 // 공통 토스트 (Container element + message)
@@ -917,24 +914,18 @@ function showToast(message, type) {
 }
 
 function rsBuildSelectedList() {
-  // dateKey → Set<time> → 정렬된 ['M/D (요일) HH:MM', ...]
-  const arr = [];
-  rsSelectedTimes.forEach((set, dateKey) => {
-    const [m, day] = dateKey.split('/').map(Number);
-    set.forEach(time => {
-      const d = new Date(RS_TODAY); d.setMonth(m - 1, day);
-      arr.push({ sortKey: d.getTime() + parseInt(time.replace(':',''), 10), label: `${m}/${day} (${RS_DAY_NAMES[d.getDay()]}) ${time}` });
-    });
-  });
-  arr.sort((a, b) => a.sortKey - b.sortKey);
-  return arr.map(x => x.label);
+  if (!rsSelectedSlot) return [];
+  const { dateKey, time } = rsSelectedSlot;
+  const [m, day] = dateKey.split('/').map(Number);
+  const d = new Date(RS_TODAY); d.setMonth(m - 1, day);
+  return [`${m}/${day} (${RS_DAY_NAMES[d.getDay()]}) ${time}`];
 }
 
 function submitRescheduleRequest() {
   const total = rsTotalSelected();
   // 시간 미선택
   if (total === 0) {
-    showToast('가능한 시간을 1개 이상 선택해 주세요', 'error');
+    showToast('희망 일정을 선택해 주세요', 'error');
     return;
   }
   // 사유 미선택
