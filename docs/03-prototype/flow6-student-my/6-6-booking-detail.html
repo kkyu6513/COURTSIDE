@@ -308,6 +308,19 @@ function confirmMakeup() {
   window.location.href = `6-6-booking-detail.html?status=makeup_confirmed&confirmedDate=${date}`;
 }
 
+function acceptAdjustment(type) {
+  const target = type === 'MERGE' ? 'merge_confirmed' : 'split_confirmed';
+  window.location.href = `6-6-booking-detail.html?status=${target}`;
+}
+
+function rejectAdjustment(type) {
+  const label = type === 'MERGE' ? '통합' : '분할';
+  if (!confirm(`코치의 ${label} 제안을 거절하시겠어요?\n\n· 거절하면 원래 회차 일정이 유지돼요\n· 코치에게 거절 알림이 발송됩니다`)) return;
+  // 결강/보강 흐름으로 복귀: 통합 거절 → makeup_requested, 분할 거절 → makeup (코치 보강 일정 등록 흐름)
+  const back = type === 'MERGE' ? 'makeup_requested' : 'makeup';
+  window.location.href = `6-6-booking-detail.html?status=${back}`;
+}
+
 const confirmedDate = decodeURIComponent(params.get('confirmedDate') || '');
 const isToday = params.get('isToday') === '1';
 
@@ -459,6 +472,125 @@ const configs = {
     actions: `<a href="../flow4-chat/4-2-chat.html" class="btn-secondary" style="flex:1;display:block;text-align:center;text-decoration:none;line-height:48px;height:auto;">코치에게 문의</a>
               <a href="6-5-booking-list.html" class="btn-primary" style="flex:1;display:block;text-align:center;text-decoration:none;line-height:52px;">목록으로</a>`
   },
+  merge_proposed: {
+    label: '회차 통합 제안',
+    badge: '<span class="badge" style="font-size:14px;padding:6px 16px;background:#EDE9FE;color:#5B21B6;">🔗 통합 제안 도착</span>',
+    session: '6/8회',
+    message: `<div style="padding:16px;background:#F5F3FF;border-radius:12px;border:1.5px solid #C4B5FD;">
+      <div style="font-size:13px;font-weight:700;color:#5B21B6;margin-bottom:8px;">코치님이 회차 통합을 제안했어요</div>
+      <div style="font-size:12px;color:#6D28D9;line-height:1.6;margin-bottom:12px;">짧은 회차 2건을 한 번에 진행하면 일정 매칭이 더 쉬워요.<br>시간 합계와 결제 금액은 동일합니다.</div>
+
+      <!-- 변경 미리보기 -->
+      <div style="padding:14px;background:#fff;border-radius:10px;border:1px solid #DDD6FE;margin-bottom:10px;">
+        <div style="font-size:11px;color:var(--gray-400);margin-bottom:8px;">변경 미리보기</div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;">
+          <div style="text-align:center;">
+            <div style="font-size:11px;color:var(--gray-400);text-decoration:line-through;">4/13 (일) 09:30</div>
+            <div style="font-size:11px;color:var(--gray-400);text-decoration:line-through;">4/20 (일) 09:30</div>
+            <div style="font-size:10px;color:var(--gray-400);margin-top:2px;">20분 × 2회</div>
+          </div>
+          <span style="font-size:18px;color:#5B21B6;">→</span>
+          <div style="text-align:center;">
+            <div style="font-size:14px;font-weight:800;color:#5B21B6;">4/27 (일) 10:00</div>
+            <div style="font-size:11px;font-weight:700;color:#5B21B6;margin-top:2px;">40분 × 1회 (통합)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 영향 안내 -->
+      <div style="padding:10px 12px;background:#fff;border-radius:8px;border:1px solid #DDD6FE;font-size:11px;color:var(--gray-500);line-height:1.6;">
+        ✓ 회차 카운트: 통합 후 <strong style="color:var(--navy);">2회 차감</strong> (원 회차 수 보존)<br>
+        ✓ 결제 금액: <strong style="color:var(--navy);">변동 없음</strong><br>
+        ✗ 통합 후 결강 시 한 번에 2회 차감될 수 있어요
+      </div>
+    </div>`,
+    actions: `<button onclick="rejectAdjustment('MERGE')" class="btn-secondary" style="flex:1;">거절</button>
+              <button onclick="acceptAdjustment('MERGE')" class="btn-primary" style="flex:1.4;background:#7C3AED;">통합 수락</button>`
+  },
+  split_proposed: {
+    label: '회차 분할 제안',
+    badge: '<span class="badge" style="font-size:14px;padding:6px 16px;background:#EDE9FE;color:#5B21B6;">✂ 분할 제안 도착</span>',
+    session: '6/8회',
+    message: `<div style="padding:16px;background:#F5F3FF;border-radius:12px;border:1.5px solid #C4B5FD;">
+      <div style="font-size:13px;font-weight:700;color:#5B21B6;margin-bottom:8px;">코치님이 회차 분할을 제안했어요</div>
+      <div style="font-size:12px;color:#6D28D9;line-height:1.6;margin-bottom:12px;">한 회를 짧게 두 번 나눠서 진행하면 일정이 더 유연해져요.<br>시간 합계와 결제 금액은 동일합니다.</div>
+
+      <!-- 변경 미리보기 -->
+      <div style="padding:14px;background:#fff;border-radius:10px;border:1px solid #DDD6FE;margin-bottom:10px;">
+        <div style="font-size:11px;color:var(--gray-400);margin-bottom:8px;">변경 미리보기</div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;">
+          <div style="text-align:center;">
+            <div style="font-size:11px;color:var(--gray-400);text-decoration:line-through;">4/13 (일) 10:00</div>
+            <div style="font-size:10px;color:var(--gray-400);margin-top:2px;">40분 × 1회</div>
+          </div>
+          <span style="font-size:18px;color:#5B21B6;">→</span>
+          <div style="text-align:center;">
+            <div style="font-size:13px;font-weight:800;color:#5B21B6;">4/22 (화) 14:00</div>
+            <div style="font-size:13px;font-weight:800;color:#5B21B6;">4/24 (목) 14:00</div>
+            <div style="font-size:11px;font-weight:700;color:#5B21B6;margin-top:2px;">20분 × 2회 (분할)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 영향 안내 -->
+      <div style="padding:10px 12px;background:#fff;border-radius:8px;border:1px solid #DDD6FE;font-size:11px;color:var(--gray-500);line-height:1.6;">
+        ✓ 회차 카운트: 분할 후 <strong style="color:var(--navy);">1회 차감</strong> (그룹 합계 = 1)<br>
+        ✓ 결제 금액: <strong style="color:var(--navy);">변동 없음</strong><br>
+        ✗ 분할 회차 중 한 건 결강 시 잔여 회차 진행 정책은 결강 정책에 따름
+      </div>
+    </div>`,
+    actions: `<button onclick="rejectAdjustment('SPLIT')" class="btn-secondary" style="flex:1;">거절</button>
+              <button onclick="acceptAdjustment('SPLIT')" class="btn-primary" style="flex:1.4;background:#7C3AED;">분할 수락</button>`
+  },
+  merge_confirmed: {
+    label: '통합 회차 확정',
+    badge: '<span class="badge" style="font-size:14px;padding:6px 16px;background:#EDE9FE;color:#5B21B6;">🔗 통합 회차</span>',
+    session: '6/8회 (통합 +2)',
+    message: `<div style="padding:16px;background:#F5F3FF;border-radius:12px;border:1.5px solid #C4B5FD;">
+      <div style="font-size:13px;font-weight:700;color:#5B21B6;margin-bottom:6px;">통합 회차로 확정되었습니다</div>
+      <div style="font-size:13px;color:#6D28D9;line-height:1.6;margin-bottom:12px;">원 회차 2건이 한 번의 긴 레슨으로 묶였어요.</div>
+      <div style="padding:14px;background:#fff;border-radius:10px;border:1px solid #DDD6FE;margin-bottom:10px;">
+        <div style="font-size:14px;font-weight:800;color:var(--navy);text-align:center;">📅 4/27 (일) 10:00 · 40분</div>
+        <div style="font-size:11px;color:var(--gray-400);text-align:center;margin-top:6px;">통합된 원 회차</div>
+        <div style="margin-top:8px;display:flex;flex-direction:column;gap:4px;">
+          <div style="display:flex;justify-content:space-between;padding:6px 10px;background:#F5F3FF;border-radius:6px;font-size:11px;color:#5B21B6;"><span>원 회차 1</span><span style="text-decoration:line-through;color:var(--gray-400);">4/13 (일) 09:30 · 20분</span></div>
+          <div style="display:flex;justify-content:space-between;padding:6px 10px;background:#F5F3FF;border-radius:6px;font-size:11px;color:#5B21B6;"><span>원 회차 2</span><span style="text-decoration:line-through;color:var(--gray-400);">4/20 (일) 09:30 · 20분</span></div>
+        </div>
+      </div>
+      <div style="padding:10px 12px;background:#fff;border-radius:8px;border:1px solid #DDD6FE;font-size:11px;color:var(--gray-500);line-height:1.6;">
+        💡 회차 카운트: 2회 차감 · 결제 변동 없음
+      </div>
+    </div>`,
+    actions: `<a href="../flow4-chat/4-2-chat.html" class="btn-secondary" style="flex:1;display:block;text-align:center;text-decoration:none;line-height:48px;height:auto;">코치에게 문의</a>
+              <a href="6-5-booking-list.html" class="btn-primary" style="flex:1;display:block;text-align:center;text-decoration:none;line-height:52px;">목록으로</a>`
+  },
+  split_confirmed: {
+    label: '분할 회차 확정',
+    badge: '<span class="badge" style="font-size:14px;padding:6px 16px;background:#EDE9FE;color:#5B21B6;">✂ 분할 회차</span>',
+    session: '6/8회 (분할 1/2)',
+    message: `<div style="padding:16px;background:#F5F3FF;border-radius:12px;border:1.5px solid #C4B5FD;">
+      <div style="font-size:13px;font-weight:700;color:#5B21B6;margin-bottom:6px;">분할 회차로 확정되었습니다</div>
+      <div style="font-size:13px;color:#6D28D9;line-height:1.6;margin-bottom:12px;">한 회차가 두 번의 짧은 레슨으로 나뉘었어요.</div>
+      <div style="padding:14px;background:#fff;border-radius:10px;border:1px solid #DDD6FE;margin-bottom:10px;">
+        <div style="font-size:11px;color:var(--gray-400);text-align:center;margin-bottom:6px;text-decoration:line-through;">원 회차: 4/13 (일) 10:00 · 40분</div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <div style="padding:10px;background:#F5F3FF;border-radius:8px;border:1px solid #DDD6FE;text-align:center;">
+            <div style="font-size:13px;font-weight:800;color:#5B21B6;">📅 4/22 (화) 14:00 · 20분</div>
+            <div style="font-size:10px;color:var(--gray-400);margin-top:2px;">분할 1/2 (현재 화면)</div>
+          </div>
+          <div style="padding:10px;background:#fff;border-radius:8px;border:1px dashed #DDD6FE;text-align:center;">
+            <div style="font-size:12px;font-weight:600;color:var(--gray-500);">📅 4/24 (목) 14:00 · 20분</div>
+            <div style="font-size:10px;color:var(--gray-400);margin-top:2px;">분할 2/2 (같은 그룹)</div>
+          </div>
+        </div>
+      </div>
+      <div style="padding:10px 12px;background:#fff;border-radius:8px;border:1px solid #DDD6FE;font-size:11px;color:var(--gray-500);line-height:1.6;">
+        💡 회차 카운트: 1회 차감 (그룹 합계 = 1) · 결제 변동 없음
+      </div>
+    </div>`,
+    actions: `<a href="../flow4-chat/4-2-chat.html" class="btn-secondary" style="flex:1;display:block;text-align:center;text-decoration:none;line-height:48px;height:auto;">코치에게 문의</a>
+              <a href="6-5-booking-list.html" class="btn-primary" style="flex:1;display:block;text-align:center;text-decoration:none;line-height:52px;">목록으로</a>`
+  },
   reschedule_confirmed: {
     label: '변경 확정',
     badge: '<span class="badge" style="font-size:14px;padding:6px 16px;background:#FFF7ED;color:#EA580C;">🔄 변경 확정</span>',
@@ -596,6 +728,28 @@ const STATUS_HISTORY_DATA = {
   rejected: [
     { time: '오늘 11:30', actor: 'coach', action: '레슨 신청 거절', detail: '사유: 시간대 충돌' },
     { time: '오늘 10:00', actor: 'student', action: '레슨 신청', detail: '' }
+  ],
+  merge_proposed: [
+    { time: '오늘 14:00', actor: 'coach', action: '회차 통합 제안', detail: '20분 × 2회 → 40분 × 1회 (FR-14m)' },
+    { time: '4/20 09:30', actor: 'coach', action: '결강 처리', detail: '사유: 코치 사정' },
+    { time: '4/13 09:30', actor: 'coach', action: '결강 처리', detail: '사유: 수강생 사전 통보' }
+  ],
+  split_proposed: [
+    { time: '오늘 14:00', actor: 'coach', action: '회차 분할 제안', detail: '40분 × 1회 → 20분 × 2회 (FR-14m)' },
+    { time: '4/13 11:00', actor: 'coach', action: '결강 처리', detail: '사유: 코치 사정' },
+    { time: '4/8 14:00', actor: 'coach', action: '레슨 확정', detail: '' }
+  ],
+  merge_confirmed: [
+    { time: '어제 17:30', actor: 'student', action: '통합 수락', detail: '4/27 (일) 10:00 · 40분' },
+    { time: '어제 14:00', actor: 'coach', action: '회차 통합 제안', detail: '원 회차 2건 통합' },
+    { time: '4/20 09:30', actor: 'coach', action: '결강 처리', detail: '사유: 코치 사정' },
+    { time: '4/13 09:30', actor: 'coach', action: '결강 처리', detail: '사유: 수강생 사전 통보' }
+  ],
+  split_confirmed: [
+    { time: '어제 17:30', actor: 'student', action: '분할 수락', detail: '4/22 14:00 + 4/24 14:00 (각 20분)' },
+    { time: '어제 14:00', actor: 'coach', action: '회차 분할 제안', detail: '40분 1회 → 20분 2회' },
+    { time: '4/13 11:00', actor: 'coach', action: '결강 처리', detail: '사유: 코치 사정' },
+    { time: '4/8 14:00', actor: 'coach', action: '레슨 확정', detail: '' }
   ]
 };
 const ACTOR_INFO = {

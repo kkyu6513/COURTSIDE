@@ -1051,6 +1051,31 @@
 
 **API**: `PUT /api/bookings/:id/accept-proposal { selectedSlotId }` [인증: 수강생]
 - 선택한 슬롯으로 Booking 일정 확정
+
+### 회차 통합/분할 제안 수신 (수강생) — FR-14m
+
+> 코치가 보강 처리 시 회차 통합/분할을 제안한 경우, 수강생이 수락/거절을 선택하는 UI.
+
+**진입 경로**: 카카오 알림톡 (MAKEUP_MERGE_PROPOSED / MAKEUP_SPLIT_PROPOSED) → 앱 딥링크 → 6-6 신청 상세 (status=merge_proposed / split_proposed)
+
+| 요소 | 동작 | 로직 | 이동 |
+|------|------|------|------|
+| 제안 배지 | 표시 | "🔗 통합 제안 도착" (보라) / "✂ 분할 제안 도착" (보라) | |
+| 변경 미리보기 박스 | 표시 | 원 회차 N건(취소선) → 통합/분할 후 회차 (강조) + "20분 × N회 → 40분 × 1회" 형식 | |
+| 영향 안내 | 표시 | 회차 카운트 변동(통합=N회 차감, 분할=그룹 합 1회) + 결제 변동 없음 + 결강 시 정책 안내 | |
+| 거절 | 클릭 | confirm() → `PUT /api/bookings/:id/adjustment/reject { type }` → 통합 거절 시 status=MAKEUP_REQUESTED 복귀, 분할 거절 시 status=MAKEUP_PENDING 복귀 + 코치 알림 | → 6-6 (해당 상태) |
+| 통합/분할 수락 | 클릭 | `PUT /api/bookings/:id/adjustment/accept { type }` → ① 통합: 신규 Booking 생성 (sessionAdjustmentType=MERGE, sessionWeight=N, mergeGroupId=UUID) + 원 회차 N건 mergedIntoBookingId 채우고 status=ABSENT 유지 / ② 분할: 신규 Booking N건 생성 (sessionAdjustmentType=SPLIT, mergeGroupId 공유) + 원 회차 1건 mergedIntoBookingId 채우고 status=CANCELLED → ③ 코치 알림톡 (MAKEUP_ADJUSTMENT_CONFIRMED) → ④ 화면 이동 | → 6-6 (merge_confirmed/split_confirmed) |
+
+### 회차 통합/분할 확정 표시 (수강생/코치 공통) — FR-14m
+
+| 요소 | 동작 | 로직 |
+|------|------|------|
+| 확정 배지 | 표시 | "🔗 통합 회차" (보라) / "✂ 분할 회차" (보라) |
+| 회차 라벨 | 표시 | 통합: "N/M회 (통합 +N)" — sessionWeight만큼 가중 표시 / 분할: "N/M회 (분할 1/N)" — 같은 그룹 내 순번 |
+| 레슨 시간 라벨 | 표시 | 통합: "40분 (통합)" / 분할: "20분 (분할 1/2)" |
+| 통합 그룹 박스 | 표시 | (통합 시) "통합된 원 회차" 라벨 + 원 회차 N건 일정(취소선) 리스트 |
+| 분할 그룹 박스 | 표시 | (분할 시) 원 회차(취소선) + 같은 mergeGroupId의 분할 회차 리스트 (현재 회차 강조 + 다른 회차 점선) |
+| 정책 안내 푸터 | 표시 | "회차 카운트: N회 차감 · 결제 변동 없음" 짧은 안내
 - 전체 status = CONFIRMED
 - 코치에게 RESCHEDULE_ACCEPTED 알림톡 발송
 - 해당 슬롯 Schedule isBlocked = true
