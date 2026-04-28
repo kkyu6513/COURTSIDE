@@ -71,6 +71,10 @@
         <div class="stat-value" style="color:var(--gray-400);">12</div>
         <div class="stat-label">만료/거절</div>
       </div>
+      <div class="stat-card" style="background:#F5F3FF;border:1px solid #C4B5FD;">
+        <div class="stat-value" style="color:#5B21B6;">5</div>
+        <div class="stat-label" style="color:#5B21B6;">통합/분할 제안 (FR-14m)</div>
+      </div>
     </div>
 
     <!-- 탭 -->
@@ -78,6 +82,7 @@
       <div class="tab-item active" onclick="switchProposalTab('all')">전체 제안</div>
       <div class="tab-item" onclick="switchProposalTab('reschedule')">변경요청 제안</div>
       <div class="tab-item" onclick="switchProposalTab('makeup')">보강 제안</div>
+      <div class="tab-item" onclick="switchProposalTab('adjustment')">통합/분할 제안</div>
       <div class="tab-item" onclick="switchProposalTab('history')">제안 이력</div>
     </div>
 
@@ -195,6 +200,51 @@
             <td style="font-size:12px;color:var(--gray-400);">4/22 18:00</td>
             <td><span class="badge" style="background:var(--gray-100);color:var(--gray-500);">응답 대기</span></td>
             <td><span style="font-weight:600;color:#92400E;">5:18:00</span></td>
+            <td>
+              <div style="display:flex;gap:6px;">
+                <button class="btn-sm" style="background:var(--green);color:#fff;">상세</button>
+                <button class="btn-sm" style="background:var(--gray-100);color:var(--gray-500);">강제 만료</button>
+              </div>
+            </td>
+          </tr>
+          <!-- 회차 통합 제안 — 응답 대기 (FR-14m) -->
+          <tr style="background:#F5F3FF;">
+            <td><span class="badge" style="background:#EDE9FE;color:#5B21B6;">🔗 통합</span></td>
+            <td style="font-weight:600;">김민수</td>
+            <td>이수진</td>
+            <td style="font-size:12px;color:var(--gray-400);">4/13 + 4/20 결강 (각 20분)</td>
+            <td>
+              <div style="display:flex;flex-wrap:wrap;gap:2px;align-items:center;">
+                <span class="slot-tag" style="background:#EDE9FE;color:#5B21B6;border:1px solid #C4B5FD;">4/27 (일) 10:00</span>
+                <span style="font-size:10px;color:#5B21B6;font-weight:700;background:#fff;padding:2px 5px;border-radius:4px;border:1px solid #C4B5FD;">40분 × 1회</span>
+              </div>
+            </td>
+            <td style="font-size:12px;color:var(--gray-400);">4/24 14:00</td>
+            <td><span class="badge" style="background:var(--gray-100);color:var(--gray-500);">응답 대기</span></td>
+            <td><span style="font-weight:600;color:#92400E;">9:45:00</span></td>
+            <td>
+              <div style="display:flex;gap:6px;">
+                <button class="btn-sm" style="background:var(--green);color:#fff;">상세</button>
+                <button class="btn-sm" style="background:var(--gray-100);color:var(--gray-500);">강제 만료</button>
+              </div>
+            </td>
+          </tr>
+          <!-- 회차 분할 제안 — 응답 대기 (FR-14m) -->
+          <tr style="background:#F5F3FF;">
+            <td><span class="badge" style="background:#EDE9FE;color:#5B21B6;">✂ 분할</span></td>
+            <td style="font-weight:600;">김민수</td>
+            <td>박지수</td>
+            <td style="font-size:12px;color:var(--gray-400);">4/13 (일) 10:00 · 40분</td>
+            <td>
+              <div style="display:flex;flex-wrap:wrap;gap:2px;align-items:center;">
+                <span class="slot-tag" style="background:#EDE9FE;color:#5B21B6;border:1px solid #C4B5FD;">4/22 (화) 14:00</span>
+                <span class="slot-tag" style="background:#EDE9FE;color:#5B21B6;border:1px solid #C4B5FD;">4/24 (목) 14:00</span>
+                <span style="font-size:10px;color:#5B21B6;font-weight:700;background:#fff;padding:2px 5px;border-radius:4px;border:1px solid #C4B5FD;">20분 × 2회</span>
+              </div>
+            </td>
+            <td style="font-size:12px;color:var(--gray-400);">4/24 14:30</td>
+            <td><span class="badge" style="background:var(--gray-100);color:var(--gray-500);">응답 대기</span></td>
+            <td><span style="font-weight:600;color:#92400E;">10:12:00</span></td>
             <td>
               <div style="display:flex;gap:6px;">
                 <button class="btn-sm" style="background:var(--green);color:#fff;">상세</button>

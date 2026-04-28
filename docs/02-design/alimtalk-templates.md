@@ -43,6 +43,9 @@
 | 16 | SUBSCRIPTION_EXPIRE | 구독 | 코치 | 구독 만료 시 | 항상 |
 | 17 | VERIFY_APPROVED | 검증 | 코치 | 검증 승인 시 | 항상 |
 | 18 | VERIFY_REJECTED | 검증 | 코치 | 검증 반려 시 | 항상 |
+| 19 | MAKEUP_MERGE_PROPOSED | 회차 조정 | 수강생 | 코치 회차 통합 제안 시 (FR-14m) | bookingAlert |
+| 20 | MAKEUP_SPLIT_PROPOSED | 회차 조정 | 수강생 | 코치 회차 분할 제안 시 (FR-14m) | bookingAlert |
+| 21 | MAKEUP_ADJUSTMENT_CONFIRMED | 회차 조정 | 코치 | 수강생 통합/분할 수락 시 (FR-14m) | bookingAlert |
 
 ---
 
@@ -558,6 +561,110 @@ PRO 플랜을 다시 구독하시면 모든 기능을 이용하실 수 있어요
 
 ---
 
+### 3.7 회차 조정 카테고리 (FR-14m)
+
+#### MAKEUP_MERGE_PROPOSED — 수강생에게 발송
+
+```
+[COURTSIDE] 코치님이 회차 통합을 제안했어요
+
+#{수강생명}님, #{코치명} 코치님이 짧은 회차를 한 번에 진행하는
+"회차 통합"을 제안했어요.
+
+■ 원 회차: #{원회차요약} (예: 20분 × 2회)
+■ 통합 후: #{통합후일정} #{통합후시간} (예: 4/27 (일) 10:00 · 40분)
+
+✓ 회차 카운트: #{차감회차}회 차감 (원 회차 수 보존)
+✓ 결제 금액: 변동 없음
+
+수락하면 일정이 확정되고, 거절하면 원래 회차가 유지됩니다.
+응답 만료까지 #{홀드남은시간} 남았어요.
+
+[제안 확인하기]
+```
+
+**변수**:
+| 변수 | 출처 | 예시 |
+|------|------|------|
+| #{수강생명} | User.name | 박지수 |
+| #{코치명} | CoachProfile.User.name | 김민수 |
+| #{원회차요약} | mergedFromBookings 합산 | 20분 × 2회 |
+| #{통합후일정} | 새 Booking.startDate | 4/27 (일) |
+| #{통합후시간} | 새 Booking.startTime + lessonDuration | 10:00 · 40분 |
+| #{차감회차} | 새 Booking.sessionWeight | 2 |
+| #{홀드남은시간} | ScheduleHold.expiresAt - now | 11시간 30분 |
+
+**버튼**: 웹링크 → `/bookings/{bookingId}?status=merge_proposed` (앱 딥링크)
+
+---
+
+#### MAKEUP_SPLIT_PROPOSED — 수강생에게 발송
+
+```
+[COURTSIDE] 코치님이 회차 분할을 제안했어요
+
+#{수강생명}님, #{코치명} 코치님이 한 회를 짧게 여러 번 나눠
+진행하는 "회차 분할"을 제안했어요.
+
+■ 원 회차: #{원회차일정} #{원회차시간} (예: 4/13 (일) 10:00 · 40분)
+■ 분할 후: #{분할후일정요약} (예: 4/22 + 4/24 각 20분)
+
+✓ 회차 카운트: 1회 차감 (그룹 합계 = 1)
+✓ 결제 금액: 변동 없음
+
+수락하면 일정이 확정되고, 거절하면 원래 회차가 유지됩니다.
+응답 만료까지 #{홀드남은시간} 남았어요.
+
+[제안 확인하기]
+```
+
+**변수**:
+| 변수 | 출처 | 예시 |
+|------|------|------|
+| #{수강생명} | User.name | 박지수 |
+| #{코치명} | CoachProfile.User.name | 김민수 |
+| #{원회차일정} | 원 Booking.startDate | 4/13 (일) |
+| #{원회차시간} | 원 Booking.startTime + lessonDuration | 10:00 · 40분 |
+| #{분할후일정요약} | 신규 Booking N건 요약 | 4/22 + 4/24 각 20분 |
+| #{홀드남은시간} | ScheduleHold.expiresAt - now | 11시간 30분 |
+
+**버튼**: 웹링크 → `/bookings/{bookingId}?status=split_proposed` (앱 딥링크)
+
+---
+
+#### MAKEUP_ADJUSTMENT_CONFIRMED — 코치에게 발송
+
+```
+[COURTSIDE] 회차 #{조정유형}이 확정되었어요
+
+#{코치명} 코치님, #{수강생명} 수강생이 회차 #{조정유형}을 수락했습니다.
+
+■ 수강생: #{수강생명}
+■ 조정 유형: #{조정유형} (#{원회차수}회 → #{조정후회차수}회)
+■ 확정 일정: #{확정일정요약}
+■ 회차 카운트: #{차감회차}회 차감
+■ 결제 변동: 없음
+
+조정된 일정에 맞춰 레슨을 진행해 주세요.
+
+[스케줄 확인하기]
+```
+
+**변수**:
+| 변수 | 출처 | 예시 |
+|------|------|------|
+| #{코치명} | CoachProfile.User.name | 김민수 |
+| #{수강생명} | User.name | 박지수 |
+| #{조정유형} | sessionAdjustmentType | 통합 / 분할 |
+| #{원회차수} | mergeGroup 원본 회차 수 | 2 |
+| #{조정후회차수} | mergeGroup 조정 후 회차 수 | 1 |
+| #{확정일정요약} | Booking[].startDate + startTime | 4/27 (일) 10:00 · 40분 |
+| #{차감회차} | Booking.sessionWeight 합 | 2 |
+
+**버튼**: 웹링크 → `/coach/schedule?date={confirmedDate}` (앱 딥링크)
+
+---
+
 ## 4. 카카오 알림톡 연동 스펙
 
 ### 4.1 API 정보
@@ -602,3 +709,4 @@ PRO 플랜을 다시 구독하시면 모든 기능을 이용하실 수 있어요
 |---------|------|---------|
 | 1.0 | 2026-04-13 | 초안 — 17개 알림톡 템플릿 정의 (예약 4, 레슨 2, 스케줄변경 6, 채팅 1, 구독 2, 검증 2) |
 | 1.1 | 2026-04-13 | RESCHEDULE_COMPLETED 템플릿 추가 (수강생에게 변경 확정 알림) — 18개 |
+| 1.2 | 2026-04-28 | FR-14m 회차 통합/분할 템플릿 3종 추가 (MAKEUP_MERGE_PROPOSED, MAKEUP_SPLIT_PROPOSED, MAKEUP_ADJUSTMENT_CONFIRMED) — 21개 |

@@ -134,6 +134,7 @@
             <span onclick="toggleFilter(this,'absent')" class="f-chip" style="padding:5px 10px;border-radius:20px;background:var(--gray-100);color:var(--gray-500);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;">결강 1</span>
             <span onclick="toggleFilter(this,'makeup')" class="f-chip" style="padding:5px 10px;border-radius:20px;background:var(--gray-100);color:var(--gray-500);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;">보강 2</span>
             <span onclick="toggleFilter(this,'makeup_requested')" class="f-chip" style="padding:5px 10px;border-radius:20px;background:var(--gray-100);color:var(--gray-500);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;">보강 요청 1</span>
+            <span onclick="toggleFilter(this,'merge_split')" class="f-chip" style="padding:5px 10px;border-radius:20px;background:var(--gray-100);color:var(--gray-500);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;">통합/분할 2</span>
           </div>
 
           <!-- 레슨 신청 (PENDING) — 오늘 신청 들어온 건만 노출 -->
@@ -188,6 +189,14 @@
           <div class="schedule-slot" style="background:#FFF7ED;border:1.5px solid #FDBA74;cursor:pointer;" data-status="makeup_requested" onclick="showLessonDetail('makeup_requested')">
             <div><div class="time" style="color:#EA580C;">17:30</div><div class="student">이수진 · 1:1 · <span style="color:var(--info);font-weight:600;">보강 요청</span></div></div>
             <span class="badge-sm" style="background:#FFF7ED;color:#EA580C;">🙋 보강 요청</span>
+          </div>
+          <div class="schedule-slot" style="background:#F5F3FF;border:1.5px solid #C4B5FD;cursor:pointer;" data-status="merge_split" onclick="showLessonDetail('merge_confirmed')">
+            <div><div class="time" style="color:#5B21B6;">10:00 <span style="font-size:10px;color:#7C3AED;font-weight:700;margin-left:4px;background:#EDE9FE;padding:1px 6px;border-radius:6px;">40분</span></div><div class="student">이수진 · 1:1 · <span style="color:#5B21B6;font-weight:600;">통합 (원 회차 2건)</span></div></div>
+            <span class="badge-sm" style="background:#EDE9FE;color:#5B21B6;">🔗 통합 회차</span>
+          </div>
+          <div class="schedule-slot" style="background:#F5F3FF;border:1.5px solid #C4B5FD;cursor:pointer;" data-status="merge_split" onclick="showLessonDetail('split_confirmed')">
+            <div><div class="time" style="color:#5B21B6;">14:00 <span style="font-size:10px;color:#7C3AED;font-weight:700;margin-left:4px;background:#EDE9FE;padding:1px 6px;border-radius:6px;">20분 · 1/2</span></div><div class="student">박지수 · 1:1 · <span style="color:#5B21B6;font-weight:600;">분할 (그룹 2건 중 1)</span></div></div>
+            <span class="badge-sm" style="background:#EDE9FE;color:#5B21B6;">✂ 분할 회차</span>
           </div>
           <div class="schedule-slot" style="background:#fff;border:1px solid var(--gray-100);cursor:pointer;" data-status="upcoming" onclick="showLessonDetail('upcoming')">
             <div><div class="time">18:00</div><div class="student">한지우 · 그룹 · <span style="color:var(--info);font-weight:600;">1/4회</span> · <span style="color:var(--error);font-weight:600;">미결제</span></div></div>
