@@ -594,7 +594,7 @@ COMPLETED (완료)
 오늘 레슨 목록 표시 상태:
   - 🎾 진행중 (코랄/빨강): status=CONFIRMED이고 현재 시간이 레슨 시작~종료 시간 범위 내인 건
     판정: now >= startTime AND now < endTime
-    endTime = startTime + lessonDurationMinutes (기본 60분)
+    endTime = startTime + lessonDurationMinutes (Booking.lessonDuration → MIN_20=20분 / MIN_30=30분 / MIN_40=40분)
   - 📌 레슨 예정 (보라색): status=CONFIRMED이고 오늘 날짜이며 시작 시간이 현재 시간 이후인 건
   - 🔄 변경 요청 (주황색): 오늘 레슨 중 rescheduleStatus가 PENDING 또는 PROPOSED인 건
     변경 요청이 있는 레슨도 오늘 레슨 목록에 함께 표시
@@ -608,7 +608,15 @@ COMPLETED (완료)
 
 레슨 상세 풀팝업:
   - 레슨 목표 항목은 표시하지 않음
-  - 레슨 정보 표시 항목: 레슨 유형 / 레슨 형태 / 현재 회차 / 결제 상태 / 다음 결제일
+  - 레슨 정보 표시 항목: 레슨 유형 / 레슨 형태 / 레슨 시간 / 현재 회차 / 결제 상태 / 다음 결제일
+
+  레슨 시간 정책:
+    값: 20분 / 30분 / 40분 (LessonDuration enum: MIN_20 / MIN_30 / MIN_40)
+    데이터: Booking.lessonDuration
+    표시 형식: "{N}분" (예: "30분")
+    슬롯 환산: 10분 슬롯 단위로 환산 — MIN_20=2슬롯 / MIN_30=3슬롯 / MIN_40=4슬롯
+    적용 범위: 정규레슨/쿠폰레슨 모두 동일. 보강 레슨도 원 예약의 lessonDuration을 그대로 승계
+    종료 시간 산출: endTime = startTime + lessonDuration (진행중 판정 및 슬롯 점유 계산에 사용)
 
   현재 회차 정책:
     표시 형식: "N/M회"

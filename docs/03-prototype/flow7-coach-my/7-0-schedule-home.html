@@ -1935,7 +1935,7 @@ function showLessonDetail(status) {
   const data = {
     makeup_requested: {
       name: '이수진', age: '30대', gender: '여성', ntrp: 'NTRP 2.5',
-      type: '정규레슨', format: '1:1 개인',
+      type: '정규레슨', format: '1:1 개인', duration: '30분',
       schedule: [{ day: '일', date: '4/13', slot: 'T1000', label: '10:00' }],
       session: '4/8회', lastPayment: '3/18', nextPayment: '4/18',
       paymentStatus: 'paid', paid: true, price: '55,000원',
@@ -1946,7 +1946,7 @@ function showLessonDetail(status) {
     },
     absent: {
       name: '강민서', age: '20대', gender: '여성', ntrp: 'NTRP 2.0',
-      type: '정규레슨', format: '그룹 (3인)',
+      type: '정규레슨', format: '그룹 (3인)', duration: '40분',
       schedule: [{ day: '일', date: '4/13', slot: 'T0930', label: '09:30' }],
       session: '3/8회', lastPayment: '3/15', nextPayment: '4/15',
       paymentStatus: 'paid', paid: true, price: '50,000원',
@@ -1957,7 +1957,7 @@ function showLessonDetail(status) {
     },
     makeup: {
       name: '강민서', age: '20대', gender: '여성', ntrp: 'NTRP 2.0',
-      type: '정규레슨', format: '그룹 (3인)',
+      type: '정규레슨', format: '그룹 (3인)', duration: '40분',
       schedule: [{ day: '일', date: '4/13', slot: 'T1630', label: '16:30' }],
       session: '보강', lastPayment: '3/15', nextPayment: '4/15',
       paymentStatus: 'paid', paid: true, price: '50,000원',
@@ -1969,7 +1969,7 @@ function showLessonDetail(status) {
     },
     makeup_confirmed: {
       name: '김태호', age: '30대', gender: '남성', ntrp: 'NTRP 3.5',
-      type: '정규레슨', format: '1:1 개인',
+      type: '정규레슨', format: '1:1 개인', duration: '30분',
       schedule: [{ day: '수', date: '4/16', slot: 'T1000', label: '10:00' }],
       session: '보강', lastPayment: '3/20', nextPayment: '4/20',
       paymentStatus: 'paid', paid: true, price: '60,000원',
@@ -1980,7 +1980,7 @@ function showLessonDetail(status) {
     },
     inprogress: {
       name: '이민호', age: '30대', gender: '남성', ntrp: 'NTRP 4.0',
-      type: '정규레슨', format: '1:1 개인', goal: '발리 연습',
+      type: '정규레슨', format: '1:1 개인', duration: '40분', goal: '발리 연습',
       schedule: [{ day: '일', date: '4/13', slot: 'T1000', label: '10:00' }],
       session: '6/8회', lastPayment: '3/20', nextPayment: '4/20',
       paymentStatus: 'paid', paid: true, price: '70,000원',
@@ -1989,7 +1989,7 @@ function showLessonDetail(status) {
     },
     completed: {
       name: '홍길동', age: '30대', gender: '남성', ntrp: 'NTRP 3.0',
-      type: '정규레슨', format: '1:1 개인', goal: '포핸드 교정',
+      type: '정규레슨', format: '1:1 개인', duration: '30분', goal: '포핸드 교정',
       schedule: [{ day: '일', date: '4/13', slot: 'T0900', label: '09:00' }],
       session: '5/8회', lastPayment: '3/20', nextPayment: '4/20',
       paymentStatus: 'paid', paid: true, price: '50,000원',
@@ -1998,7 +1998,7 @@ function showLessonDetail(status) {
     },
     reschedule: {
       name: '박지수', age: '20대', gender: '여성', ntrp: 'NTRP 3.0',
-      type: '정규레슨', format: '1:1 개인',
+      type: '정규레슨', format: '1:1 개인', duration: '20분',
       schedule: [{ day: '일', date: '4/13', slot: 'T1600', label: '16:00' }],
       session: '3/8회', lastPayment: '3/25', nextPayment: '4/25',
       paymentStatus: 'paid', paid: true, price: '60,000원',
@@ -2011,7 +2011,7 @@ function showLessonDetail(status) {
     },
     pending: {
       name: '김영희 외 2인', age: '20대', gender: '여성', ntrp: 'NTRP 2.5',
-      type: '정규레슨', format: '그룹 (3인)', weeklyCount: '주 2회', goal: '서브 연습',
+      type: '정규레슨', format: '그룹 (3인)', duration: '40분', weeklyCount: '주 2회', goal: '서브 연습',
       schedule: [
         { day: '화', date: '4/15', slot: 'T1400', label: '14:00' },
         { day: '목', date: '4/17', slot: 'T1400', label: '14:00' }
@@ -2023,7 +2023,7 @@ function showLessonDetail(status) {
     },
     'pending-conflict': {
       name: '박지수', age: '20대', gender: '여성', ntrp: 'NTRP 3.0',
-      type: '정규레슨', format: '1:1 개인', weeklyCount: '주 3회', goal: '포핸드 교정',
+      type: '정규레슨', format: '1:1 개인', duration: '20분', weeklyCount: '주 3회', goal: '포핸드 교정',
       schedule: [
         { day: '화', date: '4/15', label: '10:00', status: 'available' },
         { day: '목', date: '4/17', label: '10:00', status: 'conflict', conflictWith: '이민호 레슨', alternatives: ['목 14:00', '수 10:00', '목 11:00'] },
@@ -2036,7 +2036,7 @@ function showLessonDetail(status) {
     },
     upcoming: {
       name: '김영희', age: '20대', gender: '여성', ntrp: 'NTRP 2.5',
-      type: '정규레슨', format: '1:1 개인', goal: '서브 연습',
+      type: '정규레슨', format: '1:1 개인', duration: '30분', goal: '서브 연습',
       schedule: [
         { day: '일', date: '4/13', slot: 'T1400', label: '14:00' }
       ],
@@ -2048,7 +2048,7 @@ function showLessonDetail(status) {
     },
     reschedule_completed: {
       name: '한지원', age: '30대', gender: '여성', ntrp: 'NTRP 3.0',
-      type: '정규레슨', format: '1:1 개인', goal: '발리 교정',
+      type: '정규레슨', format: '1:1 개인', duration: '20분', goal: '발리 교정',
       schedule: [
         { day: '일', date: '4/13', slot: 'T1600', label: '16:00' }
       ],
@@ -2062,7 +2062,7 @@ function showLessonDetail(status) {
     },
     confirmed: {
       name: '이철수', age: '40대', gender: '남성', ntrp: 'NTRP 3.5',
-      type: '쿠폰레슨', format: '1:1 개인', goal: '백핸드 교정',
+      type: '쿠폰레슨', format: '1:1 개인', duration: '40분', goal: '백핸드 교정',
       session: '3/10회', lastPayment: '4/1', nextPayment: null,
       schedule: [
         { day: '월', date: '4/14', slot: 'T1800', label: '18:00' },
@@ -2115,6 +2115,7 @@ function showLessonDetail(status) {
       <div style="display:flex;flex-direction:column;">
         <div style="display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid var(--gray-100);"><span style="font-size:12px;color:var(--gray-400);">레슨 유형</span><span style="font-size:12px;font-weight:600;color:var(--navy);">${d.type}</span></div>
         <div style="display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid var(--gray-100);"><span style="font-size:12px;color:var(--gray-400);">레슨 형태</span><span style="font-size:12px;font-weight:600;color:var(--navy);">${d.format}</span></div>
+        ${d.duration ? `<div style="display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid var(--gray-100);"><span style="font-size:12px;color:var(--gray-400);">레슨 시간</span><span style="font-size:12px;font-weight:600;color:var(--navy);">${d.duration}</span></div>` : ''}
         ${weeklyInfo}
         <div style="display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid var(--gray-100);"><span style="font-size:12px;color:var(--gray-400);">현재 회차</span><span style="font-size:12px;font-weight:600;color:var(--navy);">${d.session}</span></div>
         <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-top:1px solid var(--gray-100);"><span style="font-size:12px;color:var(--gray-400);">결제</span><div style="display:flex;align-items:center;gap:6px;"><span style="font-size:12px;font-weight:600;color:${d.paid ? 'var(--navy)' : 'var(--coral)'};">${d.price}</span>${paymentBadge}</div></div>

@@ -73,6 +73,12 @@ enum LessonFormat {
   GROUP       // 그룹 (2~4인)
 }
 
+enum LessonDuration {
+  MIN_20  // 20분 (10분 슬롯 × 2)
+  MIN_30  // 30분 (10분 슬롯 × 3)
+  MIN_40  // 40분 (10분 슬롯 × 4)
+}
+
 enum BookingStatus {
   PENDING
   ON_HOLD
@@ -316,6 +322,7 @@ Response: { "images": [
 | coachId | Int | FK → User | 코치 FK | FR-05b |
 | lessonType | LessonType | Not Null | 레슨 유형 (REGULAR / COUPON) | FR-05b |
 | lessonFormat | LessonFormat | Not Null | 레슨 형태 (INDIVIDUAL / GROUP) | FR-05b |
+| lessonDuration | LessonDuration | Not Null, Default: MIN_30 | 레슨 시간 (MIN_20 / MIN_30 / MIN_40). 10분 슬롯 단위로 환산하여 BookingSchedule slot 점유 수 결정 | FR-05b |
 | status | BookingStatus | Not Null, Default: PENDING | 예약 상태 | FR-05c |
 | rejectionReason | String? | Nullable | 거절 사유 (거절 시 필수) | FR-05c |
 | holdReason | String? | Nullable | 보류 사유 (보류 시 필수). 수강생에게 알림톡으로 전달 | FR-05c |
