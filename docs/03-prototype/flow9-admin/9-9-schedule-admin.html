@@ -659,6 +659,58 @@
       </div>
 
       <div class="admin-card">
+        <div class="card-title">회차 통합/분할 정책 (FR-14m)</div>
+        <div style="font-size:12px;color:var(--gray-400);margin:-8px 0 16px;line-height:1.5;">보강 시 짧은 회차 N개를 1회로 통합(예: 20분×2 → 40분×1) 또는 1회를 N개로 분할 제안하는 기능 정책. 시간 합계는 변하지 않으며 결제도 변동 없음.</div>
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <!-- 기능 활성화 -->
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div>
+              <div style="font-size:14px;font-weight:600;color:var(--navy);">회차 통합/분할 기능 활성화</div>
+              <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">off 시 코치 보강 처리에서 통합/분할 토글 자체 비노출 (sessionMergeEnabled)</div>
+            </div>
+            <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+          </div>
+          <div style="height:1px;background:var(--gray-100);"></div>
+
+          <!-- 월 한도 -->
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div>
+              <div style="font-size:14px;font-weight:600;color:var(--navy);">수강생당 월 통합/분할 한도</div>
+              <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">한 수강생에게 월 N회까지 제안 가능 (0=무제한). 한도 도달 시 보강 처리 토글 비활성 (sessionMergePerMonthLimit)</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:14px;color:var(--gray-500);">월</span>
+              <input class="input-field" type="number" value="1" min="0" max="10" style="width:70px;text-align:center;">
+              <span style="font-size:14px;color:var(--gray-500);">회</span>
+            </div>
+          </div>
+          <div style="height:1px;background:var(--gray-100);"></div>
+
+          <!-- 같은 월 회차만 가능 -->
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div>
+              <div style="font-size:14px;font-weight:600;color:var(--navy);">같은 월 회차만 통합 가능</div>
+              <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">on 시 같은 월 안의 회차끼리만 통합/분할. off 시 월 경계 무시 (sessionMergeWithinSameMonth)</div>
+            </div>
+            <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+          </div>
+          <div style="height:1px;background:var(--gray-100);"></div>
+
+          <!-- 그룹 최대 크기 -->
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div>
+              <div style="font-size:14px;font-weight:600;color:var(--navy);">한 번에 통합 가능한 최대 회차 수</div>
+              <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">통합/분할 그룹 크기 상한. 예: 3 → 최대 3회를 1회로 통합 가능 (sessionMergeMaxGroupSize)</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <input class="input-field" type="number" value="3" min="2" max="10" style="width:70px;text-align:center;">
+              <span style="font-size:14px;color:var(--gray-500);">회</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="admin-card">
         <div class="card-title">알림 정책</div>
         <div style="display:flex;flex-direction:column;gap:16px;">
           <div style="display:flex;align-items:center;justify-content:space-between;">

@@ -918,6 +918,75 @@
         </div>
         <textarea id="mkr-etc-input" placeholder="기타 사유를 직접 입력해 주세요" style="display:none;width:100%;height:72px;border-radius:12px;border:1.5px solid var(--green);padding:12px 14px;font-size:13px;font-family:inherit;resize:none;box-sizing:border-box;outline:none;color:var(--navy);background:#F0FDFA;margin-bottom:4px;" onfocus="this.style.borderColor='var(--navy)'" onblur="this.style.borderColor='var(--green)'"></textarea>
 
+        <!-- 회차 통합/분할 토글 (FR-14m) -->
+        <div style="margin-top:14px;padding:14px;border:1.5px solid var(--gray-100);border-radius:12px;background:#fff;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:6px;">
+                <span style="font-size:13px;font-weight:700;color:var(--navy);">🔀 회차 통합/분할 제안</span>
+                <span style="padding:2px 6px;border-radius:6px;background:#FEF3C7;color:#92400E;font-size:10px;font-weight:700;">선택</span>
+              </div>
+              <div style="font-size:11px;color:var(--gray-400);margin-top:4px;line-height:1.5;">짧은 회차 N개를 한 번에(통합) 또는 한 회를 N번 나눠서(분할) 제안. 시간 합계는 동일</div>
+            </div>
+            <label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0;">
+              <input type="checkbox" id="merge-toggle" onchange="onMergeToggleChange()" style="opacity:0;width:0;height:0;">
+              <span id="merge-toggle-track" style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:var(--gray-300);border-radius:24px;transition:0.2s;"></span>
+              <span id="merge-toggle-thumb" style="position:absolute;height:18px;width:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:0.2s;box-shadow:0 1px 3px rgba(0,0,0,0.2);"></span>
+            </label>
+          </div>
+
+          <!-- 통합/분할 옵션 (토글 ON 시 노출) -->
+          <div id="merge-options" style="display:none;margin-top:14px;padding-top:14px;border-top:1px dashed var(--gray-200);">
+            <!-- 라디오 -->
+            <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;">
+              <label style="display:flex;align-items:flex-start;gap:10px;padding:12px;border:1.5px solid var(--gray-100);border-radius:10px;cursor:pointer;background:#fff;" id="merge-opt-merge">
+                <input type="radio" name="merge-type" value="MERGE" onchange="onMergeTypeChange('MERGE')" checked style="margin-top:2px;">
+                <div style="flex:1;">
+                  <div style="font-size:13px;font-weight:700;color:var(--navy);">🔗 통합 (여러 회차 → 1회)</div>
+                  <div style="font-size:11px;color:var(--gray-400);margin-top:2px;">예: 20분 × 2회 → 40분 × 1회</div>
+                </div>
+              </label>
+              <label style="display:flex;align-items:flex-start;gap:10px;padding:12px;border:1.5px solid var(--gray-100);border-radius:10px;cursor:pointer;background:#fff;" id="merge-opt-split">
+                <input type="radio" name="merge-type" value="SPLIT" onchange="onMergeTypeChange('SPLIT')" style="margin-top:2px;">
+                <div style="flex:1;">
+                  <div style="font-size:13px;font-weight:700;color:var(--navy);">✂ 분할 (1회 → 여러 회차)</div>
+                  <div style="font-size:11px;color:var(--gray-400);margin-top:2px;">예: 40분 × 1회 → 20분 × 2회</div>
+                </div>
+              </label>
+            </div>
+
+            <!-- 통합 대상 회차 체크박스 (MERGE 모드) -->
+            <div id="merge-targets-merge" style="margin-bottom:12px;">
+              <div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:8px;">통합 대상 회차 (같은 수강생의 결강된 회차)</div>
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1.5px solid var(--gray-100);border-radius:10px;cursor:pointer;background:#FAFAFA;">
+                  <input type="checkbox" class="merge-target" data-duration="20" checked>
+                  <div style="flex:1;font-size:12px;color:var(--navy);"><strong>4/13 (일) 09:30</strong> · 20분 · 결강 (수강생 사전 통보)</div>
+                </label>
+                <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1.5px solid var(--gray-100);border-radius:10px;cursor:pointer;background:#FAFAFA;">
+                  <input type="checkbox" class="merge-target" data-duration="20" checked>
+                  <div style="flex:1;font-size:12px;color:var(--navy);"><strong>4/20 (일) 09:30</strong> · 20분 · 결강 (코치 사정)</div>
+                </label>
+              </div>
+            </div>
+
+            <!-- 분할 안내 (SPLIT 모드) -->
+            <div id="merge-targets-split" style="display:none;margin-bottom:12px;padding:12px;background:#FAFAFA;border:1.5px solid var(--gray-100);border-radius:10px;">
+              <div style="font-size:12px;color:var(--navy);line-height:1.6;">현재 보강 대상: <strong>40분 × 1회</strong><br>분할 옵션: <strong>20분 × 2회</strong> (수강생 동의 필요)</div>
+            </div>
+
+            <!-- 합산 미리보기 -->
+            <div id="merge-preview" style="padding:12px;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:10px;font-size:12px;color:#1E40AF;line-height:1.6;">
+              <strong>📋 미리보기</strong><br>20분 × 2회 → <strong>40분 × 1회</strong>로 통합<br>· 회차 카운트: 2회 차감 (시간 합계 보존)<br>· 결제 변동 없음
+            </div>
+
+            <!-- 정책 한도 안내 -->
+            <div style="margin-top:8px;padding:10px;background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;font-size:11px;color:#92400E;line-height:1.5;">
+              💡 이번 달 통합/분할 사용: <strong>0/1회</strong> (어드민 정책 기준) · 같은 월 회차만 가능
+            </div>
+          </div>
+        </div>
+
         <div style="padding:12px;background:#F0FDFA;border-radius:10px;margin-bottom:16px;margin-top:12px;">
           <div style="font-size:12px;color:#065F46;line-height:1.6;">
             ✅ <strong>회차는 차감되지 않습니다</strong><br>
@@ -1642,7 +1711,51 @@ function handleSupplement() {
   btn.disabled = true;
   btn.style.background = 'var(--gray-300)';
   btn.style.cursor = 'not-allowed';
+  // 회차 통합/분할 토글 초기화
+  const mt = document.getElementById('merge-toggle');
+  if (mt) mt.checked = false;
+  const mo = document.getElementById('merge-options');
+  if (mo) mo.style.display = 'none';
+  const track = document.getElementById('merge-toggle-track');
+  const thumb = document.getElementById('merge-toggle-thumb');
+  if (track) track.style.background = 'var(--gray-300)';
+  if (thumb) thumb.style.left = '3px';
   document.getElementById('makeup-reason-sheet').style.display = 'block';
+}
+
+function onMergeToggleChange() {
+  const checked = document.getElementById('merge-toggle').checked;
+  const opts = document.getElementById('merge-options');
+  const track = document.getElementById('merge-toggle-track');
+  const thumb = document.getElementById('merge-toggle-thumb');
+  opts.style.display = checked ? 'block' : 'none';
+  track.style.background = checked ? 'var(--green)' : 'var(--gray-300)';
+  thumb.style.left = checked ? '23px' : '3px';
+}
+
+function onMergeTypeChange(type) {
+  const mergeBox = document.getElementById('merge-targets-merge');
+  const splitBox = document.getElementById('merge-targets-split');
+  const preview = document.getElementById('merge-preview');
+  const mergeOpt = document.getElementById('merge-opt-merge');
+  const splitOpt = document.getElementById('merge-opt-split');
+  if (type === 'MERGE') {
+    mergeBox.style.display = 'block';
+    splitBox.style.display = 'none';
+    mergeOpt.style.borderColor = 'var(--green)';
+    mergeOpt.style.background = '#F0FDFA';
+    splitOpt.style.borderColor = 'var(--gray-100)';
+    splitOpt.style.background = '#fff';
+    preview.innerHTML = '<strong>📋 미리보기</strong><br>20분 × 2회 → <strong>40분 × 1회</strong>로 통합<br>· 회차 카운트: 2회 차감 (시간 합계 보존)<br>· 결제 변동 없음';
+  } else {
+    mergeBox.style.display = 'none';
+    splitBox.style.display = 'block';
+    mergeOpt.style.borderColor = 'var(--gray-100)';
+    mergeOpt.style.background = '#fff';
+    splitOpt.style.borderColor = 'var(--green)';
+    splitOpt.style.background = '#F0FDFA';
+    preview.innerHTML = '<strong>📋 미리보기</strong><br>40분 × 1회 → <strong>20분 × 2회</strong>로 분할<br>· 회차 카운트: 1회 차감 (분할 그룹 합계 = 1)<br>· 결제 변동 없음 · 슬롯 2개 선택 필수';
+  }
 }
 
 function closeMakeupReasonSheet() {

@@ -897,6 +897,100 @@ API:
   - 보강 확정: "✅ 보강 확정" (확정된 보강 일정)
 ```
 
+### 5.1d-2 회차 통합/분할 정책 (Session Merge / Split) — FR-14m
+
+```
+배경:
+  주N회 짧은 회차(예: 주2회 × 20분) 수강생의 보강 일정이 잘 매칭되지 않을 때,
+  코치가 "여러 회차를 한 번에 길게(통합)" 또는 "한 회를 짧게 여러 번(분할)" 진행하도록
+  제안할 수 있어야 한다.
+  실제 시간 총량은 변하지 않으므로 결제 변동은 없으며, 회차 카운트는 합계로 보존된다.
+
+  예시:
+    - 통합(MERGE): 20분 × 2회 → 40분 × 1회 (시간 합계 40분 동일, 회차 2회 차감)
+    - 분할(SPLIT): 40분 × 1회 → 20분 × 2회 (시간 합계 40분 동일, 회차 1회 차감)
+
+적용 범위 — 1차 릴리스:
+  - 보강 처리 플로우에서만 사용 (일반 예약/변경 요청에서는 불가)
+  - 1:1 개인 레슨만 허용 (그룹은 다른 수강생 일정 영향 → 후순위)
+  - 미결제 회원은 통합/분할 불가 (회차 카운트 자체가 없음)
+  - 통합 그룹 내 회차들은 모두 같은 코치-수강생 페어, 같은 lessonType, 같은 lessonFormat이어야 함
+
+LessonDuration enum 호환성 (현재 MIN_20/MIN_30/MIN_40만 지원):
+  통합/분할은 시간 합계가 enum 값에 정확히 매칭될 때만 가능
+    - 가능: 20 + 20 = 40 (MERGE) / 40 = 20 + 20 (SPLIT)
+    - 불가: 30 + 30 = 60 (60분 enum 없음) → 시스템이 자동 차단
+    - 불가: 20 + 30 = 50 (혼합 불가, 같은 duration끼리만)
+  매칭 안 되는 조합은 토글 시 안내 메시지로 차단
+
+정책 (어드민 9-9 동적 설정 — ScheduleSetting):
+  | 설정 키 | 기본값 | 설명 |
+  |--------|-------|------|
+  | sessionMergeEnabled | true | 회차 통합/분할 기능 전체 활성/비활성 |
+  | sessionMergePerMonthLimit | 1 | 수강생당 월 통합/분할 제안 한도 (0=무제한) |
+  | sessionMergeWithinSameMonth | true | true=같은 월 회차만 통합/분할 가능, false=월 경계 무시 |
+  | sessionMergeMaxGroupSize | 3 | 한 번에 통합/분할 가능한 최대 회차 수 |
+
+  한도 계산:
+    이번 달에 코치가 같은 수강생에게 제안한 통합/분할 건수 카운트
+    한도 초과 시 보강 처리 바텀시트의 "회차 통합/분할" 토글 자동 비활성 + 사유 표시
+
+플로우 — 통합 (MERGE):
+  [전제] 수강생에게 결강된 보강 대상 회차가 2건 이상 존재
+  [1] 코치가 7-0 → 결강 카드 → "보강 처리" 클릭
+  [2] 보강 사유 바텀시트에서 사유 선택 후, 신규 토글 "회차 통합/분할 제안"을 ON
+  [3] 라디오: "통합 (여러 회차를 한 번에 진행)" / "분할 (한 회를 여러 번에 나눠서 진행)" — 통합 선택
+  [4] 통합 대상 회차 체크박스 리스트 (현재 보강 대상 외 결강된 다른 회차 노출, 정책 매칭만)
+  [5] 합산 시간 미리보기 ("20분 × 2회 → 40분 × 1회")
+  [6] "다음: 날짜 선택" → 보강 날짜 바텀시트, 슬롯 1개만 선택 가능 (40분 슬롯 점유)
+  [7] 제안하기 → 수강생 알림톡 (MAKEUP_MERGE_PROPOSED)
+  [8] 수강생 수락 시:
+    - 신규 Booking 생성 (lessonDuration=MIN_40, sessionAdjustmentType=MERGE, sessionWeight=2, mergeGroupId=UUID)
+    - 원 회차 N건의 mergedIntoBookingId = 신규 Booking.id, status=ABSENT 유지 (회차 카운트에서 제외)
+    - 새 통합 Booking 1건이 회차 카운트에 sessionWeight(=2)만큼 기여
+
+플로우 — 분할 (SPLIT):
+  [전제] 코치가 보강할 회차가 1건 (MIN_40 등 분할 가능한 duration)
+  [1~3] 동일하되 라디오에서 "분할" 선택
+  [4] 분할 옵션 노출: "40분 1회 → 20분 2회로 분할" (현재는 이 조합만 가능)
+  [5] 분할 회수 N (자동 계산) + "다음: 날짜 선택"
+  [6] 보강 날짜 바텀시트, 슬롯 N개 선택 필수 (각 20분 슬롯)
+  [7] 제안하기 → 수강생 알림톡 (MAKEUP_SPLIT_PROPOSED)
+  [8] 수강생 수락 시:
+    - 신규 Booking N건 생성 (lessonDuration=MIN_20, sessionAdjustmentType=SPLIT, sessionWeight=1, mergeGroupId=UUID 공유)
+    - 원 회차 1건의 mergedIntoBookingId = 첫 신규 Booking.id, status=CANCELLED, sessionWeight=0
+    - 신규 N건 중 sessionWeight 합계가 원 회차 1건과 같아야 함 (분할 그룹 합 = 1)
+    - 단순화: 신규 N건 각각 sessionWeight=0, 그룹 대표 1건만 sessionWeight=1
+
+회차 카운트 (현재 회차 표시) 계산 변경:
+  기존: COUNT(status IN [COMPLETED, CONFIRMED])
+  신규: SUM(sessionWeight WHERE status IN [COMPLETED, CONFIRMED] AND mergedIntoBookingId IS NULL)
+  → MERGE된 통합 Booking은 sessionWeight=N으로 카운트
+  → SPLIT된 신규 Booking들은 그룹 합이 원본 1과 일치하도록 sessionWeight 분배
+
+결제/환불 영향:
+  - 결제 금액 변동 없음 (시간 합계 동일)
+  - 통합/분할 후 환불 발생 시: 원 회차 단위 환불 금액으로 환산 (통합 1건 환불 = 원 회차 N건 환불 금액)
+  - 환불 시 sessionWeight도 함께 0으로 처리
+
+상태 변경 히스토리 기록 (5.1e):
+  - 통합 제안: actor=COACH, action="회차 통합 제안 (N회 → 1회)"
+  - 통합 수락: actor=STUDENT, action="회차 통합 수락"
+  - 분할 제안: actor=COACH, action="회차 분할 제안 (1회 → N회)"
+  - 분할 수락: actor=STUDENT, action="회차 분할 수락"
+  - 어드민 정책 변경: actor=ADMIN, action="회차 통합 정책 변경"
+
+UI 노출 (코치/수강생 양측 레슨 상세):
+  - 통합 회차: 일정 영역에 "🔗 통합 회차 (원 회차 N건 합산)" 배지 + 원 회차 일정 목록
+  - 분할 회차: 일정 영역에 "✂ 분할 회차 (그룹 N건 중 M번째)" 배지 + 같은 그룹 다른 일정 링크
+  - 회차 라벨: 통합 = "N회차 분 (통합)", 분할 = "1회차 분 / N회 분할 중 M번째"
+
+알림톡 신규 템플릿 (3종):
+  - MAKEUP_MERGE_PROPOSED: "코치님이 회차 통합을 제안했어요"
+  - MAKEUP_SPLIT_PROPOSED: "코치님이 회차 분할을 제안했어요"
+  - MAKEUP_ADJUSTMENT_CONFIRMED: "회차 조정이 확정되었어요"
+```
+
 ### 5.1e 상태 변경 히스토리 (Status Change History)
 
 ```

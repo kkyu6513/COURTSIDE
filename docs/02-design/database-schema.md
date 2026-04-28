@@ -335,6 +335,10 @@ Response: { "images": [
 | externalStudentId | Int? | FK → ExternalStudent, Nullable | 외부 수강생 FK (isExternal=true일 때) | FR-13a |
 | bookingType | String | Default: 'REGULAR_BOOKING' | 예약 유형 — `REGULAR_BOOKING`(일반) / `SUPPLEMENTARY`(보강) | FR-13a |
 | supplementaryReason | String? | Nullable | 보강 사유 (보강일 때 선택 입력) | FR-13a |
+| sessionAdjustmentType | String? | Nullable | 회차 조정 유형 — `MERGE`(통합: N회 → 1회) / `SPLIT`(분할: 1회 → N회) / null(조정 없음, 기본). 보강 처리 시 코치가 시간 합치기/쪼개기 제안할 때 사용 | FR-14m |
+| sessionWeight | Int | Default: 1 | 회차 가중치 — 이 Booking 1건이 차지하는 원 회차 수. MERGE는 1보다 큰 값(통합 회차 수), SPLIT은 1/N 분수가 아니라 SPLIT 그룹 합계로 원 회차 1을 표현(아래 mergeGroupId로 묶음) | FR-14m |
+| mergeGroupId | String? | Nullable | 통합/분할 그룹 식별자 (UUID). 같은 그룹에 속한 Booking들은 한 번의 조정 단위. MERGE에서는 원 회차 N건이 같은 mergeGroupId를 공유하며 그 중 1건이 mergedTargetId 역할(나머지는 mergedIntoBookingId로 연결). SPLIT에서는 분할로 생긴 N건이 같은 mergeGroupId를 공유 | FR-14m |
+| mergedIntoBookingId | Int? | FK → Booking, Nullable | MERGE 시 통합 대상 Booking으로 흡수된 원 회차들의 참조. mergedIntoBookingId가 채워진 Booking은 status=ABSENT(통합 처리됨) 또는 status=CANCELLED(분할 원본)로 보존되며 회차 카운트에서 제외 | FR-14m |
 | rescheduleStatus | String? | Nullable | 변경 요청 상태 — `PENDING`(요청중) / `PROPOSED`(제안됨) / `ACCEPTED`(수락) / `COMPLETED`(변경완료) / `REJECTED`(거절) / `NEGOTIATING`(재협의). null=변경 요청 없음 | FR-10a |
 | rescheduleRequestedDate | DateTime? | Nullable | 수강생 희망 변경 날짜 | FR-10a |
 | rescheduleRequestedTime | String? | Nullable | 수강생 희망 변경 시간 (HH:mm) | FR-10a |
@@ -909,7 +913,13 @@ ScheduleSetting (어드민 정책 설정, 독립)
 | updatedBy | Int? | FK → User, Nullable | 마지막 변경 어드민 | FR-14k |
 | updatedAt | DateTime | @updatedAt | 수정일 | |
 
-**기본값**: holdDurationHours=12, holdExpiryNotification=true, maxConcurrentHolds=1, rescheduleDeadlineDays=1, maxRecommendSlots=5, recommendRangeDays=1, paidOnlyReschedule=true, completedCardDays=1, notifyOnRequest=true, notifyOnUnavailable=true, notifyOnComplete=true, notifyOnAdminAction=true
+**기본값**: holdDurationHours=12, holdExpiryNotification=true, maxConcurrentHolds=1, rescheduleDeadlineDays=1, maxRecommendSlots=5, recommendRangeDays=1, paidOnlyReschedule=true, completedCardDays=1, notifyOnRequest=true, notifyOnUnavailable=true, notifyOnComplete=true, notifyOnAdminAction=true, **sessionMergeEnabled=true, sessionMergePerMonthLimit=1, sessionMergeWithinSameMonth=true, sessionMergeMaxGroupSize=3**
+
+**회차 조정 정책 (FR-14m)**:
+- `sessionMergeEnabled` (Boolean): 회차 통합/분할 기능 전체 활성/비활성
+- `sessionMergePerMonthLimit` (Int): 수강생당 월 통합/분할 제안 한도 (기본 1, 0=무제한)
+- `sessionMergeWithinSameMonth` (Boolean): true=같은 월의 회차만 통합/분할 가능, false=월 경계 무시
+- `sessionMergeMaxGroupSize` (Int): 한 번에 통합/분할 가능한 최대 회차 수 (기본 3)
 
 ---
 
@@ -948,3 +958,5 @@ ScheduleSetting (어드민 정책 설정, 독립)
 | 1.2 | 2026-04-13 | ScheduleHold 테이블 추가 (슬롯 임시 홀드), Booking.rescheduleStatus에 PROPOSED/NEGOTIATING/COMPLETED 상태 추가 — 35개 테이블 |
 | 1.3 | 2026-04-13 | RescheduleActionLog, ScheduleSetting 테이블 추가 (어드민 스케줄 관리) — 37개 테이블 |
 | 1.4 | 2026-04-17 | ExternalStudent 테이블 추가 + Booking에 isExternal/externalStudentId/bookingType/supplementaryReason 컬럼 추가 — 38개 테이블 |
+| 1.5 | 2026-04-28 | LessonDuration enum + Booking.lessonDuration 추가 (20/30/40분 회차 시간) |
+| 1.6 | 2026-04-28 | Booking에 sessionAdjustmentType / sessionWeight / mergeGroupId / mergedIntoBookingId 추가 (FR-14m 회차 통합·분할). ScheduleSetting에 회차 조정 정책 4종 추가 |
