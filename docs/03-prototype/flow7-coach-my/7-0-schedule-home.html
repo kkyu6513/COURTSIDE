@@ -966,16 +966,41 @@
 
             <!-- 통합 대상 회차 체크박스 (MERGE 모드) -->
             <div id="merge-targets-merge" style="margin-bottom:12px;">
-              <div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:8px;">통합 대상 회차 (같은 수강생의 결강된 회차)</div>
+              <div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:8px;">통합 대상 회차 <span style="font-weight:400;color:var(--gray-400);">(같은 수강생, 결강 또는 예정)</span></div>
               <div style="display:flex;flex-direction:column;gap:6px;">
+                <!-- [결강] 다른 결강 회차 -->
                 <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1.5px solid var(--gray-100);border-radius:10px;cursor:pointer;background:#FAFAFA;">
-                  <input type="checkbox" class="merge-target" data-duration="20" checked>
-                  <div style="flex:1;font-size:12px;color:var(--navy);"><strong>4/13 (일) 09:30</strong> · 20분 · 결강 (수강생 사전 통보)</div>
+                  <input type="checkbox" class="merge-target" data-duration="20" data-kind="ABSENT" data-date="4/13 (일) 09:30" onchange="updateMergePreview()" checked>
+                  <div style="flex:1;font-size:12px;color:var(--navy);">
+                    <span style="display:inline-block;padding:1px 6px;border-radius:4px;background:var(--gray-100);color:var(--gray-500);font-size:10px;font-weight:700;margin-right:4px;">결강</span>
+                    <strong>4/13 (일) 09:30</strong> · 20분 (수강생 사전 통보)
+                  </div>
                 </label>
                 <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1.5px solid var(--gray-100);border-radius:10px;cursor:pointer;background:#FAFAFA;">
-                  <input type="checkbox" class="merge-target" data-duration="20" checked>
-                  <div style="flex:1;font-size:12px;color:var(--navy);"><strong>4/20 (일) 09:30</strong> · 20분 · 결강 (코치 사정)</div>
+                  <input type="checkbox" class="merge-target" data-duration="20" data-kind="ABSENT" data-date="4/20 (일) 09:30" onchange="updateMergePreview()">
+                  <div style="flex:1;font-size:12px;color:var(--navy);">
+                    <span style="display:inline-block;padding:1px 6px;border-radius:4px;background:var(--gray-100);color:var(--gray-500);font-size:10px;font-weight:700;margin-right:4px;">결강</span>
+                    <strong>4/20 (일) 09:30</strong> · 20분 (코치 사정)
+                  </div>
                 </label>
+                <!-- [예정] 가까운 예정 회차 (FR-14m 케이스 ㄴ) -->
+                <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1.5px solid #C4B5FD;border-radius:10px;cursor:pointer;background:#F5F3FF;">
+                  <input type="checkbox" class="merge-target" data-duration="20" data-kind="SCHEDULED" data-date="5/2 (금) 10:00" onchange="updateMergePreview()">
+                  <div style="flex:1;font-size:12px;color:var(--navy);">
+                    <span style="display:inline-block;padding:1px 6px;border-radius:4px;background:#EDE9FE;color:#5B21B6;font-size:10px;font-weight:700;margin-right:4px;">예정</span>
+                    <strong>5/2 (금) 10:00</strong> · 20분 (D+4)
+                  </div>
+                </label>
+                <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1.5px solid #C4B5FD;border-radius:10px;cursor:pointer;background:#F5F3FF;">
+                  <input type="checkbox" class="merge-target" data-duration="20" data-kind="SCHEDULED" data-date="5/5 (월) 14:00" onchange="updateMergePreview()">
+                  <div style="flex:1;font-size:12px;color:var(--navy);">
+                    <span style="display:inline-block;padding:1px 6px;border-radius:4px;background:#EDE9FE;color:#5B21B6;font-size:10px;font-weight:700;margin-right:4px;">예정</span>
+                    <strong>5/5 (월) 14:00</strong> · 20분 (D+7)
+                  </div>
+                </label>
+              </div>
+              <div style="margin-top:8px;padding:8px 10px;background:#EFF6FF;border-radius:8px;font-size:10px;color:#1E40AF;line-height:1.5;">
+                💡 <strong>예정 회차</strong>를 선택하면 그 일정에 합쳐서 길게 진행돼요 (날짜 다시 안 잡아도 됨)
               </div>
             </div>
 
@@ -1755,7 +1780,7 @@ function onMergeTypeChange(type) {
     mergeOpt.style.background = '#F0FDFA';
     splitOpt.style.borderColor = 'var(--gray-100)';
     splitOpt.style.background = '#fff';
-    preview.innerHTML = '<strong>📋 미리보기</strong><br>20분 × 2회 → <strong>40분 × 1회</strong>로 통합<br>· 회차 카운트: 2회 차감 (시간 합계 보존)<br>· 결제 변동 없음';
+    updateMergePreview();
   } else {
     mergeBox.style.display = 'none';
     splitBox.style.display = 'block';
@@ -1764,6 +1789,32 @@ function onMergeTypeChange(type) {
     splitOpt.style.borderColor = 'var(--green)';
     splitOpt.style.background = '#F0FDFA';
     preview.innerHTML = '<strong>📋 미리보기</strong><br>40분 × 1회 → <strong>20분 × 2회</strong>로 분할<br>· 회차 카운트: 1회 차감 (분할 그룹 합계 = 1)<br>· 결제 변동 없음 · 슬롯 2개 선택 필수';
+  }
+}
+
+// 통합 대상 체크 변화에 따라 미리보기 동적 갱신 (FR-14m 케이스 분기)
+function updateMergePreview() {
+  const preview = document.getElementById('merge-preview');
+  const checked = Array.from(document.querySelectorAll('.merge-target:checked'));
+  const absentCount = checked.filter(c => c.dataset.kind === 'ABSENT').length;
+  const scheduled = checked.filter(c => c.dataset.kind === 'SCHEDULED');
+  // 현재 보강 대상 회차도 1건(=20분)으로 가정
+  const baseDuration = 20;
+  const totalDuration = baseDuration + checked.reduce((sum, c) => sum + parseInt(c.dataset.duration || '0', 10), 0);
+  const totalCount = checked.length + 1; // +1 = 현재 보강 대상 회차
+
+  if (checked.length === 0) {
+    preview.innerHTML = '<strong>📋 미리보기</strong><br><span style="color:var(--gray-400);">통합 대상 회차를 1개 이상 선택해 주세요</span>';
+    return;
+  }
+
+  if (scheduled.length > 0) {
+    // 케이스 ㄴ: 결강 + 예정
+    const sched = scheduled[0]; // 단순화: 첫 예정 회차 사용
+    preview.innerHTML = `<strong>📋 미리보기 — 결강 + 예정 통합</strong><br>현재 결강 회차(20분) + <strong style="color:#5B21B6;">${sched.dataset.date} 예정(20분)</strong><br>→ <strong style="color:#5B21B6;">${sched.dataset.date} · ${totalDuration}분으로 길게 진행</strong><br>· 새 일정 안 잡아도 됨 (다음 단계 스킵)<br>· 회차 카운트: ${totalCount}회 차감 · 결제 변동 없음`;
+  } else {
+    // 케이스 ㄱ: 결강 + 결강
+    preview.innerHTML = `<strong>📋 미리보기 — 결강 통합</strong><br>20분 × ${totalCount}회 → <strong>${totalDuration}분 × 1회</strong>로 통합<br>· 다음 단계에서 새 일정 1개 선택 필요<br>· 회차 카운트: ${totalCount}회 차감 · 결제 변동 없음`;
   }
 }
 

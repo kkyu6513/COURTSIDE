@@ -216,8 +216,8 @@
           <div class="session">보강 1/1회</div>
         </a>
 
-        <!-- 11a. 통합 제안 도착 (FR-14m) -->
-        <a href="6-6-booking-detail.html?status=merge_proposed" class="booking-card" style="border-left:3px solid #7C3AED;">
+        <!-- 11a. 통합 제안 도착 — 결강+결강 (FR-14m 케이스 ㄱ) -->
+        <a href="6-6-booking-detail.html?status=merge_proposed&case=ABSENT_ONLY" class="booking-card" style="border-left:3px solid #7C3AED;">
           <div class="row1">
             <div>
               <div class="coach-name">김민수 코치</div>
@@ -226,7 +226,20 @@
             <span class="status-badge" style="background:#EDE9FE;color:#5B21B6;">🔗 통합 제안 도착</span>
           </div>
           <div class="schedule">📅 원 회차 2건 → 4/27 (일) 10:00 · 40분</div>
-          <div class="session" style="color:#5B21B6;">시간 합계 동일 · 결제 변동 없음 · <strong>응답 필요</strong></div>
+          <div class="session" style="color:#5B21B6;">결강+결강 · 결제 변동 없음 · <strong>응답 필요</strong></div>
+        </a>
+
+        <!-- 11a-2. 통합 제안 도착 — 결강+예정 (FR-14m 케이스 ㄴ) -->
+        <a href="6-6-booking-detail.html?status=merge_proposed&case=ABSENT_PLUS_SCHEDULED" class="booking-card" style="border-left:3px solid #7C3AED;">
+          <div class="row1">
+            <div>
+              <div class="coach-name">김민수 코치</div>
+              <div class="meta">정규레슨 · 1:1 · 20분</div>
+            </div>
+            <span class="status-badge" style="background:#EDE9FE;color:#5B21B6;">🔗 통합 제안 도착</span>
+          </div>
+          <div class="schedule">📅 4/29 결강 → 5/2 (금) 10:00 예정에 합쳐서 40분</div>
+          <div class="session" style="color:#5B21B6;">결강+예정 · 새 일정 X · <strong>응답 필요</strong></div>
         </a>
 
         <!-- 11b. 분할 제안 도착 -->

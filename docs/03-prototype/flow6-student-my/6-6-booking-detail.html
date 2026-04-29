@@ -472,41 +472,63 @@ const configs = {
     actions: `<a href="../flow4-chat/4-2-chat.html" class="btn-secondary" style="flex:1;display:block;text-align:center;text-decoration:none;line-height:48px;height:auto;">코치에게 문의</a>
               <a href="6-5-booking-list.html" class="btn-primary" style="flex:1;display:block;text-align:center;text-decoration:none;line-height:52px;">목록으로</a>`
   },
-  merge_proposed: {
-    label: '회차 통합 제안',
-    badge: '<span class="badge" style="font-size:14px;padding:6px 16px;background:#EDE9FE;color:#5B21B6;">🔗 통합 제안 도착</span>',
-    session: '6/8회',
-    message: `<div style="padding:16px;background:#F5F3FF;border-radius:12px;border:1.5px solid #C4B5FD;">
-      <div style="font-size:13px;font-weight:700;color:#5B21B6;margin-bottom:8px;">코치님이 회차 통합을 제안했어요</div>
-      <div style="font-size:12px;color:#6D28D9;line-height:1.6;margin-bottom:12px;">짧은 회차 2건을 한 번에 진행하면 일정 매칭이 더 쉬워요.<br>시간 합계와 결제 금액은 동일합니다.</div>
+  merge_proposed: (function(){
+    // FR-14m 케이스 분기: ?case=ABSENT_ONLY (기본) / ?case=ABSENT_PLUS_SCHEDULED
+    const mergeCase = params.get('case') || 'ABSENT_ONLY';
+    const isAbsentPlusScheduled = mergeCase === 'ABSENT_PLUS_SCHEDULED';
 
-      <!-- 변경 미리보기 -->
-      <div style="padding:14px;background:#fff;border-radius:10px;border:1px solid #DDD6FE;margin-bottom:10px;">
-        <div style="font-size:11px;color:var(--gray-400);margin-bottom:8px;">변경 미리보기</div>
-        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;">
-          <div style="text-align:center;">
-            <div style="font-size:11px;color:var(--gray-400);text-decoration:line-through;">4/13 (일) 09:30</div>
-            <div style="font-size:11px;color:var(--gray-400);text-decoration:line-through;">4/20 (일) 09:30</div>
-            <div style="font-size:10px;color:var(--gray-400);margin-top:2px;">20분 × 2회</div>
+    const previewHtml = isAbsentPlusScheduled
+      ? `<div style="padding:14px;background:#fff;border-radius:10px;border:1px solid #DDD6FE;margin-bottom:10px;">
+          <div style="font-size:11px;color:var(--gray-400);margin-bottom:8px;">변경 미리보기 — 결강 + 예정 통합</div>
+          <div style="padding:10px;background:#FEF2F2;border-radius:8px;border:1px solid #FECACA;margin-bottom:8px;">
+            <div style="font-size:11px;color:#991B1B;font-weight:700;margin-bottom:2px;">❌ 결강된 회차</div>
+            <div style="font-size:13px;color:var(--gray-500);text-decoration:line-through;">4/29 (화) 14:00 · 20분</div>
           </div>
-          <span style="font-size:18px;color:#5B21B6;">→</span>
-          <div style="text-align:center;">
-            <div style="font-size:14px;font-weight:800;color:#5B21B6;">4/27 (일) 10:00</div>
-            <div style="font-size:11px;font-weight:700;color:#5B21B6;margin-top:2px;">40분 × 1회 (통합)</div>
+          <div style="text-align:center;font-size:14px;color:#5B21B6;margin:6px 0;">↓ 합쳐서 ↓</div>
+          <div style="padding:12px;background:#F5F3FF;border-radius:8px;border:1.5px solid #C4B5FD;">
+            <div style="font-size:11px;color:#5B21B6;font-weight:700;margin-bottom:2px;">📌 기존 예정 레슨에 흡수</div>
+            <div style="font-size:14px;font-weight:800;color:#5B21B6;">5/2 (금) 10:00</div>
+            <div style="font-size:11px;color:#5B21B6;margin-top:4px;"><span style="text-decoration:line-through;color:var(--gray-400);">20분</span> → <strong>40분으로 길게 진행</strong></div>
           </div>
+        </div>`
+      : `<div style="padding:14px;background:#fff;border-radius:10px;border:1px solid #DDD6FE;margin-bottom:10px;">
+          <div style="font-size:11px;color:var(--gray-400);margin-bottom:8px;">변경 미리보기 — 결강 통합</div>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;">
+            <div style="text-align:center;">
+              <div style="font-size:11px;color:var(--gray-400);text-decoration:line-through;">4/13 (일) 09:30</div>
+              <div style="font-size:11px;color:var(--gray-400);text-decoration:line-through;">4/20 (일) 09:30</div>
+              <div style="font-size:10px;color:var(--gray-400);margin-top:2px;">20분 × 2회</div>
+            </div>
+            <span style="font-size:18px;color:#5B21B6;">→</span>
+            <div style="text-align:center;">
+              <div style="font-size:14px;font-weight:800;color:#5B21B6;">4/27 (일) 10:00</div>
+              <div style="font-size:11px;font-weight:700;color:#5B21B6;margin-top:2px;">40분 × 1회 (통합)</div>
+            </div>
+          </div>
+        </div>`;
+
+    const headlineMsg = isAbsentPlusScheduled
+      ? '4/29 (화) 결강을 5/2 (금) 예정 레슨에 합쳐서 진행하자고 제안했어요. 새 일정 안 잡아도 되고, 시간 합계와 결제 금액은 동일합니다.'
+      : '짧은 회차 2건을 한 번에 진행하면 일정 매칭이 더 쉬워요. 시간 합계와 결제 금액은 동일합니다.';
+
+    return {
+      label: isAbsentPlusScheduled ? '회차 통합 제안 (기존 예정에 흡수)' : '회차 통합 제안',
+      badge: '<span class="badge" style="font-size:14px;padding:6px 16px;background:#EDE9FE;color:#5B21B6;">🔗 통합 제안 도착</span>',
+      session: '6/8회',
+      message: `<div style="padding:16px;background:#F5F3FF;border-radius:12px;border:1.5px solid #C4B5FD;">
+        <div style="font-size:13px;font-weight:700;color:#5B21B6;margin-bottom:8px;">${isAbsentPlusScheduled ? '코치님이 결강 회차를 기존 예정 레슨과 합쳐 제안했어요' : '코치님이 회차 통합을 제안했어요'}</div>
+        <div style="font-size:12px;color:#6D28D9;line-height:1.6;margin-bottom:12px;">${headlineMsg}</div>
+        ${previewHtml}
+        <div style="padding:10px 12px;background:#fff;border-radius:8px;border:1px solid #DDD6FE;font-size:11px;color:var(--gray-500);line-height:1.6;">
+          ✓ 회차 카운트: 통합 후 <strong style="color:var(--navy);">2회 차감</strong> (원 회차 수 보존)<br>
+          ✓ 결제 금액: <strong style="color:var(--navy);">변동 없음</strong><br>
+          ${isAbsentPlusScheduled ? '✓ 새 일정 잡지 않아도 됩니다' : '✗ 통합 후 결강 시 한 번에 2회 차감될 수 있어요'}
         </div>
-      </div>
-
-      <!-- 영향 안내 -->
-      <div style="padding:10px 12px;background:#fff;border-radius:8px;border:1px solid #DDD6FE;font-size:11px;color:var(--gray-500);line-height:1.6;">
-        ✓ 회차 카운트: 통합 후 <strong style="color:var(--navy);">2회 차감</strong> (원 회차 수 보존)<br>
-        ✓ 결제 금액: <strong style="color:var(--navy);">변동 없음</strong><br>
-        ✗ 통합 후 결강 시 한 번에 2회 차감될 수 있어요
-      </div>
-    </div>`,
-    actions: `<button onclick="rejectAdjustment('MERGE')" class="btn-secondary" style="flex:1;">거절</button>
-              <button onclick="acceptAdjustment('MERGE')" class="btn-primary" style="flex:1.4;background:#7C3AED;">통합 수락</button>`
-  },
+      </div>`,
+      actions: `<button onclick="rejectAdjustment('MERGE')" class="btn-secondary" style="flex:1;">거절</button>
+                <button onclick="acceptAdjustment('MERGE')" class="btn-primary" style="flex:1.4;background:#7C3AED;">통합 수락</button>`
+    };
+  })(),
   split_proposed: {
     label: '회차 분할 제안',
     badge: '<span class="badge" style="font-size:14px;padding:6px 16px;background:#EDE9FE;color:#5B21B6;">✂ 분할 제안 도착</span>',

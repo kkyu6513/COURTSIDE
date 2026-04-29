@@ -565,13 +565,17 @@ PRO 플랜을 다시 구독하시면 모든 기능을 이용하실 수 있어요
 
 #### MAKEUP_MERGE_PROPOSED — 수강생에게 발송
 
+> 통합 케이스에 따라 본문 분기. `mergeCase` 변수로 결정 — `ABSENT_ONLY`(결강만 모아 새 일정으로 통합) 또는 `ABSENT_PLUS_SCHEDULED`(결강을 기존 예정 일정에 흡수)
+
+**케이스 ㄱ — ABSENT_ONLY (결강 N건 → 새 보강 일정 1건)**
+
 ```
 [COURTSIDE] 코치님이 회차 통합을 제안했어요
 
 #{수강생명}님, #{코치명} 코치님이 짧은 회차를 한 번에 진행하는
 "회차 통합"을 제안했어요.
 
-■ 원 회차: #{원회차요약} (예: 20분 × 2회)
+■ 원 회차: #{원회차요약} (예: 20분 × 2회 결강)
 ■ 통합 후: #{통합후일정} #{통합후시간} (예: 4/27 (일) 10:00 · 40분)
 
 ✓ 회차 카운트: #{차감회차}회 차감 (원 회차 수 보존)
@@ -583,18 +587,46 @@ PRO 플랜을 다시 구독하시면 모든 기능을 이용하실 수 있어요
 [제안 확인하기]
 ```
 
+**케이스 ㄴ — ABSENT_PLUS_SCHEDULED (결강 1건을 기존 예정 회차에 흡수)**
+
+```
+[COURTSIDE] 코치님이 회차 통합을 제안했어요
+
+#{수강생명}님, #{결강일정}이 어려우셨죠?
+#{코치명} 코치님이 이 회차를 #{기존예정일정} 예정 레슨과 합쳐
+한 번에 길게 진행하자고 제안했어요.
+
+■ 결강 회차: #{결강일정} (#{결강시간})
+■ 흡수 대상: #{기존예정일정} #{기존예정시간} (기존 예정)
+■ 통합 후: #{기존예정일정} #{통합후시간} (예: 5/2 (금) 10:00 · 40분으로 길게 진행)
+
+✓ 회차 카운트: 2회 차감 (결강 + 예정 = 통합 1건)
+✓ 결제 금액: 변동 없음
+✓ 새 일정 잡지 않아도 됩니다
+
+수락하면 즉시 적용되고, 거절하면 원래 회차가 유지됩니다.
+응답 만료까지 #{홀드남은시간} 남았어요.
+
+[제안 확인하기]
+```
+
 **변수**:
 | 변수 | 출처 | 예시 |
 |------|------|------|
 | #{수강생명} | User.name | 박지수 |
 | #{코치명} | CoachProfile.User.name | 김민수 |
+| #{mergeCase} | 라우팅 변수 | ABSENT_ONLY / ABSENT_PLUS_SCHEDULED |
 | #{원회차요약} | mergedFromBookings 합산 | 20분 × 2회 |
-| #{통합후일정} | 새 Booking.startDate | 4/27 (일) |
-| #{통합후시간} | 새 Booking.startTime + lessonDuration | 10:00 · 40분 |
-| #{차감회차} | 새 Booking.sessionWeight | 2 |
+| #{결강일정} | 결강 Booking.startDate | 4/29 (화) |
+| #{결강시간} | 결강 Booking.startTime + lessonDuration | 14:00 · 20분 |
+| #{기존예정일정} | 기존 예정 Booking.startDate | 5/2 (금) |
+| #{기존예정시간} | 기존 예정 Booking.startTime + 원래 lessonDuration | 10:00 · 20분 |
+| #{통합후일정} | 통합 후 Booking.startDate | 4/27 (일) 또는 5/2 (금) |
+| #{통합후시간} | 통합 후 Booking.startTime + 새 lessonDuration | 10:00 · 40분 |
+| #{차감회차} | sessionWeight | 2 |
 | #{홀드남은시간} | ScheduleHold.expiresAt - now | 11시간 30분 |
 
-**버튼**: 웹링크 → `/bookings/{bookingId}?status=merge_proposed` (앱 딥링크)
+**버튼**: 웹링크 → `/bookings/{bookingId}?status=merge_proposed&case={mergeCase}` (앱 딥링크)
 
 ---
 
