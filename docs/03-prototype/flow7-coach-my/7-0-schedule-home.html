@@ -944,92 +944,16 @@
             </label>
           </div>
 
-          <!-- 통합/분할 옵션 (토글 ON 시 노출) -->
-          <div id="merge-options" style="display:none;margin-top:14px;padding-top:14px;border-top:1px dashed var(--gray-200);">
-            <!-- 라디오 -->
-            <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;">
-              <label style="display:flex;align-items:flex-start;gap:10px;padding:12px;border:1.5px solid var(--gray-100);border-radius:10px;cursor:pointer;background:#fff;" id="merge-opt-merge">
-                <input type="radio" name="merge-type" value="MERGE" onchange="onMergeTypeChange('MERGE')" checked style="margin-top:2px;">
-                <div style="flex:1;">
-                  <div style="font-size:13px;font-weight:700;color:var(--navy);">🔗 통합 (여러 회차 → 1회)</div>
-                  <div style="font-size:11px;color:var(--gray-400);margin-top:2px;">예: 20분 × 2회 → 40분 × 1회</div>
-                </div>
-              </label>
-              <label style="display:flex;align-items:flex-start;gap:10px;padding:12px;border:1.5px solid var(--gray-100);border-radius:10px;cursor:pointer;background:#fff;" id="merge-opt-split">
-                <input type="radio" name="merge-type" value="SPLIT" onchange="onMergeTypeChange('SPLIT')" style="margin-top:2px;">
-                <div style="flex:1;">
-                  <div style="font-size:13px;font-weight:700;color:var(--navy);">✂ 분할 (1회 → 여러 회차)</div>
-                  <div style="font-size:11px;color:var(--gray-400);margin-top:2px;">예: 40분 × 1회 → 20분 × 2회</div>
-                </div>
-              </label>
-            </div>
-
-            <!-- 통합 대상 회차 체크박스 (MERGE 모드) -->
-            <div id="merge-targets-merge" style="margin-bottom:12px;">
-              <div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:8px;">통합 대상 회차 <span style="font-weight:400;color:var(--gray-400);">(같은 수강생, 결강 또는 예정)</span></div>
-              <div style="display:flex;flex-direction:column;gap:6px;">
-                <!-- [결강] 다른 결강 회차 -->
-                <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1.5px solid var(--gray-100);border-radius:10px;cursor:pointer;background:#FAFAFA;">
-                  <input type="checkbox" class="merge-target" data-duration="20" data-kind="ABSENT" data-date="4/13 (일) 09:30" onchange="updateMergePreview()" checked>
-                  <div style="flex:1;font-size:12px;color:var(--navy);">
-                    <span style="display:inline-block;padding:1px 6px;border-radius:4px;background:var(--gray-100);color:var(--gray-500);font-size:10px;font-weight:700;margin-right:4px;">결강</span>
-                    <strong>4/13 (일) 09:30</strong> · 20분 (수강생 사전 통보)
-                  </div>
-                </label>
-                <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1.5px solid var(--gray-100);border-radius:10px;cursor:pointer;background:#FAFAFA;">
-                  <input type="checkbox" class="merge-target" data-duration="20" data-kind="ABSENT" data-date="4/20 (일) 09:30" onchange="updateMergePreview()">
-                  <div style="flex:1;font-size:12px;color:var(--navy);">
-                    <span style="display:inline-block;padding:1px 6px;border-radius:4px;background:var(--gray-100);color:var(--gray-500);font-size:10px;font-weight:700;margin-right:4px;">결강</span>
-                    <strong>4/20 (일) 09:30</strong> · 20분 (코치 사정)
-                  </div>
-                </label>
-                <!-- [예정] 가까운 예정 회차 (FR-14m 케이스 ㄴ) -->
-                <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1.5px solid #C4B5FD;border-radius:10px;cursor:pointer;background:#F5F3FF;">
-                  <input type="checkbox" class="merge-target" data-duration="20" data-kind="SCHEDULED" data-date="5/2 (금) 10:00" onchange="updateMergePreview()">
-                  <div style="flex:1;font-size:12px;color:var(--navy);">
-                    <span style="display:inline-block;padding:1px 6px;border-radius:4px;background:#EDE9FE;color:#5B21B6;font-size:10px;font-weight:700;margin-right:4px;">예정</span>
-                    <strong>5/2 (금) 10:00</strong> · 20분 (D+4)
-                  </div>
-                </label>
-                <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1.5px solid #C4B5FD;border-radius:10px;cursor:pointer;background:#F5F3FF;">
-                  <input type="checkbox" class="merge-target" data-duration="20" data-kind="SCHEDULED" data-date="5/5 (월) 14:00" onchange="updateMergePreview()">
-                  <div style="flex:1;font-size:12px;color:var(--navy);">
-                    <span style="display:inline-block;padding:1px 6px;border-radius:4px;background:#EDE9FE;color:#5B21B6;font-size:10px;font-weight:700;margin-right:4px;">예정</span>
-                    <strong>5/5 (월) 14:00</strong> · 20분 (D+7)
-                  </div>
-                </label>
-              </div>
-              <div style="margin-top:8px;padding:8px 10px;background:#EFF6FF;border-radius:8px;font-size:10px;color:#1E40AF;line-height:1.5;">
-                💡 <strong>예정 회차</strong>를 선택하면 그 일정에 합쳐서 길게 진행돼요 (날짜 다시 안 잡아도 됨)
-              </div>
-            </div>
-
-            <!-- 분할 안내 (SPLIT 모드) -->
-            <div id="merge-targets-split" style="display:none;margin-bottom:12px;padding:12px;background:#FAFAFA;border:1.5px solid var(--gray-100);border-radius:10px;">
-              <div style="font-size:12px;color:var(--navy);line-height:1.6;">현재 보강 대상: <strong>40분 × 1회</strong><br>분할 옵션: <strong>20분 × 2회</strong> (수강생 동의 필요)</div>
-            </div>
-
-            <!-- 합산 미리보기 -->
-            <div id="merge-preview" style="padding:12px;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:10px;font-size:12px;color:#1E40AF;line-height:1.6;">
-              <strong>📋 미리보기</strong><br>20분 × 2회 → <strong>40분 × 1회</strong>로 통합<br>· 회차 카운트: 2회 차감 (시간 합계 보존)<br>· 결제 변동 없음
-            </div>
-
-            <!-- 정책 한도 안내 -->
-            <div style="margin-top:8px;padding:10px;background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;font-size:11px;color:#92400E;line-height:1.5;">
-              💡 이번 달 통합/분할 사용: <strong>0/1회</strong> (어드민 정책 기준) · 같은 월 회차만 가능
-            </div>
-          </div>
         </div>
 
         <div style="padding:12px;background:#F0FDFA;border-radius:10px;margin-bottom:16px;margin-top:12px;">
           <div style="font-size:12px;color:#065F46;line-height:1.6;">
             ✅ <strong>회차는 차감되지 않습니다</strong><br>
-            다음 화면에서 보강 가능 날짜를 선택하면<br>
-            수강생에게 카카오 알림톡으로 제안됩니다.
+            <span id="mkr-info-dynamic">다음 화면에서 보강 가능 날짜를 선택하면<br>수강생에게 카카오 알림톡으로 제안됩니다.</span>
           </div>
         </div>
 
-        <button id="mkr-next-btn" onclick="goToMakeupDateSheet()" disabled style="width:100%;height:50px;border-radius:12px;border:none;background:var(--gray-300);color:#fff;font-size:15px;font-weight:700;cursor:not-allowed;font-family:inherit;">다음: 날짜 선택하기</button>
+        <button id="mkr-next-btn" onclick="onReasonNext()" disabled style="width:100%;height:50px;border-radius:12px;border:none;background:var(--gray-300);color:#fff;font-size:15px;font-weight:700;cursor:not-allowed;font-family:inherit;">다음: 날짜 선택하기</button>
         <button onclick="closeMakeupReasonSheet()" style="width:100%;height:46px;border-radius:12px;border:1px solid var(--gray-100);background:#fff;color:var(--gray-500);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:8px;">취소</button>
       </div>
     </div>
@@ -1070,8 +994,148 @@
           💡 선택한 날짜/시간이 수강생에게 카카오 알림톡으로 전송됩니다.<br>수강생이 1개를 선택하면 보강 일정이 확정됩니다.
         </div>
 
-        <button id="makeup-propose-btn" onclick="proposeMakeupDates()" disabled style="width:100%;height:50px;border-radius:12px;border:none;background:var(--gray-300);color:#fff;font-size:15px;font-weight:700;cursor:not-allowed;font-family:inherit;">선택 날짜 제안하기</button>
-        <button onclick="closeMakeupDateSheet()" style="width:100%;height:46px;border-radius:12px;border:1px solid var(--gray-100);background:#fff;color:var(--gray-500);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:8px;">취소</button>
+        <div style="display:flex;gap:8px;">
+          <button onclick="backFromMakeupDateSheet()" style="flex:1;height:50px;border-radius:12px;border:1.5px solid var(--gray-200);background:#fff;color:var(--gray-500);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">‹ 이전</button>
+          <button id="makeup-propose-btn" onclick="proposeMakeupDates()" disabled style="flex:1.6;height:50px;border-radius:12px;border:none;background:var(--gray-300);color:#fff;font-size:15px;font-weight:700;cursor:not-allowed;font-family:inherit;">선택 날짜 제안하기</button>
+        </div>
+        <button onclick="closeMakeupDateSheet()" style="width:100%;height:42px;border:none;background:transparent;color:var(--gray-400);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;margin-top:6px;">전체 취소</button>
+      </div>
+    </div>
+
+    <!-- 통합/분할 선택 바텀시트 (FR-14m STEP 1/2, 신규) -->
+    <div id="makeup-merge-type-sheet" style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;z-index:170;">
+      <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.45);" onclick="closeAllMakeupSheets()"></div>
+      <div style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;padding:20px;z-index:171;max-height:85%;overflow-y:auto;">
+        <div style="width:40px;height:4px;border-radius:2px;background:var(--gray-200);margin:0 auto 16px;"></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--green);letter-spacing:0.4px;">STEP 1 / 2</div>
+            <div style="font-size:17px;font-weight:800;color:var(--navy);margin-top:2px;">통합/분할 방식 선택</div>
+          </div>
+          <button onclick="closeAllMakeupSheets()" style="width:32px;height:32px;border-radius:50%;border:none;background:var(--gray-100);color:var(--gray-500);font-size:16px;cursor:pointer;">✕</button>
+        </div>
+        <div style="font-size:13px;color:var(--gray-500);margin-bottom:16px;">어떻게 진행할지 먼저 선택해 주세요</div>
+
+        <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;">
+          <label id="merge-opt-merge" style="display:flex;align-items:flex-start;gap:10px;padding:14px;border:1.5px solid var(--green);border-radius:12px;cursor:pointer;background:#F0FDFA;">
+            <input type="radio" name="merge-type" value="MERGE" onchange="onMergeTypeChange('MERGE')" checked style="margin-top:3px;">
+            <div style="flex:1;">
+              <div style="font-size:14px;font-weight:700;color:var(--navy);">🔗 통합 (여러 회차 → 1회)</div>
+              <div style="font-size:12px;color:var(--gray-500);margin-top:4px;line-height:1.5;">짧은 회차 N개를 한 번에 길게 진행하도록 합쳐요<br>예: 20분 × 2회 → 40분 × 1회</div>
+            </div>
+          </label>
+          <label id="merge-opt-split" style="display:flex;align-items:flex-start;gap:10px;padding:14px;border:1.5px solid var(--gray-100);border-radius:12px;cursor:pointer;background:#fff;">
+            <input type="radio" name="merge-type" value="SPLIT" onchange="onMergeTypeChange('SPLIT')" style="margin-top:3px;">
+            <div style="flex:1;">
+              <div style="font-size:14px;font-weight:700;color:var(--navy);">✂ 분할 (1회 → 여러 회차)</div>
+              <div style="font-size:12px;color:var(--gray-500);margin-top:4px;line-height:1.5;">긴 회차 1회를 짧게 N번 나눠서 진행해요<br>예: 40분 × 1회 → 20분 × 2회</div>
+            </div>
+          </label>
+        </div>
+
+        <div style="padding:10px 12px;background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;margin-bottom:16px;font-size:11px;color:#92400E;line-height:1.5;">
+          💡 이번 달 통합/분할 사용: <strong>0/1회</strong> (어드민 정책 기준) · 같은 월 회차만 가능
+        </div>
+
+        <div style="display:flex;gap:8px;">
+          <button onclick="backFromMergeTypeSheet()" style="flex:1;height:50px;border-radius:12px;border:1.5px solid var(--gray-200);background:#fff;color:var(--gray-500);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">‹ 이전</button>
+          <button onclick="goToMergeTargetsSheet()" style="flex:1.6;height:50px;border-radius:12px;border:none;background:var(--navy);color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">다음: 대상 선택 ›</button>
+        </div>
+        <button onclick="closeAllMakeupSheets()" style="width:100%;height:42px;border:none;background:transparent;color:var(--gray-400);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;margin-top:6px;">전체 취소</button>
+      </div>
+    </div>
+
+    <!-- 통합/분할 대상 선택 바텀시트 (FR-14m STEP 2/2, 신규) -->
+    <div id="makeup-merge-targets-sheet" style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;z-index:175;">
+      <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.45);" onclick="closeAllMakeupSheets()"></div>
+      <div style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;padding:20px;z-index:176;max-height:90%;overflow-y:auto;">
+        <div style="width:40px;height:4px;border-radius:2px;background:var(--gray-200);margin:0 auto 16px;"></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--green);letter-spacing:0.4px;">STEP 2 / 2</div>
+            <div id="mts-title" style="font-size:17px;font-weight:800;color:var(--navy);margin-top:2px;">통합 대상 회차 선택</div>
+          </div>
+          <button onclick="closeAllMakeupSheets()" style="width:32px;height:32px;border-radius:50%;border:none;background:var(--gray-100);color:var(--gray-500);font-size:16px;cursor:pointer;">✕</button>
+        </div>
+        <div id="mts-subtitle" style="font-size:13px;color:var(--gray-500);margin-bottom:16px;">합칠 회차를 1개 이상 선택해 주세요</div>
+
+        <!-- 통합 모드: 대상 회차 체크박스 -->
+        <div id="merge-targets-merge" style="margin-bottom:14px;">
+          <div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:8px;">통합 대상 회차 <span style="font-weight:400;color:var(--gray-400);">(같은 수강생, 결강 또는 예정)</span></div>
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1.5px solid var(--gray-100);border-radius:10px;cursor:pointer;background:#FAFAFA;">
+              <input type="checkbox" class="merge-target" data-duration="20" data-kind="ABSENT" data-date="4/13 (일) 09:30" onchange="updateMergePreview()" checked>
+              <div style="flex:1;font-size:12px;color:var(--navy);">
+                <span style="display:inline-block;padding:1px 6px;border-radius:4px;background:var(--gray-100);color:var(--gray-500);font-size:10px;font-weight:700;margin-right:4px;">결강</span>
+                <strong>4/13 (일) 09:30</strong> · 20분 (수강생 사전 통보)
+              </div>
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1.5px solid var(--gray-100);border-radius:10px;cursor:pointer;background:#FAFAFA;">
+              <input type="checkbox" class="merge-target" data-duration="20" data-kind="ABSENT" data-date="4/20 (일) 09:30" onchange="updateMergePreview()">
+              <div style="flex:1;font-size:12px;color:var(--navy);">
+                <span style="display:inline-block;padding:1px 6px;border-radius:4px;background:var(--gray-100);color:var(--gray-500);font-size:10px;font-weight:700;margin-right:4px;">결강</span>
+                <strong>4/20 (일) 09:30</strong> · 20분 (코치 사정)
+              </div>
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1.5px solid #C4B5FD;border-radius:10px;cursor:pointer;background:#F5F3FF;">
+              <input type="checkbox" class="merge-target" data-duration="20" data-kind="SCHEDULED" data-date="5/2 (금) 10:00" onchange="updateMergePreview()">
+              <div style="flex:1;font-size:12px;color:var(--navy);">
+                <span style="display:inline-block;padding:1px 6px;border-radius:4px;background:#EDE9FE;color:#5B21B6;font-size:10px;font-weight:700;margin-right:4px;">예정</span>
+                <strong>5/2 (금) 10:00</strong> · 20분 (D+4)
+              </div>
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1.5px solid #C4B5FD;border-radius:10px;cursor:pointer;background:#F5F3FF;">
+              <input type="checkbox" class="merge-target" data-duration="20" data-kind="SCHEDULED" data-date="5/5 (월) 14:00" onchange="updateMergePreview()">
+              <div style="flex:1;font-size:12px;color:var(--navy);">
+                <span style="display:inline-block;padding:1px 6px;border-radius:4px;background:#EDE9FE;color:#5B21B6;font-size:10px;font-weight:700;margin-right:4px;">예정</span>
+                <strong>5/5 (월) 14:00</strong> · 20분 (D+7)
+              </div>
+            </label>
+          </div>
+          <div style="margin-top:8px;padding:8px 10px;background:#EFF6FF;border-radius:8px;font-size:10px;color:#1E40AF;line-height:1.5;">
+            💡 <strong>예정 회차</strong>를 선택하면 그 일정에 합쳐서 길게 진행돼요 (날짜 다시 안 잡아도 됨)
+          </div>
+        </div>
+
+        <!-- 분할 모드: 분할 안내 -->
+        <div id="merge-targets-split" style="display:none;margin-bottom:14px;padding:14px;background:#FAFAFA;border:1.5px solid var(--gray-100);border-radius:12px;">
+          <div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:6px;">자동 계산된 분할 옵션</div>
+          <div style="font-size:12px;color:var(--navy);line-height:1.6;">현재 보강 대상: <strong>40분 × 1회</strong><br>분할 결과: <strong>20분 × 2회</strong> (수강생 동의 필요)</div>
+          <div style="margin-top:8px;font-size:11px;color:var(--gray-400);line-height:1.5;">분할은 자동으로 계산돼요. 다음 단계에서 수강생에게 제안할 슬롯 2개를 선택합니다.</div>
+        </div>
+
+        <!-- 합산 미리보기 -->
+        <div id="merge-preview" style="padding:12px;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:10px;font-size:12px;color:#1E40AF;line-height:1.6;margin-bottom:8px;">
+          <strong>📋 미리보기</strong><br>20분 × 2회 → <strong>40분 × 1회</strong>로 통합<br>· 회차 카운트: 2회 차감 (시간 합계 보존)<br>· 결제 변동 없음
+        </div>
+
+        <!-- 정책 한도 안내 -->
+        <div style="margin-bottom:16px;padding:10px;background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;font-size:11px;color:#92400E;line-height:1.5;">
+          💡 이번 달 통합/분할 사용: <strong>0/1회</strong> (어드민 정책 기준) · 같은 월 회차만 가능
+        </div>
+
+        <div style="display:flex;gap:8px;">
+          <button onclick="backFromMergeTargetsSheet()" style="flex:1;height:50px;border-radius:12px;border:1.5px solid var(--gray-200);background:#fff;color:var(--gray-500);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">‹ 이전</button>
+          <button id="mts-next-btn" onclick="onMergeTargetsNext()" style="flex:1.6;height:50px;border-radius:12px;border:none;background:var(--navy);color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">다음: 날짜 선택 ›</button>
+        </div>
+        <button onclick="closeAllMakeupSheets()" style="width:100%;height:42px;border:none;background:transparent;color:var(--gray-400);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;margin-top:6px;">전체 취소</button>
+      </div>
+    </div>
+
+    <!-- 통합 제안 확정 모달 (FR-14m 케이스 ㄴ: 결강+예정, 날짜 단계 스킵) -->
+    <div id="merge-propose-confirm" style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;z-index:200;">
+      <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);" onclick="hideMergeProposeConfirm()"></div>
+      <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:88%;max-width:340px;background:#fff;border-radius:18px;padding:24px 20px;z-index:201;">
+        <div style="font-size:17px;font-weight:800;color:var(--navy);text-align:center;margin-bottom:8px;">통합 제안 확인</div>
+        <div id="mpc-body" style="font-size:13px;color:var(--gray-500);line-height:1.6;text-align:center;margin-bottom:18px;">
+          기존 <strong style="color:#5B21B6;">5/2 (금) 10:00</strong> 예정 일정에<br>
+          합쳐서 <strong>40분</strong>으로 진행됩니다.<br>
+          <span style="color:var(--gray-400);font-size:12px;">수강생에게 카카오 알림톡이 발송됩니다.</span>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button onclick="hideMergeProposeConfirm()" style="flex:1;height:48px;border-radius:12px;border:1.5px solid var(--gray-200);background:#fff;color:var(--gray-500);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">취소</button>
+          <button onclick="confirmMergeProposeToScheduled()" style="flex:1.6;height:48px;border-radius:12px;border:none;background:var(--green);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">제안하기</button>
+        </div>
       </div>
     </div>
 
@@ -1717,6 +1781,28 @@ function closeStatusActions() {
   document.getElementById('status-actions-overlay').style.display = 'none';
 }
 
+// FR-14m 위저드 상태: 'reason' | 'targets' (보강 날짜 시트의 이전 버튼 분기에 사용)
+let makeupDateOrigin = 'reason';
+let currentMergeType = 'MERGE';
+
+function getMergeToggleOn() {
+  const mt = document.getElementById('merge-toggle');
+  return !!(mt && mt.checked);
+}
+
+function updateReasonNextButtonLabel() {
+  const btn = document.getElementById('mkr-next-btn');
+  if (!btn) return;
+  const on = getMergeToggleOn();
+  btn.textContent = on ? '다음: 통합/분할 선택 ›' : '다음: 날짜 선택하기';
+  const info = document.getElementById('mkr-info-dynamic');
+  if (info) {
+    info.innerHTML = on
+      ? '다음 단계에서 통합/분할 방식과 대상 회차를 선택하면<br>수강생에게 카카오 알림톡으로 제안됩니다.'
+      : '다음 화면에서 보강 가능 날짜를 선택하면<br>수강생에게 카카오 알림톡으로 제안됩니다.';
+  }
+}
+
 function onMakeupReasonChange() {
   const sel = document.getElementById('mkr-select');
   const val = sel.value;
@@ -1730,6 +1816,7 @@ function onMakeupReasonChange() {
   btn.disabled = !val;
   btn.style.background = val ? 'var(--navy)' : 'var(--gray-300)';
   btn.style.cursor = val ? 'pointer' : 'not-allowed';
+  updateReasonNextButtonLabel();
 }
 
 function handleSupplement() {
@@ -1748,47 +1835,116 @@ function handleSupplement() {
   // 회차 통합/분할 토글 초기화
   const mt = document.getElementById('merge-toggle');
   if (mt) mt.checked = false;
-  const mo = document.getElementById('merge-options');
-  if (mo) mo.style.display = 'none';
   const track = document.getElementById('merge-toggle-track');
   const thumb = document.getElementById('merge-toggle-thumb');
   if (track) track.style.background = 'var(--gray-300)';
   if (thumb) thumb.style.left = '3px';
+  // 위저드 상태 초기화
+  currentMergeType = 'MERGE';
+  makeupDateOrigin = 'reason';
+  // 통합/분할 라디오 기본값(MERGE)으로 복원
+  const radios = document.querySelectorAll('input[name="merge-type"]');
+  radios.forEach(r => { r.checked = (r.value === 'MERGE'); });
+  // 통합 대상 체크박스 기본 상태 복원 (첫 ABSENT만 체크, 나머지 해제)
+  const targets = Array.from(document.querySelectorAll('.merge-target'));
+  targets.forEach((cb, idx) => { cb.checked = (idx === 0); });
+  // 라벨 스타일/미리보기/다음 버튼 동기화
+  onMergeTypeChange('MERGE');
+  updateReasonNextButtonLabel();
+  // 모든 후속 시트/모달 닫힘 보장
+  closeMergeTypeSheet();
+  closeMergeTargetsSheet();
+  closeMakeupDateSheet();
+  hideMergeProposeConfirm();
   document.getElementById('makeup-reason-sheet').style.display = 'block';
 }
 
 function onMergeToggleChange() {
   const checked = document.getElementById('merge-toggle').checked;
-  const opts = document.getElementById('merge-options');
   const track = document.getElementById('merge-toggle-track');
   const thumb = document.getElementById('merge-toggle-thumb');
-  opts.style.display = checked ? 'block' : 'none';
-  track.style.background = checked ? 'var(--green)' : 'var(--gray-300)';
-  thumb.style.left = checked ? '23px' : '3px';
+  if (track) track.style.background = checked ? 'var(--green)' : 'var(--gray-300)';
+  if (thumb) thumb.style.left = checked ? '23px' : '3px';
+  updateReasonNextButtonLabel();
+}
+
+// 사유 시트 "다음" 버튼 — 토글 상태에 따라 분기
+function onReasonNext() {
+  if (getMergeToggleOn()) {
+    goToMergeTypeSheet();
+  } else {
+    makeupDateOrigin = 'reason';
+    goToMakeupDateSheet();
+  }
 }
 
 function onMergeTypeChange(type) {
+  currentMergeType = type;
   const mergeBox = document.getElementById('merge-targets-merge');
   const splitBox = document.getElementById('merge-targets-split');
   const preview = document.getElementById('merge-preview');
   const mergeOpt = document.getElementById('merge-opt-merge');
   const splitOpt = document.getElementById('merge-opt-split');
   if (type === 'MERGE') {
-    mergeBox.style.display = 'block';
-    splitBox.style.display = 'none';
-    mergeOpt.style.borderColor = 'var(--green)';
-    mergeOpt.style.background = '#F0FDFA';
-    splitOpt.style.borderColor = 'var(--gray-100)';
-    splitOpt.style.background = '#fff';
+    if (mergeBox) mergeBox.style.display = 'block';
+    if (splitBox) splitBox.style.display = 'none';
+    if (mergeOpt) { mergeOpt.style.borderColor = 'var(--green)'; mergeOpt.style.background = '#F0FDFA'; }
+    if (splitOpt) { splitOpt.style.borderColor = 'var(--gray-100)'; splitOpt.style.background = '#fff'; }
     updateMergePreview();
   } else {
-    mergeBox.style.display = 'none';
-    splitBox.style.display = 'block';
-    mergeOpt.style.borderColor = 'var(--gray-100)';
-    mergeOpt.style.background = '#fff';
-    splitOpt.style.borderColor = 'var(--green)';
-    splitOpt.style.background = '#F0FDFA';
-    preview.innerHTML = '<strong>📋 미리보기</strong><br>40분 × 1회 → <strong>20분 × 2회</strong>로 분할<br>· 회차 카운트: 1회 차감 (분할 그룹 합계 = 1)<br>· 결제 변동 없음 · 슬롯 2개 선택 필수';
+    if (mergeBox) mergeBox.style.display = 'none';
+    if (splitBox) splitBox.style.display = 'block';
+    if (mergeOpt) { mergeOpt.style.borderColor = 'var(--gray-100)'; mergeOpt.style.background = '#fff'; }
+    if (splitOpt) { splitOpt.style.borderColor = 'var(--green)'; splitOpt.style.background = '#F0FDFA'; }
+    if (preview) preview.innerHTML = '<strong>📋 미리보기</strong><br>40분 × 1회 → <strong>20분 × 2회</strong>로 분할<br>· 회차 카운트: 1회 차감 (분할 그룹 합계 = 1)<br>· 결제 변동 없음 · 슬롯 2개 선택 필수';
+  }
+  updateMergeTargetsTitleSubtitle();
+  updateMergeTargetsNextButton();
+}
+
+function updateMergeTargetsTitleSubtitle() {
+  const title = document.getElementById('mts-title');
+  const sub = document.getElementById('mts-subtitle');
+  if (!title || !sub) return;
+  if (currentMergeType === 'SPLIT') {
+    title.textContent = '분할 옵션 확인';
+    sub.textContent = '자동 계산된 분할 옵션을 확인하세요';
+  } else {
+    title.textContent = '통합 대상 회차 선택';
+    sub.textContent = '합칠 회차를 1개 이상 선택해 주세요';
+  }
+}
+
+function updateMergeTargetsNextButton() {
+  const btn = document.getElementById('mts-next-btn');
+  if (!btn) return;
+  if (currentMergeType === 'SPLIT') {
+    btn.textContent = '다음: 날짜 선택 ›';
+    btn.disabled = false;
+    btn.style.background = 'var(--navy)';
+    btn.style.cursor = 'pointer';
+    return;
+  }
+  // MERGE 모드
+  const checked = Array.from(document.querySelectorAll('.merge-target:checked'));
+  const hasScheduled = checked.some(c => c.dataset.kind === 'SCHEDULED');
+  if (checked.length === 0) {
+    btn.textContent = '대상 회차 선택 필요';
+    btn.disabled = true;
+    btn.style.background = 'var(--gray-300)';
+    btn.style.cursor = 'not-allowed';
+  } else if (hasScheduled) {
+    // 케이스 ㄴ: 결강+예정 → 날짜 단계 스킵
+    btn.textContent = '제안하기 (예정 회차에 합치기) ›';
+    btn.disabled = false;
+    btn.style.background = 'var(--green)';
+    btn.style.cursor = 'pointer';
+  } else {
+    // 케이스 ㄱ: 결강+결강 → 날짜 선택 단계 필요
+    btn.textContent = '다음: 날짜 선택 ›';
+    btn.disabled = false;
+    btn.style.background = 'var(--navy)';
+    btn.style.cursor = 'pointer';
   }
 }
 
@@ -1796,35 +1952,140 @@ function onMergeTypeChange(type) {
 function updateMergePreview() {
   const preview = document.getElementById('merge-preview');
   const checked = Array.from(document.querySelectorAll('.merge-target:checked'));
-  const absentCount = checked.filter(c => c.dataset.kind === 'ABSENT').length;
   const scheduled = checked.filter(c => c.dataset.kind === 'SCHEDULED');
   // 현재 보강 대상 회차도 1건(=20분)으로 가정
   const baseDuration = 20;
   const totalDuration = baseDuration + checked.reduce((sum, c) => sum + parseInt(c.dataset.duration || '0', 10), 0);
   const totalCount = checked.length + 1; // +1 = 현재 보강 대상 회차
 
-  if (checked.length === 0) {
-    preview.innerHTML = '<strong>📋 미리보기</strong><br><span style="color:var(--gray-400);">통합 대상 회차를 1개 이상 선택해 주세요</span>';
-    return;
+  if (preview) {
+    if (checked.length === 0) {
+      preview.innerHTML = '<strong>📋 미리보기</strong><br><span style="color:var(--gray-400);">통합 대상 회차를 1개 이상 선택해 주세요</span>';
+    } else if (scheduled.length > 0) {
+      // 케이스 ㄴ: 결강 + 예정
+      const sched = scheduled[0];
+      preview.innerHTML = `<strong>📋 미리보기 — 결강 + 예정 통합</strong><br>현재 결강 회차(20분) + <strong style="color:#5B21B6;">${sched.dataset.date} 예정(20분)</strong><br>→ <strong style="color:#5B21B6;">${sched.dataset.date} · ${totalDuration}분으로 길게 진행</strong><br>· 새 일정 안 잡아도 됨 (다음 단계 스킵)<br>· 회차 카운트: ${totalCount}회 차감 · 결제 변동 없음`;
+    } else {
+      // 케이스 ㄱ: 결강 + 결강
+      preview.innerHTML = `<strong>📋 미리보기 — 결강 통합</strong><br>20분 × ${totalCount}회 → <strong>${totalDuration}분 × 1회</strong>로 통합<br>· 다음 단계에서 새 일정 1개 선택 필요<br>· 회차 카운트: ${totalCount}회 차감 · 결제 변동 없음`;
+    }
   }
-
-  if (scheduled.length > 0) {
-    // 케이스 ㄴ: 결강 + 예정
-    const sched = scheduled[0]; // 단순화: 첫 예정 회차 사용
-    preview.innerHTML = `<strong>📋 미리보기 — 결강 + 예정 통합</strong><br>현재 결강 회차(20분) + <strong style="color:#5B21B6;">${sched.dataset.date} 예정(20분)</strong><br>→ <strong style="color:#5B21B6;">${sched.dataset.date} · ${totalDuration}분으로 길게 진행</strong><br>· 새 일정 안 잡아도 됨 (다음 단계 스킵)<br>· 회차 카운트: ${totalCount}회 차감 · 결제 변동 없음`;
-  } else {
-    // 케이스 ㄱ: 결강 + 결강
-    preview.innerHTML = `<strong>📋 미리보기 — 결강 통합</strong><br>20분 × ${totalCount}회 → <strong>${totalDuration}분 × 1회</strong>로 통합<br>· 다음 단계에서 새 일정 1개 선택 필요<br>· 회차 카운트: ${totalCount}회 차감 · 결제 변동 없음`;
-  }
+  updateMergeTargetsNextButton();
 }
 
 function closeMakeupReasonSheet() {
   document.getElementById('makeup-reason-sheet').style.display = 'none';
 }
 
+function closeMergeTypeSheet() {
+  const el = document.getElementById('makeup-merge-type-sheet');
+  if (el) el.style.display = 'none';
+}
+
+function closeMergeTargetsSheet() {
+  const el = document.getElementById('makeup-merge-targets-sheet');
+  if (el) el.style.display = 'none';
+}
+
+// 모든 보강 처리 시트 + 모달 닫기 (전체 취소 / 오버레이 클릭)
+function closeAllMakeupSheets() {
+  closeMakeupReasonSheet();
+  closeMergeTypeSheet();
+  closeMergeTargetsSheet();
+  closeMakeupDateSheet();
+  hideMergeProposeConfirm();
+}
+
+// 사유 시트 → 통합/분할 선택 시트 (STEP 1/2)
+function goToMergeTypeSheet() {
+  closeMakeupReasonSheet();
+  // 현재 선택된 타입에 맞춰 라디오/스타일 동기화
+  const radios = document.querySelectorAll('input[name="merge-type"]');
+  radios.forEach(r => { r.checked = (r.value === currentMergeType); });
+  onMergeTypeChange(currentMergeType);
+  document.getElementById('makeup-merge-type-sheet').style.display = 'block';
+}
+
+// 통합/분할 선택 시트 → 사유 시트 (이전, 토글/사유 보존)
+function backFromMergeTypeSheet() {
+  closeMergeTypeSheet();
+  document.getElementById('makeup-reason-sheet').style.display = 'block';
+}
+
+// 통합/분할 선택 시트 → 대상 선택 시트 (STEP 2/2)
+function goToMergeTargetsSheet() {
+  closeMergeTypeSheet();
+  // 타입 별 대상 영역 표시 동기화 + 미리보기/다음 버튼 갱신
+  onMergeTypeChange(currentMergeType);
+  document.getElementById('makeup-merge-targets-sheet').style.display = 'block';
+}
+
+// 대상 선택 시트 → 통합/분할 선택 시트 (이전, 선택값 보존)
+function backFromMergeTargetsSheet() {
+  closeMergeTargetsSheet();
+  document.getElementById('makeup-merge-type-sheet').style.display = 'block';
+}
+
+// 대상 선택 시트 "다음" — 케이스별 분기
+function onMergeTargetsNext() {
+  if (currentMergeType === 'MERGE') {
+    const checked = Array.from(document.querySelectorAll('.merge-target:checked'));
+    if (checked.length === 0) return; // 비활성 상태이므로 도달하지 않지만 안전망
+    const hasScheduled = checked.some(c => c.dataset.kind === 'SCHEDULED');
+    if (hasScheduled) {
+      // 케이스 ㄴ: 날짜 단계 스킵 → 제안 확정 모달
+      const sched = checked.find(c => c.dataset.kind === 'SCHEDULED');
+      showMergeProposeConfirm(sched ? sched.dataset.date : '');
+      return;
+    }
+  }
+  // 케이스 ㄱ (MERGE 결강+결강) 또는 SPLIT → 날짜 시트
+  makeupDateOrigin = 'targets';
+  closeMergeTargetsSheet();
+  openMakeupDateSheet();
+}
+
+// (사유 시트 또는 대상 시트에서 호출) 날짜 시트 진입
 function goToMakeupDateSheet() {
   closeMakeupReasonSheet();
   openMakeupDateSheet();
+}
+
+// 날짜 시트 "이전" — 진입 출처에 따라 분기
+function backFromMakeupDateSheet() {
+  closeMakeupDateSheet();
+  if (makeupDateOrigin === 'targets') {
+    document.getElementById('makeup-merge-targets-sheet').style.display = 'block';
+  } else {
+    document.getElementById('makeup-reason-sheet').style.display = 'block';
+  }
+}
+
+// FR-14m 케이스 ㄴ 제안 확정 모달
+function showMergeProposeConfirm(scheduledDate) {
+  const body = document.getElementById('mpc-body');
+  if (body) {
+    const checked = Array.from(document.querySelectorAll('.merge-target:checked'));
+    const baseDuration = 20; // 현재 보강 대상 회차
+    const totalDuration = baseDuration + checked.reduce((s, c) => s + parseInt(c.dataset.duration || '0', 10), 0);
+    body.innerHTML = `기존 <strong style="color:#5B21B6;">${scheduledDate}</strong> 예정 일정에<br>합쳐서 <strong>${totalDuration}분</strong>으로 진행됩니다.<br><span style="color:var(--gray-400);font-size:12px;">수강생에게 카카오 알림톡이 발송됩니다.</span>`;
+  }
+  document.getElementById('merge-propose-confirm').style.display = 'block';
+}
+
+function hideMergeProposeConfirm() {
+  const el = document.getElementById('merge-propose-confirm');
+  if (el) el.style.display = 'none';
+}
+
+function confirmMergeProposeToScheduled() {
+  hideMergeProposeConfirm();
+  closeMergeTargetsSheet();
+  closeMakeupReasonSheet();
+  // 수강생 화면으로 이동 (case=ABSENT_PLUS_SCHEDULED)
+  const sched = Array.from(document.querySelectorAll('.merge-target:checked')).find(c => c.dataset.kind === 'SCHEDULED');
+  const dateParam = sched ? sched.dataset.date : '';
+  window.location.href = `../flow6-student-my/6-6-booking-detail.html?status=makeup_proposed&mergeCase=ABSENT_PLUS_SCHEDULED&mergeDate=${encodeURIComponent(dateParam)}`;
 }
 
 const MAKEUP_DAY_NAMES = ['일','월','화','수','목','금','토'];
