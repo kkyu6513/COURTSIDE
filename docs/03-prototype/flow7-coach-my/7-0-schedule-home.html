@@ -927,33 +927,14 @@
         </div>
         <textarea id="mkr-etc-input" placeholder="기타 사유를 직접 입력해 주세요" style="display:none;width:100%;height:72px;border-radius:12px;border:1.5px solid var(--green);padding:12px 14px;font-size:13px;font-family:inherit;resize:none;box-sizing:border-box;outline:none;color:var(--navy);background:#F0FDFA;margin-bottom:4px;" onfocus="this.style.borderColor='var(--navy)'" onblur="this.style.borderColor='var(--green)'"></textarea>
 
-        <!-- 회차 통합/분할 토글 (FR-14m) -->
-        <div style="margin-top:14px;padding:14px;border:1.5px solid var(--gray-100);border-radius:12px;background:#fff;">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
-            <div style="flex:1;">
-              <div style="display:flex;align-items:center;gap:6px;">
-                <span style="font-size:13px;font-weight:700;color:var(--navy);">🔀 회차 통합/분할 제안</span>
-                <span style="padding:2px 6px;border-radius:6px;background:#FEF3C7;color:#92400E;font-size:10px;font-weight:700;">선택</span>
-              </div>
-              <div style="font-size:11px;color:var(--gray-400);margin-top:4px;line-height:1.5;">짧은 회차 N개를 한 번에(통합) 또는 한 회를 N번 나눠서(분할) 제안. 시간 합계는 동일</div>
-            </div>
-            <label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0;">
-              <input type="checkbox" id="merge-toggle" onchange="onMergeToggleChange()" style="opacity:0;width:0;height:0;">
-              <span id="merge-toggle-track" style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:var(--gray-300);border-radius:24px;transition:0.2s;"></span>
-              <span id="merge-toggle-thumb" style="position:absolute;height:18px;width:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:0.2s;box-shadow:0 1px 3px rgba(0,0,0,0.2);"></span>
-            </label>
-          </div>
-
-        </div>
-
-        <div style="padding:12px;background:#F0FDFA;border-radius:10px;margin-bottom:16px;margin-top:12px;">
+        <div style="padding:12px;background:#F0FDFA;border-radius:10px;margin:14px 0 16px;">
           <div style="font-size:12px;color:#065F46;line-height:1.6;">
             ✅ <strong>회차는 차감되지 않습니다</strong><br>
-            <span id="mkr-info-dynamic">다음 화면에서 보강 가능 날짜를 선택하면<br>수강생에게 카카오 알림톡으로 제안됩니다.</span>
+            다음 단계에서 보강 방식(추가/통합/분할)을 선택해 주세요.
           </div>
         </div>
 
-        <button id="mkr-next-btn" onclick="onReasonNext()" disabled style="width:100%;height:50px;border-radius:12px;border:none;background:var(--gray-300);color:#fff;font-size:15px;font-weight:700;cursor:not-allowed;font-family:inherit;">다음: 날짜 선택하기</button>
+        <button id="mkr-next-btn" onclick="onReasonNext()" disabled style="width:100%;height:50px;border-radius:12px;border:none;background:var(--gray-300);color:#fff;font-size:15px;font-weight:700;cursor:not-allowed;font-family:inherit;">다음: 보강 방식 선택 ›</button>
         <button onclick="closeMakeupReasonSheet()" style="width:100%;height:46px;border-radius:12px;border:1px solid var(--gray-100);background:#fff;color:var(--gray-500);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:8px;">취소</button>
       </div>
     </div>
@@ -1002,59 +983,60 @@
       </div>
     </div>
 
-    <!-- 통합/분할 선택 바텀시트 (FR-14m STEP 1/2, 신규) -->
-    <div id="makeup-merge-type-sheet" style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;z-index:170;">
+    <!-- 보강 방식 선택 바텀시트 (사유 후 항상 거침 — 추가/통합/분할 3종) -->
+    <div id="makeup-action-sheet" style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;z-index:170;">
       <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.45);" onclick="closeAllMakeupSheets()"></div>
       <div style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;padding:20px;z-index:171;max-height:85%;overflow-y:auto;">
         <div style="width:40px;height:4px;border-radius:2px;background:var(--gray-200);margin:0 auto 16px;"></div>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
-          <div>
-            <div style="font-size:11px;font-weight:700;color:var(--green);letter-spacing:0.4px;">STEP 1 / 2</div>
-            <div style="font-size:17px;font-weight:800;color:var(--navy);margin-top:2px;">통합/분할 방식 선택</div>
-          </div>
+          <div style="font-size:17px;font-weight:800;color:var(--navy);">보강 방식 선택</div>
           <button onclick="closeAllMakeupSheets()" style="width:32px;height:32px;border-radius:50%;border:none;background:var(--gray-100);color:var(--gray-500);font-size:16px;cursor:pointer;">✕</button>
         </div>
-        <div style="font-size:13px;color:var(--gray-500);margin-bottom:16px;">어떻게 진행할지 먼저 선택해 주세요</div>
+        <div style="font-size:13px;color:var(--gray-500);margin-bottom:16px;">어떻게 보강할지 선택해 주세요</div>
 
         <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;">
-          <label id="merge-opt-merge" style="display:flex;align-items:flex-start;gap:10px;padding:14px;border:1.5px solid var(--green);border-radius:12px;cursor:pointer;background:#F0FDFA;">
-            <input type="radio" name="merge-type" value="MERGE" onchange="onMergeTypeChange('MERGE')" checked style="margin-top:3px;">
+          <label id="mas-opt-add" style="display:flex;align-items:flex-start;gap:10px;padding:14px;border:1.5px solid var(--green);border-radius:12px;cursor:pointer;background:#F0FDFA;">
+            <input type="radio" name="makeup-action" value="ADD" onchange="onMakeupActionChange('ADD')" checked style="margin-top:3px;">
             <div style="flex:1;">
-              <div style="font-size:14px;font-weight:700;color:var(--navy);">🔗 통합 (여러 회차 → 1회)</div>
-              <div style="font-size:12px;color:var(--gray-500);margin-top:4px;line-height:1.5;">짧은 회차 N개를 한 번에 길게 진행하도록 합쳐요<br>예: 20분 × 2회 → 40분 × 1회</div>
+              <div style="font-size:14px;font-weight:700;color:var(--navy);display:flex;align-items:center;gap:6px;">➕ 추가 <span style="font-size:10px;font-weight:700;background:var(--green);color:#fff;padding:2px 6px;border-radius:6px;">기본</span></div>
+              <div style="font-size:12px;color:var(--gray-500);margin-top:4px;line-height:1.5;">기존 회차 차감 없이 새 날짜를 잡아 보강해요<br>가장 일반적인 방식</div>
             </div>
           </label>
-          <label id="merge-opt-split" style="display:flex;align-items:flex-start;gap:10px;padding:14px;border:1.5px solid var(--gray-100);border-radius:12px;cursor:pointer;background:#fff;">
-            <input type="radio" name="merge-type" value="SPLIT" onchange="onMergeTypeChange('SPLIT')" style="margin-top:3px;">
+          <label id="mas-opt-merge" style="display:flex;align-items:flex-start;gap:10px;padding:14px;border:1.5px solid var(--gray-100);border-radius:12px;cursor:pointer;background:#fff;">
+            <input type="radio" name="makeup-action" value="MERGE" onchange="onMakeupActionChange('MERGE')" style="margin-top:3px;">
+            <div style="flex:1;">
+              <div style="font-size:14px;font-weight:700;color:var(--navy);">🔗 통합 (여러 회차 → 1회)</div>
+              <div style="font-size:12px;color:var(--gray-500);margin-top:4px;line-height:1.5;">짧은 회차 N개를 한 번에 길게<br>예: 20분 × 2회 → 40분 × 1회</div>
+            </div>
+          </label>
+          <label id="mas-opt-split" style="display:flex;align-items:flex-start;gap:10px;padding:14px;border:1.5px solid var(--gray-100);border-radius:12px;cursor:pointer;background:#fff;">
+            <input type="radio" name="makeup-action" value="SPLIT" onchange="onMakeupActionChange('SPLIT')" style="margin-top:3px;">
             <div style="flex:1;">
               <div style="font-size:14px;font-weight:700;color:var(--navy);">✂ 분할 (1회 → 여러 회차)</div>
-              <div style="font-size:12px;color:var(--gray-500);margin-top:4px;line-height:1.5;">긴 회차 1회를 짧게 N번 나눠서 진행해요<br>예: 40분 × 1회 → 20분 × 2회</div>
+              <div style="font-size:12px;color:var(--gray-500);margin-top:4px;line-height:1.5;">긴 회차 1회를 짧게 N번<br>예: 40분 × 1회 → 20분 × 2회</div>
             </div>
           </label>
         </div>
 
-        <div style="padding:10px 12px;background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;margin-bottom:16px;font-size:11px;color:#92400E;line-height:1.5;">
+        <div id="mas-policy-notice" style="display:none;padding:10px 12px;background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;margin-bottom:16px;font-size:11px;color:#92400E;line-height:1.5;">
           💡 이번 달 통합/분할 사용: <strong>0/1회</strong> (어드민 정책 기준) · 같은 월 회차만 가능
         </div>
 
         <div style="display:flex;gap:8px;">
-          <button onclick="backFromMergeTypeSheet()" style="flex:1;height:50px;border-radius:12px;border:1.5px solid var(--gray-200);background:#fff;color:var(--gray-500);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">‹ 이전</button>
-          <button onclick="goToMergeTargetsSheet()" style="flex:1.6;height:50px;border-radius:12px;border:none;background:var(--navy);color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">다음: 대상 선택 ›</button>
+          <button onclick="backFromActionSheet()" style="flex:1;height:50px;border-radius:12px;border:1.5px solid var(--gray-200);background:#fff;color:var(--gray-500);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">‹ 이전</button>
+          <button id="mas-next-btn" onclick="onActionNext()" style="flex:1.6;height:50px;border-radius:12px;border:none;background:var(--navy);color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">다음: 날짜 선택 ›</button>
         </div>
         <button onclick="closeAllMakeupSheets()" style="width:100%;height:42px;border:none;background:transparent;color:var(--gray-400);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;margin-top:6px;">전체 취소</button>
       </div>
     </div>
 
-    <!-- 통합/분할 대상 선택 바텀시트 (FR-14m STEP 2/2, 신규) -->
+    <!-- 통합/분할 대상 선택 바텀시트 (통합·분할 선택 시에만 진입) -->
     <div id="makeup-merge-targets-sheet" style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;z-index:175;">
       <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.45);" onclick="closeAllMakeupSheets()"></div>
       <div style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;padding:20px;z-index:176;max-height:90%;overflow-y:auto;">
         <div style="width:40px;height:4px;border-radius:2px;background:var(--gray-200);margin:0 auto 16px;"></div>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
-          <div>
-            <div style="font-size:11px;font-weight:700;color:var(--green);letter-spacing:0.4px;">STEP 2 / 2</div>
-            <div id="mts-title" style="font-size:17px;font-weight:800;color:var(--navy);margin-top:2px;">통합 대상 회차 선택</div>
-          </div>
+          <div id="mts-title" style="font-size:17px;font-weight:800;color:var(--navy);">통합 대상 회차 선택</div>
           <button onclick="closeAllMakeupSheets()" style="width:32px;height:32px;border-radius:50%;border:none;background:var(--gray-100);color:var(--gray-500);font-size:16px;cursor:pointer;">✕</button>
         </div>
         <div id="mts-subtitle" style="font-size:13px;color:var(--gray-500);margin-bottom:16px;">합칠 회차를 1개 이상 선택해 주세요</div>
@@ -1781,27 +1763,11 @@ function closeStatusActions() {
   document.getElementById('status-actions-overlay').style.display = 'none';
 }
 
-// FR-14m 위저드 상태: 'reason' | 'targets' (보강 날짜 시트의 이전 버튼 분기에 사용)
-let makeupDateOrigin = 'reason';
-let currentMergeType = 'MERGE';
-
-function getMergeToggleOn() {
-  const mt = document.getElementById('merge-toggle');
-  return !!(mt && mt.checked);
-}
-
-function updateReasonNextButtonLabel() {
-  const btn = document.getElementById('mkr-next-btn');
-  if (!btn) return;
-  const on = getMergeToggleOn();
-  btn.textContent = on ? '다음: 통합/분할 선택 ›' : '다음: 날짜 선택하기';
-  const info = document.getElementById('mkr-info-dynamic');
-  if (info) {
-    info.innerHTML = on
-      ? '다음 단계에서 통합/분할 방식과 대상 회차를 선택하면<br>수강생에게 카카오 알림톡으로 제안됩니다.'
-      : '다음 화면에서 보강 가능 날짜를 선택하면<br>수강생에게 카카오 알림톡으로 제안됩니다.';
-  }
-}
+// 보강 위저드 상태
+// makeupDateOrigin: 'action' (ADD에서 진입) | 'targets' (MERGE/SPLIT에서 진입) — 날짜 시트 이전 버튼 분기용
+// currentMakeupAction: 'ADD' (기본/일반 보강) | 'MERGE' | 'SPLIT'
+let makeupDateOrigin = 'action';
+let currentMakeupAction = 'ADD';
 
 function onMakeupReasonChange() {
   const sel = document.getElementById('mkr-select');
@@ -1816,11 +1782,11 @@ function onMakeupReasonChange() {
   btn.disabled = !val;
   btn.style.background = val ? 'var(--navy)' : 'var(--gray-300)';
   btn.style.cursor = val ? 'pointer' : 'not-allowed';
-  updateReasonNextButtonLabel();
 }
 
 function handleSupplement() {
   closeLessonDetail();
+  // 사유 입력 초기화
   const sel = document.getElementById('mkr-select');
   sel.value = '';
   sel.style.color = 'var(--gray-400)';
@@ -1832,99 +1798,101 @@ function handleSupplement() {
   btn.disabled = true;
   btn.style.background = 'var(--gray-300)';
   btn.style.cursor = 'not-allowed';
-  // 회차 통합/분할 토글 초기화
-  const mt = document.getElementById('merge-toggle');
-  if (mt) mt.checked = false;
-  const track = document.getElementById('merge-toggle-track');
-  const thumb = document.getElementById('merge-toggle-thumb');
-  if (track) track.style.background = 'var(--gray-300)';
-  if (thumb) thumb.style.left = '3px';
   // 위저드 상태 초기화
-  currentMergeType = 'MERGE';
-  makeupDateOrigin = 'reason';
-  // 통합/분할 라디오 기본값(MERGE)으로 복원
-  const radios = document.querySelectorAll('input[name="merge-type"]');
-  radios.forEach(r => { r.checked = (r.value === 'MERGE'); });
+  currentMakeupAction = 'ADD';
+  makeupDateOrigin = 'action';
+  // 방식 선택 라디오 기본값(ADD)으로 복원 + 카드 스타일 동기화
+  const radios = document.querySelectorAll('input[name="makeup-action"]');
+  radios.forEach(r => { r.checked = (r.value === 'ADD'); });
   // 통합 대상 체크박스 기본 상태 복원 (첫 ABSENT만 체크, 나머지 해제)
   const targets = Array.from(document.querySelectorAll('.merge-target'));
   targets.forEach((cb, idx) => { cb.checked = (idx === 0); });
-  // 라벨 스타일/미리보기/다음 버튼 동기화
-  onMergeTypeChange('MERGE');
-  updateReasonNextButtonLabel();
+  onMakeupActionChange('ADD');
   // 모든 후속 시트/모달 닫힘 보장
-  closeMergeTypeSheet();
+  closeActionSheet();
   closeMergeTargetsSheet();
   closeMakeupDateSheet();
   hideMergeProposeConfirm();
   document.getElementById('makeup-reason-sheet').style.display = 'block';
 }
 
-function onMergeToggleChange() {
-  const checked = document.getElementById('merge-toggle').checked;
-  const track = document.getElementById('merge-toggle-track');
-  const thumb = document.getElementById('merge-toggle-thumb');
-  if (track) track.style.background = checked ? 'var(--green)' : 'var(--gray-300)';
-  if (thumb) thumb.style.left = checked ? '23px' : '3px';
-  updateReasonNextButtonLabel();
-}
-
-// 사유 시트 "다음" 버튼 — 토글 상태에 따라 분기
+// 사유 시트 "다음" — 항상 보강 방식 선택 시트로
 function onReasonNext() {
-  if (getMergeToggleOn()) {
-    goToMergeTypeSheet();
-  } else {
-    makeupDateOrigin = 'reason';
-    goToMakeupDateSheet();
-  }
+  goToActionSheet();
 }
 
-function onMergeTypeChange(type) {
-  currentMergeType = type;
+// 보강 방식 선택 변경 (추가/통합/분할) — 카드 스타일 + 다음 버튼 + 정책 안내 + 대상 시트 사전 구성
+function onMakeupActionChange(action) {
+  currentMakeupAction = action;
+  // 라디오 카드 스타일 동기화
+  const cards = {
+    ADD: document.getElementById('mas-opt-add'),
+    MERGE: document.getElementById('mas-opt-merge'),
+    SPLIT: document.getElementById('mas-opt-split')
+  };
+  Object.entries(cards).forEach(([key, el]) => {
+    if (!el) return;
+    if (key === action) {
+      el.style.borderColor = 'var(--green)';
+      el.style.background = '#F0FDFA';
+    } else {
+      el.style.borderColor = 'var(--gray-100)';
+      el.style.background = '#fff';
+    }
+  });
+  // 정책 안내 — 통합/분할 선택 시에만
+  const policy = document.getElementById('mas-policy-notice');
+  if (policy) policy.style.display = (action === 'ADD') ? 'none' : 'block';
+  // 다음 버튼 텍스트
+  const nextBtn = document.getElementById('mas-next-btn');
+  if (nextBtn) nextBtn.textContent = (action === 'ADD') ? '다음: 날짜 선택 ›' : '다음: 대상 선택 ›';
+  // 대상 시트 사전 구성 (MERGE/SPLIT 진입 시 이미 정확한 영역이 보이도록)
   const mergeBox = document.getElementById('merge-targets-merge');
   const splitBox = document.getElementById('merge-targets-split');
   const preview = document.getElementById('merge-preview');
-  const mergeOpt = document.getElementById('merge-opt-merge');
-  const splitOpt = document.getElementById('merge-opt-split');
-  if (type === 'MERGE') {
+  if (action === 'MERGE') {
     if (mergeBox) mergeBox.style.display = 'block';
     if (splitBox) splitBox.style.display = 'none';
-    if (mergeOpt) { mergeOpt.style.borderColor = 'var(--green)'; mergeOpt.style.background = '#F0FDFA'; }
-    if (splitOpt) { splitOpt.style.borderColor = 'var(--gray-100)'; splitOpt.style.background = '#fff'; }
     updateMergePreview();
-  } else {
+  } else if (action === 'SPLIT') {
     if (mergeBox) mergeBox.style.display = 'none';
     if (splitBox) splitBox.style.display = 'block';
-    if (mergeOpt) { mergeOpt.style.borderColor = 'var(--gray-100)'; mergeOpt.style.background = '#fff'; }
-    if (splitOpt) { splitOpt.style.borderColor = 'var(--green)'; splitOpt.style.background = '#F0FDFA'; }
     if (preview) preview.innerHTML = '<strong>📋 미리보기</strong><br>40분 × 1회 → <strong>20분 × 2회</strong>로 분할<br>· 회차 카운트: 1회 차감 (분할 그룹 합계 = 1)<br>· 결제 변동 없음 · 슬롯 2개 선택 필수';
   }
+  // 대상 시트 제목/다음 버튼도 갱신 (이미 떠있을 수 있으므로)
   updateMergeTargetsTitleSubtitle();
   updateMergeTargetsNextButton();
 }
 
+// 방식 선택 시트 "다음" — 액션별 분기
+function onActionNext() {
+  if (currentMakeupAction === 'ADD') {
+    makeupDateOrigin = 'action';
+    closeActionSheet();
+    openMakeupDateSheet();
+  } else {
+    // MERGE/SPLIT → 대상 선택 시트
+    goToMergeTargetsSheet();
+  }
+}
+
 function updateMergeTargetsTitleSubtitle() {
   const title = document.getElementById('mts-title');
-  const sub = document.getElementById('mts-subtitle');
-  if (!title || !sub) return;
-  if (currentMergeType === 'SPLIT') {
-    title.textContent = '분할 옵션 확인';
-    sub.textContent = '자동 계산된 분할 옵션을 확인하세요';
-  } else {
-    title.textContent = '통합 대상 회차 선택';
-    sub.textContent = '합칠 회차를 1개 이상 선택해 주세요';
-  }
+  if (!title) return;
+  title.textContent = (currentMakeupAction === 'SPLIT') ? '분할 옵션 확인' : '통합 대상 회차 선택';
 }
 
 function updateMergeTargetsNextButton() {
   const btn = document.getElementById('mts-next-btn');
   if (!btn) return;
-  if (currentMergeType === 'SPLIT') {
+  if (currentMakeupAction === 'SPLIT') {
     btn.textContent = '다음: 날짜 선택 ›';
     btn.disabled = false;
     btn.style.background = 'var(--navy)';
     btn.style.cursor = 'pointer';
     return;
   }
+  if (currentMakeupAction !== 'MERGE') return; // ADD는 이 시트 안 씀
   // MERGE 모드
   const checked = Array.from(document.querySelectorAll('.merge-target:checked'));
   const hasScheduled = checked.some(c => c.dataset.kind === 'SCHEDULED');
@@ -1977,8 +1945,8 @@ function closeMakeupReasonSheet() {
   document.getElementById('makeup-reason-sheet').style.display = 'none';
 }
 
-function closeMergeTypeSheet() {
-  const el = document.getElementById('makeup-merge-type-sheet');
+function closeActionSheet() {
+  const el = document.getElementById('makeup-action-sheet');
   if (el) el.style.display = 'none';
 }
 
@@ -1990,45 +1958,44 @@ function closeMergeTargetsSheet() {
 // 모든 보강 처리 시트 + 모달 닫기 (전체 취소 / 오버레이 클릭)
 function closeAllMakeupSheets() {
   closeMakeupReasonSheet();
-  closeMergeTypeSheet();
+  closeActionSheet();
   closeMergeTargetsSheet();
   closeMakeupDateSheet();
   hideMergeProposeConfirm();
 }
 
-// 사유 시트 → 통합/분할 선택 시트 (STEP 1/2)
-function goToMergeTypeSheet() {
+// 사유 시트 → 보강 방식 선택 시트
+function goToActionSheet() {
   closeMakeupReasonSheet();
-  // 현재 선택된 타입에 맞춰 라디오/스타일 동기화
-  const radios = document.querySelectorAll('input[name="merge-type"]');
-  radios.forEach(r => { r.checked = (r.value === currentMergeType); });
-  onMergeTypeChange(currentMergeType);
-  document.getElementById('makeup-merge-type-sheet').style.display = 'block';
+  // 현재 선택된 액션에 맞춰 라디오/카드 스타일 동기화
+  const radios = document.querySelectorAll('input[name="makeup-action"]');
+  radios.forEach(r => { r.checked = (r.value === currentMakeupAction); });
+  onMakeupActionChange(currentMakeupAction);
+  document.getElementById('makeup-action-sheet').style.display = 'block';
 }
 
-// 통합/분할 선택 시트 → 사유 시트 (이전, 토글/사유 보존)
-function backFromMergeTypeSheet() {
-  closeMergeTypeSheet();
+// 방식 선택 시트 → 사유 시트 (이전, 사유·방식 보존)
+function backFromActionSheet() {
+  closeActionSheet();
   document.getElementById('makeup-reason-sheet').style.display = 'block';
 }
 
-// 통합/분할 선택 시트 → 대상 선택 시트 (STEP 2/2)
+// 방식 선택 시트(MERGE/SPLIT) → 대상 선택 시트
 function goToMergeTargetsSheet() {
-  closeMergeTypeSheet();
-  // 타입 별 대상 영역 표시 동기화 + 미리보기/다음 버튼 갱신
-  onMergeTypeChange(currentMergeType);
+  closeActionSheet();
+  onMakeupActionChange(currentMakeupAction); // 시트 내 표시 동기화
   document.getElementById('makeup-merge-targets-sheet').style.display = 'block';
 }
 
-// 대상 선택 시트 → 통합/분할 선택 시트 (이전, 선택값 보존)
+// 대상 선택 시트 → 방식 선택 시트 (이전, 선택값 보존)
 function backFromMergeTargetsSheet() {
   closeMergeTargetsSheet();
-  document.getElementById('makeup-merge-type-sheet').style.display = 'block';
+  document.getElementById('makeup-action-sheet').style.display = 'block';
 }
 
-// 대상 선택 시트 "다음" — 케이스별 분기
+// 대상 선택 시트 "다음" — MERGE/SPLIT 한정. 케이스별 분기
 function onMergeTargetsNext() {
-  if (currentMergeType === 'MERGE') {
+  if (currentMakeupAction === 'MERGE') {
     const checked = Array.from(document.querySelectorAll('.merge-target:checked'));
     if (checked.length === 0) return; // 비활성 상태이므로 도달하지 않지만 안전망
     const hasScheduled = checked.some(c => c.dataset.kind === 'SCHEDULED');
@@ -2039,25 +2006,19 @@ function onMergeTargetsNext() {
       return;
     }
   }
-  // 케이스 ㄱ (MERGE 결강+결강) 또는 SPLIT → 날짜 시트
+  // MERGE 케이스 ㄱ (결강+결강) 또는 SPLIT → 날짜 시트
   makeupDateOrigin = 'targets';
   closeMergeTargetsSheet();
   openMakeupDateSheet();
 }
 
-// (사유 시트 또는 대상 시트에서 호출) 날짜 시트 진입
-function goToMakeupDateSheet() {
-  closeMakeupReasonSheet();
-  openMakeupDateSheet();
-}
-
-// 날짜 시트 "이전" — 진입 출처에 따라 분기
+// 날짜 시트 "이전" — 진입 출처에 따라 분기 (action: 추가 / targets: 통합·분할)
 function backFromMakeupDateSheet() {
   closeMakeupDateSheet();
   if (makeupDateOrigin === 'targets') {
     document.getElementById('makeup-merge-targets-sheet').style.display = 'block';
   } else {
-    document.getElementById('makeup-reason-sheet').style.display = 'block';
+    document.getElementById('makeup-action-sheet').style.display = 'block';
   }
 }
 
