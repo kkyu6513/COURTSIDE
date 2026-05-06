@@ -783,8 +783,17 @@ const ACTOR_INFO = {
 function renderStatusHistory(s) {
   const c = document.getElementById('status-history-area');
   if (!c) return;
-  const items = STATUS_HISTORY_DATA[s];
+  let items = STATUS_HISTORY_DATA[s];
   if (!items || items.length === 0) { c.innerHTML = ''; return; }
+  // 보강 일정 제안 갯수 동적 치환 (URL의 dates 또는 proposedCount 기준)
+  const proposedCount = (rawDates ? rawDates.split('|').filter(Boolean).length : 0)
+                     || parseInt(params.get('proposedCount') || '0', 10);
+  if (proposedCount > 0) {
+    items = items.map(it => ({
+      ...it,
+      action: it.action.replace(/보강 일정 \d+개 제안/, `보강 일정 ${proposedCount}개 제안`)
+    }));
+  }
   const itemsHtml = items.map((it, i) => {
     const a = ACTOR_INFO[it.actor] || ACTOR_INFO.system;
     const isLast = i === items.length - 1;
