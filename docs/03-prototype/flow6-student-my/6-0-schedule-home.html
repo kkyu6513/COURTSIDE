@@ -6,7 +6,7 @@
   <title>6-0 학생 스케줄 홈 — COURTSIDE</title>
   <link rel="stylesheet" href="../common.css">
   <style>
-    /* ── 6-0 격리 디자인 시스템 (탈-AI 톤): 슬레이트 ink + 1 액센트, flat, 라인 SVG ── */
+    /* ── 6-0 디자인 시스템 (정보 다이어트 v3): 슬레이트 ink + 1 액센트, flat ── */
     .v6 {
       --ink: #0F172A;
       --ink-2: #475569;
@@ -22,24 +22,18 @@
     .v6 .screen { background: var(--bg); }
     .v6 a { -webkit-tap-highlight-color: transparent; }
 
-    /* 아이콘: inline SVG · stroke currentColor */
     .v6 .ic { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; flex-shrink:0; }
-    .v6 .ic-lg { width: 22px; height: 22px; }
     .v6 .ic-sm { width: 16px; height: 16px; }
 
-    /* 헤더 — 인삿말 제거, 워드마크 + 날짜 */
-    .v6 .hdr { padding: 16px 20px 18px; background: var(--surface); border-bottom: 1px solid var(--line); }
-    .v6 .hdr .brand { font-size: 12px; font-weight: 600; color: var(--ink-2); letter-spacing: -0.1px; }
-    .v6 .hdr .brand .dot { display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--ink);margin:0 2px 2px 0;vertical-align:middle;}
-    .v6 .hdr .date { margin-top: 8px; font-size: 24px; font-weight: 800; color: var(--ink); letter-spacing: -0.6px; line-height: 1.15; }
-    .v6 .hdr .sub { margin-top: 4px; font-size: 12px; color: var(--ink-2); font-weight: 500; }
+    /* 헤더 — 날짜 1줄 (C1·C7 wordmark·sub 제거) */
+    .v6 .hdr { padding: 22px 20px 18px; background: var(--surface); border-bottom: 1px solid var(--line); }
+    .v6 .hdr .date { font-size: 26px; font-weight: 800; color: var(--ink); letter-spacing: -0.7px; line-height: 1.1; }
 
-    /* 섹션 타이틀 — 위 24 / 아래 12 호흡 */
-    .v6 .sec-ttl { display:flex; align-items:baseline; justify-content:space-between; padding: 24px 4px 12px; }
+    /* 섹션 타이틀 — 응답 필요 단 1곳만 */
+    .v6 .sec-ttl { display:flex; align-items:baseline; justify-content:space-between; padding: 26px 4px 12px; }
     .v6 .sec-ttl .t { font-size: 13px; font-weight: 700; color: var(--ink); letter-spacing: -0.2px; }
-    .v6 .sec-ttl .c { font-size: 11px; color: var(--ink-3); font-weight: 500; }
 
-    /* hero 카드 — 좌측 stripe / tinted icon box 제거, flat */
+    /* hero — 핵심 정보 1단 (display + 1줄 meta) */
     .v6 .hero {
       display:flex; align-items:center; gap:14px; padding: 18px 16px;
       background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
@@ -51,82 +45,27 @@
     .v6 .hero .display { font-size: 22px; font-weight: 800; color: var(--ink); letter-spacing: -0.6px; line-height: 1.2; }
     .v6 .hero .display .pill { margin-left: 6px; vertical-align: middle; transform: translateY(-2px); }
     .v6 .hero .meta { margin-top: 6px; font-size: 12px; color: var(--ink-2); line-height: 1.5; font-weight: 500; }
+    .v6 .hero .session { margin-top: 4px; font-size: 11px; color: var(--ink-3); font-weight: 500; font-variant-numeric: tabular-nums; }
     .v6 .hero .arrow { color: var(--ink-3); flex-shrink:0; }
 
-    /* alert 카드 — flat, 긴급만 1px alert 외곽선 */
-    .v6 .alert { display:flex; gap:12px; padding: 14px 14px 12px; background: var(--surface); border:1px solid var(--line); border-radius: 10px; text-decoration:none; color: var(--ink);}
-    .v6 .alert + .alert { margin-top: 10px; }
-    .v6 .alert.urgent { border-color: var(--alert); }
-    .v6 .alert .lead { width: 32px; height: 32px; border-radius: 8px; background: var(--soft); color: var(--ink-2); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-    .v6 .alert.urgent .lead { background: var(--alert-bg); color: var(--alert); }
+    /* alert — urgent only, flat */
+    .v6 .alert { display:flex; gap:12px; padding: 14px 14px 12px; background: var(--surface); border:1px solid var(--alert); border-radius: 10px; color: var(--ink);}
+    .v6 .alert .lead { width: 32px; height: 32px; border-radius: 8px; background: var(--alert-bg); color: var(--alert); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
     .v6 .alert .b { flex:1; min-width:0; }
     .v6 .alert .head { display:flex; align-items:center; justify-content:space-between; gap:8px; }
-    .v6 .alert .ttl { font-size: 14px; font-weight: 700; color: var(--ink); line-height: 1.3; letter-spacing: -0.2px; }
+    .v6 .alert .ttl { font-size: 14px; font-weight: 700; color: var(--ink); letter-spacing: -0.2px; }
     .v6 .alert .head .pill { font-size: 10px; padding: 2px 6px; }
     .v6 .alert .sub { margin-top: 4px; font-size: 12px; color: var(--ink-2); line-height: 1.5; font-weight: 500; }
     .v6 .alert .actions { display:flex; gap:8px; margin-top: 12px; }
-    .v6 .alert-cta { text-align:center; padding: 10px; border-radius: 8px; font-size: 12px; font-weight: 600; text-decoration:none; border: 1px solid var(--line-strong); letter-spacing: -0.1px; }
-    .v6 .alert-cta.primary { flex: 1.5 1 0; background: var(--ink); color: #fff; border-color: var(--ink); font-weight: 700; }
-    .v6 .alert-cta.ghost { flex: 1 1 0; background: var(--surface); color: var(--ink-2); }
+    .v6 .alert-cta { text-align:center; padding: 10px; border-radius: 8px; font-size: 12px; font-weight: 700; text-decoration:none; }
+    .v6 .alert-cta.primary { flex: 1.5 1 0; background: var(--ink); color: #fff; }
+    .v6 .alert-cta.ghost { flex: 1 1 0; background: var(--surface); color: var(--ink-2); border:1px solid var(--line-strong); font-weight:600;}
 
-    /* pill — 카드당 1개만 사용, 색상 단일 + 긴급 1단계 */
-    .v6 .pill { display:inline-block; font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 4px; background: var(--soft); color: var(--ink-2); white-space:nowrap; letter-spacing: 0; }
+    /* pill — 단일 톤 + 긴급 1단계 */
+    .v6 .pill { display:inline-block; font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 4px; background: var(--soft); color: var(--ink-2); white-space:nowrap; }
     .v6 .pill.alert { background: var(--alert-bg); color: var(--alert); }
 
-    /* 회차 진행 bar — 비강조 톤 */
-    .v6 .progress { margin-top: 12px; display:flex; align-items:center; gap:10px; }
-    .v6 .progress .track { flex:1; height: 2px; background: var(--soft); border-radius: 2px; overflow:hidden; }
-    .v6 .progress .fill { height:100%; background: var(--ink-3); }
-    .v6 .progress .txt { font-size: 11px; color: var(--ink-3); white-space:nowrap; font-variant-numeric: tabular-nums; font-weight: 500; }
-
-    /* 코치 — 단색 ava + 이니셜 */
-    .v6 .coach { display:flex; align-items:center; gap:12px; padding: 14px; background: var(--surface); border:1px solid var(--line); border-radius: 10px; }
-    .v6 .coach .ava { width:42px; height:42px; border-radius:50%; background: var(--ink); color: #fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:15px; flex-shrink:0; letter-spacing:-0.5px;}
-    .v6 .coach .nm { flex:1; min-width:0; }
-    .v6 .coach .nm .role { font-size: 11px; color: var(--ink-3); font-weight: 500; }
-    .v6 .coach .nm .name { font-size: 15px; font-weight: 700; color: var(--ink); margin-top: 2px; letter-spacing: -0.3px; }
-    .v6 .coach .nm .next { font-size: 12px; color: var(--ink-2); margin-top: 3px; font-weight: 500; }
-    .v6 .coach .acts { display:flex; gap: 6px; flex-shrink:0;}
-    .v6 .coach .acts a { width:36px; height:36px; border-radius: 8px; background: var(--surface); border:1px solid var(--line); color: var(--ink-2); display:flex; align-items:center; justify-content:center; text-decoration:none;}
-    .v6 .coach .acts a:hover { color: var(--ink); border-color: var(--line-strong);}
-
-    /* 캘린더 — 강조 색 절제, 단색 ink + 점 표시 */
-    .v6 .week-bar { display:flex; align-items:center; justify-content:space-between; margin-bottom: 10px;}
-    .v6 .week-bar .lbl { font-size: 13px; font-weight: 600; color: var(--ink);}
-    .v6 .week-bar .nav { display:flex; gap:4px;}
-    .v6 .week-bar .nav button { width:30px; height:30px; border-radius:8px; border:1px solid var(--line); background: var(--surface); color: var(--ink); cursor:pointer; display:flex; align-items:center; justify-content:center;}
-    .v6 .week-bar .nav button:disabled { opacity:.35; cursor:default;}
-    .v6 .grid { display:grid; grid-template-columns: repeat(7,1fr); gap: 4px; margin-bottom: 8px;}
-    .v6 .cell { height: 50px; border-radius: 8px; background: var(--surface); border:1px solid transparent; cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; transition: border-color .15s, background .15s;}
-    .v6 .cell .dow { font-size: 10px; color: var(--ink-3); font-weight: 600;}
-    .v6 .cell .num { font-size: 14px; font-weight: 700; color: var(--ink); margin-top: 2px; font-variant-numeric: tabular-nums;}
-    .v6 .cell .dot { width: 4px; height: 4px; border-radius: 50%; background: var(--ink); margin-top: 4px;}
-    .v6 .cell .dot.done { background: var(--ink-3);}
-    .v6 .cell .dot.absent { background: var(--alert);}
-    .v6 .cell .dot.makeup { background: var(--ink); width:5px; height:5px; border-radius:1px;}
-    .v6 .cell.has { background: var(--soft);}
-    .v6 .cell.today { border-color: var(--ink); }
-    .v6 .cell.today .num { color: var(--ink); font-weight: 800;}
-    .v6 .cell.selected { background: var(--ink); border-color: var(--ink);}
-    .v6 .cell.selected .dow, .v6 .cell.selected .num { color: #fff;}
-    .v6 .cell.selected .dot { background: #fff;}
-    .v6 .cell.selected.today { background: var(--ink); }
-    .v6 .legend { display:flex; flex-wrap:wrap; gap: 12px; font-size: 11px; color: var(--ink-2); margin-bottom: 12px; padding: 0 4px;}
-    .v6 .legend .lg { display:inline-flex; align-items:center; gap:5px;}
-    .v6 .legend .dt { width:5px; height:5px; border-radius:50%; }
-
-    /* 선택일 레슨 카드 */
-    .v6 .lesson { display:flex; align-items:center; gap:16px; padding: 14px 16px; background: var(--surface); border:1px solid var(--line); border-radius: 10px; text-decoration:none; color: var(--ink);}
-    .v6 .lesson .time { width: 52px; flex-shrink:0; border-right: 1px solid var(--line); padding-right: 14px; margin-right: -2px;}
-    .v6 .lesson .time .hh { font-size: 20px; font-weight: 800; color: var(--ink); letter-spacing: -0.6px; font-variant-numeric: tabular-nums; line-height: 1.1;}
-    .v6 .lesson .time .ampm { font-size: 11px; color: var(--ink-3); font-weight: 500; margin-top: 2px;}
-    .v6 .lesson .info { flex:1; min-width:0;}
-    .v6 .lesson .info .ttl { font-size: 13px; font-weight: 700; color: var(--ink); letter-spacing: -0.2px;}
-    .v6 .lesson .info .meta { font-size: 11px; color: var(--ink-2); margin-top: 4px; font-weight: 500;}
-    .v6 .empty { padding: 18px; text-align:center; background: var(--surface); border: 1px dashed var(--line-strong); border-radius: 10px; color: var(--ink-3); font-size: 12px; font-weight: 500;}
-    .v6 .lessons-title { font-size: 11px; color: var(--ink-3); font-weight: 600; letter-spacing:-0.1px; margin: 14px 4px 8px; text-transform: none;}
-
-    /* 하단 nav — flat bottom bar, active 상단 2px line */
+    /* 하단 nav */
     .v6 .navbar { position:absolute; left:0; right:0; bottom:0; height: 64px; background: var(--surface); border-top:1px solid var(--line); display:flex; align-items:stretch; }
     .v6 .navbar a { position:relative; flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; text-decoration:none; color: var(--ink-3); font-weight:500;}
     .v6 .navbar a::before { content:""; position:absolute; top:0; left:50%; transform:translateX(-50%); width:0; height:2px; background:var(--ink); transition: width .15s; }
@@ -137,21 +76,16 @@
 </head>
 <body>
 <div class="device-wrap">
-  <div class="device-label"><span class="device-num">6-0</span>학생 스케줄 홈 (SaaS 신규)</div>
+  <div class="device-label"><span class="device-num">6-0</span>학생 스케줄 홈 (정보 다이어트)</div>
   <div class="device v6" style="position:relative;overflow:hidden;background:var(--bg);">
-    <!-- SVG 심볼 정의 -->
     <svg width="0" height="0" style="position:absolute" aria-hidden="true">
       <defs>
         <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9.5h18"/><path d="M8 2.5v4M16 2.5v4"/></symbol>
         <symbol id="i-card" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/><path d="M7 15h4"/></symbol>
         <symbol id="i-ball" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3.5 12c4 -2.5 13 -2.5 17 0"/><path d="M3.5 12c4 2.5 13 2.5 17 0"/></symbol>
         <symbol id="i-sync" viewBox="0 0 24 24"><path d="M4 12a8 8 0 0 1 13.5-5.7"/><path d="M20 12a8 8 0 0 1-13.5 5.7"/><path d="M14 4l4 2-2 4"/><path d="M10 20l-4-2 2-4"/></symbol>
-        <symbol id="i-edit-cal" viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9.5h18"/><path d="M8 2.5v4M16 2.5v4"/><path d="M9 14l5-2 1 1-2 5-3-1z"/></symbol>
-        <symbol id="i-phone" viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A14 14 0 0 1 4 7a3 3 0 0 1 1-3z"/></symbol>
         <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></symbol>
         <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
-        <symbol id="i-cl" viewBox="0 0 24 24"><path d="M14 6l-6 6 6 6"/></symbol>
-        <symbol id="i-cr" viewBox="0 0 24 24"><path d="M10 6l6 6-6 6"/></symbol>
         <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v9a1 1 0 0 1-1 1h-4v-7h-6v7H5a1 1 0 0 1-1-1z"/></symbol>
         <symbol id="i-list" viewBox="0 0 24 24"><path d="M5 6h14M5 12h14M5 18h14"/></symbol>
         <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
@@ -161,111 +95,56 @@
     <div class="status-bar"><span class="time">9:41</span><div class="status-icons"><span>●</span><span>●</span></div></div>
     <div class="screen" style="padding-bottom:84px;overflow-y:auto;">
 
-      <!-- ① 헤더: 인삿말 제거, 워드마크 + 오늘 날짜 -->
+      <!-- 헤더: 오늘 날짜 1줄 (C1, C7) -->
       <div class="hdr">
-        <div class="brand"><span class="dot"></span>courtside</div>
         <div class="date" id="hdr-date"></div>
-        <div class="sub" id="hdr-sub"></div>
       </div>
 
-      <!-- 카드 영역 -->
+      <!-- 카드 영역 (4개 이하) -->
       <div style="padding: 16px 16px 0;">
 
-        <!-- 0) 모두 비었을 때 -->
+        <!-- empty (위 모두 비었을 때만) -->
         <div id="empty-hero" style="display:none;">
           <a href="../flow2-home/2-2-coach-list.html" class="hero">
             <div class="lead"><svg class="ic"><use href="#i-ball"/></svg></div>
             <div class="body">
               <div class="display">예정된 레슨 없음</div>
-              <div class="meta">코치를 둘러보고 첫 레슨을 잡아보세요</div>
+              <div class="meta">코치를 찾아보세요</div>
             </div>
             <svg class="ic ic-sm arrow"><use href="#i-arrow"/></svg>
           </a>
         </div>
 
-        <!-- 1) 결제 안내 (조건부) -->
+        <!-- 1) 결제 (조건부) -->
         <div id="payment-area"></div>
 
         <!-- 2) 다음 레슨 -->
         <div id="next-lesson-area"></div>
 
-        <!-- 3) 응답 필요 -->
+        <!-- 3) 응답 필요 — urgent 1건만 -->
         <div id="alerts-wrap">
-          <div class="sec-ttl">
-            <div class="t">응답 필요</div>
-            <div class="c" id="alert-count"></div>
-          </div>
+          <div class="sec-ttl"><div class="t">응답 필요</div></div>
           <div id="alerts-area">
-            <div class="alert urgent">
+            <div class="alert">
               <div class="lead"><svg class="ic ic-sm"><use href="#i-sync"/></svg></div>
               <div class="b">
                 <div class="head">
                   <div class="ttl">보강 일정 제안</div>
                   <span class="pill alert">8h 32m</span>
                 </div>
-                <div class="sub">4/24 (목) 16:00, 4/25 (금) 10:00 — 1개를 선택하세요</div>
+                <div class="sub">4/24 (목) 16:00, 4/25 (금) 10:00 중 1개 선택</div>
                 <div class="actions">
                   <a href="6-6-booking-detail.html?status=makeup_proposed&dates=4%2F24%20(%EB%AA%A9)%2016%3A00%7C4%2F25%20(%EA%B8%88)%2010%3A00#select" class="alert-cta primary">날짜 선택</a>
                   <a href="6-6-booking-detail.html?status=makeup_proposed&dates=4%2F24%20(%EB%AA%A9)%2016%3A00%7C4%2F25%20(%EA%B8%88)%2010%3A00" class="alert-cta ghost">자세히</a>
                 </div>
               </div>
             </div>
-            <div class="alert">
-              <div class="lead"><svg class="ic ic-sm"><use href="#i-edit-cal"/></svg></div>
-              <div class="b">
-                <div class="head">
-                  <div class="ttl">변경 요청 응답 대기</div>
-                  <span class="pill">D-2</span>
-                </div>
-                <div class="sub">5/13 (수) 14:00 — 코치 응답 대기</div>
-                <div class="actions">
-                  <a href="6-6-booking-detail.html?status=reschedule_pending" class="alert-cta ghost">상세</a>
-                  <a href="../flow4-chat/4-2-chat.html" class="alert-cta primary">코치에게 문의</a>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
-
-        <!-- 4) 담당 코치 -->
-        <div class="sec-ttl"><div class="t">담당 코치</div></div>
-        <div class="coach">
-          <div class="ava">김</div>
-          <div class="nm">
-            <div class="role">정기 레슨 · 월·수 14:00 · 20분</div>
-            <div class="name">김민수 코치</div>
-            <div class="next">다음 약속 · 오늘 14:00</div>
-          </div>
-          <div class="acts">
-            <a href="tel:01012345678" aria-label="전화"><svg class="ic ic-sm"><use href="#i-phone"/></svg></a>
-            <a href="../flow4-chat/4-2-chat.html" aria-label="메시지"><svg class="ic ic-sm"><use href="#i-chat"/></svg></a>
-          </div>
-        </div>
-
-        <!-- 5) 주간 일정 -->
-        <div class="sec-ttl"><div class="t">주간 일정</div></div>
-        <div class="week-bar">
-          <div class="lbl" id="week-label"></div>
-          <div class="nav">
-            <button id="wk-prev" onclick="moveWeek(-1)" aria-label="이전 주"><svg class="ic ic-sm"><use href="#i-cl"/></svg></button>
-            <button onclick="moveWeek(1)" aria-label="다음 주"><svg class="ic ic-sm"><use href="#i-cr"/></svg></button>
-          </div>
-        </div>
-        <div class="grid" id="week-grid"></div>
-        <div class="legend">
-          <span class="lg"><span class="dt" style="background:var(--ink);"></span>예정</span>
-          <span class="lg"><span class="dt" style="background:var(--ink-3);"></span>완료</span>
-          <span class="lg"><span class="dt" style="background:var(--alert);"></span>결강</span>
-          <span class="lg"><span class="dt" style="background:var(--ink);border-radius:1px;width:6px;height:6px;"></span>보강</span>
-        </div>
-        <div id="lessons-title" class="lessons-title"></div>
-        <div id="lessons-area"></div>
 
       </div>
-      <div style="height:8px;"></div>
     </div>
 
-    <!-- 하단 네비 — flat bar -->
     <div class="navbar">
       <a href="6-0-schedule-home.html" class="active"><svg class="ic"><use href="#i-home"/></svg><span class="lbl">홈</span></a>
       <a href="6-5-booking-list.html"><svg class="ic"><use href="#i-list"/></svg><span class="lbl">내 레슨</span></a>
@@ -280,237 +159,115 @@
 const DAY_NAMES = ['일','월','화','수','목','금','토'];
 const TODAY = new Date();
 TODAY.setHours(0,0,0,0);
-// 학생 정기 레슨 mock: 월(1)·수(3) 14:00 20분
-const STUDENT_LESSON_DAYS = [1, 3];
+const STUDENT_LESSON_DAYS = [1, 3];      // 월·수
 const LESSON_TIME = '14:00';
 const LESSON_DURATION = 20;
-// mock 결제 미수
 const HAS_UNPAID = true;
 const UNPAID_AMOUNT = 240000;
 const UNPAID_DUE_DAYS = 2;
-// mock 회차 진행
 const SESSION_DONE = 3;
 const SESSION_TOTAL = 8;
-// mock 일자별 상태
-const DATE_STATUS = {
-  '-7': 'done', '-5': 'done', '-3': 'absent', '-2': 'makeup', '0': 'scheduled', '2': 'scheduled', '4': 'scheduled'
-};
-function statusOfDate(d) {
-  const offset = Math.round((d - TODAY) / 86400000);
-  if (DATE_STATUS[String(offset)]) return DATE_STATUS[String(offset)];
-  if (STUDENT_LESSON_DAYS.includes(d.getDay())) return offset < 0 ? 'done' : 'scheduled';
-  return null;
-}
-let weekOffset = 0;
-let selectedDate = new Date(TODAY);
 
-function addDays(d, n) { const x = new Date(d); x.setDate(d.getDate() + n); return x; }
-function sameDay(a, b) { return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate(); }
+function addDays(d,n){const x=new Date(d);x.setDate(d.getDate()+n);return x;}
+function sameDay(a,b){return a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();}
 
-function getNextLesson() {
-  for (let i = 0; i < 14; i++) {
-    const d = new Date(TODAY); d.setDate(TODAY.getDate() + i);
-    if (STUDENT_LESSON_DAYS.includes(d.getDay())) return d;
-  }
+function getNextLesson(){
+  for(let i=0;i<14;i++){const d=new Date(TODAY);d.setDate(TODAY.getDate()+i);if(STUDENT_LESSON_DAYS.includes(d.getDay()))return d;}
   return null;
 }
 
-function renderHeader() {
-  const dateEl = document.getElementById('hdr-date');
-  const subEl = document.getElementById('hdr-sub');
-  const m = TODAY.getMonth()+1, dd = TODAY.getDate(), dow = DAY_NAMES[TODAY.getDay()];
-  dateEl.textContent = `${m}월 ${dd}일 (${dow})`;
-  const next = getNextLesson();
-  if (next) {
-    const diff = Math.round((next - TODAY)/86400000);
-    subEl.textContent = diff === 0 ? '오늘 레슨이 있어요' : (diff === 1 ? '내일 레슨이 있어요' : `다음 레슨까지 D-${diff}`);
-  } else {
-    subEl.textContent = '예정된 레슨 없음';
-  }
+function renderHeader(){
+  // C1·C7: brand wordmark + sub 제거 → 날짜만
+  const m=TODAY.getMonth()+1,dd=TODAY.getDate(),dow=DAY_NAMES[TODAY.getDay()];
+  document.getElementById('hdr-date').textContent=`${m}월 ${dd}일 (${dow})`;
 }
 
-function renderPaymentArea() {
-  const area = document.getElementById('payment-area');
-  if (!area) return;
-  if (!HAS_UNPAID) { area.innerHTML = ''; return; }
-  const amount = UNPAID_AMOUNT.toLocaleString('ko-KR');
-  const overdue = UNPAID_DUE_DAYS < 0;
-  // pill 1개만 — 긴급 단계만 색 강조
-  const pill = overdue
+function renderPayment(){
+  const area=document.getElementById('payment-area');
+  if(!HAS_UNPAID){area.innerHTML='';return;}
+  const amount=UNPAID_AMOUNT.toLocaleString('ko-KR');
+  const overdue=UNPAID_DUE_DAYS<0;
+  // C8: meta 단축 → "5월 4주차" 1단어 (마감/사유는 pill로)
+  const pill=overdue
     ? `<span class="pill alert">${Math.abs(UNPAID_DUE_DAYS)}일 연체</span>`
-    : (UNPAID_DUE_DAYS <= 1 ? `<span class="pill alert">D-${UNPAID_DUE_DAYS}</span>` : `<span class="pill">D-${UNPAID_DUE_DAYS}</span>`);
-  area.innerHTML = `
+    : (UNPAID_DUE_DAYS<=1 ? `<span class="pill alert">D-${UNPAID_DUE_DAYS}</span>` : `<span class="pill">D-${UNPAID_DUE_DAYS}</span>`);
+  area.innerHTML=`
     <a href="6-6-booking-detail.html?status=confirmed&payment=unpaid" class="hero">
       <div class="lead"><svg class="ic"><use href="#i-card"/></svg></div>
       <div class="body">
         <div class="display">${amount}원 ${pill}</div>
-        <div class="meta">5월 4주차 레슨료 · 결제 후 알려주세요</div>
+        <div class="meta">5월 4주차 레슨료</div>
       </div>
       <svg class="ic ic-sm arrow"><use href="#i-arrow"/></svg>
     </a>`;
 }
 
-function renderNextLesson() {
-  const area = document.getElementById('next-lesson-area');
-  if (!area) return;
-  const next = getNextLesson();
-  if (!next) {
-    area.innerHTML = `
+function renderNextLesson(){
+  const area=document.getElementById('next-lesson-area');
+  const next=getNextLesson();
+  if(!next){
+    area.innerHTML=`
       <div class="hero">
         <div class="lead"><svg class="ic"><use href="#i-cal"/></svg></div>
         <div class="body">
           <div class="display" style="color:var(--ink-3);">예정된 레슨 없음</div>
-          <div class="meta">코치에게 일정을 문의하세요</div>
         </div>
       </div>`;
     return;
   }
-  const isToday = sameDay(next, TODAY);
-  const dow = next.getDay();
-  const dayLabel = isToday ? '오늘' : (sameDay(next, addDays(TODAY,1)) ? '내일' : `${next.getMonth()+1}/${next.getDate()} (${DAY_NAMES[dow]})`);
-  const daysDiff = Math.round((next - TODAY)/86400000);
-  const MOCK_NOW_MIN = 9*60 + 41;
-  const [lh, lm] = LESSON_TIME.split(':').map(Number);
-  const lessonStartMin = lh*60 + lm;
-  const lessonEndMin = lessonStartMin + LESSON_DURATION;
-  // pill 1개만 — D-DAY/D-N + 시작 임박/진행만 alert 색 (그 외 단일 톤)
-  let pill = '', countdown = '';
-  if (isToday) {
-    if (MOCK_NOW_MIN >= lessonStartMin && MOCK_NOW_MIN <= lessonEndMin) {
-      pill = `<span class="pill alert">진행 중</span>`;
-    } else if (MOCK_NOW_MIN < lessonStartMin) {
-      const remain = lessonStartMin - MOCK_NOW_MIN;
-      const rh = Math.floor(remain/60), rm = remain%60;
-      countdown = `· ${rh>0 ? rh+'시간 ' : ''}${rm}분 후`;
-      pill = remain <= 60 ? `<span class="pill alert">곧 시작</span>` : `<span class="pill">오늘</span>`;
+  const isToday=sameDay(next,TODAY);
+  const dow=next.getDay();
+  const dayLabel=isToday?'오늘':(sameDay(next,addDays(TODAY,1))?'내일':`${next.getMonth()+1}/${next.getDate()} (${DAY_NAMES[dow]})`);
+  const daysDiff=Math.round((next-TODAY)/86400000);
+  const MOCK_NOW_MIN=9*60+41;
+  const [lh,lm]=LESSON_TIME.split(':').map(Number);
+  const lessonStartMin=lh*60+lm;
+  const lessonEndMin=lessonStartMin+LESSON_DURATION;
+  let pill='',meta='김민수 코치';
+  if(isToday){
+    if(MOCK_NOW_MIN>=lessonStartMin&&MOCK_NOW_MIN<=lessonEndMin){
+      pill=`<span class="pill alert">진행 중</span>`;
+    }else if(MOCK_NOW_MIN<lessonStartMin){
+      const remain=lessonStartMin-MOCK_NOW_MIN;
+      const rh=Math.floor(remain/60),rm=remain%60;
+      const txt=rh>0?`${rh}시간 ${rm}분 후`:`${rm}분 후`;
+      meta=`김민수 코치 · ${txt} 시작`;
+      pill=remain<=60?`<span class="pill alert">곧 시작</span>`:`<span class="pill">오늘</span>`;
     }
-  } else {
-    pill = `<span class="pill">D-${daysDiff}</span>`;
+  }else{
+    pill=`<span class="pill">D-${daysDiff}</span>`;
   }
-  const pct = Math.round(SESSION_DONE / SESSION_TOTAL * 100);
-  area.innerHTML = `
+  // C2·C3: meta 단순화 (코치명 + 임박 시간), progress bar 제거 → 우측 small text
+  area.innerHTML=`
     <a href="6-6-booking-detail.html?status=confirmed" class="hero">
       <div class="lead"><svg class="ic"><use href="#i-cal"/></svg></div>
       <div class="body">
         <div class="display">${dayLabel} ${LESSON_TIME} ${pill}</div>
-        <div class="meta">정기 레슨 · ${LESSON_DURATION}분 · 김민수 코치 ${countdown}</div>
-        <div class="progress">
-          <div class="track"><div class="fill" style="width:${pct}%;"></div></div>
-          <span class="txt">${SESSION_DONE} / ${SESSION_TOTAL}회</span>
-        </div>
+        <div class="meta">${meta}</div>
+        <div class="session">${SESSION_DONE} / ${SESSION_TOTAL}회</div>
       </div>
       <svg class="ic ic-sm arrow"><use href="#i-arrow"/></svg>
     </a>`;
 }
 
-function getWeekStart() {
-  const s = new Date(TODAY);
-  s.setDate(TODAY.getDate() - TODAY.getDay() + weekOffset * 7);
-  return s;
+function renderEmptyHero(){
+  const empty=document.getElementById('empty-hero');
+  const noPayment=!HAS_UNPAID;
+  const noNext=!getNextLesson();
+  const noAlerts=document.querySelectorAll('#alerts-area .alert').length===0;
+  empty.style.display=(noPayment&&noNext&&noAlerts)?'block':'none';
 }
 
-function renderWeek() {
-  const start = getWeekStart();
-  const end = new Date(start); end.setDate(start.getDate() + 6);
-  document.getElementById('week-label').textContent =
-    `${start.getMonth()+1}/${start.getDate()} – ${end.getMonth()+1}/${end.getDate()}`;
-  const prev = document.getElementById('wk-prev');
-  prev.disabled = weekOffset <= -4;
-  const grid = document.getElementById('week-grid');
-  grid.innerHTML = '';
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(start); d.setDate(start.getDate() + i);
-    const dow = d.getDay();
-    const isToday = sameDay(d, TODAY);
-    const isSelected = sameDay(d, selectedDate);
-    const status = statusOfDate(d);
-    const has = !!status;
-    const cell = document.createElement('div');
-    let cls = 'cell';
-    if (isToday) cls += ' today';
-    else if (has) cls += ' has';
-    if (isSelected) cls += ' selected';
-    cell.className = cls;
-    const dotCls = status === 'done' ? ' done' : (status === 'absent' ? ' absent' : (status === 'makeup' ? ' makeup' : ''));
-    cell.innerHTML = `
-      <div class="dow">${DAY_NAMES[dow]}</div>
-      <div class="num">${d.getDate()}</div>
-      ${has ? `<div class="dot${dotCls}"></div>` : '<div style="height:8px;"></div>'}
-    `;
-    const dateCopy = new Date(d);
-    cell.addEventListener('click', () => selectDate(dateCopy));
-    grid.appendChild(cell);
-  }
-  renderLessons();
-}
-
-function selectDate(d) {
-  selectedDate = new Date(d);
-  selectedDate.setHours(0,0,0,0);
-  renderWeek();
-}
-
-function renderLessons() {
-  const titleEl = document.getElementById('lessons-title');
-  const area = document.getElementById('lessons-area');
-  if (!titleEl || !area) return;
-  const dow = selectedDate.getDay();
-  const status = statusOfDate(selectedDate);
-  const dateLabel = `${selectedDate.getMonth()+1}/${selectedDate.getDate()} (${DAY_NAMES[dow]})`;
-  titleEl.textContent = `${dateLabel}`;
-  if (!status) {
-    area.innerHTML = `<div class="empty">이 날에는 레슨이 없어요</div>`;
-    return;
-  }
-  const cfg = {
-    scheduled: {label:'예정',   title:'정기 레슨', urlStatus:'confirmed', cls:''},
-    done:      {label:'완료',   title:'정기 레슨', urlStatus:'completed', cls:''},
-    absent:    {label:'결강',   title:'정기 레슨', urlStatus:'absent',    cls:'alert'},
-    makeup:    {label:'보강',   title:'보강 레슨', urlStatus:'makeup_confirmed', cls:''}
-  }[status];
-  area.innerHTML = `
-    <a href="6-6-booking-detail.html?status=${cfg.urlStatus}" class="lesson">
-      <div class="time">
-        <div class="hh">${LESSON_TIME}</div>
-        <div class="ampm">${DAY_NAMES[dow]}</div>
-      </div>
-      <div class="info">
-        <div class="ttl">${cfg.title} · 김민수 코치 <span class="pill ${cfg.cls}" style="margin-left:4px;">${cfg.label}</span></div>
-        <div class="meta">${LESSON_DURATION}분 · 1:1 개인</div>
-      </div>
-    </a>`;
-}
-
-function moveWeek(dir) {
-  weekOffset += dir;
-  if (weekOffset < -4) weekOffset = -4;
-  if (weekOffset > 8) weekOffset = 8;
-  renderWeek();
-}
-
-function renderAlertCount() {
-  const cnt = document.querySelectorAll('#alerts-area .alert').length;
-  const label = document.getElementById('alert-count');
-  const wrap = document.getElementById('alerts-wrap');
-  if (label) label.textContent = cnt > 0 ? `${cnt}건` : '';
-  if (wrap) wrap.style.display = cnt > 0 ? 'block' : 'none';
-}
-
-function renderEmptyHero() {
-  const empty = document.getElementById('empty-hero');
-  if (!empty) return;
-  const noPayment = !HAS_UNPAID;
-  const noNext = !getNextLesson();
-  const noAlerts = document.querySelectorAll('#alerts-area .alert').length === 0;
-  empty.style.display = (noPayment && noNext && noAlerts) ? 'block' : 'none';
+function renderAlerts(){
+  const cnt=document.querySelectorAll('#alerts-area .alert').length;
+  document.getElementById('alerts-wrap').style.display=cnt>0?'block':'none';
 }
 
 renderHeader();
-renderPaymentArea();
+renderPayment();
 renderNextLesson();
-renderAlertCount();
+renderAlerts();
 renderEmptyHero();
-renderWeek();
 </script>
 </body>
 </html>
