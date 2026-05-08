@@ -1041,41 +1041,20 @@
         </div>
         <div id="mts-subtitle" style="font-size:13px;color:var(--gray-500);margin-bottom:16px;">합칠 회차를 1개 이상 선택해 주세요</div>
 
-        <!-- 통합 모드: 대상 회차 체크박스 -->
+        <!-- 통합 모드: 합칠 예정 회차 선택 (캘린더, 오늘 기준 주 단위 + 단일 선택) -->
         <div id="merge-targets-merge" style="margin-bottom:14px;">
-          <div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:8px;">통합 대상 회차 <span style="font-weight:400;color:var(--gray-400);">(같은 수강생, 결강 또는 예정)</span></div>
-          <div style="display:flex;flex-direction:column;gap:6px;">
-            <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1.5px solid var(--gray-100);border-radius:10px;cursor:pointer;background:#FAFAFA;">
-              <input type="checkbox" class="merge-target" data-duration="20" data-kind="ABSENT" data-date="4/13 (일) 09:30" onchange="updateMergePreview()" checked>
-              <div style="flex:1;font-size:12px;color:var(--navy);">
-                <span style="display:inline-block;padding:1px 6px;border-radius:4px;background:var(--gray-100);color:var(--gray-500);font-size:10px;font-weight:700;margin-right:4px;">결강</span>
-                <strong>4/13 (일) 09:30</strong> · 20분 (수강생 사전 통보)
-              </div>
-            </label>
-            <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1.5px solid var(--gray-100);border-radius:10px;cursor:pointer;background:#FAFAFA;">
-              <input type="checkbox" class="merge-target" data-duration="20" data-kind="ABSENT" data-date="4/20 (일) 09:30" onchange="updateMergePreview()">
-              <div style="flex:1;font-size:12px;color:var(--navy);">
-                <span style="display:inline-block;padding:1px 6px;border-radius:4px;background:var(--gray-100);color:var(--gray-500);font-size:10px;font-weight:700;margin-right:4px;">결강</span>
-                <strong>4/20 (일) 09:30</strong> · 20분 (코치 사정)
-              </div>
-            </label>
-            <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1.5px solid #C4B5FD;border-radius:10px;cursor:pointer;background:#F5F3FF;">
-              <input type="checkbox" class="merge-target" data-duration="20" data-kind="SCHEDULED" data-date="5/2 (금) 10:00" onchange="updateMergePreview()">
-              <div style="flex:1;font-size:12px;color:var(--navy);">
-                <span style="display:inline-block;padding:1px 6px;border-radius:4px;background:#EDE9FE;color:#5B21B6;font-size:10px;font-weight:700;margin-right:4px;">예정</span>
-                <strong>5/2 (금) 10:00</strong> · 20분 (D+4)
-              </div>
-            </label>
-            <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1.5px solid #C4B5FD;border-radius:10px;cursor:pointer;background:#F5F3FF;">
-              <input type="checkbox" class="merge-target" data-duration="20" data-kind="SCHEDULED" data-date="5/5 (월) 14:00" onchange="updateMergePreview()">
-              <div style="flex:1;font-size:12px;color:var(--navy);">
-                <span style="display:inline-block;padding:1px 6px;border-radius:4px;background:#EDE9FE;color:#5B21B6;font-size:10px;font-weight:700;margin-right:4px;">예정</span>
-                <strong>5/5 (월) 14:00</strong> · 20분 (D+7)
-              </div>
-            </label>
+          <div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:6px;">합칠 예정 회차 선택 <span style="font-weight:400;color:var(--gray-400);">(이 학생의 다가오는 정기 레슨 1개)</span></div>
+          <div id="mt-week-info" style="font-size:11px;color:var(--gray-400);margin-bottom:8px;"></div>
+          <!-- 주 네비게이션 -->
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <button id="mt-week-prev" onclick="moveMergeWeek(-1)" style="width:32px;height:32px;border-radius:8px;border:1px solid var(--gray-200);background:#fff;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;">‹</button>
+            <span id="mt-week-label" style="font-size:13px;font-weight:700;color:var(--navy);"></span>
+            <button onclick="moveMergeWeek(1)" style="width:32px;height:32px;border-radius:8px;border:1px solid var(--gray-200);background:#fff;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;">›</button>
           </div>
+          <!-- 7일 그리드 -->
+          <div id="mt-date-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;"></div>
           <div style="margin-top:8px;padding:8px 10px;background:#EFF6FF;border-radius:8px;font-size:10px;color:#1E40AF;line-height:1.5;">
-            💡 <strong>예정 회차</strong>를 선택하면 그 일정에 합쳐서 길게 진행돼요 (날짜 다시 안 잡아도 됨)
+            💡 학생의 정기 레슨이 있는 날만 선택 가능해요. 선택한 날짜에 합쳐서 길게 진행돼요.
           </div>
         </div>
 
@@ -1804,9 +1783,9 @@ function handleSupplement() {
   // 방식 선택 라디오 기본값(ADD)으로 복원 + 카드 스타일 동기화
   const radios = document.querySelectorAll('input[name="makeup-action"]');
   radios.forEach(r => { r.checked = (r.value === 'ADD'); });
-  // 통합 대상 체크박스 기본 상태 복원 (첫 ABSENT만 체크, 나머지 해제)
-  const targets = Array.from(document.querySelectorAll('.merge-target'));
-  targets.forEach((cb, idx) => { cb.checked = (idx === 0); });
+  // 통합 대상 캘린더 상태 초기화
+  selectedMergeTarget = null;
+  mergeWeekOffset = 0;
   onMakeupActionChange('ADD');
   // 모든 후속 시트/모달 닫힘 보장
   closeActionSheet();
@@ -1893,50 +1872,101 @@ function updateMergeTargetsNextButton() {
     return;
   }
   if (currentMakeupAction !== 'MERGE') return; // ADD는 이 시트 안 씀
-  // MERGE 모드
-  const checked = Array.from(document.querySelectorAll('.merge-target:checked'));
-  const hasScheduled = checked.some(c => c.dataset.kind === 'SCHEDULED');
-  if (checked.length === 0) {
-    btn.textContent = '대상 회차 선택 필요';
+  // MERGE 모드 — 항상 케이스 ㄴ (예정 회차에 합치기). 단일 선택.
+  if (!selectedMergeTarget) {
+    btn.textContent = '예정 회차 선택 필요';
     btn.disabled = true;
     btn.style.background = 'var(--gray-300)';
     btn.style.cursor = 'not-allowed';
-  } else if (hasScheduled) {
-    // 케이스 ㄴ: 결강+예정 → 날짜 단계 스킵
+  } else {
     btn.textContent = '제안하기 (예정 회차에 합치기) ›';
     btn.disabled = false;
     btn.style.background = 'var(--green)';
     btn.style.cursor = 'pointer';
-  } else {
-    // 케이스 ㄱ: 결강+결강 → 날짜 선택 단계 필요
-    btn.textContent = '다음: 날짜 선택 ›';
-    btn.disabled = false;
-    btn.style.background = 'var(--navy)';
-    btn.style.cursor = 'pointer';
   }
 }
 
-// 통합 대상 체크 변화에 따라 미리보기 동적 갱신 (FR-14m 케이스 분기)
+// 통합 대상 — 학생의 정기 레슨 mock (단일 선택 기준, 오늘 기준 캘린더로 표시)
+// daysOfWeek: 0=일 ~ 6=토. 예: 월·수 = [1,3]
+const MERGE_STUDENT_SCHEDULE = {
+  studentName: '강민서',
+  daysOfWeek: [1, 3], // 월·수 정기 레슨 가정
+  time: '14:00',
+  duration: 20
+};
+const MERGE_BASE_ABSENT_DURATION = 20; // 현재 보강 대상(결강) 회차 시간
+
+let mergeWeekOffset = 0;
+let selectedMergeTarget = null; // { dateKey, dayLabel, time, duration, fullLabel }
+
+function getMergeTargetWeekStart() {
+  const s = new Date(MAKEUP_TODAY);
+  s.setDate(MAKEUP_TODAY.getDate() + mergeWeekOffset * 7);
+  return s;
+}
+
+function renderMergeTargetWeek() {
+  const start = getMergeTargetWeekStart();
+  const end = new Date(start); end.setDate(start.getDate() + 6);
+  const wkLabel = document.getElementById('mt-week-label');
+  if (wkLabel) wkLabel.textContent = `${start.getMonth()+1}/${start.getDate()} ~ ${end.getMonth()+1}/${end.getDate()}`;
+  const info = document.getElementById('mt-week-info');
+  if (info) info.textContent = `${MERGE_STUDENT_SCHEDULE.studentName} 학생 · 정기 레슨: ${MERGE_STUDENT_SCHEDULE.daysOfWeek.map(d => MAKEUP_DAY_NAMES[d]).join('·')}요일 ${MERGE_STUDENT_SCHEDULE.time}`;
+  const prev = document.getElementById('mt-week-prev');
+  if (prev) { prev.disabled = mergeWeekOffset === 0; prev.style.opacity = mergeWeekOffset === 0 ? '0.35' : '1'; }
+  const grid = document.getElementById('mt-date-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(start); d.setDate(start.getDate() + i);
+    const dow = d.getDay();
+    const dateKey = makeDateKey(d);
+    const isEligible = MERGE_STUDENT_SCHEDULE.daysOfWeek.includes(dow);
+    const isSelected = selectedMergeTarget && selectedMergeTarget.dateKey === dateKey;
+    const cell = document.createElement('div');
+    cell.style.cssText = `text-align:center;padding:8px 0;border-radius:10px;border:1.5px solid ${isSelected ? 'var(--green)' : (isEligible ? '#C4B5FD' : 'var(--gray-100)')};background:${isSelected ? '#F0FDFA' : (isEligible ? '#F5F3FF' : '#fafafa')};cursor:${isEligible ? 'pointer' : 'not-allowed'};opacity:${isEligible ? '1' : '0.4'};`;
+    cell.innerHTML = `
+      <div style="font-size:9px;color:var(--gray-400);">${MAKEUP_DAY_NAMES[dow]}</div>
+      <div style="font-size:13px;font-weight:700;color:${isSelected ? 'var(--green)' : 'var(--navy)'};margin-top:2px;">${d.getDate()}</div>
+      ${isEligible ? `<div style="font-size:8px;color:#5B21B6;font-weight:700;margin-top:2px;">${MERGE_STUDENT_SCHEDULE.time}</div>` : '<div style="height:11px;"></div>'}
+    `;
+    if (isEligible) {
+      cell.dataset.dateKey = dateKey;
+      cell.dataset.dayLabel = MAKEUP_DAY_NAMES[dow];
+      cell.onclick = () => selectMergeTargetDate(dateKey, MAKEUP_DAY_NAMES[dow]);
+    }
+    grid.appendChild(cell);
+  }
+}
+
+function moveMergeWeek(dir) {
+  mergeWeekOffset += dir;
+  if (mergeWeekOffset < 0) mergeWeekOffset = 0;
+  renderMergeTargetWeek();
+}
+
+function selectMergeTargetDate(dateKey, dayLabel) {
+  selectedMergeTarget = {
+    dateKey,
+    dayLabel,
+    time: MERGE_STUDENT_SCHEDULE.time,
+    duration: MERGE_STUDENT_SCHEDULE.duration,
+    fullLabel: `${dateKey} (${dayLabel}) ${MERGE_STUDENT_SCHEDULE.time}`
+  };
+  renderMergeTargetWeek();
+  updateMergePreview();
+}
+
+// 통합 대상 선택 변화에 따라 미리보기 동적 갱신
 function updateMergePreview() {
   const preview = document.getElementById('merge-preview');
-  const checked = Array.from(document.querySelectorAll('.merge-target:checked'));
-  const scheduled = checked.filter(c => c.dataset.kind === 'SCHEDULED');
-  // 현재 보강 대상 회차도 1건(=20분)으로 가정
-  const baseDuration = 20;
-  const totalDuration = baseDuration + checked.reduce((sum, c) => sum + parseInt(c.dataset.duration || '0', 10), 0);
-  const totalCount = checked.length + 1; // +1 = 현재 보강 대상 회차
-
-  if (preview) {
-    if (checked.length === 0) {
-      preview.innerHTML = '<strong>📋 미리보기</strong><br><span style="color:var(--gray-400);">통합 대상 회차를 1개 이상 선택해 주세요</span>';
-    } else if (scheduled.length > 0) {
-      // 케이스 ㄴ: 결강 + 예정
-      const sched = scheduled[0];
-      preview.innerHTML = `<strong>📋 미리보기 — 결강 + 예정 통합</strong><br>현재 결강 회차(20분) + <strong style="color:#5B21B6;">${sched.dataset.date} 예정(20분)</strong><br>→ <strong style="color:#5B21B6;">${sched.dataset.date} · ${totalDuration}분으로 길게 진행</strong><br>· 새 일정 안 잡아도 됨 (다음 단계 스킵)<br>· 회차 카운트: ${totalCount}회 차감 · 결제 변동 없음`;
-    } else {
-      // 케이스 ㄱ: 결강 + 결강
-      preview.innerHTML = `<strong>📋 미리보기 — 결강 통합</strong><br>20분 × ${totalCount}회 → <strong>${totalDuration}분 × 1회</strong>로 통합<br>· 다음 단계에서 새 일정 1개 선택 필요<br>· 회차 카운트: ${totalCount}회 차감 · 결제 변동 없음`;
-    }
+  if (!preview) return;
+  if (currentMakeupAction !== 'MERGE') return; // SPLIT은 onMakeupActionChange에서 직접 셋
+  if (!selectedMergeTarget) {
+    preview.innerHTML = '<strong>📋 미리보기</strong><br><span style="color:var(--gray-400);">합칠 예정 회차를 캘린더에서 1개 선택해 주세요</span>';
+  } else {
+    const total = MERGE_BASE_ABSENT_DURATION + selectedMergeTarget.duration;
+    preview.innerHTML = `<strong>📋 미리보기 — 결강 + 예정 통합</strong><br>현재 결강 회차(${MERGE_BASE_ABSENT_DURATION}분) + <strong style="color:#5B21B6;">${selectedMergeTarget.fullLabel} 예정(${selectedMergeTarget.duration}분)</strong><br>→ <strong style="color:#5B21B6;">${selectedMergeTarget.fullLabel} · ${total}분으로 길게 진행</strong><br>· 새 일정 안 잡아도 됨 (확정 모달로 직행)<br>· 회차 카운트: 2회 차감 · 결제 변동 없음`;
   }
   updateMergeTargetsNextButton();
 }
@@ -1984,6 +2014,9 @@ function backFromActionSheet() {
 function goToMergeTargetsSheet() {
   closeActionSheet();
   onMakeupActionChange(currentMakeupAction); // 시트 내 표시 동기화
+  if (currentMakeupAction === 'MERGE') {
+    renderMergeTargetWeek();
+  }
   document.getElementById('makeup-merge-targets-sheet').style.display = 'block';
 }
 
@@ -1993,20 +2026,14 @@ function backFromMergeTargetsSheet() {
   document.getElementById('makeup-action-sheet').style.display = 'block';
 }
 
-// 대상 선택 시트 "다음" — MERGE/SPLIT 한정. 케이스별 분기
+// 대상 선택 시트 "다음" — MERGE는 항상 모달 직행, SPLIT은 날짜 시트
 function onMergeTargetsNext() {
   if (currentMakeupAction === 'MERGE') {
-    const checked = Array.from(document.querySelectorAll('.merge-target:checked'));
-    if (checked.length === 0) return; // 비활성 상태이므로 도달하지 않지만 안전망
-    const hasScheduled = checked.some(c => c.dataset.kind === 'SCHEDULED');
-    if (hasScheduled) {
-      // 케이스 ㄴ: 날짜 단계 스킵 → 제안 확정 모달
-      const sched = checked.find(c => c.dataset.kind === 'SCHEDULED');
-      showMergeProposeConfirm(sched ? sched.dataset.date : '');
-      return;
-    }
+    if (!selectedMergeTarget) return; // 비활성 상태이지만 안전망
+    showMergeProposeConfirm(selectedMergeTarget.fullLabel);
+    return;
   }
-  // MERGE 케이스 ㄱ (결강+결강) 또는 SPLIT → 날짜 시트
+  // SPLIT → 날짜 시트
   makeupDateOrigin = 'targets';
   closeMergeTargetsSheet();
   openMakeupDateSheet();
@@ -2022,14 +2049,12 @@ function backFromMakeupDateSheet() {
   }
 }
 
-// FR-14m 케이스 ㄴ 제안 확정 모달
-function showMergeProposeConfirm(scheduledDate) {
+// 통합 제안 확정 모달 (MERGE = 항상 케이스 ㄴ, 예정 회차에 합치기)
+function showMergeProposeConfirm(scheduledDateLabel) {
   const body = document.getElementById('mpc-body');
-  if (body) {
-    const checked = Array.from(document.querySelectorAll('.merge-target:checked'));
-    const baseDuration = 20; // 현재 보강 대상 회차
-    const totalDuration = baseDuration + checked.reduce((s, c) => s + parseInt(c.dataset.duration || '0', 10), 0);
-    body.innerHTML = `기존 <strong style="color:#5B21B6;">${scheduledDate}</strong> 예정 일정에<br>합쳐서 <strong>${totalDuration}분</strong>으로 진행됩니다.<br><span style="color:var(--gray-400);font-size:12px;">수강생에게 카카오 알림톡이 발송됩니다.</span>`;
+  if (body && selectedMergeTarget) {
+    const total = MERGE_BASE_ABSENT_DURATION + selectedMergeTarget.duration;
+    body.innerHTML = `기존 <strong style="color:#5B21B6;">${scheduledDateLabel}</strong> 예정 일정에<br>합쳐서 <strong>${total}분</strong>으로 진행됩니다.<br><span style="color:var(--gray-400);font-size:12px;">수강생에게 카카오 알림톡이 발송됩니다.</span>`;
   }
   document.getElementById('merge-propose-confirm').style.display = 'block';
 }
@@ -2043,9 +2068,8 @@ function confirmMergeProposeToScheduled() {
   hideMergeProposeConfirm();
   closeMergeTargetsSheet();
   closeMakeupReasonSheet();
-  // 수강생 화면으로 이동 (case=ABSENT_PLUS_SCHEDULED)
-  const sched = Array.from(document.querySelectorAll('.merge-target:checked')).find(c => c.dataset.kind === 'SCHEDULED');
-  const dateParam = sched ? sched.dataset.date : '';
+  closeActionSheet();
+  const dateParam = selectedMergeTarget ? selectedMergeTarget.fullLabel : '';
   window.location.href = `../flow6-student-my/6-6-booking-detail.html?status=makeup_proposed&mergeCase=ABSENT_PLUS_SCHEDULED&mergeDate=${encodeURIComponent(dateParam)}`;
 }
 
