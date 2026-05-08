@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=375, initial-scale=1.0">
+  <title>6-0 학생 스케줄 홈 — COURTSIDE</title>
+  <link rel="stylesheet" href="../common.css">
+  <style>
+    .lesson-card {background:#fff;border:1px solid var(--gray-100);border-radius:12px;padding:14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;text-decoration:none;}
+    .lesson-time {flex-shrink:0;width:54px;text-align:center;}
+    .lesson-time .hh {font-size:18px;font-weight:800;color:var(--navy);}
+    .lesson-time .ampm {font-size:10px;color:var(--gray-400);font-weight:600;}
+    .lesson-info {flex:1;}
+    .lesson-info .title {font-size:14px;font-weight:700;color:var(--navy);margin-bottom:2px;}
+    .lesson-info .meta {font-size:11px;color:var(--gray-400);}
+    .badge-sm {display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;}
+    .b-scheduled {background:#EDE9FE;color:#5B21B6;}
+    .b-progress  {background:#FEE2E2;color:#B91C1C;}
+    .b-completed {background:#DBEAFE;color:#1E40AF;}
+    .b-absent    {background:var(--gray-100);color:var(--gray-500);}
+    .b-makeup    {background:#D1FAE5;color:#065F46;}
+    .alert-card {background:#fff;border:1.5px solid #C4B5FD;border-radius:12px;padding:14px;margin-bottom:8px;display:flex;align-items:flex-start;gap:10px;text-decoration:none;}
+    .alert-card.urgent {border-color:var(--coral);background:#FFF7ED;}
+    .alert-card .icon {font-size:18px;flex-shrink:0;}
+    .alert-card .body {flex:1;}
+    .alert-card .ttl {font-size:13px;font-weight:700;color:var(--navy);margin-bottom:2px;}
+    .alert-card .sub {font-size:11px;color:var(--gray-500);line-height:1.5;}
+    .alert-card .arrow {color:var(--gray-400);font-size:14px;flex-shrink:0;align-self:center;}
+    .cal-cell {display:flex;flex-direction:column;align-items:center;justify-content:center;height:46px;border-radius:10px;border:1px solid transparent;cursor:pointer;background:#fff;}
+    .cal-cell.has-lesson {border-color:#EDE9FE;background:#F5F3FF;}
+    .cal-cell.today {background:var(--green);color:#fff;border-color:var(--green);}
+    .cal-cell.today .dow,.cal-cell.today .num {color:#fff;}
+    .cal-cell .dow {font-size:9px;color:var(--gray-400);font-weight:600;}
+    .cal-cell .num {font-size:14px;font-weight:700;color:var(--navy);margin-top:2px;}
+    .cal-cell .dot {width:4px;height:4px;border-radius:50%;background:var(--green);margin-top:3px;}
+    .cal-cell.today .dot {background:#fff;}
+    .section-title {font-size:13px;font-weight:700;color:var(--navy);margin:14px 4px 8px;display:flex;align-items:center;justify-content:space-between;}
+  </style>
+</head>
+<body>
+<div class="device-wrap">
+  <div class="device-label"><span class="device-num">6-0</span>학생 스케줄 홈 (SaaS 신규)</div>
+  <div class="device" style="position:relative;overflow:hidden;background:var(--gray-50);">
+    <div class="status-bar"><span class="time">9:41</span><div class="status-icons"><span>📶</span><span>🔋</span></div></div>
+    <div class="screen" style="padding-bottom:100px;overflow-y:auto;">
+
+      <!-- 헤더 -->
+      <div style="padding:18px 20px;background:#fff;display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <div style="font-size:18px;font-weight:800;color:var(--navy);">안녕하세요, 홍길동님</div>
+          <div style="font-size:12px;color:var(--gray-500);margin-top:4px;">오늘도 즐거운 레슨 되세요 🎾</div>
+        </div>
+        <button onclick="showNotifications()" style="position:relative;width:38px;height:38px;border-radius:50%;border:none;background:var(--gray-50);font-size:18px;cursor:pointer;">
+          🔔
+          <span id="notif-dot" style="position:absolute;top:6px;right:6px;width:8px;height:8px;border-radius:50%;background:var(--coral);"></span>
+        </button>
+      </div>
+
+      <!-- 코치 카드 -->
+      <div style="padding:0 16px;margin-top:-6px;">
+        <div style="background:linear-gradient(135deg,#F0FDFA,#EDE9FE);border-radius:14px;padding:14px;display:flex;align-items:center;gap:12px;">
+          <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--sky));display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">🧑‍🏫</div>
+          <div style="flex:1;">
+            <div style="font-size:11px;color:var(--gray-500);">담당 코치</div>
+            <div style="font-size:15px;font-weight:700;color:var(--navy);margin-top:2px;">김민수 코치님</div>
+            <div style="font-size:11px;color:var(--gray-400);margin-top:2px;">정기 레슨 · 월·수 14:00 · 20분</div>
+          </div>
+          <a href="../flow4-chat/4-2-chat.html" style="flex-shrink:0;padding:8px 12px;border-radius:10px;background:#fff;color:var(--green);font-size:12px;font-weight:700;text-decoration:none;border:1px solid var(--green);">💬 메시지</a>
+        </div>
+      </div>
+
+      <!-- 주간 미니 캘린더 -->
+      <div style="padding:14px 16px 0;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <div id="week-label" style="font-size:13px;font-weight:700;color:var(--navy);"></div>
+          <div style="display:flex;gap:4px;">
+            <button onclick="moveWeek(-1)" id="wk-prev" style="width:28px;height:28px;border-radius:8px;border:1px solid var(--gray-200);background:#fff;font-size:12px;cursor:pointer;">‹</button>
+            <button onclick="moveWeek(1)" style="width:28px;height:28px;border-radius:8px;border:1px solid var(--gray-200);background:#fff;font-size:12px;cursor:pointer;">›</button>
+          </div>
+        </div>
+        <div id="week-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;"></div>
+      </div>
+
+      <!-- 알림 영역 (변경요청·보강 제안) -->
+      <div style="padding:0 16px;">
+        <div class="section-title">📬 코치님 알림 <span style="font-size:11px;color:var(--gray-400);font-weight:500;" id="alert-count">2건</span></div>
+        <div id="alerts-area">
+          <a href="6-6-booking-detail.html?status=makeup_proposed&dates=4%2F24%20(%EB%AA%A9)%2016%3A00%7C4%2F25%20(%EA%B8%88)%2010%3A00" class="alert-card urgent">
+            <span class="icon">🔄</span>
+            <div class="body">
+              <div class="ttl">보강 일정 제안 도착</div>
+              <div class="sub">코치님이 4/24, 4/25 두 날짜를 제안했어요.<br>1개를 선택해서 보강 일정 확정해 주세요.</div>
+            </div>
+            <span class="arrow">›</span>
+          </a>
+          <a href="6-6-booking-detail.html?status=reschedule_pending" class="alert-card">
+            <span class="icon">📅</span>
+            <div class="body">
+              <div class="ttl">변경 요청 응답 대기 중</div>
+              <div class="sub">5/13 (수) 14:00 레슨 변경 요청 — 코치님 응답 대기</div>
+            </div>
+            <span class="arrow">›</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- 오늘/다가오는 레슨 -->
+      <div style="padding:0 16px;">
+        <div class="section-title">📅 다가오는 레슨</div>
+        <div id="lessons-area">
+          <a href="6-6-booking-detail.html?status=confirmed" class="lesson-card">
+            <div class="lesson-time">
+              <div class="hh">14:00</div>
+              <div class="ampm">월요일</div>
+            </div>
+            <div class="lesson-info">
+              <div class="title">정기 레슨 · 김민수 코치 <span class="badge-sm b-scheduled">예정</span></div>
+              <div class="meta">20분 · 1:1 개인 · 5/11 (월)</div>
+            </div>
+          </a>
+          <a href="6-6-booking-detail.html?status=confirmed" class="lesson-card">
+            <div class="lesson-time">
+              <div class="hh">14:00</div>
+              <div class="ampm">수요일</div>
+            </div>
+            <div class="lesson-info">
+              <div class="title">정기 레슨 · 김민수 코치 <span class="badge-sm b-scheduled">예정</span></div>
+              <div class="meta">20분 · 1:1 개인 · 5/13 (수)</div>
+            </div>
+          </a>
+        </div>
+      </div>
+
+      <!-- 미결제 안내 (옵션) -->
+      <div style="padding:14px 16px 0;">
+        <div style="background:#FEF3C7;border:1px solid #FDE68A;border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px;">
+          <span style="font-size:20px;">💳</span>
+          <div style="flex:1;font-size:12px;color:#92400E;line-height:1.5;">
+            <strong>5월 4주차 결제 안내</strong><br>
+            아직 결제하지 않은 회차가 있어요. 코치님께 직접 정산 후 알려주세요.
+          </div>
+        </div>
+      </div>
+
+      <!-- 푸터 여백 -->
+      <div style="height:20px;"></div>
+
+    </div>
+
+    <!-- 하단 네비 (학생용 SaaS — 검색 → 변경요청으로 교체) -->
+    <div style="position:absolute;bottom:20px;left:16px;right:16px;z-index:50;">
+      <div style="display:flex;align-items:center;justify-content:space-around;height:60px;background:#fff;border-radius:30px;box-shadow:0 2px 16px rgba(0,0,0,0.1);border:1px solid var(--gray-100);">
+        <a href="6-0-schedule-home.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;padding:8px 16px;"><span style="font-size:18px;">🏠</span><span style="font-size:9px;font-weight:700;color:var(--green);">홈</span></a>
+        <a href="6-5-booking-list.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;padding:8px 16px;"><span style="font-size:18px;">🔔</span><span style="font-size:9px;font-weight:600;color:var(--gray-400);">알림</span></a>
+        <a href="../flow4-chat/4-1-chat-list.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;padding:8px 16px;"><span style="font-size:18px;">💬</span><span style="font-size:9px;font-weight:600;color:var(--gray-400);">메시지</span></a>
+        <a href="6-2-mypage.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;padding:8px 16px;"><span style="font-size:18px;">👤</span><span style="font-size:9px;font-weight:600;color:var(--gray-400);">마이</span></a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const DAY_NAMES = ['일','월','화','수','목','금','토'];
+const TODAY = new Date();
+TODAY.setHours(0,0,0,0);
+// 학생 정기 레슨: 월(1)·수(3) — 캘린더 점 표시용
+const STUDENT_LESSON_DAYS = [1, 3];
+let weekOffset = 0;
+
+function getWeekStart() {
+  // 오늘이 포함된 주의 일요일
+  const s = new Date(TODAY);
+  s.setDate(TODAY.getDate() - TODAY.getDay() + weekOffset * 7);
+  return s;
+}
+
+function renderWeek() {
+  const start = getWeekStart();
+  const end = new Date(start); end.setDate(start.getDate() + 6);
+  document.getElementById('week-label').textContent =
+    `${start.getMonth()+1}/${start.getDate()} ~ ${end.getMonth()+1}/${end.getDate()}`;
+  const prev = document.getElementById('wk-prev');
+  prev.style.opacity = weekOffset <= -4 ? '0.35' : '1';
+  prev.disabled = weekOffset <= -4;
+  const grid = document.getElementById('week-grid');
+  grid.innerHTML = '';
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(start); d.setDate(start.getDate() + i);
+    const dow = d.getDay();
+    const isToday = d.getTime() === TODAY.getTime();
+    const hasLesson = STUDENT_LESSON_DAYS.includes(dow);
+    const cell = document.createElement('div');
+    cell.className = 'cal-cell' + (isToday ? ' today' : (hasLesson ? ' has-lesson' : ''));
+    cell.innerHTML = `
+      <div class="dow">${DAY_NAMES[dow]}</div>
+      <div class="num">${d.getDate()}</div>
+      ${hasLesson && !isToday ? '<div class="dot"></div>' : (isToday && hasLesson ? '<div class="dot"></div>' : '<div style="height:7px;"></div>')}
+    `;
+    grid.appendChild(cell);
+  }
+}
+
+function moveWeek(dir) {
+  weekOffset += dir;
+  if (weekOffset < -4) weekOffset = -4;
+  if (weekOffset > 8) weekOffset = 8;
+  renderWeek();
+}
+
+function showNotifications() {
+  // 임시: 알림 dot 끄기 (실제는 알림 풀팝업 연결)
+  const dot = document.getElementById('notif-dot');
+  if (dot) dot.style.display = (dot.style.display === 'none') ? 'block' : 'none';
+}
+
+renderWeek();
+</script>
+</body>
+</html>
