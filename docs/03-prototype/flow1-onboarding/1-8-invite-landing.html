@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=375, initial-scale=1.0">
+  <title>1-8 초대 진입 — COURTSIDE</title>
+  <link rel="stylesheet" href="../common.css">
+  <style>
+    .center-stage {min-height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:32px 24px;}
+    .coach-card {background:#fff;border:1.5px solid var(--gray-100);border-radius:16px;padding:20px;text-align:center;width:100%;box-shadow:0 2px 12px rgba(0,0,0,0.04);}
+    .coach-photo {width:88px;height:88px;border-radius:50%;margin:0 auto 14px;background:linear-gradient(135deg,var(--green),var(--sky));display:flex;align-items:center;justify-content:center;font-size:44px;}
+    .invite-msg {font-size:13px;color:var(--gray-500);margin-bottom:8px;}
+    .coach-name {font-size:22px;font-weight:800;color:var(--navy);margin-bottom:4px;}
+    .coach-spec {font-size:12px;color:var(--gray-500);margin-bottom:18px;}
+    .lesson-info {background:#F0FDFA;border-radius:12px;padding:12px;font-size:12px;color:#065F46;line-height:1.6;text-align:left;}
+    .btn-primary {width:100%;height:52px;border-radius:14px;border:none;background:var(--navy);color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;}
+    .btn-secondary {width:100%;height:48px;border-radius:14px;border:1.5px solid var(--gray-200);background:#fff;color:var(--gray-500);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;}
+    .social-btn {width:100%;height:50px;border-radius:12px;border:none;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;}
+    .btn-kakao {background:#FEE500;color:#191600;}
+    .btn-naver {background:#03C75A;color:#fff;}
+    .err-icon {width:88px;height:88px;border-radius:50%;background:var(--gray-100);display:flex;align-items:center;justify-content:center;font-size:44px;margin:0 auto 14px;}
+    .err-msg {font-size:14px;color:var(--gray-500);text-align:center;line-height:1.6;margin-bottom:18px;}
+  </style>
+</head>
+<body>
+<div class="device-wrap">
+  <div class="device-label"><span class="device-num">1-8</span>초대 진입 (학생 초대 링크 가입, SaaS 신규)</div>
+  <div class="device" style="position:relative;overflow:hidden;background:var(--gray-50);">
+    <div class="status-bar"><span class="time">9:41</span><div class="status-icons"><span>📶</span><span>🔋</span></div></div>
+    <div class="screen" style="overflow-y:auto;">
+
+      <!-- 헤더 -->
+      <div style="padding:20px 20px 12px;text-align:center;">
+        <div style="font-size:18px;font-weight:800;color:var(--navy);">🎾 COURTSIDE</div>
+      </div>
+
+      <!-- 분기 컨테이너 -->
+      <div class="center-stage" style="min-height:calc(100% - 60px);">
+
+        <!-- 1) 유효한 초대 -->
+        <div id="state-valid" style="display:none;width:100%;">
+          <div class="coach-card">
+            <div class="coach-photo">🧑‍🏫</div>
+            <div class="invite-msg">초대 도착</div>
+            <div class="coach-name" id="coach-name">김민수 코치님</div>
+            <div class="coach-spec" id="coach-spec">테니스 정규 레슨 · 강남 · NTRP 4.0+</div>
+            <div class="lesson-info">
+              <strong>📌 학생으로 등록되어 있어요</strong><br>
+              <span id="invite-detail">메모: 월·수 14:00 정기 (그룹 4인 중 1명)</span><br>
+              <span style="color:var(--gray-400);font-size:11px;">가입 후 자동으로 코치님과 연결돼요</span>
+            </div>
+          </div>
+
+          <div style="height:24px;"></div>
+
+          <div style="font-size:13px;color:var(--gray-500);text-align:center;margin-bottom:14px;">간편 로그인으로 시작하기</div>
+          <button class="social-btn btn-kakao" onclick="socialLogin('KAKAO')" style="margin-bottom:8px;">
+            💬 카카오로 시작하기
+          </button>
+          <button class="social-btn btn-naver" onclick="socialLogin('NAVER')">
+            🟢 네이버로 시작하기
+          </button>
+
+          <div style="height:16px;"></div>
+          <div style="font-size:11px;color:var(--gray-400);text-align:center;line-height:1.6;">
+            가입 시 <a href="#" style="color:var(--green);text-decoration:underline;">이용약관</a> · <a href="#" style="color:var(--green);text-decoration:underline;">개인정보 처리방침</a>에 동의합니다.
+          </div>
+        </div>
+
+        <!-- 2) 만료된 초대 -->
+        <div id="state-expired" style="display:none;width:100%;">
+          <div class="coach-card">
+            <div class="err-icon">⌛</div>
+            <div style="font-size:18px;font-weight:800;color:var(--navy);text-align:center;margin-bottom:8px;">초대가 만료되었어요</div>
+            <div class="err-msg">
+              이 초대 링크는 7일이 지나 만료되었습니다.<br>
+              <strong style="color:var(--navy);">담당 코치님께 다시 초대를 요청</strong>해 주세요.
+            </div>
+            <button class="btn-secondary" onclick="contactCoach()">코치님께 카카오로 문의</button>
+          </div>
+        </div>
+
+        <!-- 3) 이미 사용된 초대 -->
+        <div id="state-used" style="display:none;width:100%;">
+          <div class="coach-card">
+            <div class="err-icon">✅</div>
+            <div style="font-size:18px;font-weight:800;color:var(--navy);text-align:center;margin-bottom:8px;">이미 가입하신 회원이에요</div>
+            <div class="err-msg">
+              이 초대 링크는 이미 사용되었습니다.<br>
+              로그인해서 내 스케줄을 확인하세요.
+            </div>
+            <button class="btn-primary" onclick="goLogin()">로그인하기</button>
+          </div>
+        </div>
+
+        <!-- 4) 토큰 없음 / 잘못된 토큰 -->
+        <div id="state-invalid" style="display:none;width:100%;">
+          <div class="coach-card">
+            <div class="err-icon">❓</div>
+            <div style="font-size:18px;font-weight:800;color:var(--navy);text-align:center;margin-bottom:8px;">유효하지 않은 링크예요</div>
+            <div class="err-msg">
+              초대 링크를 다시 확인해 주세요.<br>
+              담당 코치님께 받은 정확한 링크가 맞나요?
+            </div>
+            <button class="btn-secondary" onclick="goHome()">홈으로 이동</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// 토큰별 mock 응답 (실제론 GET /api/invitations/verify?token=...)
+const MOCK_INVITES = {
+  'valid-xyz': { state:'valid', coachName:'김민수 코치님', coachSpec:'테니스 정규 레슨 · 강남 · NTRP 4.0+', detail:'메모: 월·수 14:00 정기 (그룹 4인 중 1명)' },
+  'valid-abc': { state:'valid', coachName:'이서연 코치님', coachSpec:'테니스 입문·중급 · 송파 · NTRP 3.5+', detail:'메모: 토요일 그룹 레슨' },
+  'expired':   { state:'expired' },
+  'used':      { state:'used' }
+};
+
+function getToken() {
+  const p = new URLSearchParams(location.search);
+  return p.get('token') || '';
+}
+
+function showState(key) {
+  ['state-valid','state-expired','state-used','state-invalid'].forEach(id => {
+    document.getElementById(id).style.display = (id === `state-${key}`) ? 'block' : 'none';
+  });
+}
+
+function init() {
+  const token = getToken();
+  if (!token) { showState('invalid'); return; }
+  const inv = MOCK_INVITES[token];
+  if (!inv) { showState('invalid'); return; }
+  if (inv.state === 'valid') {
+    document.getElementById('coach-name').textContent = inv.coachName;
+    document.getElementById('coach-spec').textContent = inv.coachSpec;
+    document.getElementById('invite-detail').textContent = inv.detail;
+    showState('valid');
+  } else {
+    showState(inv.state);
+  }
+}
+
+function socialLogin(provider) {
+  // 실제: 소셜 로그인 → 가입 → POST /api/invitations/{token}/accept → 6-0 학생 홈
+  // 프로토타입: 가입 흐름 단축 — 학생 프로필 등록(1-4)으로 보내거나 바로 6-0
+  const token = getToken();
+  // 토큰을 학생 가입 단축 플로우에 전달 (역할 자동 학생 고정)
+  window.location.href = `1-4-student-profile.html?inviteToken=${encodeURIComponent(token)}&provider=${provider}`;
+}
+
+function contactCoach() {
+  alert('카카오톡 채널로 코치님께 문의 (실제 구현 시 연결)');
+}
+
+function goLogin() {
+  window.location.href = '1-2-login.html';
+}
+
+function goHome() {
+  window.location.href = '../flow6-student-my/6-0-schedule-home.html';
+}
+
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=375, initial-scale=1.0">
+  <title>7-11 학생 초대 — COURTSIDE</title>
+  <link rel="stylesheet" href="../common.css">
+  <style>
+    .field-label {font-size:12px;font-weight:700;color:var(--navy);margin-bottom:6px;display:block;}
+    .field-label .req {color:var(--coral);margin-left:2px;}
+    .field-input {width:100%;height:46px;border-radius:10px;border:1.5px solid var(--gray-200);padding:0 14px;font-size:14px;font-family:inherit;color:var(--navy);box-sizing:border-box;outline:none;background:#fff;}
+    .field-input:focus {border-color:var(--green);}
+    .field-textarea {width:100%;min-height:64px;border-radius:10px;border:1.5px solid var(--gray-200);padding:10px 14px;font-size:13px;font-family:inherit;color:var(--navy);box-sizing:border-box;outline:none;background:#fff;resize:none;}
+    .channel-card {flex:1;display:flex;align-items:center;gap:8px;padding:12px;border:1.5px solid var(--gray-100);border-radius:10px;cursor:pointer;background:#fff;}
+    .channel-card.active {border-color:var(--green);background:#F0FDFA;}
+    .invite-card {background:#fff;border:1px solid var(--gray-100);border-radius:12px;padding:14px;margin-bottom:8px;}
+    .invite-card .row1 {display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+    .invite-card .name {font-size:14px;font-weight:700;color:var(--navy);}
+    .invite-card .phone {font-size:12px;color:var(--gray-500);margin-bottom:4px;}
+    .invite-card .meta {font-size:11px;color:var(--gray-400);margin-bottom:10px;line-height:1.5;}
+    .invite-card .actions {display:flex;gap:6px;}
+    .invite-card .actions button {flex:1;height:36px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;border:1px solid var(--gray-200);background:#fff;color:var(--gray-500);}
+    .invite-card .actions button.primary {border-color:var(--green);background:var(--green);color:#fff;}
+    .invite-card .actions button.danger {border-color:var(--coral);color:var(--coral);}
+    .status-badge {font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;}
+    .s-pending {background:#FEF3C7;color:#92400E;}
+    .s-joined {background:#D1FAE5;color:#065F46;}
+    .s-expired {background:var(--gray-100);color:var(--gray-500);}
+    .s-soon {background:#FFEDD5;color:#9A3412;}
+    .tab-chip {flex:1;text-align:center;padding:10px 0;font-size:12px;font-weight:700;color:var(--gray-500);cursor:pointer;border-bottom:2px solid transparent;}
+    .tab-chip.active {color:var(--navy);border-bottom-color:var(--green);}
+  </style>
+</head>
+<body>
+<div class="device-wrap">
+  <div class="device-label"><span class="device-num">7-11</span>학생 초대 (코치 전용, SaaS 신규)</div>
+  <div class="device" style="position:relative;overflow:hidden;background:var(--gray-50);">
+    <div class="status-bar"><span class="time">9:41</span><div class="status-icons"><span>📶</span><span>🔋</span></div></div>
+    <div class="screen" style="padding-bottom:100px;overflow-y:auto;">
+
+      <!-- 헤더 -->
+      <div style="padding:16px 16px 0;display:flex;align-items:center;gap:10px;">
+        <a href="7-1-coach-mypage.html" style="font-size:20px;color:var(--navy);text-decoration:none;">←</a>
+        <div style="font-size:18px;font-weight:800;color:var(--navy);flex:1;">학생 초대</div>
+      </div>
+      <div style="padding:4px 16px 12px;font-size:12px;color:var(--gray-500);line-height:1.5;">
+        오프라인에서 만난 학생을 등록하고 초대 링크를 보내세요. 학생이 가입하면 자동으로 회원님 학생 목록에 연결돼요.
+      </div>
+
+      <!-- 입력 폼 -->
+      <div style="padding:0 16px;">
+        <div style="background:#fff;border:1px solid var(--gray-100);border-radius:12px;padding:16px;">
+          <div style="margin-bottom:12px;">
+            <label class="field-label">학생 이름 <span class="req">*</span></label>
+            <input id="inv-name" type="text" maxlength="30" placeholder="예: 박지영" class="field-input" oninput="onFormChange()">
+          </div>
+          <div style="margin-bottom:12px;">
+            <label class="field-label">전화번호 <span class="req">*</span></label>
+            <input id="inv-phone" type="tel" placeholder="010-1234-5678" class="field-input" oninput="onPhoneInput(event)">
+          </div>
+          <div style="margin-bottom:12px;">
+            <label class="field-label">메모 <span style="color:var(--gray-400);font-weight:400;">(선택)</span></label>
+            <textarea id="inv-memo" maxlength="100" placeholder="예: 월·수 14:00 정기, 그룹 4인 중 1명" class="field-textarea"></textarea>
+          </div>
+          <div style="margin-bottom:14px;">
+            <label class="field-label">발송 채널</label>
+            <div style="display:flex;gap:8px;">
+              <label class="channel-card active" id="ch-kakao">
+                <input type="radio" name="channel" value="KAKAO" checked onchange="onChannelChange('KAKAO')">
+                <div>
+                  <div style="font-size:13px;font-weight:700;color:var(--navy);">💬 카카오 알림톡</div>
+                  <div style="font-size:10px;color:var(--gray-400);margin-top:2px;">카카오 가입자에 한해</div>
+                </div>
+              </label>
+              <label class="channel-card" id="ch-sms">
+                <input type="radio" name="channel" value="SMS" onchange="onChannelChange('SMS')">
+                <div>
+                  <div style="font-size:13px;font-weight:700;color:var(--navy);">📱 SMS</div>
+                  <div style="font-size:10px;color:var(--gray-400);margin-top:2px;">전 회원 가능</div>
+                </div>
+              </label>
+            </div>
+          </div>
+          <button id="inv-submit" onclick="sendInvite()" disabled style="width:100%;height:48px;border-radius:12px;border:none;background:var(--gray-300);color:#fff;font-size:15px;font-weight:700;cursor:not-allowed;font-family:inherit;">초대 링크 발송</button>
+        </div>
+      </div>
+
+      <!-- 탭 -->
+      <div style="padding:18px 16px 0;">
+        <div style="display:flex;background:#fff;border-radius:12px;border:1px solid var(--gray-100);">
+          <div class="tab-chip active" data-tab="all" onclick="switchTab('all', this)">전체 <span id="cnt-all">0</span></div>
+          <div class="tab-chip" data-tab="pending" onclick="switchTab('pending', this)">가입 대기 <span id="cnt-pending">0</span></div>
+          <div class="tab-chip" data-tab="joined" onclick="switchTab('joined', this)">가입 완료 <span id="cnt-joined">0</span></div>
+          <div class="tab-chip" data-tab="expired" onclick="switchTab('expired', this)">만료 <span id="cnt-expired">0</span></div>
+        </div>
+      </div>
+
+      <!-- 초대 목록 -->
+      <div style="padding:12px 16px 0;">
+        <div id="invites-area"></div>
+        <div id="invites-empty" style="display:none;padding:24px;text-align:center;font-size:13px;color:var(--gray-400);">아직 초대한 학생이 없어요.</div>
+      </div>
+
+      <div style="height:20px;"></div>
+    </div>
+
+    <!-- 토스트 -->
+    <div id="toast" style="display:none;position:absolute;bottom:96px;left:50%;transform:translateX(-50%);padding:10px 18px;background:var(--navy);color:#fff;border-radius:24px;font-size:13px;font-weight:600;z-index:200;"></div>
+
+    <!-- 코치 전용 하단 네비 -->
+    <div style="position:absolute;bottom:20px;left:16px;right:16px;z-index:50;">
+      <div style="display:flex;align-items:center;justify-content:space-around;height:60px;background:#fff;border-radius:30px;box-shadow:0 2px 16px rgba(0,0,0,0.1);border:1px solid var(--gray-100);">
+        <a href="7-0-schedule-home.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;padding:8px 14px;"><span style="font-size:18px;">📅</span><span style="font-size:9px;font-weight:600;color:var(--gray-400);">스케줄</span></a>
+        <a href="7-2-booking-inbox.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;padding:8px 14px;"><span style="font-size:18px;">📬</span><span style="font-size:9px;font-weight:600;color:var(--gray-400);">알림함</span></a>
+        <a href="../flow4-chat/4-1-chat-list.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;padding:8px 14px;"><span style="font-size:18px;">💬</span><span style="font-size:9px;font-weight:600;color:var(--gray-400);">메시지</span></a>
+        <a href="7-10-student-search.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;padding:8px 14px;"><span style="font-size:18px;">🔍</span><span style="font-size:9px;font-weight:600;color:var(--gray-400);">학생</span></a>
+        <a href="7-1-coach-mypage.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;padding:8px 14px;"><span style="font-size:18px;">👤</span><span style="font-size:9px;font-weight:600;color:var(--gray-400);">마이</span></a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// 초대 mock 데이터
+let INVITES = [
+  { id:1, name:'박지영', phone:'010-1234-5678', memo:'월·수 14:00 정기', channel:'KAKAO', status:'PENDING', sentAt:'어제 15:30', expiresIn:'6일 후 만료' },
+  { id:2, name:'이수민', phone:'010-9876-5432', memo:'토요일 그룹 레슨 희망', channel:'SMS', status:'PENDING_SOON', sentAt:'6일 전', expiresIn:'1일 후 만료' },
+  { id:3, name:'강민서', phone:'010-5555-1234', memo:'', channel:'KAKAO', status:'JOINED', sentAt:'3일 전', joinedAt:'어제' },
+  { id:4, name:'최은지', phone:'010-7777-8888', memo:'화·목 16:00', channel:'SMS', status:'EXPIRED', sentAt:'10일 전' }
+];
+let activeTab = 'all';
+
+function onPhoneInput(e) {
+  // 010-XXXX-XXXX 자동 포맷
+  let v = e.target.value.replace(/[^0-9]/g,'');
+  if (v.length > 11) v = v.slice(0,11);
+  let f = v;
+  if (v.length >= 7) f = v.slice(0,3) + '-' + v.slice(3,7) + '-' + v.slice(7);
+  else if (v.length >= 4) f = v.slice(0,3) + '-' + v.slice(3);
+  e.target.value = f;
+  onFormChange();
+}
+
+function onFormChange() {
+  const name = document.getElementById('inv-name').value.trim();
+  const phone = document.getElementById('inv-phone').value.replace(/[^0-9]/g,'');
+  const valid = name.length >= 1 && phone.length === 11 && phone.startsWith('010');
+  const btn = document.getElementById('inv-submit');
+  btn.disabled = !valid;
+  btn.style.background = valid ? 'var(--navy)' : 'var(--gray-300)';
+  btn.style.cursor = valid ? 'pointer' : 'not-allowed';
+}
+
+function onChannelChange(ch) {
+  document.getElementById('ch-kakao').classList.toggle('active', ch === 'KAKAO');
+  document.getElementById('ch-sms').classList.toggle('active', ch === 'SMS');
+}
+
+function sendInvite() {
+  const name = document.getElementById('inv-name').value.trim();
+  const phone = document.getElementById('inv-phone').value;
+  const memo = document.getElementById('inv-memo').value.trim();
+  const channel = document.querySelector('input[name="channel"]:checked').value;
+  if (!name || !phone) return;
+  // 새 초대 추가 (mock)
+  INVITES.unshift({
+    id: Date.now(),
+    name, phone, memo, channel,
+    status: 'PENDING',
+    sentAt: '방금 전',
+    expiresIn: '7일 후 만료'
+  });
+  // 폼 초기화
+  document.getElementById('inv-name').value = '';
+  document.getElementById('inv-phone').value = '';
+  document.getElementById('inv-memo').value = '';
+  onFormChange();
+  // 토스트
+  showToast(`${name}님께 ${channel === 'KAKAO' ? '카카오 알림톡' : 'SMS'}으로 초대를 보냈어요`);
+  renderInvites();
+}
+
+function resendInvite(id) {
+  const inv = INVITES.find(i => i.id === id);
+  if (!inv) return;
+  inv.status = 'PENDING';
+  inv.sentAt = '방금 전';
+  inv.expiresIn = '7일 후 만료';
+  showToast(`${inv.name}님께 초대를 다시 보냈어요`);
+  renderInvites();
+}
+
+function cancelInvite(id) {
+  if (!confirm('초대를 취소할까요? 이미 보낸 링크는 무효화됩니다.')) return;
+  INVITES = INVITES.filter(i => i.id !== id);
+  showToast('초대가 취소되었어요');
+  renderInvites();
+}
+
+function switchTab(tab, el) {
+  activeTab = tab;
+  document.querySelectorAll('.tab-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderInvites();
+}
+
+function filterInvites() {
+  if (activeTab === 'all') return INVITES;
+  if (activeTab === 'pending') return INVITES.filter(i => i.status === 'PENDING' || i.status === 'PENDING_SOON');
+  if (activeTab === 'joined') return INVITES.filter(i => i.status === 'JOINED');
+  if (activeTab === 'expired') return INVITES.filter(i => i.status === 'EXPIRED');
+  return INVITES;
+}
+
+function renderInvites() {
+  // 카운트 갱신
+  document.getElementById('cnt-all').textContent = INVITES.length;
+  document.getElementById('cnt-pending').textContent = INVITES.filter(i => i.status === 'PENDING' || i.status === 'PENDING_SOON').length;
+  document.getElementById('cnt-joined').textContent = INVITES.filter(i => i.status === 'JOINED').length;
+  document.getElementById('cnt-expired').textContent = INVITES.filter(i => i.status === 'EXPIRED').length;
+
+  const list = filterInvites();
+  const area = document.getElementById('invites-area');
+  const empty = document.getElementById('invites-empty');
+  if (list.length === 0) {
+    area.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+  area.innerHTML = list.map(inv => {
+    const badge = renderStatusBadge(inv);
+    const meta = renderMeta(inv);
+    const actions = renderActions(inv);
+    return `<div class="invite-card" data-id="${inv.id}" data-status="${inv.status}">
+      <div class="row1">
+        <div class="name">${inv.name}</div>
+        ${badge}
+      </div>
+      <div class="phone">${inv.phone} · ${inv.channel === 'KAKAO' ? '카카오' : 'SMS'}</div>
+      ${inv.memo ? `<div class="meta">📝 ${inv.memo}</div>` : ''}
+      <div class="meta">${meta}</div>
+      ${actions}
+    </div>`;
+  }).join('');
+}
+
+function renderStatusBadge(inv) {
+  if (inv.status === 'JOINED') return '<span class="status-badge s-joined">가입 완료</span>';
+  if (inv.status === 'EXPIRED') return '<span class="status-badge s-expired">만료</span>';
+  if (inv.status === 'PENDING_SOON') return '<span class="status-badge s-soon">만료 임박</span>';
+  return '<span class="status-badge s-pending">가입 대기</span>';
+}
+
+function renderMeta(inv) {
+  if (inv.status === 'JOINED') return `발송 ${inv.sentAt} · 가입 ${inv.joinedAt}`;
+  if (inv.status === 'EXPIRED') return `발송 ${inv.sentAt} · 만료됨`;
+  return `발송 ${inv.sentAt} · ${inv.expiresIn}`;
+}
+
+function renderActions(inv) {
+  if (inv.status === 'JOINED') {
+    return `<div class="actions"><button class="primary" onclick="goLessonDetail(${inv.id})">레슨 상세 보기</button></div>`;
+  }
+  if (inv.status === 'EXPIRED') {
+    return `<div class="actions"><button class="primary" onclick="resendInvite(${inv.id})">다시 초대하기</button></div>`;
+  }
+  return `<div class="actions">
+    <button onclick="resendInvite(${inv.id})">재발송</button>
+    <button class="danger" onclick="cancelInvite(${inv.id})">취소</button>
+  </div>`;
+}
+
+function goLessonDetail(id) {
+  // 실제론 그 학생의 레슨 상세로
+  window.location.href = '7-0-schedule-home.html';
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  setTimeout(() => { t.style.display = 'none'; }, 2200);
+}
+
+renderInvites();
+</script>
+</body>
+</html>
