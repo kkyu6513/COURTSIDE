@@ -28,65 +28,67 @@
     .v6 .ic-sm { width: 16px; height: 16px; }
 
     /* 헤더 — 인삿말 제거, 워드마크 + 날짜 */
-    .v6 .hdr { padding: 14px 20px 12px; background: var(--surface); border-bottom: 1px solid var(--line); }
-    .v6 .hdr .brand { font-size: 13px; font-weight: 700; color: var(--ink); letter-spacing: -0.2px; }
-    .v6 .hdr .brand .dot { display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--ink);margin:0 1px 2px 0;vertical-align:middle;}
-    .v6 .hdr .date { margin-top: 6px; font-size: 22px; font-weight: 700; color: var(--ink); letter-spacing: -0.5px; }
-    .v6 .hdr .sub { margin-top: 2px; font-size: 12px; color: var(--ink-2); }
+    .v6 .hdr { padding: 16px 20px 18px; background: var(--surface); border-bottom: 1px solid var(--line); }
+    .v6 .hdr .brand { font-size: 12px; font-weight: 600; color: var(--ink-2); letter-spacing: -0.1px; }
+    .v6 .hdr .brand .dot { display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--ink);margin:0 2px 2px 0;vertical-align:middle;}
+    .v6 .hdr .date { margin-top: 8px; font-size: 24px; font-weight: 800; color: var(--ink); letter-spacing: -0.6px; line-height: 1.15; }
+    .v6 .hdr .sub { margin-top: 4px; font-size: 12px; color: var(--ink-2); font-weight: 500; }
 
-    /* 섹션 타이틀 — uppercase 마이크로라벨 제거, 일반 본문 톤 */
-    .v6 .sec-ttl { display:flex; align-items:center; justify-content:space-between; padding: 18px 4px 8px; }
-    .v6 .sec-ttl .t { font-size: 13px; font-weight: 700; color: var(--ink); }
-    .v6 .sec-ttl .c { font-size: 12px; color: var(--ink-3); }
+    /* 섹션 타이틀 — 위 24 / 아래 12 호흡 */
+    .v6 .sec-ttl { display:flex; align-items:baseline; justify-content:space-between; padding: 24px 4px 12px; }
+    .v6 .sec-ttl .t { font-size: 13px; font-weight: 700; color: var(--ink); letter-spacing: -0.2px; }
+    .v6 .sec-ttl .c { font-size: 11px; color: var(--ink-3); font-weight: 500; }
 
     /* hero 카드 — 좌측 stripe / tinted icon box 제거, flat */
     .v6 .hero {
-      display:flex; align-items:center; gap:14px; padding: 16px;
+      display:flex; align-items:center; gap:14px; padding: 18px 16px;
       background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
       text-decoration:none; color: var(--ink);
     }
-    .v6 .hero + .hero { margin-top: 8px; }
-    .v6 .hero .lead { width: 40px; height: 40px; border-radius: 10px; background: var(--soft); color: var(--ink); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .v6 .hero + .hero { margin-top: 10px; }
+    .v6 .hero .lead { width: 40px; height: 40px; border-radius: 10px; background: var(--soft); color: var(--ink-2); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
     .v6 .hero .body { flex:1; min-width:0; }
-    .v6 .hero .display { font-size: 20px; font-weight: 700; color: var(--ink); letter-spacing: -0.3px; line-height: 1.25; }
-    .v6 .hero .display .pill { margin-left: 6px; vertical-align: middle; }
-    .v6 .hero .meta { margin-top: 4px; font-size: 12px; color: var(--ink-2); line-height: 1.5; }
+    .v6 .hero .display { font-size: 22px; font-weight: 800; color: var(--ink); letter-spacing: -0.6px; line-height: 1.2; }
+    .v6 .hero .display .pill { margin-left: 6px; vertical-align: middle; transform: translateY(-2px); }
+    .v6 .hero .meta { margin-top: 6px; font-size: 12px; color: var(--ink-2); line-height: 1.5; font-weight: 500; }
     .v6 .hero .arrow { color: var(--ink-3); flex-shrink:0; }
 
-    /* alert 카드 — 좌측 4px stripe 제거. 긴급만 좌측 hairline + 글자 색 강조 */
-    .v6 .alert { display:flex; gap:12px; padding: 14px; background: var(--surface); border:1px solid var(--line); border-radius: 8px; text-decoration:none; color: var(--ink);}
-    .v6 .alert + .alert { margin-top: 8px; }
+    /* alert 카드 — flat, 긴급만 1px alert 외곽선 */
+    .v6 .alert { display:flex; gap:12px; padding: 14px 14px 12px; background: var(--surface); border:1px solid var(--line); border-radius: 10px; text-decoration:none; color: var(--ink);}
+    .v6 .alert + .alert { margin-top: 10px; }
     .v6 .alert.urgent { border-color: var(--alert); }
-    .v6 .alert .lead { width: 28px; height: 28px; border-radius: 8px; background: var(--soft); color: var(--ink); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .v6 .alert .lead { width: 32px; height: 32px; border-radius: 8px; background: var(--soft); color: var(--ink-2); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
     .v6 .alert.urgent .lead { background: var(--alert-bg); color: var(--alert); }
     .v6 .alert .b { flex:1; min-width:0; }
-    .v6 .alert .head { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; }
-    .v6 .alert .ttl { font-size: 14px; font-weight: 700; color: var(--ink); line-height: 1.3; }
-    .v6 .alert .sub { margin-top: 4px; font-size: 12px; color: var(--ink-2); line-height: 1.5; }
-    .v6 .alert .actions { display:flex; gap:8px; margin-top: 10px; }
-    .v6 .alert-cta { flex:1; text-align:center; padding: 9px 10px; border-radius: 8px; font-size: 12px; font-weight: 600; text-decoration:none; border: 1px solid var(--line-strong); }
-    .v6 .alert-cta.primary { background: var(--ink); color: #fff; border-color: var(--ink); }
-    .v6 .alert-cta.ghost { background: var(--surface); color: var(--ink); }
+    .v6 .alert .head { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+    .v6 .alert .ttl { font-size: 14px; font-weight: 700; color: var(--ink); line-height: 1.3; letter-spacing: -0.2px; }
+    .v6 .alert .head .pill { font-size: 10px; padding: 2px 6px; }
+    .v6 .alert .sub { margin-top: 4px; font-size: 12px; color: var(--ink-2); line-height: 1.5; font-weight: 500; }
+    .v6 .alert .actions { display:flex; gap:8px; margin-top: 12px; }
+    .v6 .alert-cta { text-align:center; padding: 10px; border-radius: 8px; font-size: 12px; font-weight: 600; text-decoration:none; border: 1px solid var(--line-strong); letter-spacing: -0.1px; }
+    .v6 .alert-cta.primary { flex: 1.5 1 0; background: var(--ink); color: #fff; border-color: var(--ink); font-weight: 700; }
+    .v6 .alert-cta.ghost { flex: 1 1 0; background: var(--surface); color: var(--ink-2); }
 
     /* pill — 카드당 1개만 사용, 색상 단일 + 긴급 1단계 */
     .v6 .pill { display:inline-block; font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 4px; background: var(--soft); color: var(--ink-2); white-space:nowrap; letter-spacing: 0; }
     .v6 .pill.alert { background: var(--alert-bg); color: var(--alert); }
 
-    /* 회차 진행 bar — 한 톤 다운 */
-    .v6 .progress { margin-top: 10px; display:flex; align-items:center; gap:10px; }
-    .v6 .progress .track { flex:1; height: 3px; background: var(--soft); border-radius: 2px; overflow:hidden; }
-    .v6 .progress .fill { height:100%; background: var(--ink); }
-    .v6 .progress .txt { font-size: 11px; color: var(--ink-2); white-space:nowrap; font-variant-numeric: tabular-nums; }
+    /* 회차 진행 bar — 비강조 톤 */
+    .v6 .progress { margin-top: 12px; display:flex; align-items:center; gap:10px; }
+    .v6 .progress .track { flex:1; height: 2px; background: var(--soft); border-radius: 2px; overflow:hidden; }
+    .v6 .progress .fill { height:100%; background: var(--ink-3); }
+    .v6 .progress .txt { font-size: 11px; color: var(--ink-3); white-space:nowrap; font-variant-numeric: tabular-nums; font-weight: 500; }
 
-    /* 코치 — 그라디언트 ava 제거 → 단색 + 이니셜, 액션은 라인 SVG */
-    .v6 .coach { display:flex; align-items:center; gap:12px; padding: 14px; background: var(--surface); border:1px solid var(--line); border-radius: 8px; }
-    .v6 .coach .ava { width:40px; height:40px; border-radius:50%; background: var(--soft); color: var(--ink); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px; flex-shrink:0; letter-spacing:-0.5px;}
+    /* 코치 — 단색 ava + 이니셜 */
+    .v6 .coach { display:flex; align-items:center; gap:12px; padding: 14px; background: var(--surface); border:1px solid var(--line); border-radius: 10px; }
+    .v6 .coach .ava { width:42px; height:42px; border-radius:50%; background: var(--ink); color: #fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:15px; flex-shrink:0; letter-spacing:-0.5px;}
     .v6 .coach .nm { flex:1; min-width:0; }
-    .v6 .coach .nm .role { font-size: 11px; color: var(--ink-3); }
-    .v6 .coach .nm .name { font-size: 14px; font-weight: 700; color: var(--ink); margin-top: 1px; }
-    .v6 .coach .nm .next { font-size: 12px; color: var(--ink-2); margin-top: 2px; }
+    .v6 .coach .nm .role { font-size: 11px; color: var(--ink-3); font-weight: 500; }
+    .v6 .coach .nm .name { font-size: 15px; font-weight: 700; color: var(--ink); margin-top: 2px; letter-spacing: -0.3px; }
+    .v6 .coach .nm .next { font-size: 12px; color: var(--ink-2); margin-top: 3px; font-weight: 500; }
     .v6 .coach .acts { display:flex; gap: 6px; flex-shrink:0;}
-    .v6 .coach .acts a { width:36px; height:36px; border-radius: 8px; background: var(--surface); border:1px solid var(--line); color: var(--ink); display:flex; align-items:center; justify-content:center; text-decoration:none;}
+    .v6 .coach .acts a { width:36px; height:36px; border-radius: 8px; background: var(--surface); border:1px solid var(--line); color: var(--ink-2); display:flex; align-items:center; justify-content:center; text-decoration:none;}
+    .v6 .coach .acts a:hover { color: var(--ink); border-color: var(--line-strong);}
 
     /* 캘린더 — 강조 색 절제, 단색 ink + 점 표시 */
     .v6 .week-bar { display:flex; align-items:center; justify-content:space-between; margin-bottom: 10px;}
@@ -103,30 +105,34 @@
     .v6 .cell .dot.absent { background: var(--alert);}
     .v6 .cell .dot.makeup { background: var(--ink); width:5px; height:5px; border-radius:1px;}
     .v6 .cell.has { background: var(--soft);}
-    .v6 .cell.today { background: var(--ink); }
-    .v6 .cell.today .dow, .v6 .cell.today .num { color: #fff;}
-    .v6 .cell.today .dot { background: #fff;}
-    .v6 .cell.selected { border-color: var(--ink);}
-    .v6 .cell.today.selected { box-shadow: inset 0 0 0 2px #fff;}
+    .v6 .cell.today { border-color: var(--ink); }
+    .v6 .cell.today .num { color: var(--ink); font-weight: 800;}
+    .v6 .cell.selected { background: var(--ink); border-color: var(--ink);}
+    .v6 .cell.selected .dow, .v6 .cell.selected .num { color: #fff;}
+    .v6 .cell.selected .dot { background: #fff;}
+    .v6 .cell.selected.today { background: var(--ink); }
     .v6 .legend { display:flex; flex-wrap:wrap; gap: 12px; font-size: 11px; color: var(--ink-2); margin-bottom: 12px; padding: 0 4px;}
     .v6 .legend .lg { display:inline-flex; align-items:center; gap:5px;}
     .v6 .legend .dt { width:5px; height:5px; border-radius:50%; }
 
     /* 선택일 레슨 카드 */
-    .v6 .lesson { display:flex; align-items:center; gap:14px; padding: 14px; background: var(--surface); border:1px solid var(--line); border-radius: 8px; text-decoration:none; color: var(--ink);}
-    .v6 .lesson .time { width: 56px; flex-shrink:0;}
-    .v6 .lesson .time .hh { font-size: 18px; font-weight: 700; color: var(--ink); letter-spacing: -0.5px; font-variant-numeric: tabular-nums;}
-    .v6 .lesson .time .ampm { font-size: 11px; color: var(--ink-3); font-weight: 600;}
+    .v6 .lesson { display:flex; align-items:center; gap:16px; padding: 14px 16px; background: var(--surface); border:1px solid var(--line); border-radius: 10px; text-decoration:none; color: var(--ink);}
+    .v6 .lesson .time { width: 52px; flex-shrink:0; border-right: 1px solid var(--line); padding-right: 14px; margin-right: -2px;}
+    .v6 .lesson .time .hh { font-size: 20px; font-weight: 800; color: var(--ink); letter-spacing: -0.6px; font-variant-numeric: tabular-nums; line-height: 1.1;}
+    .v6 .lesson .time .ampm { font-size: 11px; color: var(--ink-3); font-weight: 500; margin-top: 2px;}
     .v6 .lesson .info { flex:1; min-width:0;}
-    .v6 .lesson .info .ttl { font-size: 13px; font-weight: 700; color: var(--ink);}
-    .v6 .lesson .info .meta { font-size: 11px; color: var(--ink-2); margin-top: 2px;}
-    .v6 .empty { padding: 14px; text-align:center; background: var(--surface); border: 1px dashed var(--line-strong); border-radius: 8px; color: var(--ink-3); font-size: 12px;}
+    .v6 .lesson .info .ttl { font-size: 13px; font-weight: 700; color: var(--ink); letter-spacing: -0.2px;}
+    .v6 .lesson .info .meta { font-size: 11px; color: var(--ink-2); margin-top: 4px; font-weight: 500;}
+    .v6 .empty { padding: 18px; text-align:center; background: var(--surface); border: 1px dashed var(--line-strong); border-radius: 10px; color: var(--ink-3); font-size: 12px; font-weight: 500;}
+    .v6 .lessons-title { font-size: 11px; color: var(--ink-3); font-weight: 600; letter-spacing:-0.1px; margin: 14px 4px 8px; text-transform: none;}
 
-    /* 하단 nav — flat bottom bar, shadow/floating 제거 */
+    /* 하단 nav — flat bottom bar, active 상단 2px line */
     .v6 .navbar { position:absolute; left:0; right:0; bottom:0; height: 64px; background: var(--surface); border-top:1px solid var(--line); display:flex; align-items:stretch; }
-    .v6 .navbar a { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; text-decoration:none; color: var(--ink-3);}
-    .v6 .navbar a.active { color: var(--ink);}
-    .v6 .navbar a .lbl { font-size: 10px; font-weight: 600; letter-spacing: -0.2px;}
+    .v6 .navbar a { position:relative; flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; text-decoration:none; color: var(--ink-3); font-weight:500;}
+    .v6 .navbar a::before { content:""; position:absolute; top:0; left:50%; transform:translateX(-50%); width:0; height:2px; background:var(--ink); transition: width .15s; }
+    .v6 .navbar a.active { color: var(--ink); font-weight: 700; }
+    .v6 .navbar a.active::before { width: 28px; }
+    .v6 .navbar a .lbl { font-size: 10px; letter-spacing: -0.2px;}
   </style>
 </head>
 <body>
@@ -163,7 +169,7 @@
       </div>
 
       <!-- 카드 영역 -->
-      <div style="padding: 8px 16px;">
+      <div style="padding: 16px 16px 0;">
 
         <!-- 0) 모두 비었을 때 -->
         <div id="empty-hero" style="display:none;">
@@ -252,7 +258,7 @@
           <span class="lg"><span class="dt" style="background:var(--alert);"></span>결강</span>
           <span class="lg"><span class="dt" style="background:var(--ink);border-radius:1px;width:6px;height:6px;"></span>보강</span>
         </div>
-        <div id="lessons-title" style="font-size:12px;color:var(--ink-2);font-weight:600;margin: 4px 4px 8px;"></div>
+        <div id="lessons-title" class="lessons-title"></div>
         <div id="lessons-area"></div>
 
       </div>
