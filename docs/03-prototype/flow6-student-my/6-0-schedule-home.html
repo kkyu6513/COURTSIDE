@@ -29,9 +29,11 @@
     .v6 .hdr { padding: 22px 20px 18px; background: var(--surface); border-bottom: 1px solid var(--line); }
     .v6 .hdr .date { font-size: 26px; font-weight: 800; color: var(--ink); letter-spacing: -0.7px; line-height: 1.1; }
 
-    /* 섹션 타이틀 — 응답 필요 단 1곳만 */
-    .v6 .sec-ttl { display:flex; align-items:baseline; justify-content:space-between; padding: 26px 4px 12px; }
+    /* 섹션 타이틀 — 카드별 일관 적용 */
+    .v6 .sec-ttl { display:flex; align-items:baseline; justify-content:space-between; padding: 22px 4px 10px; }
+    .v6 .sec-ttl.first { padding-top: 4px; }
     .v6 .sec-ttl .t { font-size: 13px; font-weight: 700; color: var(--ink); letter-spacing: -0.2px; }
+    .v6 .sec-ttl .c { font-size: 11px; color: var(--ink-3); font-weight: 500; }
 
     /* hero — 핵심 정보 1단 (display + 1줄 meta) */
     .v6 .hero {
@@ -104,7 +106,8 @@
       <div style="padding: 16px 16px 0;">
 
         <!-- empty (위 모두 비었을 때만) -->
-        <div id="empty-hero" style="display:none;">
+        <div id="empty-wrap" style="display:none;">
+          <div class="sec-ttl first"><div class="t">안내</div></div>
           <a href="../flow2-home/2-2-coach-list.html" class="hero">
             <div class="lead"><svg class="ic"><use href="#i-ball"/></svg></div>
             <div class="body">
@@ -116,10 +119,16 @@
         </div>
 
         <!-- 1) 결제 (조건부) -->
-        <div id="payment-area"></div>
+        <div id="payment-wrap" style="display:none;">
+          <div class="sec-ttl first"><div class="t">결제</div></div>
+          <div id="payment-area"></div>
+        </div>
 
         <!-- 2) 다음 레슨 -->
-        <div id="next-lesson-area"></div>
+        <div id="next-wrap">
+          <div class="sec-ttl"><div class="t">다음 레슨</div></div>
+          <div id="next-lesson-area"></div>
+        </div>
 
         <!-- 3) 응답 필요 — urgent 1건만 -->
         <div id="alerts-wrap">
@@ -183,8 +192,10 @@ function renderHeader(){
 }
 
 function renderPayment(){
+  const wrap=document.getElementById('payment-wrap');
   const area=document.getElementById('payment-area');
-  if(!HAS_UNPAID){area.innerHTML='';return;}
+  if(!HAS_UNPAID){wrap.style.display='none';area.innerHTML='';return;}
+  wrap.style.display='block';
   const amount=UNPAID_AMOUNT.toLocaleString('ko-KR');
   const overdue=UNPAID_DUE_DAYS<0;
   // C8: meta 단축 → "5월 4주차" 1단어 (마감/사유는 pill로)
@@ -251,11 +262,13 @@ function renderNextLesson(){
 }
 
 function renderEmptyHero(){
-  const empty=document.getElementById('empty-hero');
-  const noPayment=!HAS_UNPAID;
-  const noNext=!getNextLesson();
+  const wrap=document.getElementById('empty-wrap');
+  const next=getNextLesson();
   const noAlerts=document.querySelectorAll('#alerts-area .alert').length===0;
-  empty.style.display=(noPayment&&noNext&&noAlerts)?'block':'none';
+  // empty hero는 다음 레슨 카드를 대체. 결제·알림과 무관하게 다음 레슨 없을 때 노출.
+  wrap.style.display=(!next)?'block':'none';
+  // empty가 보이면 next-wrap은 숨김 (다음 레슨 자리를 안내가 차지)
+  document.getElementById('next-wrap').style.display=(!next)?'none':'block';
 }
 
 function renderAlerts(){
@@ -263,11 +276,26 @@ function renderAlerts(){
   document.getElementById('alerts-wrap').style.display=cnt>0?'block':'none';
 }
 
+function applyFirstSecTtl(){
+  // 첫 번째로 노출되는 wrap의 sec-ttl에 .first 적용 (헤더 바로 아래 호흡)
+  document.querySelectorAll('.sec-ttl').forEach(el=>el.classList.remove('first'));
+  const wraps=['empty-wrap','payment-wrap','next-wrap','alerts-wrap'];
+  for(const id of wraps){
+    const el=document.getElementById(id);
+    if(el && getComputedStyle(el).display!=='none'){
+      const t=el.querySelector('.sec-ttl');
+      if(t) t.classList.add('first');
+      break;
+    }
+  }
+}
+
 renderHeader();
 renderPayment();
 renderNextLesson();
 renderAlerts();
 renderEmptyHero();
+applyFirstSecTtl();
 </script>
 </body>
 </html>
