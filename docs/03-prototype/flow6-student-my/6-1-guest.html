@@ -1,25 +1,46 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=375, initial-scale=1.0"><title>6-1 비로그인 마이 — COURTSIDE</title><link rel="stylesheet" href="../common.css"></head>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=375, initial-scale=1.0">
+  <title>6-1 비로그인 마이 — COURTSIDE</title>
+  <link rel="stylesheet" href="../common.css">
+  <link rel="stylesheet" href="../common-v6.css">
+</head>
 <body>
 <div class="device-wrap">
-  <div class="device-label"><span class="device-num">19</span>비로그인 마이</div>
-  <div class="device" style="background:var(--gray-50);">
-    <div class="status-bar"><span class="time">9:41</span><div class="status-icons"><span>📶</span><span>🔋</span></div></div>
-    <div class="screen screen-white" style="display:flex;flex-direction:column;align-items:center;justify-content:center;">
-      <div style="font-size:64px;margin-bottom:16px;">🔒</div>
-      <div style="font-size:20px;font-weight:700;color:var(--navy);">로그인이 필요해요</div>
-      <div style="font-size:14px;color:var(--gray-500);margin-top:8px;text-align:center;">로그인하고 나에게 딱 맞는<br>코치를 만나보세요</div>
-      <div style="margin-top:32px;padding:0 40px;width:100%;"><a href="../flow1-onboarding/1-2-login.html" class="btn-primary" style="display:block;text-align:center;text-decoration:none;line-height:52px;">로그인 / 회원가입</a></div>
-    </div>
-    <!-- Bottom Nav (플로팅 라운딩) -->
-    <div style="position:absolute;bottom:20px;left:16px;right:16px;z-index:50;">
-      <div style="display:flex;align-items:center;justify-content:space-around;height:60px;background:#fff;border-radius:30px;box-shadow:0 2px 16px rgba(0,0,0,0.1);border:1px solid var(--gray-100);">
-        <a href="6-0-schedule-home.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;padding:8px 16px;"><span style="font-size:18px;">🏠</span><span style="font-size:9px;color:var(--gray-400);font-weight:600;">홈</span></a>
-        <a href="6-5-booking-list.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;padding:8px 16px;"><span style="font-size:18px;">📋</span><span style="font-size:9px;color:var(--gray-400);font-weight:600;">내 레슨</span></a>
-        <a href="../flow4-chat/4-1-chat-list.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;padding:8px 16px;"><span style="font-size:18px;">💬</span><span style="font-size:9px;color:var(--gray-400);font-weight:600;">메시지</span></a>
-        <a href="6-1-guest.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;padding:8px 16px;border-radius:20px;"><span style="font-size:18px;">👤</span><span style="font-size:9px;color:var(--green);font-weight:700;">마이</span></a>
+  <div class="device-label"><span class="device-num">6-1</span>비로그인 마이</div>
+  <div class="device v6" style="position:relative;overflow:hidden;background:var(--bg);">
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+      <defs>
+        <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v9a1 1 0 0 1-1 1h-4v-7h-6v7H5a1 1 0 0 1-1-1z"/></symbol>
+        <symbol id="i-list" viewBox="0 0 24 24"><path d="M5 6h14M5 12h14M5 18h14"/></symbol>
+        <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></symbol>
+        <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+        <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
+      </defs>
+    </svg>
+
+    <div class="status-bar"><span class="time">9:41</span><div class="status-icons"><span>●</span><span>●</span></div></div>
+    <div class="screen" style="padding-bottom:84px;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+      <div class="empty" style="padding:0;">
+        <div class="e-icon" style="width:56px;height:56px;"><svg class="ic ic-lg"><use href="#i-lock"/></svg></div>
+        <div class="ttl" style="font-size:18px;letter-spacing:-0.4px;">로그인이 필요해요</div>
+        <div class="sub" style="margin-top:6px;line-height:1.6;">로그인하고 나에게 딱 맞는<br>코치를 만나보세요</div>
+      </div>
+      <div style="margin-top:24px;padding:0 40px;width:100%;box-sizing:border-box;">
+        <a href="../flow1-onboarding/1-2-login.html" class="btn primary block">로그인 / 회원가입</a>
       </div>
     </div>
+
+    <div class="navbar">
+      <a href="6-0-schedule-home.html"><svg class="ic"><use href="#i-home"/></svg><span class="lbl">홈</span></a>
+      <a href="6-5-booking-list.html"><svg class="ic"><use href="#i-list"/></svg><span class="lbl">내 레슨</span></a>
+      <a href="../flow4-chat/4-1-chat-list.html"><svg class="ic"><use href="#i-chat"/></svg><span class="lbl">메시지</span></a>
+      <a href="6-1-guest.html" class="active"><svg class="ic"><use href="#i-user"/></svg><span class="lbl">마이</span></a>
+    </div>
+
   </div>
 </div>
+</body>
+</html>
