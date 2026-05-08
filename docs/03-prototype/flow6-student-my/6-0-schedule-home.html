@@ -5,91 +5,7 @@
   <meta name="viewport" content="width=375, initial-scale=1.0">
   <title>6-0 학생 스케줄 홈 — COURTSIDE</title>
   <link rel="stylesheet" href="../common.css">
-  <style>
-    /* ── 6-0 디자인 시스템 (정보 다이어트 v3): 슬레이트 ink + 1 액센트, flat ── */
-    .v6 {
-      --ink: #0F172A;
-      --ink-2: #475569;
-      --ink-3: #94A3B8;
-      --line: #E2E8F0;
-      --line-strong: #CBD5E1;
-      --surface: #FFFFFF;
-      --bg: #F8FAFC;
-      --alert: #DC2626;
-      --alert-bg: #FEF2F2;
-      --soft: #F1F5F9;
-    }
-    .v6 .screen { background: var(--bg); }
-    .v6 a { -webkit-tap-highlight-color: transparent; }
-
-    .v6 .ic { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; flex-shrink:0; }
-    .v6 .ic-sm { width: 16px; height: 16px; }
-
-    /* 헤더 — 인사말 + 날짜 + 명언 */
-    .v6 .hdr { padding: 22px 20px 20px; background: var(--surface); border-bottom: 1px solid var(--line); }
-    .v6 .hdr .greet { font-size: 13px; font-weight: 600; color: var(--ink-2); letter-spacing: -0.2px; }
-    .v6 .hdr .date { margin-top: 4px; font-size: 26px; font-weight: 800; color: var(--ink); letter-spacing: -0.7px; line-height: 1.1; }
-    .v6 .hdr .quote { margin-top: 12px; padding-left: 10px; border-left: 2px solid var(--line-strong); font-size: 12px; color: var(--ink-2); font-weight: 500; line-height: 1.55; letter-spacing: -0.1px; }
-    .v6 .hdr .quote .by { display:block; margin-top: 2px; font-size: 11px; color: var(--ink-3); font-weight: 500;}
-
-    /* 섹션 타이틀 + 서브타이틀 (stacked) */
-    .v6 .sec-ttl { padding: 22px 4px 12px; }
-    .v6 .sec-ttl.first { padding-top: 4px; }
-    .v6 .sec-ttl .t { font-size: 13px; font-weight: 700; color: var(--ink); letter-spacing: -0.2px; line-height: 1.3;}
-    .v6 .sec-ttl .sub { margin-top: 3px; font-size: 11px; color: var(--ink-3); font-weight: 500; letter-spacing: -0.1px; }
-
-    /* hero — 핵심 정보 1단 (display + 1줄 meta) */
-    .v6 .hero {
-      display:flex; align-items:center; gap:14px; padding: 18px 16px;
-      background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
-      text-decoration:none; color: var(--ink);
-    }
-    .v6 .hero + .hero { margin-top: 10px; }
-    .v6 .hero .lead { width: 40px; height: 40px; border-radius: 10px; background: var(--soft); color: var(--ink-2); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-    .v6 .hero .body { flex:1; min-width:0; }
-    .v6 .hero .display { font-size: 22px; font-weight: 800; color: var(--ink); letter-spacing: -0.6px; line-height: 1.2; }
-    .v6 .hero .display .pill { margin-left: 6px; vertical-align: middle; transform: translateY(-2px); }
-    .v6 .hero .meta { margin-top: 6px; font-size: 12px; color: var(--ink-2); line-height: 1.5; font-weight: 500; }
-    .v6 .hero .session { margin-top: 4px; font-size: 11px; color: var(--ink-3); font-weight: 500; font-variant-numeric: tabular-nums; }
-    .v6 .hero .arrow { color: var(--ink-3); flex-shrink:0; }
-
-    /* alert — urgent only, flat */
-    .v6 .alert { display:flex; gap:12px; padding: 14px 14px 12px; background: var(--surface); border:1px solid var(--alert); border-radius: 10px; color: var(--ink);}
-    .v6 .alert .lead { width: 32px; height: 32px; border-radius: 8px; background: var(--alert-bg); color: var(--alert); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-    .v6 .alert .b { flex:1; min-width:0; }
-    .v6 .alert .head { display:flex; align-items:center; justify-content:space-between; gap:8px; }
-    .v6 .alert .ttl { font-size: 14px; font-weight: 700; color: var(--ink); letter-spacing: -0.2px; }
-    .v6 .alert .head .pill { font-size: 10px; padding: 2px 6px; }
-    .v6 .alert .sub { margin-top: 4px; font-size: 12px; color: var(--ink-2); line-height: 1.5; font-weight: 500; }
-    .v6 .alert .actions { display:flex; gap:8px; margin-top: 12px; }
-    .v6 .alert-cta { text-align:center; padding: 10px; border-radius: 8px; font-size: 12px; font-weight: 700; text-decoration:none; }
-    .v6 .alert-cta.primary { flex: 1.5 1 0; background: var(--ink); color: #fff; }
-    .v6 .alert-cta.ghost { flex: 1 1 0; background: var(--surface); color: var(--ink-2); border:1px solid var(--line-strong); font-weight:600;}
-
-    /* pill — 단일 톤 + 긴급 1단계 */
-    .v6 .pill { display:inline-block; font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 4px; background: var(--soft); color: var(--ink-2); white-space:nowrap; }
-    .v6 .pill.alert { background: var(--alert-bg); color: var(--alert); }
-
-    /* 코치 공지사항 — 코치가 남긴 메시지 */
-    .v6 .notice { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
-    .v6 .notice .head { display:flex; align-items:center; gap: 10px; }
-    .v6 .notice .ava { width: 28px; height: 28px; border-radius: 50%; background: var(--ink); color: #fff; display:flex; align-items:center; justify-content:center; font-weight: 700; font-size: 12px; flex-shrink: 0; letter-spacing: -0.4px;}
-    .v6 .notice .who { flex: 1; min-width: 0; }
-    .v6 .notice .who .nm { font-size: 13px; font-weight: 700; color: var(--ink); letter-spacing: -0.2px;}
-    .v6 .notice .who .ts { font-size: 11px; color: var(--ink-3); font-weight: 500; margin-top: 1px;}
-    .v6 .notice .body { margin-top: 12px; font-size: 13px; line-height: 1.6; color: var(--ink-2); font-weight: 500; letter-spacing: -0.1px; }
-    .v6 .notice .body strong { color: var(--ink); font-weight: 700; }
-    .v6 .notice .more { display: block; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line); font-size: 12px; color: var(--ink-2); font-weight: 600; text-decoration: none;}
-    .v6 .notice .more::after { content: " ›"; color: var(--ink-3);}
-
-    /* 하단 nav */
-    .v6 .navbar { position:absolute; left:0; right:0; bottom:0; height: 64px; background: var(--surface); border-top:1px solid var(--line); display:flex; align-items:stretch; }
-    .v6 .navbar a { position:relative; flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; text-decoration:none; color: var(--ink-3); font-weight:500;}
-    .v6 .navbar a::before { content:""; position:absolute; top:0; left:50%; transform:translateX(-50%); width:0; height:2px; background:var(--ink); transition: width .15s; }
-    .v6 .navbar a.active { color: var(--ink); font-weight: 700; }
-    .v6 .navbar a.active::before { width: 28px; }
-    .v6 .navbar a .lbl { font-size: 10px; letter-spacing: -0.2px;}
-  </style>
+  <link rel="stylesheet" href="../common-v6.css">
 </head>
 <body>
 <div class="device-wrap">
@@ -226,9 +142,7 @@ const UNPAID_AMOUNT = 240000;
 const UNPAID_DUE_DAYS = 2;
 const SESSION_DONE = 3;
 const SESSION_TOTAL = 8;
-// 프로토타입용 mock 현재 시각 (status bar 9:41과 일치)
 const MOCK_NOW_MIN = 9*60 + 41;
-// 명언 풀 — 테니스/성장 메시지
 const QUOTES = [
   { t: '최고의 샷은 다음 샷이다.', by: '— Tennis Wisdom' },
   { t: '이길 때보다 질 때 더 많이 배운다.', by: '— Billie Jean King' },
@@ -260,7 +174,6 @@ function timeGreeting(){
 }
 
 function todayQuote(){
-  // 날짜 기반 결정적 선택 — 같은 날에는 같은 명언
   const seed=TODAY.getFullYear()*1000 + TODAY.getMonth()*40 + TODAY.getDate();
   return QUOTES[seed % QUOTES.length];
 }
@@ -280,7 +193,6 @@ function renderPayment(){
   wrap.style.display='block';
   const amount=UNPAID_AMOUNT.toLocaleString('ko-KR');
   const overdue=UNPAID_DUE_DAYS<0;
-  // C8: meta 단축 → "5월 4주차" 1단어 (마감/사유는 pill로)
   const pill=overdue
     ? `<span class="pill alert">${Math.abs(UNPAID_DUE_DAYS)}일 연체</span>`
     : (UNPAID_DUE_DAYS<=1 ? `<span class="pill alert">D-${UNPAID_DUE_DAYS}</span>` : `<span class="pill">D-${UNPAID_DUE_DAYS}</span>`);
@@ -329,7 +241,6 @@ function renderNextLesson(){
   }else{
     pill=`<span class="pill">D-${daysDiff}</span>`;
   }
-  // C2·C3: meta 단순화 (코치명 + 임박 시간), progress bar 제거 → 우측 small text
   area.innerHTML=`
     <a href="6-6-booking-detail.html?status=confirmed" class="hero">
       <div class="lead"><svg class="ic"><use href="#i-cal"/></svg></div>
@@ -346,9 +257,7 @@ function renderEmptyHero(){
   const wrap=document.getElementById('empty-wrap');
   const next=getNextLesson();
   const noAlerts=document.querySelectorAll('#alerts-area .alert').length===0;
-  // empty hero는 다음 레슨 카드를 대체. 결제·알림과 무관하게 다음 레슨 없을 때 노출.
   wrap.style.display=(!next)?'block':'none';
-  // empty가 보이면 next-wrap은 숨김 (다음 레슨 자리를 안내가 차지)
   document.getElementById('next-wrap').style.display=(!next)?'none':'block';
 }
 
@@ -358,7 +267,6 @@ function renderAlerts(){
 }
 
 function applyFirstSecTtl(){
-  // 첫 번째로 노출되는 wrap의 sec-ttl에 .first 적용 (헤더 바로 아래 호흡)
   document.querySelectorAll('.sec-ttl').forEach(el=>el.classList.remove('first'));
   const wraps=['empty-wrap','payment-wrap','next-wrap','alerts-wrap'];
   for(const id of wraps){
