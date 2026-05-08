@@ -1,52 +1,163 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=375, initial-scale=1.0"><title>7-2 신청 수신 목록 — COURTSIDE</title><link rel="stylesheet" href="../common.css">
-<style>.booking-card{margin:12px 20px;border-radius:16px;padding:16px;color:#fff;position:relative;}.booking-card .type{font-size:11px;font-weight:700;opacity:0.9;text-transform:uppercase;}.booking-card .student{font-size:18px;font-weight:700;margin:8px 0 4px;}.booking-card .detail{font-size:13px;opacity:0.85;line-height:1.5;}.booking-card .time-ago{position:absolute;top:16px;right:16px;font-size:11px;opacity:0.7;}.card-coral{background:linear-gradient(135deg,var(--coral),#ff8e8e);}.card-orange{background:linear-gradient(135deg,var(--orange),#ffb76b);}.card-green{background:linear-gradient(135deg,var(--green),#5de8d3);}</style>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=375, initial-scale=1.0">
+  <title>7-2 운영 알림함 — COURTSIDE</title>
+  <link rel="stylesheet" href="../common.css">
+  <style>
+    .tab-chip {flex:1;text-align:center;padding:10px 0;font-size:12px;font-weight:700;color:var(--gray-500);cursor:pointer;border-bottom:2px solid transparent;}
+    .tab-chip.active {color:var(--navy);border-bottom-color:var(--green);}
+    .tab-chip .cnt {display:inline-block;margin-left:4px;font-size:11px;color:var(--gray-400);font-weight:600;}
+    .tab-chip.active .cnt {color:var(--green);}
+    .alert-card {background:#fff;border:1px solid var(--gray-100);border-radius:12px;padding:14px;margin-bottom:8px;display:flex;align-items:flex-start;gap:12px;text-decoration:none;}
+    .alert-card.unread {border-left:3px solid var(--coral);}
+    .alert-card .icon {width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+    .ic-reschedule {background:#FEF3C7;color:#92400E;}
+    .ic-makeup-yes {background:#D1FAE5;color:#065F46;}
+    .ic-makeup-no  {background:#FEE2E2;color:#B91C1C;}
+    .ic-merge      {background:#EDE9FE;color:#5B21B6;}
+    .ic-payment    {background:#DBEAFE;color:#1E40AF;}
+    .alert-body {flex:1;min-width:0;}
+    .alert-row1 {display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;gap:8px;}
+    .alert-title {font-size:13px;font-weight:700;color:var(--navy);}
+    .alert-time {font-size:10px;color:var(--gray-400);flex-shrink:0;}
+    .alert-sub {font-size:12px;color:var(--gray-500);line-height:1.5;}
+    .badge-mini {display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:5px;margin-right:4px;vertical-align:middle;}
+    .b-pending {background:#FEF3C7;color:#92400E;}
+    .b-done {background:var(--gray-100);color:var(--gray-500);}
+  </style>
 </head>
 <body>
 <div class="device-wrap">
-  <div class="device-label"><span class="device-num">2</span>신청 수신 목록</div>
-  <div class="device">
+  <div class="device-label"><span class="device-num">7-2</span>운영 알림함 (재정의 — SaaS)</div>
+  <div class="device" style="position:relative;overflow:hidden;background:var(--gray-50);">
     <div class="status-bar"><span class="time">9:41</span><div class="status-icons"><span>📶</span><span>🔋</span></div></div>
-    <div class="top-nav"><a href="7-1-coach-mypage.html" class="back">‹</a><span class="title">레슨 신청 수신</span><span class="action"></span></div>
-    <div class="screen">
-      <div style="padding:16px 20px 8px;font-size:13px;color:var(--gray-500);font-weight:600;">대기 중인 신청 <span style="color:var(--coral);font-weight:700;">3건</span></div>
+    <div class="screen" style="padding-bottom:100px;overflow-y:auto;">
 
-      <a href="7-3-booking-action.html" style="text-decoration:none;">
-        <div class="booking-card card-coral">
-          <span class="type">🎾 정규 레슨</span>
-          <span class="time-ago">2시간 전</span>
-          <div class="student">이서연</div>
-          <div class="detail">NTRP 2.5 · 주 2회 희망<br>월·수 오전 10시 · 강남구</div>
+      <!-- 헤더 -->
+      <div style="padding:16px 16px 0;display:flex;align-items:center;gap:10px;">
+        <a href="7-0-schedule-home.html" style="font-size:20px;color:var(--navy);text-decoration:none;">←</a>
+        <div style="font-size:18px;font-weight:800;color:var(--navy);flex:1;">운영 알림함</div>
+        <button onclick="markAllRead()" style="padding:6px 10px;border-radius:8px;border:1px solid var(--gray-200);background:#fff;color:var(--gray-500);font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">모두 읽음</button>
+      </div>
+      <div style="padding:4px 16px 12px;font-size:12px;color:var(--gray-500);line-height:1.5;">
+        학생이 보낸 변경 요청·보강 응답·결제 확인 등 운영 액션 알림이 모입니다.
+      </div>
+
+      <!-- 탭 -->
+      <div style="padding:0 16px;">
+        <div style="background:#fff;border-radius:12px;border:1px solid var(--gray-100);display:flex;">
+          <div class="tab-chip active" data-tab="all" onclick="switchTab('all', this)">전체 <span class="cnt" id="cnt-all">0</span></div>
+          <div class="tab-chip" data-tab="reschedule" onclick="switchTab('reschedule', this)">변경 <span class="cnt" id="cnt-reschedule">0</span></div>
+          <div class="tab-chip" data-tab="makeup" onclick="switchTab('makeup', this)">보강 <span class="cnt" id="cnt-makeup">0</span></div>
+          <div class="tab-chip" data-tab="payment" onclick="switchTab('payment', this)">결제 <span class="cnt" id="cnt-payment">0</span></div>
         </div>
-      </a>
+      </div>
 
-      <a href="7-3-booking-action.html" style="text-decoration:none;">
-        <div class="booking-card card-orange">
-          <span class="type">🎟️ 쿠폰 레슨</span>
-          <span class="time-ago">5시간 전</span>
-          <div class="student">박준호</div>
-          <div class="detail">NTRP 3.0 · 1회 체험<br>토요일 오후 2시 · 서초구</div>
-        </div>
-      </a>
+      <!-- 알림 목록 -->
+      <div style="padding:14px 16px 0;">
+        <div id="alerts-area"></div>
+        <div id="alerts-empty" style="display:none;padding:32px;text-align:center;font-size:13px;color:var(--gray-400);">이 카테고리에 알림이 없어요.</div>
+      </div>
 
-      <a href="7-3-booking-action.html" style="text-decoration:none;">
-        <div class="booking-card card-coral">
-          <span class="type">🎾 정규 레슨</span>
-          <span class="time-ago">1일 전</span>
-          <div class="student">최윤아</div>
-          <div class="detail">NTRP 1.5 · 주 1회 희망<br>화요일 오후 7시 · 송파구</div>
-        </div>
-      </a>
-
-      <div style="padding:20px;text-align:center;color:var(--gray-400);font-size:13px;margin-top:20px;">이전 신청은 예약 현황에서 확인하세요</div>
+      <div style="height:20px;"></div>
     </div>
 
-    <!-- 코치 전용 Bottom Nav -->
-    <div style="flex-shrink:0;padding:8px 16px 20px;background:var(--gray-50);">
+    <!-- 코치 전용 하단 네비 (알림함이 활성) -->
+    <div style="position:absolute;bottom:20px;left:16px;right:16px;z-index:50;">
       <div style="display:flex;align-items:center;justify-content:space-around;height:60px;background:#fff;border-radius:30px;box-shadow:0 2px 16px rgba(0,0,0,0.1);border:1px solid var(--gray-100);">
-        <a href="7-0-schedule-home.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;padding:8px 14px;"><span style="font-size:18px;">📅</span><span style="font-size:9px;font-weight:600;color:var(--gray-400);">스케줄</span></a><a href="7-2-booking-inbox.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;padding:8px 14px;"><span style="font-size:18px;">📬</span><span style="font-size:9px;font-weight:700;color:var(--green);">신청함</span></a><a href="../flow4-chat/4-1-chat-list.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;padding:8px 14px;"><span style="font-size:18px;">💬</span><span style="font-size:9px;font-weight:600;color:var(--gray-400);">메시지</span></a><a href="7-10-student-search.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;padding:8px 14px;"><span style="font-size:18px;">🔍</span><span style="font-size:9px;font-weight:600;color:var(--gray-400);">검색</span></a><a href="7-1-coach-mypage.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;padding:8px 14px;"><span style="font-size:18px;">👤</span><span style="font-size:9px;font-weight:600;color:var(--gray-400);">마이</span></a>
+        <a href="7-0-schedule-home.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;padding:8px 14px;"><span style="font-size:18px;">📅</span><span style="font-size:9px;font-weight:600;color:var(--gray-400);">스케줄</span></a>
+        <a href="7-2-booking-inbox.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;padding:8px 14px;"><span style="font-size:18px;">📬</span><span style="font-size:9px;font-weight:700;color:var(--green);">알림함</span></a>
+        <a href="../flow4-chat/4-1-chat-list.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;padding:8px 14px;"><span style="font-size:18px;">💬</span><span style="font-size:9px;font-weight:600;color:var(--gray-400);">메시지</span></a>
+        <a href="7-10-student-search.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;padding:8px 14px;"><span style="font-size:18px;">🔍</span><span style="font-size:9px;font-weight:600;color:var(--gray-400);">학생</span></a>
+        <a href="7-1-coach-mypage.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;padding:8px 14px;"><span style="font-size:18px;">👤</span><span style="font-size:9px;font-weight:600;color:var(--gray-400);">마이</span></a>
       </div>
     </div>
+
   </div>
 </div>
+
+<script>
+// 운영 알림 mock (변경 요청·보강 응답·결제 확인)
+let ALERTS = [
+  { id:1, type:'reschedule', student:'이서연', title:'일정 변경 요청', sub:'5/13 (수) 14:00 → 5/14 (목) 16:00 희망', time:'10분 전', read:false, action:'RESPOND' },
+  { id:2, type:'makeup-accept', student:'박준호', title:'보강 일정 수락', sub:'4/25 (금) 10:00 보강 일정을 수락했어요', time:'2시간 전', read:false, action:'INFO' },
+  { id:3, type:'makeup-reject', student:'강민서', title:'보강 일정 거절', sub:'제안한 3개 날짜 모두 어려워요. 다른 일정을 제안해 주세요', time:'5시간 전', read:false, action:'REPROPOSE' },
+  { id:4, type:'merge', student:'최은지', title:'회차 통합 수락', sub:'4/28 (월) 14:00 · 40분으로 합쳐서 진행 확정', time:'어제 16:30', read:true, action:'INFO' },
+  { id:5, type:'payment', student:'홍길동', title:'결제 완료 보고', sub:'5월 4주차 회차 결제 완료 (계좌이체 110,000원)', time:'어제 14:00', read:false, action:'CONFIRM' },
+  { id:6, type:'reschedule', student:'김도연', title:'일정 변경 요청', sub:'5/16 (금) 11:00 → 5/17 (토) 09:00 희망', time:'어제 10:00', read:true, action:'RESPOND' },
+  { id:7, type:'payment', student:'이수민', title:'결제 완료 보고', sub:'5월 4주차 회차 결제 완료 (현금 80,000원)', time:'2일 전', read:true, action:'CONFIRM' }
+];
+let activeTab = 'all';
+
+const TYPE_INFO = {
+  'reschedule':    { icon:'📅', cls:'ic-reschedule', cat:'reschedule' },
+  'makeup-accept': { icon:'✅', cls:'ic-makeup-yes', cat:'makeup' },
+  'makeup-reject': { icon:'⚠️', cls:'ic-makeup-no', cat:'makeup' },
+  'merge':         { icon:'🔗', cls:'ic-merge', cat:'makeup' },
+  'split':         { icon:'✂️', cls:'ic-merge', cat:'makeup' },
+  'payment':       { icon:'💳', cls:'ic-payment', cat:'payment' }
+};
+
+function filterAlerts() {
+  if (activeTab === 'all') return ALERTS;
+  return ALERTS.filter(a => TYPE_INFO[a.type].cat === activeTab);
+}
+
+function switchTab(tab, el) {
+  activeTab = tab;
+  document.querySelectorAll('.tab-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderAlerts();
+}
+
+function markAllRead() {
+  ALERTS.forEach(a => { a.read = true; });
+  renderAlerts();
+}
+
+function openAlert(id) {
+  const a = ALERTS.find(x => x.id === id);
+  if (!a) return;
+  a.read = true;
+  window.location.href = `7-3-booking-action.html?alertId=${id}&type=${a.type}&student=${encodeURIComponent(a.student)}&title=${encodeURIComponent(a.title)}&sub=${encodeURIComponent(a.sub)}&action=${a.action}`;
+}
+
+function renderAlerts() {
+  document.getElementById('cnt-all').textContent = ALERTS.length;
+  document.getElementById('cnt-reschedule').textContent = ALERTS.filter(a => TYPE_INFO[a.type].cat === 'reschedule').length;
+  document.getElementById('cnt-makeup').textContent = ALERTS.filter(a => TYPE_INFO[a.type].cat === 'makeup').length;
+  document.getElementById('cnt-payment').textContent = ALERTS.filter(a => TYPE_INFO[a.type].cat === 'payment').length;
+
+  const list = filterAlerts();
+  const area = document.getElementById('alerts-area');
+  const empty = document.getElementById('alerts-empty');
+  if (list.length === 0) {
+    area.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+  area.innerHTML = list.map(a => {
+    const info = TYPE_INFO[a.type];
+    const badge = a.read
+      ? '<span class="badge-mini b-done">처리됨</span>'
+      : (a.action === 'INFO' ? '' : '<span class="badge-mini b-pending">응답 필요</span>');
+    return `<a href="javascript:void(0)" onclick="openAlert(${a.id})" class="alert-card${a.read ? '' : ' unread'}" data-type="${a.type}">
+      <div class="icon ${info.cls}">${info.icon}</div>
+      <div class="alert-body">
+        <div class="alert-row1">
+          <div class="alert-title">${badge}${a.student} · ${a.title}</div>
+          <div class="alert-time">${a.time}</div>
+        </div>
+        <div class="alert-sub">${a.sub}</div>
+      </div>
+    </a>`;
+  }).join('');
+}
+
+renderAlerts();
+</script>
+</body>
+</html>

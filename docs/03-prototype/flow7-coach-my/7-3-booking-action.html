@@ -1,47 +1,184 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=375, initial-scale=1.0"><title>7-3 신청 상세 수락/거절 — COURTSIDE</title><link rel="stylesheet" href="../common.css">
-<style>.info-card{background:#fff;border-radius:16px;margin:16px 20px;padding:20px;border:1px solid var(--gray-100);}.info-row{display:flex;justify-content:space-between;padding:8px 0;font-size:14px;border-bottom:1px solid var(--gray-50);}.info-row:last-child{border-bottom:none;}.info-row .lbl{color:var(--gray-500);font-weight:500;}.info-row .val{color:var(--navy);font-weight:600;}.btn-row{display:flex;gap:10px;padding:12px 20px 28px;background:#fff;border-top:1px solid var(--gray-100);flex-shrink:0;}.btn-sm{flex:1;height:48px;border-radius:12px;border:none;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;}.btn-reject{background:#FEE2E2;color:var(--error);}.btn-cancel{background:var(--gray-100);color:var(--gray-500);}.btn-accept{background:var(--green);color:#fff;flex:1.5;}</style>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=375, initial-scale=1.0">
+  <title>7-3 운영 알림 상세 — COURTSIDE</title>
+  <link rel="stylesheet" href="../common.css">
+  <style>
+    .info-card {background:#fff;border-radius:14px;margin:0 16px 12px;padding:16px;border:1px solid var(--gray-100);}
+    .info-row {display:flex;justify-content:space-between;padding:8px 0;font-size:13px;border-bottom:1px solid var(--gray-50);}
+    .info-row:last-child {border-bottom:none;}
+    .info-row .lbl {color:var(--gray-500);font-weight:500;}
+    .info-row .val {color:var(--navy);font-weight:700;}
+    .icon-big {width:64px;height:64px;border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 14px;}
+    .ic-reschedule {background:#FEF3C7;color:#92400E;}
+    .ic-makeup-yes {background:#D1FAE5;color:#065F46;}
+    .ic-makeup-no  {background:#FEE2E2;color:#B91C1C;}
+    .ic-merge      {background:#EDE9FE;color:#5B21B6;}
+    .ic-payment    {background:#DBEAFE;color:#1E40AF;}
+    .btn-row {display:flex;gap:8px;padding:12px 16px 24px;background:#fff;border-top:1px solid var(--gray-100);}
+    .btn-sm {flex:1;height:48px;border-radius:12px;border:none;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;}
+    .btn-primary {background:var(--navy);color:#fff;flex:1.6;}
+    .btn-secondary {background:#fff;color:var(--gray-500);border:1.5px solid var(--gray-200);}
+    .btn-success {background:var(--green);color:#fff;flex:1.6;}
+    .btn-danger {background:#FEE2E2;color:#B91C1C;}
+  </style>
 </head>
 <body>
 <div class="device-wrap">
-  <div class="device-label"><span class="device-num">3</span>신청 상세 수락/거절</div>
-  <div class="device">
+  <div class="device-label"><span class="device-num">7-3</span>운영 알림 상세 (재정의 — SaaS)</div>
+  <div class="device" style="position:relative;overflow:hidden;background:var(--gray-50);">
     <div class="status-bar"><span class="time">9:41</span><div class="status-icons"><span>📶</span><span>🔋</span></div></div>
-    <div class="top-nav"><a href="7-2-booking-inbox.html" class="back">‹</a><span class="title">신청 상세</span><span class="action"></span></div>
-    <div class="screen" style="flex:1;overflow-y:auto;padding-bottom:0;">
-      <!-- Student Info -->
-      <div style="text-align:center;padding:24px 20px 16px;background:#fff;">
-        <div style="width:64px;height:64px;border-radius:50%;margin:0 auto 10px;background:linear-gradient(135deg,var(--sky),var(--pink));display:flex;align-items:center;justify-content:center;font-size:28px;">😊</div>
-        <div style="font-size:18px;font-weight:700;color:var(--navy);">이서연</div>
-        <div style="font-size:13px;color:var(--gray-500);margin-top:4px;">여성 · 28세 · 테니스 경력 6개월</div>
+    <div class="top-nav"><a href="7-2-booking-inbox.html" class="back">‹</a><span class="title" id="page-title">운영 알림</span><span class="action"></span></div>
+    <div class="screen" style="flex:1;overflow-y:auto;padding:16px 0 0;">
+
+      <!-- 상단 아이콘 + 학생 + 제목 -->
+      <div style="text-align:center;padding:0 20px 16px;">
+        <div id="icon-big" class="icon-big">📋</div>
+        <div style="font-size:11px;color:var(--gray-400);font-weight:600;letter-spacing:0.4px;" id="alert-time">방금 전</div>
+        <div id="alert-title-text" style="font-size:18px;font-weight:800;color:var(--navy);margin-top:4px;">알림 제목</div>
+        <div id="alert-student" style="font-size:13px;color:var(--gray-500);margin-top:4px;">학생명</div>
       </div>
-      <!-- Detail Card -->
+
+      <!-- 알림 본문 카드 -->
       <div class="info-card">
-        <div style="font-size:15px;font-weight:700;color:var(--navy);margin-bottom:12px;">신청 정보</div>
-        <div class="info-row"><span class="lbl">레슨 유형</span><span class="val" style="color:var(--coral);">🎾 정규 레슨</span></div>
-        <div class="info-row"><span class="lbl">NTRP</span><span class="val">2.5 (초중급)</span></div>
-        <div class="info-row"><span class="lbl">희망 요일</span><span class="val">월 · 수</span></div>
-        <div class="info-row"><span class="lbl">희망 시간</span><span class="val">오전 10:00</span></div>
-        <div class="info-row"><span class="lbl">희망 지역</span><span class="val">강남구</span></div>
-        <div class="info-row"><span class="lbl">횟수</span><span class="val">주 2회</span></div>
+        <div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:8px;">알림 내용</div>
+        <div id="alert-sub-text" style="font-size:13px;color:var(--gray-500);line-height:1.6;">…</div>
       </div>
-      <!-- Student Message -->
-      <div class="info-card">
-        <div style="font-size:15px;font-weight:700;color:var(--navy);margin-bottom:8px;">수강생 메시지</div>
-        <div style="font-size:14px;color:var(--gray-500);line-height:1.6;">안녕하세요! 테니스를 시작한 지 6개월 됐는데 포핸드 자세 교정이 필요해서 신청합니다. 꾸준히 배우고 싶어요 🎾</div>
+
+      <!-- 추가 컨텍스트 (동적) -->
+      <div id="context-area"></div>
+
+      <!-- 액션 안내 -->
+      <div id="action-hint" class="info-card" style="background:#F0FDFA;border-color:#A7F3D0;">
+        <div style="font-size:12px;color:#065F46;line-height:1.6;">
+          <strong>📌 다음 액션</strong><br>
+          <span id="action-hint-text">이 알림에 응답하려면 아래 버튼을 사용하세요.</span>
+        </div>
       </div>
-      <!-- Rejection Reason -->
-      <div style="padding:0 20px 20px;">
-        <label class="input-label">거절/취소 사유 (선택)</label>
-        <textarea class="textarea" placeholder="거절 또는 취소 시 사유를 입력해주세요..."></textarea>
-      </div>
+
     </div>
-    <!-- Fixed Bottom Buttons -->
-    <div class="btn-row">
-      <button class="btn-sm btn-reject">거절</button>
-      <button class="btn-sm btn-cancel">취소</button>
-      <button class="btn-sm btn-accept">수락하기</button>
+
+    <!-- 알림 종류별 액션 버튼 (동적 렌더) -->
+    <div class="btn-row" id="btn-row">
+      <button class="btn-sm btn-secondary" onclick="goBack()">목록으로</button>
+      <button id="primary-btn" class="btn-sm btn-primary" onclick="primaryAction()">처리하기</button>
     </div>
+
   </div>
 </div>
+
+<script>
+const params = new URLSearchParams(location.search);
+const type = params.get('type') || '';
+const student = params.get('student') || '학생';
+const title = params.get('title') || '운영 알림';
+const sub = params.get('sub') || '';
+const action = params.get('action') || 'INFO';
+
+// 알림 종류별 컨피그
+const ALERT_CONFIG = {
+  'reschedule': {
+    icon:'📅', cls:'ic-reschedule',
+    contextHtml: () => `
+      <div class="info-card">
+        <div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:8px;">변경 일정 협의</div>
+        <div class="info-row"><span class="lbl">기존 일정</span><span class="val" style="text-decoration:line-through;color:var(--gray-400);">5/13 (수) 14:00</span></div>
+        <div class="info-row"><span class="lbl">희망 일정</span><span class="val" style="color:var(--green);">5/14 (목) 16:00</span></div>
+        <div class="info-row"><span class="lbl">사유</span><span class="val">개인 사정</span></div>
+      </div>`,
+    actionHint: '코치님 가용 시간을 확인하고 추천 슬롯을 제안하거나 거절할 수 있어요.',
+    primaryLabel: '추천 슬롯 제안하기 ›',
+    primaryStyle: 'btn-primary',
+    primaryHref: '7-0-schedule-home.html'
+  },
+  'makeup-accept': {
+    icon:'✅', cls:'ic-makeup-yes',
+    contextHtml: () => `
+      <div class="info-card">
+        <div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:8px;">확정된 보강 일정</div>
+        <div class="info-row"><span class="lbl">날짜</span><span class="val">4/25 (금) 10:00</span></div>
+        <div class="info-row"><span class="lbl">시간</span><span class="val">20분 · 1:1 개인</span></div>
+      </div>`,
+    actionHint: '확정 안내. 별도 액션 필요 없음. 캘린더에 자동 반영되었어요.',
+    primaryLabel: '레슨 상세 보기 ›',
+    primaryStyle: 'btn-primary',
+    primaryHref: '7-0-schedule-home.html'
+  },
+  'makeup-reject': {
+    icon:'⚠️', cls:'ic-makeup-no',
+    contextHtml: () => `
+      <div class="info-card">
+        <div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:8px;">거절된 제안 일정</div>
+        <div style="font-size:12px;color:var(--gray-500);line-height:1.7;">
+          · 4/22 (월) 10:00 — 거절<br>
+          · 4/23 (화) 14:00 — 거절<br>
+          · 4/24 (수) 16:00 — 거절
+        </div>
+      </div>`,
+    actionHint: '학생이 제안한 모든 날짜를 거절했어요. 다른 일정으로 다시 제안해 주세요.',
+    primaryLabel: '다시 보강 일정 제안하기 ›',
+    primaryStyle: 'btn-success',
+    primaryHref: '7-0-schedule-home.html'
+  },
+  'merge': {
+    icon:'🔗', cls:'ic-merge',
+    contextHtml: () => `
+      <div class="info-card">
+        <div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:8px;">통합 결과</div>
+        <div class="info-row"><span class="lbl">통합 후 회차</span><span class="val" style="color:#5B21B6;">4/28 (월) 14:00 · 40분</span></div>
+        <div class="info-row"><span class="lbl">원 회차</span><span class="val" style="text-decoration:line-through;color:var(--gray-400);">4/21 (월) 14:00 · 20분</span></div>
+        <div class="info-row"><span class="lbl">회차 카운트</span><span class="val">2회 차감 (시간 합계 보존)</span></div>
+      </div>`,
+    actionHint: '통합 확정. 캘린더에 자동 반영되었어요.',
+    primaryLabel: '레슨 상세 보기 ›',
+    primaryStyle: 'btn-primary',
+    primaryHref: '7-0-schedule-home.html'
+  },
+  'payment': {
+    icon:'💳', cls:'ic-payment',
+    contextHtml: () => `
+      <div class="info-card">
+        <div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:8px;">결제 정보</div>
+        <div class="info-row"><span class="lbl">기간</span><span class="val">5월 4주차 회차</span></div>
+        <div class="info-row"><span class="lbl">결제 수단</span><span class="val">계좌이체</span></div>
+        <div class="info-row"><span class="lbl">금액</span><span class="val">110,000원</span></div>
+        <div class="info-row"><span class="lbl">학생 보고 시각</span><span class="val">어제 14:00</span></div>
+      </div>`,
+    actionHint: '계좌 입금 확인 후 "확인 처리"를 누르면 학생 측에 결제 완료 알림이 발송돼요.',
+    primaryLabel: '결제 확인 처리 ›',
+    primaryStyle: 'btn-success',
+    primaryHref: '7-0-schedule-home.html'
+  }
+};
+
+function init() {
+  const cfg = ALERT_CONFIG[type] || ALERT_CONFIG['reschedule'];
+  document.getElementById('icon-big').textContent = cfg.icon;
+  document.getElementById('icon-big').className = 'icon-big ' + cfg.cls;
+  document.getElementById('alert-title-text').textContent = title;
+  document.getElementById('alert-student').textContent = student;
+  document.getElementById('alert-sub-text').textContent = sub;
+  document.getElementById('context-area').innerHTML = cfg.contextHtml();
+  document.getElementById('action-hint-text').textContent = cfg.actionHint;
+  const btn = document.getElementById('primary-btn');
+  btn.textContent = cfg.primaryLabel;
+  btn.className = 'btn-sm ' + cfg.primaryStyle;
+  btn.dataset.href = cfg.primaryHref;
+  document.getElementById('page-title').textContent = title;
+}
+
+function primaryAction() {
+  const href = document.getElementById('primary-btn').dataset.href;
+  if (href) window.location.href = href;
+}
+
+function goBack() {
+  window.location.href = '7-2-booking-inbox.html';
+}
+
+init();
+</script>
+</body>
+</html>
