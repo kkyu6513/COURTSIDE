@@ -5,84 +5,70 @@
 <meta name="viewport" content="width=375, initial-scale=1.0">
 <title>6-6 나의 레슨 상세 — COURTSIDE</title>
 <link rel="stylesheet" href="../common.css">
+<link rel="stylesheet" href="../common-v6.css">
+<style>
+  .v6 .info-table { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 4px 16px; }
+  .v6 .info-row { display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid var(--line);}
+  .v6 .info-row:last-child { border-bottom:0; }
+  .v6 .info-row .k { font-size:12px; color:var(--ink-3); font-weight:500; }
+  .v6 .info-row .v { font-size:13px; color:var(--ink); font-weight:700; letter-spacing:-0.2px; }
+  .v6 .info-row .v-2 { color: var(--alert); }
+</style>
 </head>
 <body>
 <div class="device-wrap">
-  <div class="device-label" id="device-label"><span class="device-num">24</span>나의 레슨 상세</div>
-  <div class="device" style="position:relative;">
-    <div class="status-bar"><span class="time">9:41</span><div class="status-icons"><span>📶</span><span>🔋</span></div></div>
-    <div class="top-nav">
-      <a class="back" href="6-5-booking-list.html" onclick="if(history.length>1){history.back();return false;}">←</a>
-      <span class="title">나의 레슨 상세</span>
+  <div class="device-label" id="device-label"><span class="device-num">6-6</span>나의 레슨 상세</div>
+  <div class="device v6" style="position:relative;background:var(--bg);">
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+      <defs>
+        <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></symbol>
+      </defs>
+    </svg>
+    <div class="status-bar"><span class="time">9:41</span><div class="status-icons"><span>●</span><span>●</span></div></div>
+    <div class="topbar">
+      <a class="back" href="6-5-booking-list.html" onclick="if(history.length>1){history.back();return false;}"><svg class="ic"><use href="#i-back"/></svg></a>
+      <span class="title">레슨 상세</span>
       <span class="action"></span>
     </div>
-    <div class="screen screen-white" style="display:flex;flex-direction:column;flex:1;overflow-y:auto;padding-bottom:0;">
-      <div class="page-pad" style="flex:1;padding:20px;">
+    <div class="screen" style="display:flex;flex-direction:column;flex:1;overflow-y:auto;padding-bottom:0;background:var(--bg);">
+      <div class="page-pad" style="flex:1;padding:18px 16px;">
 
-        <!-- 상태 배지 헤더 (좌우 배치) -->
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-          <div style="font-size:18px;font-weight:800;color:var(--navy);">레슨 상세</div>
+        <!-- 상태 배지 헤더 -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+          <div style="font-size:20px;font-weight:800;color:var(--ink);letter-spacing:-0.5px;">레슨 상세</div>
           <div id="status-badge-area"></div>
         </div>
 
-        <!-- 코치 프로필 카드 -->
-        <div style="display:flex;align-items:center;gap:12px;padding:14px;background:var(--gray-50);border-radius:14px;margin-bottom:14px;">
-          <div style="width:44px;height:44px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;">김</div>
-          <div style="flex:1;">
-            <div style="font-size:15px;font-weight:700;color:var(--navy);">김민수 코치</div>
-            <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">서울 강남구 · NTRP 4.0</div>
+        <!-- 코치 카드 -->
+        <div style="display:flex;align-items:center;gap:12px;padding:14px;background:var(--surface);border:1px solid var(--line);border-radius:10px;margin-bottom:12px;">
+          <div style="width:42px;height:42px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;letter-spacing:-0.4px;">김</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:15px;font-weight:700;color:var(--ink);letter-spacing:-0.2px;">김민수 코치</div>
+            <div style="font-size:11px;color:var(--ink-3);margin-top:2px;font-weight:500;">서울 강남구 · NTRP 4.0</div>
           </div>
-          <a href="../flow4-chat/4-2-chat.html" style="padding:6px 14px;border-radius:20px;background:#fff;border:1.5px solid var(--gray-200);text-decoration:none;font-size:12px;font-weight:600;color:var(--navy);">대화하기</a>
+          <a href="../flow4-chat/4-2-chat.html" class="btn ghost sm">대화하기</a>
         </div>
 
-        <!-- 레슨 정보 박스 (구분선 형식) -->
-        <div style="display:flex;flex-direction:column;gap:10px;">
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:0 4px;">
-            <span style="font-size:13px;color:var(--gray-400);">일정</span>
-            <span style="font-size:14px;font-weight:600;color:var(--navy);">4월 13일 (일) 10:00</span>
+        <!-- 레슨 정보 -->
+        <div class="info-table">
+          <div class="info-row"><span class="k">일정</span><span class="v">4/13 (일) 10:00</span></div>
+          <div class="info-row"><span class="k">레슨 유형</span><span class="v">정규 레슨</span></div>
+          <div class="info-row"><span class="k">레슨 형태</span><span class="v">1:1 개인</span></div>
+          <div class="info-row"><span class="k">현재 회차</span><span class="v" id="session-info">6 / 8회</span></div>
+          <div class="info-row"><span class="k">결제</span>
+            <span style="display:flex;align-items:center;gap:6px;">
+              <span id="payment-amount" class="v">60,000원</span>
+              <span id="payment-status-badge" class="pill">결제완료</span>
+            </span>
           </div>
-          <div style="height:1px;background:var(--gray-100);"></div>
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:0 4px;">
-            <span style="font-size:13px;color:var(--gray-400);">레슨 유형</span>
-            <span style="font-size:14px;font-weight:600;color:var(--navy);">정규레슨</span>
-          </div>
-          <div style="height:1px;background:var(--gray-100);"></div>
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:0 4px;">
-            <span style="font-size:13px;color:var(--gray-400);">레슨 형태</span>
-            <span style="font-size:14px;font-weight:600;color:var(--navy);">1:1 개인</span>
-          </div>
-          <div style="height:1px;background:var(--gray-100);"></div>
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:0 4px;">
-            <span style="font-size:13px;color:var(--gray-400);">현재 회차</span>
-            <span style="font-size:14px;font-weight:600;color:var(--navy);" id="session-info">6/8회</span>
-          </div>
-          <div style="height:1px;background:var(--gray-100);"></div>
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:0 4px;">
-            <span style="font-size:13px;color:var(--gray-400);">결제</span>
-            <div style="display:flex;align-items:center;gap:6px;">
-              <span id="payment-amount" style="font-size:14px;font-weight:600;color:var(--navy);">60,000원</span>
-              <span id="payment-status-badge" style="padding:2px 6px;border-radius:4px;background:#D1FAE5;color:#065F46;font-size:10px;font-weight:700;">결제완료</span>
-            </div>
-          </div>
-          <div id="payment-deposit-notice" style="display:none;padding:10px 4px 4px;">
-            <div style="display:flex;align-items:flex-start;gap:6px;padding:10px 12px;background:#FEF3C7;border-radius:10px;border:1px solid #FDE68A;">
-              <span style="font-size:13px;line-height:1.5;color:#92400E;">💡 잔액은 코치와 협의된 일정에 납부해 주세요.</span>
-            </div>
-          </div>
-          <div style="height:1px;background:var(--gray-100);"></div>
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:0 4px;">
-            <span style="font-size:13px;color:var(--gray-400);">결제일</span>
-            <span id="payment-date" style="font-size:14px;font-weight:600;color:var(--navy);">3/25</span>
-          </div>
-          <div style="height:1px;background:var(--gray-100);"></div>
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:0 4px;">
-            <span style="font-size:13px;color:var(--gray-400);">다음 결제일 <span style="color:var(--gray-300);font-weight:400;">(예정)</span></span>
-            <span style="font-size:14px;font-weight:600;color:var(--navy);">4/25</span>
-          </div>
-          <div style="height:1px;background:var(--gray-100);"></div>
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:0 4px;">
-            <span style="font-size:13px;color:var(--gray-400);">이번 달 변경 요청</span>
-            <span style="font-size:14px;font-weight:600;color:#92400E;">1 / 3회</span>
+          <div class="info-row"><span class="k">결제일</span><span id="payment-date" class="v">3/25</span></div>
+          <div class="info-row"><span class="k">다음 결제일 <span style="color:var(--ink-3);font-weight:500;">(예정)</span></span><span class="v">4/25</span></div>
+          <div class="info-row"><span class="k">이번 달 변경 요청</span><span class="v v-2">1 / 3회</span></div>
+        </div>
+
+        <div id="payment-deposit-notice" style="display:none;margin-top:10px;">
+          <div style="padding:10px 14px;background:var(--alert-bg);border:1px solid var(--alert);border-radius:8px;font-size:12px;color:var(--alert);font-weight:500;line-height:1.5;">
+            잔액은 코치와 협의된 일정에 납부해 주세요.
           </div>
         </div>
 
