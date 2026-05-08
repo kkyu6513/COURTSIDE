@@ -25,9 +25,12 @@
     .v6 .ic { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; flex-shrink:0; }
     .v6 .ic-sm { width: 16px; height: 16px; }
 
-    /* 헤더 — 날짜 1줄 (C1·C7 wordmark·sub 제거) */
-    .v6 .hdr { padding: 22px 20px 18px; background: var(--surface); border-bottom: 1px solid var(--line); }
-    .v6 .hdr .date { font-size: 26px; font-weight: 800; color: var(--ink); letter-spacing: -0.7px; line-height: 1.1; }
+    /* 헤더 — 인사말 + 날짜 + 명언 */
+    .v6 .hdr { padding: 22px 20px 20px; background: var(--surface); border-bottom: 1px solid var(--line); }
+    .v6 .hdr .greet { font-size: 13px; font-weight: 600; color: var(--ink-2); letter-spacing: -0.2px; }
+    .v6 .hdr .date { margin-top: 4px; font-size: 26px; font-weight: 800; color: var(--ink); letter-spacing: -0.7px; line-height: 1.1; }
+    .v6 .hdr .quote { margin-top: 12px; padding-left: 10px; border-left: 2px solid var(--line-strong); font-size: 12px; color: var(--ink-2); font-weight: 500; line-height: 1.55; letter-spacing: -0.1px; }
+    .v6 .hdr .quote .by { display:block; margin-top: 2px; font-size: 11px; color: var(--ink-3); font-weight: 500;}
 
     /* 섹션 타이틀 — 카드별 일관 적용 */
     .v6 .sec-ttl { display:flex; align-items:baseline; justify-content:space-between; padding: 22px 4px 10px; }
@@ -97,9 +100,11 @@
     <div class="status-bar"><span class="time">9:41</span><div class="status-icons"><span>●</span><span>●</span></div></div>
     <div class="screen" style="padding-bottom:84px;overflow-y:auto;">
 
-      <!-- 헤더: 오늘 날짜 1줄 (C1, C7) -->
+      <!-- 헤더: 시간대 인사 + 날짜 + 명언 -->
       <div class="hdr">
+        <div class="greet" id="hdr-greet"></div>
         <div class="date" id="hdr-date"></div>
+        <div class="quote" id="hdr-quote"></div>
       </div>
 
       <!-- 카드 영역 (4개 이하) -->
@@ -176,6 +181,20 @@ const UNPAID_AMOUNT = 240000;
 const UNPAID_DUE_DAYS = 2;
 const SESSION_DONE = 3;
 const SESSION_TOTAL = 8;
+// 프로토타입용 mock 현재 시각 (status bar 9:41과 일치)
+const MOCK_NOW_MIN = 9*60 + 41;
+// 명언 풀 — 테니스/성장 메시지
+const QUOTES = [
+  { t: '최고의 샷은 다음 샷이다.', by: '— Tennis Wisdom' },
+  { t: '이길 때보다 질 때 더 많이 배운다.', by: '— Billie Jean King' },
+  { t: '챔피언은 코트가 아니라 연습장에서 만들어진다.', by: '— Andre Agassi' },
+  { t: '실력은 매일의 1%가 1년 뒤 37배가 된다.', by: '— 1% Rule' },
+  { t: '느린 진보가 정체보다 낫다.', by: '— Anonymous' },
+  { t: '오늘의 한 발이 내일의 폼이 된다.', by: '— Anonymous' },
+  { t: '포기하지 않는 한 슬럼프란 없다.', by: '— Roger Federer (paraphrased)' },
+  { t: '폼은 일시적이지만, 클래스는 영원하다.', by: '— Football Adage' },
+  { t: '연습이 완벽을 만드는 게 아니라, 완벽한 연습이 완벽을 만든다.', by: '— Vince Lombardi' }
+];
 
 function addDays(d,n){const x=new Date(d);x.setDate(d.getDate()+n);return x;}
 function sameDay(a,b){return a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();}
@@ -185,10 +204,28 @@ function getNextLesson(){
   return null;
 }
 
+function timeGreeting(){
+  const h=Math.floor(MOCK_NOW_MIN/60);
+  if(h<5) return '편안한 밤이에요';
+  if(h<11) return '좋은 아침이에요';
+  if(h<14) return '좋은 점심이에요';
+  if(h<17) return '좋은 오후예요';
+  if(h<21) return '좋은 저녁이에요';
+  return '편안한 밤이에요';
+}
+
+function todayQuote(){
+  // 날짜 기반 결정적 선택 — 같은 날에는 같은 명언
+  const seed=TODAY.getFullYear()*1000 + TODAY.getMonth()*40 + TODAY.getDate();
+  return QUOTES[seed % QUOTES.length];
+}
+
 function renderHeader(){
-  // C1·C7: brand wordmark + sub 제거 → 날짜만
   const m=TODAY.getMonth()+1,dd=TODAY.getDate(),dow=DAY_NAMES[TODAY.getDay()];
+  document.getElementById('hdr-greet').textContent=timeGreeting();
   document.getElementById('hdr-date').textContent=`${m}월 ${dd}일 (${dow})`;
+  const q=todayQuote();
+  document.getElementById('hdr-quote').innerHTML=`"${q.t}"<span class="by">${q.by}</span>`;
 }
 
 function renderPayment(){
@@ -230,7 +267,6 @@ function renderNextLesson(){
   const dow=next.getDay();
   const dayLabel=isToday?'오늘':(sameDay(next,addDays(TODAY,1))?'내일':`${next.getMonth()+1}/${next.getDate()} (${DAY_NAMES[dow]})`);
   const daysDiff=Math.round((next-TODAY)/86400000);
-  const MOCK_NOW_MIN=9*60+41;
   const [lh,lm]=LESSON_TIME.split(':').map(Number);
   const lessonStartMin=lh*60+lm;
   const lessonEndMin=lessonStartMin+LESSON_DURATION;
