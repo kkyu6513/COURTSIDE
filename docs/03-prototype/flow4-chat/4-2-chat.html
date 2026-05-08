@@ -1,359 +1,293 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=375, initial-scale=1.0">
-<title>4-2 1:1 채팅 — COURTSIDE</title>
-<link rel="stylesheet" href="../common.css">
-<style>
-  .more-overlay {
-    display:none;position:absolute;top:0;left:0;width:100%;height:100%;
-    background:rgba(0,0,0,0.4);z-index:60;
-  }
-  .more-overlay.show { display:block; }
-  .more-sheet {
-    position:absolute;bottom:0;left:0;width:100%;background:#fff;
-    border-radius:20px 20px 0 0;padding:8px 0 36px;
-    transform:translateY(100%);transition:transform 0.3s ease;
-  }
-  .more-overlay.show .more-sheet { transform:translateY(0); }
-  .more-item {
-    display:flex;align-items:center;gap:12px;padding:14px 20px;cursor:pointer;
-    font-size:15px;color:var(--navy);transition:background 0.1s;
-  }
-  .more-item:hover { background:var(--gray-50); }
-  .more-item .mi-icon { font-size:18px;width:24px;text-align:center; }
-  .more-item.danger { color:var(--error); }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=375, initial-scale=1.0">
+  <title>4-2 1:1 채팅 — COURTSIDE</title>
+  <link rel="stylesheet" href="../common.css">
+  <link rel="stylesheet" href="../common-v6.css">
+  <style>
+    .v6 .more-overlay { display:none; position:absolute; inset:0; background:rgba(15,23,42,0.45); z-index:60; }
+    .v6 .more-overlay.show { display:block; }
+    .v6 .more-sheet { position:absolute; bottom:0; left:0; width:100%; background:var(--surface); border-radius:16px 16px 0 0; padding:8px 0 28px; transform:translateY(100%); transition:transform 0.25s ease; box-sizing:border-box;}
+    .v6 .more-overlay.show .more-sheet { transform:translateY(0); }
+    .v6 .grip { width:36px; height:4px; border-radius:2px; background:var(--line-strong); margin:6px auto 8px; }
+    .v6 .more-item { display:flex; align-items:center; gap:12px; padding:14px 20px; cursor:pointer; font-size:14px; color:var(--ink); font-weight:500; }
+    .v6 .more-item.danger { color:var(--alert); }
+    .v6 .input-bar { display:flex; gap:10px; align-items:center; padding:10px 14px 22px; background:var(--surface); border-top:1px solid var(--line); flex-shrink:0;}
+    .v6 .input-bar .ic-btn { width:36px; height:36px; border-radius:8px; background:var(--surface); border:1px solid var(--line); color:var(--ink-2); display:flex; align-items:center; justify-content:center; cursor:pointer;}
+    .v6 .input-bar .text { flex:1; height:38px; border-radius:19px; border:1px solid var(--line-strong); background:var(--surface); padding:0 14px; font-size:13px; color:var(--ink); font-family:inherit; outline:none;}
+    .v6 .input-bar .text::placeholder { color:var(--ink-3); }
+    .v6 .input-bar .send { width:38px; height:38px; border-radius:50%; background:var(--ink); color:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+    .v6 .reason { display:flex; align-items:center; gap:10px; padding:12px; background:var(--surface); border:1px solid var(--line); border-radius:8px; cursor:pointer; }
+    .v6 .reason input { accent-color: var(--ink); width:16px; height:16px; }
+    .v6 .reason.selected { border-color: var(--ink); }
+    .v6 .reason span { font-size:13px; color: var(--ink); font-weight:500; }
+    .v6 .slot { display:flex; align-items:center; gap:8px; padding:10px 12px; background:var(--surface); border:1px solid var(--line); border-radius:8px; cursor:pointer;}
+    .v6 .slot.selected { border-color: var(--ink); background: var(--soft); }
+    .v6 .slot input { accent-color: var(--ink); width:14px; height:14px; }
+    .v6 .slot span { font-size:13px; font-weight:600; color: var(--ink); letter-spacing:-0.1px; }
+    .v6 .toast { display:none; position:absolute; bottom:88px; left:50%; transform:translateX(-50%); background:var(--ink); color:#fff; padding:10px 16px; border-radius:8px; font-size:12px; font-weight:600; z-index:100; }
+    .v6 .schedule-card { background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:14px; }
+    .v6 .schedule-card.confirmed { border-color: var(--ink); background: var(--soft); }
+  </style>
 </head>
 <body>
 <div class="device-wrap">
-  <div class="device-label"><span class="device-num">16</span>1:1 채팅</div>
-  <div class="device" style="position:relative;overflow:hidden;">
-    <div class="status-bar"><span class="time">9:41</span><div class="status-icons"><span>📶</span><span>🔋</span></div></div>
-    <div class="top-nav">
-      <a class="back" href="4-1-chat-list.html">←</a>
+  <div class="device-label"><span class="device-num">4-2</span>1:1 채팅</div>
+  <div class="device v6" style="position:relative;overflow:hidden;background:var(--bg);">
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+      <defs>
+        <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></symbol>
+        <symbol id="i-more" viewBox="0 0 24 24"><circle cx="6" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="18" cy="12" r="1.5"/></symbol>
+        <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M3 18l6-6 5 5 3-3 4 4"/></symbol>
+        <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9.5h18"/><path d="M8 2.5v4M16 2.5v4"/></symbol>
+        <symbol id="i-send" viewBox="0 0 24 24"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></symbol>
+        <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+      </defs>
+    </svg>
+
+    <div class="status-bar"><span class="time">9:41</span><div class="status-icons"><span>●</span><span>●</span></div></div>
+    <div class="topbar">
+      <a class="back" href="4-1-chat-list.html"><svg class="ic"><use href="#i-back"/></svg></a>
       <span class="title">김민수 코치</span>
-      <span class="action" style="cursor:pointer;" onclick="openMore()">⋯</span>
-    </div>
-    <div class="screen screen-white" style="display:flex;flex-direction:column;flex:1;overflow-y:auto;padding-bottom:0;">
-      <div style="flex:1;padding:20px;display:flex;flex-direction:column;gap:8px;">
-        <div style="text-align:center;font-size:12px;color:var(--gray-400);margin-bottom:12px;">2026년 4월 9일</div>
-        <div style="max-width:70%;padding:10px 14px;border-radius:16px;font-size:14px;line-height:1.5;background:var(--gray-50);color:var(--navy);border-bottom-left-radius:4px;">안녕하세요! 레슨 문의 주셔서 감사합니다 😊</div>
-        <div style="font-size:10px;color:var(--gray-400);margin-top:2px;">오전 9:15</div>
-        <div style="max-width:70%;padding:10px 14px;border-radius:16px;font-size:14px;line-height:1.5;background:var(--green);color:#fff;margin-left:auto;border-bottom-right-radius:4px;">안녕하세요! 포핸드 교정 레슨 가능한가요?</div>
-        <div style="font-size:10px;color:var(--gray-400);margin-top:2px;text-align:right;">오전 9:20</div>
-        <div style="max-width:70%;padding:10px 14px;border-radius:16px;font-size:14px;line-height:1.5;background:var(--gray-50);color:var(--navy);border-bottom-left-radius:4px;">네, 물론이죠! 포핸드는 제 전문 분야입니다. 현재 NTRP가 어느 정도이신가요?</div>
-        <div style="font-size:10px;color:var(--gray-400);margin-top:2px;">오전 9:22</div>
-        <div style="max-width:70%;padding:10px 14px;border-radius:16px;font-size:14px;line-height:1.5;background:var(--green);color:#fff;margin-left:auto;border-bottom-right-radius:4px;">2.5 정도인 것 같아요. 자세가 많이 안 좋다고 하더라구요.</div>
-        <div style="font-size:10px;color:var(--gray-400);margin-top:2px;text-align:right;">오전 9:25</div>
-        <div style="max-width:70%;padding:10px 14px;border-radius:16px;font-size:14px;line-height:1.5;background:var(--gray-50);color:var(--navy);border-bottom-left-radius:4px;">그 정도면 충분히 교정 가능합니다! 화요일 10시에 어떠세요?</div>
-        <div style="font-size:10px;color:var(--gray-400);margin-top:2px;">오전 9:30</div>
-        <div style="max-width:70%;padding:10px 14px;border-radius:16px;font-size:14px;line-height:1.5;background:var(--green);color:#fff;margin-left:auto;border-bottom-right-radius:4px;">좋아요! 신청할게요 🎾</div>
-        <div style="font-size:10px;color:var(--gray-400);margin-top:2px;text-align:right;">오전 9:31</div>
-        <div style="max-width:70%;padding:10px 14px;border-radius:16px;font-size:14px;line-height:1.5;background:var(--gray-50);color:var(--navy);border-bottom-left-radius:4px;">네, 화요일 10시에 뵙겠습니다!</div>
-        <div style="font-size:10px;color:var(--gray-400);margin-top:2px;">오전 9:32</div>
-      </div>
-    </div>
-    <!-- Chat Input -->
-    <div style="padding:12px 20px 32px;background:#fff;border-top:1px solid var(--gray-100);display:flex;gap:10px;align-items:center;flex-shrink:0;">
-      <input type="file" id="chat-image-input" accept="image/jpeg,image/png" style="display:none;" onchange="handleChatImage(this)">
-      <span style="font-size:20px;cursor:pointer;" onclick="document.getElementById('chat-image-input').click()">📷</span>
-      <span style="font-size:20px;cursor:pointer;" onclick="openScheduleProposal()">📅</span>
-      <input class="input-field" style="flex:1;height:40px;border-radius:20px;" placeholder="메시지를 입력하세요" />
-      <div style="width:40px;height:40px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;font-size:16px;color:#fff;cursor:pointer;">→</div>
+      <a class="action" onclick="openMore()"><svg class="ic"><use href="#i-more"/></svg></a>
     </div>
 
-    <!-- ⋯ 더보기 바텀시트 -->
+    <div class="screen" style="display:flex;flex-direction:column;flex:1;background:var(--bg);">
+      <div id="chat-area" style="flex:1;padding:16px;overflow-y:auto;">
+        <div class="chat-day">2026년 4월 9일</div>
+
+        <div class="chat-row">
+          <div class="ava">김</div>
+          <div>
+            <div class="bubble them">안녕하세요! 레슨 문의 주셔서 감사합니다.</div>
+            <div class="chat-meta" style="margin-top:2px;">오전 9:15</div>
+          </div>
+        </div>
+
+        <div class="chat-row me">
+          <div>
+            <div class="bubble me">안녕하세요! 포핸드 교정 레슨 가능한가요?</div>
+            <div class="chat-meta" style="margin-top:2px;text-align:right;">오전 9:20</div>
+          </div>
+        </div>
+
+        <div class="chat-row">
+          <div class="ava">김</div>
+          <div>
+            <div class="bubble them">네, 포핸드는 제 전문 분야입니다. 현재 NTRP가 어느 정도이신가요?</div>
+            <div class="chat-meta" style="margin-top:2px;">오전 9:22</div>
+          </div>
+        </div>
+
+        <div class="chat-row me">
+          <div>
+            <div class="bubble me">2.5 정도인 것 같아요. 자세가 많이 안 좋다고 하더라구요.</div>
+            <div class="chat-meta" style="margin-top:2px;text-align:right;">오전 9:25</div>
+          </div>
+        </div>
+
+        <div class="chat-row">
+          <div class="ava">김</div>
+          <div>
+            <div class="bubble them">그 정도면 충분히 교정 가능합니다. 화요일 10시에 어떠세요?</div>
+            <div class="chat-meta" style="margin-top:2px;">오전 9:30</div>
+          </div>
+        </div>
+
+        <div class="chat-row me">
+          <div>
+            <div class="bubble me">좋아요! 신청할게요.</div>
+            <div class="chat-meta" style="margin-top:2px;text-align:right;">오전 9:31</div>
+          </div>
+        </div>
+
+        <div class="chat-row">
+          <div class="ava">김</div>
+          <div>
+            <div class="bubble them">네, 화요일 10시에 뵙겠습니다.</div>
+            <div class="chat-meta" style="margin-top:2px;">오전 9:32</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="input-bar">
+      <input type="file" id="chat-image-input" accept="image/jpeg,image/png" style="display:none;" onchange="handleChatImage(this)">
+      <a class="ic-btn" onclick="document.getElementById('chat-image-input').click()" aria-label="이미지"><svg class="ic ic-sm"><use href="#i-image"/></svg></a>
+      <a class="ic-btn" onclick="openScheduleProposal()" aria-label="일정 제안"><svg class="ic ic-sm"><use href="#i-cal"/></svg></a>
+      <input class="text" placeholder="메시지를 입력하세요" />
+      <a class="send" aria-label="보내기"><svg class="ic ic-sm" style="color:#fff;"><use href="#i-send"/></svg></a>
+    </div>
+
     <div id="more-overlay" class="more-overlay" onclick="closeMore()">
       <div class="more-sheet" onclick="event.stopPropagation()">
-        <div style="width:40px;height:4px;border-radius:2px;background:var(--gray-300);margin:4px auto 8px;"></div>
-        <div class="more-item danger" onclick="confirmLeave()">
-          <span class="mi-icon">🚪</span>채팅방 나가기
-        </div>
-        <div class="more-item danger" onclick="confirmBlock()">
-          <span class="mi-icon">🚫</span>차단하기
-        </div>
-        <div class="more-item danger" onclick="openReport()">
-          <span class="mi-icon">🚨</span>신고하기
-        </div>
+        <div class="grip"></div>
+        <div class="more-item danger" onclick="confirmLeave()">채팅방 나가기</div>
+        <div class="more-item danger" onclick="confirmBlock()">차단하기</div>
+        <div class="more-item danger" onclick="openReport()">신고하기</div>
       </div>
     </div>
 
-    <!-- 신고하기 바텀시트 -->
     <div id="report-overlay" class="more-overlay" onclick="closeReport()">
-      <div class="more-sheet" style="padding:20px 20px 36px;" onclick="event.stopPropagation()">
-        <div style="width:40px;height:4px;border-radius:2px;background:var(--gray-300);margin:0 auto 16px;"></div>
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-          <span style="font-size:17px;font-weight:700;color:var(--navy);">신고하기</span>
-          <span style="font-size:16px;color:var(--gray-400);cursor:pointer;" onclick="closeReport()">✕</span>
+      <div class="more-sheet" style="padding:8px 20px 28px;" onclick="event.stopPropagation()">
+        <div class="grip"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin:8px 0 14px;">
+          <span style="font-size:16px;font-weight:800;color:var(--ink);letter-spacing:-0.3px;">신고하기</span>
+          <a onclick="closeReport()" style="cursor:pointer;color:var(--ink-3);"><svg class="ic ic-sm"><use href="#i-x"/></svg></a>
         </div>
-
-        <div style="font-size:13px;color:var(--gray-500);margin-bottom:16px;">신고 사유를 선택해주세요</div>
-
-        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;" id="report-reasons">
-          <label style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--gray-50);border-radius:10px;cursor:pointer;border:1.5px solid var(--gray-100);" onclick="selectReason(this)">
-            <input type="radio" name="report" value="INAPPROPRIATE_MSG" style="accent-color:var(--green);width:18px;height:18px;">
-            <span style="font-size:14px;color:var(--navy);">부적절한 메시지</span>
-          </label>
-          <label style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--gray-50);border-radius:10px;cursor:pointer;border:1.5px solid var(--gray-100);" onclick="selectReason(this)">
-            <input type="radio" name="report" value="FAKE_PROFILE" style="accent-color:var(--green);width:18px;height:18px;">
-            <span style="font-size:14px;color:var(--navy);">허위 프로필</span>
-          </label>
-          <label style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--gray-50);border-radius:10px;cursor:pointer;border:1.5px solid var(--gray-100);" onclick="selectReason(this)">
-            <input type="radio" name="report" value="SPAM" style="accent-color:var(--green);width:18px;height:18px;">
-            <span style="font-size:14px;color:var(--navy);">스팸/광고</span>
-          </label>
-          <label style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--gray-50);border-radius:10px;cursor:pointer;border:1.5px solid var(--gray-100);" onclick="selectReason(this)">
-            <input type="radio" name="report" value="NO_SHOW" style="accent-color:var(--green);width:18px;height:18px;">
-            <span style="font-size:14px;color:var(--navy);">레슨 불이행</span>
-          </label>
-          <label style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--gray-50);border-radius:10px;cursor:pointer;border:1.5px solid var(--gray-100);" onclick="selectReason(this)">
-            <input type="radio" name="report" value="FRAUD" style="accent-color:var(--green);width:18px;height:18px;">
-            <span style="font-size:14px;color:var(--navy);">사기/금전 피해</span>
-          </label>
-          <label style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--gray-50);border-radius:10px;cursor:pointer;border:1.5px solid var(--gray-100);" onclick="selectReason(this)">
-            <input type="radio" name="report" value="OTHER" style="accent-color:var(--green);width:18px;height:18px;">
-            <span style="font-size:14px;color:var(--navy);">기타</span>
-          </label>
+        <div style="font-size:12px;color:var(--ink-2);margin-bottom:14px;font-weight:500;">신고 사유를 선택해주세요</div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;" id="report-reasons">
+          <label class="reason" onclick="selectReason(this)"><input type="radio" name="report" value="INAPPROPRIATE_MSG"><span>부적절한 메시지</span></label>
+          <label class="reason" onclick="selectReason(this)"><input type="radio" name="report" value="FAKE_PROFILE"><span>허위 프로필</span></label>
+          <label class="reason" onclick="selectReason(this)"><input type="radio" name="report" value="SPAM"><span>스팸·광고</span></label>
+          <label class="reason" onclick="selectReason(this)"><input type="radio" name="report" value="NO_SHOW"><span>레슨 불이행</span></label>
+          <label class="reason" onclick="selectReason(this)"><input type="radio" name="report" value="FRAUD"><span>사기·금전 피해</span></label>
+          <label class="reason" onclick="selectReason(this)"><input type="radio" name="report" value="OTHER"><span>기타</span></label>
         </div>
-
-        <div id="report-detail-wrap" style="display:none;margin-bottom:16px;">
-          <label style="font-size:13px;font-weight:600;color:var(--navy);display:block;margin-bottom:6px;">상세 내용</label>
-          <textarea id="report-detail" style="width:100%;min-height:80px;border-radius:10px;border:1px solid var(--gray-100);background:var(--gray-50);padding:12px;font-size:14px;color:var(--navy);font-family:inherit;outline:none;resize:none;" placeholder="상세 내용을 입력해주세요"></textarea>
+        <div id="report-detail-wrap" style="display:none;margin-bottom:14px;">
+          <label class="field-label">상세 내용</label>
+          <textarea id="report-detail" class="input" style="height:80px;padding:10px 12px;resize:none;" placeholder="상세 내용을 입력해주세요"></textarea>
         </div>
-
-        <button class="btn-primary" style="height:48px;font-size:14px;" onclick="submitReport()">신고 접수</button>
+        <button class="btn primary block" onclick="submitReport()">신고 접수</button>
       </div>
     </div>
 
-    <!-- 일정 제안 바텀시트 -->
     <div id="schedule-overlay" class="more-overlay" onclick="closeScheduleProposal()">
-      <div class="more-sheet" style="padding:20px 20px 36px;max-height:70%;overflow-y:auto;" onclick="event.stopPropagation()">
-        <div style="width:40px;height:4px;border-radius:2px;background:var(--gray-300);margin:0 auto 16px;"></div>
-        <div style="font-size:17px;font-weight:800;color:var(--navy);margin-bottom:4px;">📅 일정 제안하기</div>
-        <div style="font-size:12px;color:var(--gray-400);margin-bottom:16px;">레슨 가능한 날짜를 선택하여 수강생에게 제안하세요</div>
-
-        <!-- 추천 일정 -->
-        <div style="padding:14px;background:var(--gray-50);border-radius:14px;margin-bottom:12px;">
-          <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;">
-            <span style="font-size:13px;">🤖</span>
-            <span style="font-size:13px;font-weight:700;color:var(--navy);">추천 일정</span>
-            <span style="font-size:10px;color:var(--gray-400);margin-left:auto;">빈 시간 우선</span>
-          </div>
-          <div id="schedule-slots" style="display:flex;flex-direction:column;gap:6px;">
-            <div onclick="toggleSlot(this)" style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:#fff;border-radius:10px;border:1px solid var(--gray-100);cursor:pointer;transition:all 0.15s;">
-              <input type="checkbox" onclick="event.stopPropagation()" onchange="toggleSlotByCheckbox(this)" style="width:16px;height:16px;accent-color:var(--green);flex-shrink:0;cursor:pointer;">
-              <span style="font-size:13px;font-weight:600;color:var(--navy);">4/17 (목) 10:00</span>
-            </div>
-            <div onclick="toggleSlot(this)" style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:#fff;border-radius:10px;border:1px solid var(--gray-100);cursor:pointer;transition:all 0.15s;">
-              <input type="checkbox" onclick="event.stopPropagation()" onchange="toggleSlotByCheckbox(this)" style="width:16px;height:16px;accent-color:var(--green);flex-shrink:0;cursor:pointer;">
-              <span style="font-size:13px;font-weight:600;color:var(--navy);">4/17 (목) 14:00</span>
-            </div>
-            <div onclick="toggleSlot(this)" style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:#fff;border-radius:10px;border:1px solid var(--gray-100);cursor:pointer;transition:all 0.15s;">
-              <input type="checkbox" onclick="event.stopPropagation()" onchange="toggleSlotByCheckbox(this)" style="width:16px;height:16px;accent-color:var(--green);flex-shrink:0;cursor:pointer;">
-              <span style="font-size:13px;font-weight:600;color:var(--navy);">4/18 (금) 10:00</span>
-            </div>
-          </div>
-          <div id="more-schedule-slots" style="display:none;margin-top:6px;">
-            <div style="display:flex;flex-direction:column;gap:6px;">
-              <div onclick="toggleSlot(this)" style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:#fff;border-radius:10px;border:1px solid var(--gray-100);cursor:pointer;transition:all 0.15s;">
-                <input type="checkbox" onclick="event.stopPropagation()" onchange="toggleSlotByCheckbox(this)" style="width:16px;height:16px;accent-color:var(--green);flex-shrink:0;cursor:pointer;">
-                <span style="font-size:13px;font-weight:600;color:var(--navy);">4/18 (금) 14:00</span>
-              </div>
-              <div onclick="toggleSlot(this)" style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:#fff;border-radius:10px;border:1px solid var(--gray-100);cursor:pointer;transition:all 0.15s;">
-                <input type="checkbox" onclick="event.stopPropagation()" onchange="toggleSlotByCheckbox(this)" style="width:16px;height:16px;accent-color:var(--green);flex-shrink:0;cursor:pointer;">
-                <span style="font-size:13px;font-weight:600;color:var(--navy);">4/19 (토) 10:00</span>
-              </div>
-            </div>
-          </div>
-          <button onclick="var el=document.getElementById('more-schedule-slots');el.style.display=el.style.display==='none'?'block':'none';this.textContent=el.style.display==='none'?'다른 시간 더보기 ▼':'접기 ▲'" style="width:100%;margin-top:8px;padding:8px;border-radius:8px;border:1px dashed var(--gray-200);background:#fff;color:var(--gray-400);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">다른 시간 더보기 ▼</button>
+      <div class="more-sheet" style="padding:8px 20px 28px;max-height:70%;overflow-y:auto;" onclick="event.stopPropagation()">
+        <div class="grip"></div>
+        <div style="font-size:16px;font-weight:800;color:var(--ink);margin:8px 0 4px;letter-spacing:-0.3px;">일정 제안하기</div>
+        <div style="font-size:12px;color:var(--ink-2);margin-bottom:14px;font-weight:500;">레슨 가능한 날짜를 선택해 보내세요</div>
+        <div style="display:flex;flex-direction:column;gap:6px;" id="schedule-slots">
+          <label class="slot" onclick="toggleSlot(this)"><input type="checkbox"><span>4/17 (목) 10:00</span></label>
+          <label class="slot" onclick="toggleSlot(this)"><input type="checkbox"><span>4/17 (목) 14:00</span></label>
+          <label class="slot" onclick="toggleSlot(this)"><input type="checkbox"><span>4/18 (금) 10:00</span></label>
         </div>
-
-        <button onclick="sendScheduleProposal()" style="width:100%;height:48px;border-radius:12px;border:none;background:var(--green);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">제안 보내기</button>
+        <div id="more-schedule-slots" style="display:none;margin-top:6px;">
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <label class="slot" onclick="toggleSlot(this)"><input type="checkbox"><span>4/18 (금) 14:00</span></label>
+            <label class="slot" onclick="toggleSlot(this)"><input type="checkbox"><span>4/19 (토) 10:00</span></label>
+          </div>
+        </div>
+        <button onclick="var el=document.getElementById('more-schedule-slots');el.style.display=el.style.display==='none'?'block':'none';this.textContent=el.style.display==='none'?'다른 시간 더보기':'접기'" class="btn ghost block sm" style="margin-top:10px;">다른 시간 더보기</button>
+        <button onclick="sendScheduleProposal()" class="btn primary block" style="margin-top:14px;">제안 보내기</button>
       </div>
     </div>
 
-    <!-- 토스트 -->
-    <div id="toast" style="display:none;position:absolute;bottom:100px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:12px 20px;border-radius:12px;font-size:13px;font-weight:600;white-space:nowrap;z-index:100;box-shadow:0 4px 16px rgba(0,0,0,0.2);"></div>
+    <div id="toast" class="toast"></div>
   </div>
 </div>
 
 <script>
-function openMore() {
-  document.getElementById('more-overlay').classList.add('show');
-}
+function openMore(){document.getElementById('more-overlay').classList.add('show');}
+function closeMore(){document.getElementById('more-overlay').classList.remove('show');}
 
-function closeMore() {
-  document.getElementById('more-overlay').classList.remove('show');
-}
-
-function confirmBlock() {
+function confirmBlock(){
   closeMore();
-  if (confirm('이 코치를 차단하시겠습니까?\n차단 시 채팅방이 비활성화되고, 해당 코치의 레슨 신청이 제한됩니다.')) {
-    // 실제: POST /api/users/block/:coachId → 차단 처리
-    // 채팅방 비활성화: ChatRoom.isBlocked = true
+  if(confirm('이 코치를 차단하시겠습니까?\n차단 시 채팅방이 비활성화되고, 해당 코치의 레슨 신청이 제한됩니다.')){
     showToast('차단되었습니다');
-    setTimeout(() => { window.location.href = '4-1-chat-list.html'; }, 1000);
+    setTimeout(()=>{window.location.href='4-1-chat-list.html';}, 1000);
   }
 }
-
-function confirmLeave() {
+function confirmLeave(){
   closeMore();
-  if (confirm('채팅방을 나가시겠습니까?\n대화 내용이 삭제됩니다.')) {
+  if(confirm('채팅방을 나가시겠습니까?\n대화 내용이 삭제됩니다.')){
     showToast('채팅방을 나갔습니다');
-    setTimeout(() => { window.location.href = '4-1-chat-list.html'; }, 1000);
+    setTimeout(()=>{window.location.href='4-1-chat-list.html';}, 1000);
   }
 }
 
-function openReport() {
-  closeMore();
-  document.getElementById('report-overlay').classList.add('show');
+function openReport(){closeMore();document.getElementById('report-overlay').classList.add('show');}
+function closeReport(){document.getElementById('report-overlay').classList.remove('show');}
+
+function selectReason(el){
+  document.querySelectorAll('#report-reasons label').forEach(l=>l.classList.remove('selected'));
+  el.classList.add('selected');
+  const val=el.querySelector('input').value;
+  document.getElementById('report-detail-wrap').style.display = val==='OTHER'?'block':'none';
 }
 
-function closeReport() {
-  document.getElementById('report-overlay').classList.remove('show');
-}
-
-function selectReason(el) {
-  // 선택 시 border 강조
-  document.querySelectorAll('#report-reasons label').forEach(l => l.style.borderColor = 'var(--gray-100)');
-  el.style.borderColor = 'var(--green)';
-  // "기타" 선택 시 상세 입력 표시
-  const val = el.querySelector('input').value;
-  document.getElementById('report-detail-wrap').style.display = val === 'OTHER' ? 'block' : 'none';
-}
-
-function submitReport() {
-  const selected = document.querySelector('#report-reasons input:checked');
-  if (!selected) {
-    showToast('신고 사유를 선택해주세요');
-    return;
+function submitReport(){
+  const selected=document.querySelector('#report-reasons input:checked');
+  if(!selected){showToast('신고 사유를 선택해주세요');return;}
+  if(selected.value==='OTHER' && !document.getElementById('report-detail').value.trim()){
+    showToast('상세 내용을 입력해주세요');return;
   }
-  if (selected.value === 'OTHER' && !document.getElementById('report-detail').value.trim()) {
-    showToast('상세 내용을 입력해주세요');
-    return;
-  }
-  // 실제: POST /api/reports { targetId, targetType, reasonCode, reasonDetail }
-  console.log('신고 접수:', selected.value, document.getElementById('report-detail').value);
   closeReport();
-  showToast('신고가 접수되었습니다. 검토 후 조치하겠습니다');
+  showToast('신고가 접수되었습니다');
 }
 
-/**
- * 이미지 첨부 — 앨범에서 가져오기
- * 클릭 → file input 트리거 → OS 앨범/파일 선택 → 미리보기 메시지로 추가
- * 실제: S3 업로드 → WebSocket으로 IMAGE 타입 메시지 전송
- */
-function handleChatImage(input) {
-  if (input.files && input.files[0]) {
-    const file = input.files[0];
-    if (file.size > 5 * 1024 * 1024) {
-      showToast('파일 크기는 5MB 이하여야 합니다');
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      const chatArea = document.querySelector('.screen > div');
-      const imgMsg = document.createElement('div');
-      imgMsg.style.cssText = 'max-width:70%;margin-left:auto;margin-top:8px;';
-      imgMsg.innerHTML = '<img src="' + e.target.result + '" style="width:100%;border-radius:12px;border-bottom-right-radius:4px;">';
-      chatArea.appendChild(imgMsg);
-      const timeEl = document.createElement('div');
-      timeEl.style.cssText = 'font-size:10px;color:var(--gray-400);margin-top:2px;text-align:right;';
-      timeEl.textContent = '방금 전';
-      chatArea.appendChild(timeEl);
-      chatArea.scrollTop = chatArea.scrollHeight;
-      // 실제: POST /api/chat/images (S3 업로드) → WebSocket emit (type=IMAGE)
-      console.log('이미지 전송:', file.name);
+function handleChatImage(input){
+  if(input.files && input.files[0]){
+    const file=input.files[0];
+    if(file.size > 5*1024*1024){showToast('파일 크기는 5MB 이하여야 합니다');return;}
+    const reader=new FileReader();
+    reader.onload=function(e){
+      const chatArea=document.getElementById('chat-area');
+      const row=document.createElement('div');
+      row.className='chat-row me';
+      row.innerHTML='<div><div style="max-width:75%;margin-left:auto;"><img src="'+e.target.result+'" style="width:100%;border-radius:14px;border-bottom-right-radius:4px;"></div><div class="chat-meta" style="margin-top:2px;text-align:right;">방금 전</div></div>';
+      chatArea.appendChild(row);
+      chatArea.scrollTop=chatArea.scrollHeight;
     };
     reader.readAsDataURL(file);
-    input.value = '';
+    input.value='';
   }
 }
 
-// 일정 제안
-function openScheduleProposal() {
-  document.getElementById('schedule-overlay').classList.add('show');
-}
-function closeScheduleProposal() {
-  document.getElementById('schedule-overlay').classList.remove('show');
-}
-function toggleSlot(el) {
-  const cb = el.querySelector('input');
+function openScheduleProposal(){document.getElementById('schedule-overlay').classList.add('show');}
+function closeScheduleProposal(){document.getElementById('schedule-overlay').classList.remove('show');}
+
+function toggleSlot(el){
+  const cb=el.querySelector('input');
   cb.checked = !cb.checked;
-  el.style.borderColor = cb.checked ? 'var(--green)' : 'var(--gray-100)';
-  el.style.background = cb.checked ? '#F0FDFA' : '#fff';
+  el.classList.toggle('selected', cb.checked);
 }
-function toggleSlotByCheckbox(cb) {
-  const el = cb.parentElement;
-  el.style.borderColor = cb.checked ? 'var(--green)' : 'var(--gray-100)';
-  el.style.background = cb.checked ? '#F0FDFA' : '#fff';
-}
-function sendScheduleProposal() {
-  const checked = document.querySelectorAll('#schedule-slots input:checked, #more-schedule-slots input:checked');
-  if (checked.length === 0) {
-    showToast('제안할 일정을 선택해주세요');
-    return;
-  }
-  closeScheduleProposal();
-  // 채팅에 카드형 메시지 추가
-  const slots = Array.from(checked).map(cb => cb.parentElement.querySelector('span').textContent);
-  const chatArea = document.querySelector('.screen-white > div');
-  const radioHtml = slots.map((s, i) =>
-    `<label onclick="this.parentElement.querySelectorAll('label').forEach(l=>{l.style.borderColor='var(--gray-100)';l.style.background='#fff'});this.style.borderColor='var(--green)';this.style.background='#F0FDFA';" style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:#fff;border-radius:8px;border:1px solid var(--gray-100);cursor:pointer;transition:all 0.15s;">
-      <input type="radio" name="chat-schedule" style="accent-color:var(--green);width:14px;height:14px;">
-      <span style="font-size:13px;font-weight:600;color:var(--navy);">${s}</span>
-    </label>`
-  ).join('');
 
-  chatArea.innerHTML += `
-    <div style="font-size:10px;color:var(--gray-400);margin-top:12px;text-align:right;">오전 9:35</div>
-    <div style="max-width:85%;margin-left:auto;">
-      <div style="background:#F0FDFA;border:1.5px solid #D1FAE5;border-radius:16px;padding:14px;border-bottom-right-radius:4px;">
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;">
-          <span style="font-size:14px;">📅</span>
-          <span style="font-size:14px;font-weight:700;color:var(--navy);">일정 제안</span>
-        </div>
-        <div style="font-size:12px;color:var(--gray-500);margin-bottom:10px;">아래 일정 중 원하시는 시간을 선택해주세요</div>
-        <div style="display:flex;flex-direction:column;gap:6px;">
-          ${radioHtml}
-        </div>
-        <button onclick="acceptChatSchedule(this)" style="width:100%;height:40px;border-radius:10px;border:none;background:var(--green);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:10px;">선택 완료</button>
-      </div>
-    </div>`;
-  chatArea.scrollTop = chatArea.scrollHeight;
+function sendScheduleProposal(){
+  const checked=document.querySelectorAll('#schedule-slots input:checked, #more-schedule-slots input:checked');
+  if(checked.length===0){showToast('제안할 일정을 선택해주세요');return;}
+  closeScheduleProposal();
+  const slots=Array.from(checked).map(cb => cb.parentElement.querySelector('span').textContent);
+  const chatArea=document.getElementById('chat-area');
+  const radioHtml=slots.map((s,i)=>
+    `<label class="slot" onclick="this.parentElement.querySelectorAll('label').forEach(l=>l.classList.remove('selected'));this.classList.add('selected');this.querySelector('input').checked=true;" style="margin-bottom:6px;"><input type="radio" name="chat-schedule"><span>${s}</span></label>`
+  ).join('');
+  const row=document.createElement('div');
+  row.className='chat-row me';
+  row.innerHTML=`<div style="max-width:85%;margin-left:auto;width:100%;"><div class="schedule-card">
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;"><svg class="ic ic-sm" style="color:var(--ink-2);"><use href="#i-cal"/></svg><span style="font-size:13px;font-weight:800;color:var(--ink);">일정 제안</span></div>
+    <div style="font-size:11px;color:var(--ink-2);margin-bottom:10px;font-weight:500;">아래 일정 중 원하시는 시간을 선택해주세요</div>
+    <div style="display:flex;flex-direction:column;gap:6px;">${radioHtml}</div>
+    <button onclick="acceptChatSchedule(this)" class="btn primary block sm" style="margin-top:10px;">선택 완료</button>
+  </div><div class="chat-meta" style="margin-top:2px;text-align:right;">오전 9:35</div></div>`;
+  chatArea.appendChild(row);
+  chatArea.scrollTop=chatArea.scrollHeight;
   showToast('일정이 제안되었습니다');
 }
-function acceptChatSchedule(btn) {
-  const card = btn.parentElement;
-  const selected = card.querySelector('input[name="chat-schedule"]:checked');
-  if (!selected) {
-    showToast('일정을 선택해주세요');
-    return;
-  }
-  const selectedText = selected.parentElement.querySelector('span').textContent;
-  // 카드를 확정 상태로 변경
+
+function acceptChatSchedule(btn){
+  const card=btn.parentElement;
+  const sel=card.querySelector('input[name="chat-schedule"]:checked');
+  if(!sel){showToast('일정을 선택해주세요');return;}
+  const txt=sel.parentElement.querySelector('span').textContent;
+  card.classList.add('confirmed');
   card.innerHTML = `
-    <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
-      <span style="font-size:14px;">✅</span>
-      <span style="font-size:14px;font-weight:700;color:var(--navy);">일정 확정</span>
-    </div>
-    <div style="padding:10px 12px;background:#D1FAE5;border-radius:10px;display:flex;align-items:center;gap:8px;">
-      <span style="font-size:13px;font-weight:700;color:#065F46;">${selectedText}</span>
-      <span style="font-size:10px;font-weight:600;color:#065F46;margin-left:auto;background:#fff;padding:2px 8px;border-radius:4px;">확정</span>
-    </div>
-  `;
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;"><span style="font-size:13px;font-weight:800;color:var(--ink);">일정 확정</span></div>
+    <div style="padding:10px 12px;background:var(--surface);border:1px solid var(--line);border-radius:8px;display:flex;align-items:center;gap:8px;">
+      <span style="font-size:13px;font-weight:700;color:var(--ink);">${txt}</span>
+      <span class="pill" style="margin-left:auto;">확정</span>
+    </div>`;
   showToast('일정이 확정되었습니다');
 }
 
-function showToast(msg) {
-  const toast = document.getElementById('toast');
-  toast.textContent = msg;
-  toast.style.display = 'block';
-  setTimeout(() => { toast.style.display = 'none'; }, 2000);
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.style.display='block';
+  setTimeout(()=>{t.style.display='none';}, 2000);
 }
 </script>
-<script src="../site-nav.js"></script>
 </body>
 </html>
