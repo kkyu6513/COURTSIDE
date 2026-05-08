@@ -11,11 +11,17 @@
     .hero-card.payment {border-left-color:#F59E0B;}
     .hero-card.next-lesson {border-left-color:var(--green);}
     .hero-card .lead-icon {font-size:24px;flex-shrink:0;width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:var(--gray-50);border-radius:12px;}
+    .hero-card.payment .lead-icon {background:#FEF3C7;}
+    .hero-card.next-lesson .lead-icon {background:#ECFDF5;}
     .hero-card .body {flex:1;min-width:0;}
     .hero-card .label {font-size:10px;color:var(--gray-400);font-weight:700;letter-spacing:0.4px;text-transform:uppercase;margin-bottom:4px;}
     .hero-card .ttl {font-size:16px;font-weight:800;color:var(--navy);margin-bottom:2px;}
     .hero-card .sub {font-size:12px;color:var(--gray-500);line-height:1.5;}
     .hero-card .arrow {color:var(--gray-400);font-size:16px;flex-shrink:0;}
+    .dday-pill {display:inline-block;font-size:10px;font-weight:800;padding:2px 7px;border-radius:6px;background:#E0E7FF;color:#3730A3;margin-left:6px;vertical-align:middle;letter-spacing:0.2px;}
+    .dday-pill.today {background:#FEE2E2;color:#B91C1C;}
+    .dday-pill.live {background:var(--coral);color:#fff;}
+    .dday-pill.soon {background:#FEF3C7;color:#92400E;}
     /* 작은 레슨 카드 (캘린더 선택일 레슨) */
     .lesson-card {background:#fff;border:1px solid var(--gray-100);border-radius:12px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:12px;text-decoration:none;}
     .lesson-time {flex-shrink:0;width:50px;text-align:center;}
@@ -38,11 +44,27 @@
     .alert-card .ttl {font-size:13px;font-weight:700;color:var(--navy);margin-bottom:2px;}
     .alert-card .sub {font-size:11px;color:var(--gray-500);line-height:1.5;}
     .alert-card .arrow {color:var(--gray-400);font-size:14px;flex-shrink:0;align-self:center;}
+    .alert-card .head {display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:2px;}
+    .deadline-pill {font-size:10px;font-weight:800;padding:2px 6px;border-radius:5px;background:var(--gray-100);color:var(--gray-500);white-space:nowrap;}
+    .deadline-pill.urgent {background:var(--coral);color:#fff;}
+    .deadline-pill.warn {background:#FEF3C7;color:#92400E;}
+    .alert-card .actions {display:flex;gap:6px;margin-top:8px;}
+    .alert-cta {flex:1;text-align:center;padding:7px 10px;border-radius:8px;font-size:11px;font-weight:700;text-decoration:none;border:1px solid transparent;}
+    .alert-cta.primary {background:var(--navy);color:#fff;}
+    .alert-cta.ghost {background:#fff;color:var(--gray-500);border-color:var(--gray-200);}
+    .session-bar {margin-top:6px;display:flex;align-items:center;gap:8px;}
+    .session-bar .track {flex:1;height:4px;background:var(--gray-100);border-radius:2px;overflow:hidden;}
+    .session-bar .fill {height:100%;background:var(--green);border-radius:2px;}
+    .session-bar .txt {font-size:10px;font-weight:700;color:var(--gray-500);white-space:nowrap;}
     /* 보조 코치 카드 (헤더 인사 옆/단순) */
-    .coach-pill {display:flex;align-items:center;gap:10px;padding:10px 12px;background:#fff;border:1px solid var(--gray-100);border-radius:12px;text-decoration:none;}
-    .coach-pill .ava {width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--sky));display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
-    .coach-pill .nm {flex:1;font-size:12px;color:var(--navy);font-weight:600;}
-    .coach-pill .nm .role {font-size:10px;color:var(--gray-400);font-weight:500;display:block;margin-bottom:1px;}
+    .coach-pill {display:flex;align-items:center;gap:10px;padding:12px;background:#fff;border:1px solid var(--gray-100);border-radius:12px;text-decoration:none;}
+    .coach-pill .ava {width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--sky));display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+    .coach-pill .nm {flex:1;font-size:13px;color:var(--navy);font-weight:700;min-width:0;}
+    .coach-pill .nm .role {font-size:10px;color:var(--gray-400);font-weight:500;display:block;margin-bottom:2px;}
+    .coach-pill .nm .next {font-size:11px;color:var(--gray-500);font-weight:500;display:block;margin-top:2px;}
+    .coach-pill .acts {display:flex;gap:6px;flex-shrink:0;}
+    .coach-pill .acts a {width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;text-decoration:none;background:var(--gray-50);border:1px solid var(--gray-100);}
+    .coach-pill .acts a.msg {background:#ECFDF5;border-color:#A7F3D0;}
     .cal-cell {display:flex;flex-direction:column;align-items:center;justify-content:center;height:46px;border-radius:10px;border:1px solid transparent;cursor:pointer;background:#fff;transition:all 0.15s;}
     .cal-cell:hover {background:var(--gray-50);}
     .cal-cell.has-lesson {border-color:#EDE9FE;background:#F5F3FF;}
@@ -54,7 +76,13 @@
     .cal-cell .dow {font-size:9px;color:var(--gray-400);font-weight:600;}
     .cal-cell .num {font-size:14px;font-weight:700;color:var(--navy);margin-top:2px;}
     .cal-cell .dot {width:4px;height:4px;border-radius:50%;background:var(--green);margin-top:3px;}
+    .cal-cell .dot.done {background:#1E40AF;}
+    .cal-cell .dot.absent {background:var(--gray-400);}
+    .cal-cell .dot.makeup {background:#7C3AED;}
     .cal-cell.today .dot {background:#fff;}
+    .cal-legend {display:flex;flex-wrap:wrap;gap:10px;margin-bottom:8px;font-size:10px;color:var(--gray-500);}
+    .cal-legend .lg {display:inline-flex;align-items:center;gap:4px;}
+    .cal-legend .lg .dt {width:6px;height:6px;border-radius:50%;}
     .section-title {font-size:13px;font-weight:700;color:var(--navy);margin:14px 4px 8px;display:flex;align-items:center;justify-content:space-between;}
   </style>
 </head>
@@ -71,6 +99,19 @@
         <div style="font-size:12px;color:var(--gray-500);margin-top:4px;">오늘도 즐거운 레슨 되세요</div>
       </div>
 
+      <!-- ⓪ 모두 비었을 때 동기부여 카드 (조건부) -->
+      <div id="empty-hero" style="padding:0 16px 0;display:none;">
+        <a href="../flow2-home/2-2-coach-list.html" class="hero-card" style="border-left-color:var(--sky);">
+          <div class="lead-icon" style="background:#E0F2FE;">🎾</div>
+          <div class="body">
+            <div class="label">시작해 보기</div>
+            <div class="ttl">예정된 레슨이 없어요</div>
+            <div class="sub">근처 코치를 둘러보고 첫 레슨을 예약해 보세요</div>
+          </div>
+          <span class="arrow">›</span>
+        </a>
+      </div>
+
       <!-- ① 결제 안내 (조건부, 가장 위) -->
       <div id="payment-area" style="padding:0 16px 0;"></div>
 
@@ -83,36 +124,52 @@
       <div id="alerts-wrap" style="padding:8px 16px 0;">
         <div class="section-title">📬 응답 대기 <span style="font-size:11px;color:var(--gray-400);font-weight:500;" id="alert-count"></span></div>
         <div id="alerts-area">
-          <a href="6-6-booking-detail.html?status=makeup_proposed&dates=4%2F24%20(%EB%AA%A9)%2016%3A00%7C4%2F25%20(%EA%B8%88)%2010%3A00" class="alert-card urgent">
+          <div class="alert-card urgent">
             <span class="icon">🔄</span>
             <div class="body">
-              <div class="ttl">보강 일정 제안 도착</div>
-              <div class="sub">코치님이 4/24, 4/25 두 날짜를 제안했어요. 1개를 선택해 주세요.</div>
+              <div class="head">
+                <div class="ttl">보강 일정 제안 도착</div>
+                <span class="deadline-pill urgent">8h 32m 남음</span>
+              </div>
+              <div class="sub">코치님이 4/24 (목) 16:00, 4/25 (금) 10:00 두 날짜를 제안했어요.</div>
+              <div class="actions">
+                <a href="6-6-booking-detail.html?status=makeup_proposed&dates=4%2F24%20(%EB%AA%A9)%2016%3A00%7C4%2F25%20(%EA%B8%88)%2010%3A00#select" class="alert-cta primary">날짜 선택하기</a>
+                <a href="6-6-booking-detail.html?status=makeup_proposed&dates=4%2F24%20(%EB%AA%A9)%2016%3A00%7C4%2F25%20(%EA%B8%88)%2010%3A00" class="alert-cta ghost">자세히</a>
+              </div>
             </div>
-            <span class="arrow">›</span>
-          </a>
-          <a href="6-6-booking-detail.html?status=reschedule_pending" class="alert-card">
+          </div>
+          <div class="alert-card">
             <span class="icon">📅</span>
             <div class="body">
-              <div class="ttl">변경 요청 응답 대기 중</div>
+              <div class="head">
+                <div class="ttl">변경 요청 응답 대기 중</div>
+                <span class="deadline-pill warn">D-2</span>
+              </div>
               <div class="sub">5/13 (수) 14:00 레슨 변경 요청 — 코치님 응답 대기</div>
+              <div class="actions">
+                <a href="6-6-booking-detail.html?status=reschedule_pending" class="alert-cta ghost">상세 보기</a>
+                <a href="../flow4-chat/4-2-chat.html" class="alert-cta primary">코치에게 문의</a>
+              </div>
             </div>
-            <span class="arrow">›</span>
-          </a>
+          </div>
         </div>
       </div>
 
       <!-- ④ 담당 코치 (작은 보조 카드) -->
       <div style="padding:14px 16px 0;">
         <div class="section-title" style="margin-bottom:6px;">담당 코치</div>
-        <a href="../flow4-chat/4-2-chat.html" class="coach-pill">
+        <div class="coach-pill">
           <div class="ava">🧑‍🏫</div>
           <div class="nm">
             <span class="role">정기 레슨 · 월·수 14:00 · 20분</span>
             김민수 코치님
+            <span class="next">다음 약속 · 오늘 14:00</span>
           </div>
-          <span style="color:var(--green);font-size:12px;font-weight:700;flex-shrink:0;">💬 메시지</span>
-        </a>
+          <div class="acts">
+            <a href="tel:01012345678" aria-label="전화">📞</a>
+            <a href="../flow4-chat/4-2-chat.html" class="msg" aria-label="메시지">💬</a>
+          </div>
+        </div>
       </div>
 
       <!-- ⑤ 캘린더 + 선택일 레슨 (둘러보기) -->
@@ -125,7 +182,13 @@
             <button onclick="moveWeek(1)" style="width:28px;height:28px;border-radius:8px;border:1px solid var(--gray-200);background:#fff;font-size:12px;cursor:pointer;">›</button>
           </div>
         </div>
-        <div id="week-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:10px;"></div>
+        <div id="week-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:8px;"></div>
+        <div class="cal-legend">
+          <span class="lg"><span class="dt" style="background:var(--green);"></span>예정</span>
+          <span class="lg"><span class="dt" style="background:#1E40AF;"></span>완료</span>
+          <span class="lg"><span class="dt" style="background:var(--gray-400);"></span>결강</span>
+          <span class="lg"><span class="dt" style="background:#7C3AED;"></span>보강</span>
+        </div>
         <div id="lessons-title" style="font-size:11px;color:var(--gray-500);font-weight:600;margin-bottom:6px;"></div>
         <div id="lessons-area"></div>
       </div>
@@ -158,6 +221,22 @@ const LESSON_TIME = '14:00';
 const LESSON_DURATION = 20;
 // mock 결제 미수 (실제로는 API)
 const HAS_UNPAID = true;
+const UNPAID_AMOUNT = 240000;       // 원
+const UNPAID_DUE_DAYS = 2;            // 마감까지 D-N (음수면 연체)
+// mock 회차 진행
+const SESSION_DONE = 3;
+const SESSION_TOTAL = 8;
+// mock 일자별 상태 (오늘 기준 day offset → status)
+// 'done' 완료 · 'absent' 결강 · 'makeup' 보강(비정기) · 'scheduled' 예정
+const DATE_STATUS = {
+  '-7': 'done', '-5': 'done', '-3': 'absent', '-2': 'makeup', '0': 'scheduled', '2': 'scheduled', '4': 'scheduled'
+};
+function statusOfDate(d) {
+  const offset = Math.round((d - TODAY) / 86400000);
+  if (DATE_STATUS[String(offset)]) return DATE_STATUS[String(offset)];
+  if (STUDENT_LESSON_DAYS.includes(d.getDay())) return offset < 0 ? 'done' : 'scheduled';
+  return null;
+}
 let weekOffset = 0;
 let selectedDate = new Date(TODAY); // 기본 선택 = 오늘
 
@@ -174,13 +253,20 @@ function renderPaymentArea() {
   const area = document.getElementById('payment-area');
   if (!area) return;
   if (!HAS_UNPAID) { area.innerHTML = ''; return; }
+  const amountTxt = UNPAID_AMOUNT.toLocaleString('ko-KR') + '원';
+  const overdue = UNPAID_DUE_DAYS < 0;
+  const duePill = overdue
+    ? `<span class="dday-pill live">${Math.abs(UNPAID_DUE_DAYS)}일 연체</span>`
+    : (UNPAID_DUE_DAYS === 0
+        ? `<span class="dday-pill today">오늘까지</span>`
+        : `<span class="dday-pill soon">D-${UNPAID_DUE_DAYS}</span>`);
   area.innerHTML = `
     <a href="6-6-booking-detail.html?status=confirmed&payment=unpaid" class="hero-card payment">
       <div class="lead-icon">💳</div>
       <div class="body">
         <div class="label">결제 안내</div>
-        <div class="ttl">5월 4주차 미결제</div>
-        <div class="sub">결제 후 코치님께 보고해 주세요</div>
+        <div class="ttl">${amountTxt} 미결제 ${duePill}</div>
+        <div class="sub">5월 4주차 · 결제 후 코치님께 보고해 주세요</div>
       </div>
       <span class="arrow">›</span>
     </a>`;
@@ -205,13 +291,42 @@ function renderNextLesson() {
   const isToday = sameDay(next, TODAY);
   const dow = next.getDay();
   const dayLabel = isToday ? '오늘' : (sameDay(next, addDays(TODAY, 1)) ? '내일' : `${next.getMonth()+1}/${next.getDate()} (${DAY_NAMES[dow]})`);
+  const daysDiff = Math.round((next - TODAY) / 86400000);
+  // mock 현재 시각 (status bar 9:41 기준) — 임박/진행중 상태 시뮬
+  const MOCK_NOW_MIN = 9*60 + 41;
+  const [lh, lm] = LESSON_TIME.split(':').map(Number);
+  const lessonStartMin = lh*60 + lm;
+  const lessonEndMin = lessonStartMin + LESSON_DURATION;
+  let pill = '';
+  let countdown = '';
+  if (isToday) {
+    if (MOCK_NOW_MIN >= lessonStartMin && MOCK_NOW_MIN <= lessonEndMin) {
+      pill = `<span class="dday-pill live">● LIVE</span>`;
+      countdown = '· 진행 중';
+    } else if (MOCK_NOW_MIN < lessonStartMin) {
+      const remain = lessonStartMin - MOCK_NOW_MIN;
+      const rh = Math.floor(remain/60), rm = remain%60;
+      const remainTxt = rh > 0 ? `${rh}시간 ${rm}분 후` : `${rm}분 후`;
+      pill = `<span class="dday-pill ${remain <= 60 ? 'soon' : 'today'}">D-DAY</span>`;
+      countdown = `· ${remainTxt} 시작`;
+    } else {
+      pill = `<span class="dday-pill">완료</span>`;
+    }
+  } else {
+    pill = `<span class="dday-pill">D-${daysDiff}</span>`;
+  }
+  const pct = Math.round(SESSION_DONE / SESSION_TOTAL * 100);
   area.innerHTML = `
     <a href="6-6-booking-detail.html?status=confirmed" class="hero-card next-lesson">
       <div class="lead-icon">📅</div>
       <div class="body">
         <div class="label">다음 레슨</div>
-        <div class="ttl">${dayLabel} ${LESSON_TIME}</div>
-        <div class="sub">정기 레슨 · ${LESSON_DURATION}분 · 김민수 코치</div>
+        <div class="ttl">${dayLabel} ${LESSON_TIME} ${pill}</div>
+        <div class="sub">정기 레슨 · ${LESSON_DURATION}분 · 김민수 코치 ${countdown}</div>
+        <div class="session-bar">
+          <div class="track"><div class="fill" style="width:${pct}%;"></div></div>
+          <span class="txt">${SESSION_DONE}/${SESSION_TOTAL}회</span>
+        </div>
       </div>
       <span class="arrow">›</span>
     </a>`;
@@ -247,17 +362,19 @@ function renderWeek() {
     const dow = d.getDay();
     const isToday = sameDay(d, TODAY);
     const isSelected = sameDay(d, selectedDate);
-    const hasLesson = STUDENT_LESSON_DAYS.includes(dow);
+    const status = statusOfDate(d);
+    const hasLesson = !!status;
     const cell = document.createElement('div');
     let cls = 'cal-cell';
     if (isToday) cls += ' today';
     else if (hasLesson) cls += ' has-lesson';
     if (isSelected) cls += ' selected';
     cell.className = cls;
+    const dotCls = status === 'done' ? ' done' : (status === 'absent' ? ' absent' : (status === 'makeup' ? ' makeup' : ''));
     cell.innerHTML = `
       <div class="dow">${DAY_NAMES[dow]}</div>
       <div class="num">${d.getDate()}</div>
-      ${hasLesson ? '<div class="dot"></div>' : '<div style="height:7px;"></div>'}
+      ${hasLesson ? `<div class="dot${dotCls}"></div>` : '<div style="height:7px;"></div>'}
     `;
     // 모든 날짜 클릭 가능 (오늘 포함)
     const dateCopy = new Date(d);
@@ -278,28 +395,34 @@ function renderLessons() {
   const area = document.getElementById('lessons-area');
   if (!titleEl || !area) return;
   const dow = selectedDate.getDay();
-  const hasLesson = STUDENT_LESSON_DAYS.includes(dow);
+  const status = statusOfDate(selectedDate);
   const dateLabel = `${selectedDate.getMonth()+1}/${selectedDate.getDate()} (${DAY_NAMES[dow]})`;
   titleEl.textContent = `${dateLabel} 레슨`;
 
-  if (hasLesson) {
-    area.innerHTML = `
-      <a href="6-6-booking-detail.html?status=confirmed" class="lesson-card">
-        <div class="lesson-time">
-          <div class="hh">${LESSON_TIME}</div>
-          <div class="ampm">${DAY_NAMES[dow]}요일</div>
-        </div>
-        <div class="lesson-info">
-          <div class="title">정기 레슨 · 김민수 코치 <span class="badge-sm b-scheduled">예정</span></div>
-          <div class="meta">${LESSON_DURATION}분 · 1:1 개인 · ${dateLabel}</div>
-        </div>
-      </a>`;
-  } else {
+  if (!status) {
     area.innerHTML = `
       <div style="padding:14px;text-align:center;background:#fff;border:1px dashed var(--gray-200);border-radius:12px;color:var(--gray-400);font-size:12px;">
         이 날에는 정기 레슨이 없어요
       </div>`;
+    return;
   }
+  const cfg = {
+    scheduled: {badge:'b-scheduled', label:'예정',   title:'정기 레슨', urlStatus:'confirmed'},
+    done:      {badge:'b-completed', label:'완료',   title:'정기 레슨', urlStatus:'completed'},
+    absent:    {badge:'b-absent',    label:'결강',   title:'정기 레슨', urlStatus:'absent'},
+    makeup:    {badge:'b-makeup',    label:'보강',   title:'보강 레슨', urlStatus:'makeup_confirmed'}
+  }[status];
+  area.innerHTML = `
+    <a href="6-6-booking-detail.html?status=${cfg.urlStatus}" class="lesson-card">
+      <div class="lesson-time">
+        <div class="hh">${LESSON_TIME}</div>
+        <div class="ampm">${DAY_NAMES[dow]}요일</div>
+      </div>
+      <div class="lesson-info">
+        <div class="title">${cfg.title} · 김민수 코치 <span class="badge-sm ${cfg.badge}">${cfg.label}</span></div>
+        <div class="meta">${LESSON_DURATION}분 · 1:1 개인 · ${dateLabel}</div>
+      </div>
+    </a>`;
 }
 
 function moveWeek(dir) {
@@ -317,10 +440,20 @@ function renderAlertCount() {
   if (wrap) wrap.style.display = cnt > 0 ? 'block' : 'none';
 }
 
+function renderEmptyHero() {
+  const empty = document.getElementById('empty-hero');
+  if (!empty) return;
+  const noPayment = !HAS_UNPAID;
+  const noNext = !getNextLesson();
+  const noAlerts = document.querySelectorAll('#alerts-area .alert-card').length === 0;
+  empty.style.display = (noPayment && noNext && noAlerts) ? 'block' : 'none';
+}
+
 // 초기 렌더
 renderPaymentArea();
 renderNextLesson();
 renderAlertCount();
+renderEmptyHero();
 renderWeek();
 </script>
 </body>
