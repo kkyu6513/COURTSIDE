@@ -8,6 +8,14 @@
   <link rel="stylesheet" href="../common-v6.css">
 </head>
 <body>
+<!-- DEV: 학생 홈 케이스 전환 (프로토타입 테스트용) -->
+<div style="position:fixed;top:50%;right:16px;transform:translateY(-50%);display:flex;flex-direction:column;gap:6px;z-index:200;">
+  <div style="font-size:9px;color:#fff;background:rgba(15,23,42,0.85);padding:4px 8px;border-radius:6px;font-weight:700;letter-spacing:0.3px;text-align:center;">CASE</div>
+  <a href="6-0-schedule-home.html" style="display:block;padding:8px 12px;border-radius:8px;background:#0F172A;color:#fff;font-size:11px;font-weight:700;text-decoration:none;text-align:center;letter-spacing:-0.1px;box-shadow:0 2px 8px rgba(0,0,0,0.15);">정상</a>
+  <a href="6-0a-no-coach.html" style="display:block;padding:8px 12px;border-radius:8px;background:#fff;color:#475569;font-size:11px;font-weight:600;text-decoration:none;text-align:center;letter-spacing:-0.1px;border:1px solid #CBD5E1;box-shadow:0 2px 8px rgba(0,0,0,0.06);">코치 미연결</a>
+  <a href="6-0b-guest-no-coach.html" style="display:block;padding:8px 12px;border-radius:8px;background:#fff;color:#475569;font-size:11px;font-weight:600;text-decoration:none;text-align:center;letter-spacing:-0.1px;border:1px solid #CBD5E1;box-shadow:0 2px 8px rgba(0,0,0,0.06);">비로그인</a>
+</div>
+
 <div class="device-wrap">
   <div class="device-label"><span class="device-num">6-0</span>학생 스케줄 홈 (정보 다이어트)</div>
   <div class="device v6" style="position:relative;overflow:hidden;background:var(--bg);">
@@ -28,17 +36,16 @@
     <div class="status-bar"><span class="time">9:41</span><div class="status-icons"><span>●</span><span>●</span></div></div>
     <div class="screen" style="padding-bottom:84px;overflow-y:auto;">
 
-      <!-- 헤더: 시간대 인사 + 날짜 + 명언 -->
+      <!-- 헤더: 닉네임(마스킹) + 시간대 인사 + 날짜 + 명언 -->
       <div class="hdr">
+        <div style="font-size:12px;color:var(--ink-2);font-weight:600;letter-spacing:-0.1px;margin-bottom:6px;"><span id="hdr-name"></span>님</div>
         <div class="greet" id="hdr-greet"></div>
         <div class="date" id="hdr-date"></div>
         <div class="quote" id="hdr-quote"></div>
       </div>
 
-      <!-- 카드 영역 (4개 이하) -->
       <div style="padding: 16px 16px 0;">
 
-        <!-- empty (위 모두 비었을 때만) -->
         <div id="empty-wrap" style="display:none;">
           <div class="sec-ttl first">
             <div class="t">안내</div>
@@ -54,7 +61,6 @@
           </a>
         </div>
 
-        <!-- 1) 결제 (조건부) -->
         <div id="payment-wrap" style="display:none;">
           <div class="sec-ttl first">
             <div class="t">결제</div>
@@ -63,7 +69,6 @@
           <div id="payment-area"></div>
         </div>
 
-        <!-- 2) 다음 레슨 -->
         <div id="next-wrap">
           <div class="sec-ttl">
             <div class="t">다음 레슨</div>
@@ -72,7 +77,6 @@
           <div id="next-lesson-area"></div>
         </div>
 
-        <!-- 3) 응답 필요 — urgent 1건만 -->
         <div id="alerts-wrap">
           <div class="sec-ttl">
             <div class="t">응답 필요</div>
@@ -96,7 +100,6 @@
           </div>
         </div>
 
-        <!-- 4) 코치 공지사항 -->
         <div id="notice-wrap">
           <div class="sec-ttl">
             <div class="t">코치 공지사항</div>
@@ -134,7 +137,7 @@
 const DAY_NAMES = ['일','월','화','수','목','금','토'];
 const TODAY = new Date();
 TODAY.setHours(0,0,0,0);
-const STUDENT_LESSON_DAYS = [1, 3];      // 월·수
+const STUDENT_LESSON_DAYS = [1, 3];
 const LESSON_TIME = '14:00';
 const LESSON_DURATION = 20;
 const HAS_UNPAID = true;
@@ -178,8 +181,17 @@ function todayQuote(){
   return QUOTES[seed % QUOTES.length];
 }
 
+function maskNickname(name){
+  if(!name) return '';
+  if(name.length===1) return name;
+  if(name.length===2) return name[0]+'*';
+  if(name.length===3) return name[0]+'*'+name[2];
+  return name[0]+'*'.repeat(name.length-2)+name[name.length-1];
+}
+
 function renderHeader(){
   const m=TODAY.getMonth()+1,dd=TODAY.getDate(),dow=DAY_NAMES[TODAY.getDay()];
+  document.getElementById('hdr-name').textContent=maskNickname('홍길동');
   document.getElementById('hdr-greet').textContent=timeGreeting();
   document.getElementById('hdr-date').textContent=`${m}월 ${dd}일 (${dow})`;
   const q=todayQuote();
@@ -256,7 +268,6 @@ function renderNextLesson(){
 function renderEmptyHero(){
   const wrap=document.getElementById('empty-wrap');
   const next=getNextLesson();
-  const noAlerts=document.querySelectorAll('#alerts-area .alert').length===0;
   wrap.style.display=(!next)?'block':'none';
   document.getElementById('next-wrap').style.display=(!next)?'none':'block';
 }
