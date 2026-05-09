@@ -154,8 +154,7 @@ function timeGreeting(){
 }
 
 function todayQuote(){
-  const seed=TODAY.getFullYear()*1000 + TODAY.getMonth()*40 + TODAY.getDate();
-  return QUOTES[seed % QUOTES.length];
+  return QUOTES[Math.floor(Math.random() * QUOTES.length)];
 }
 
 function maskNickname(name){
