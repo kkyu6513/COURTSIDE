@@ -12,6 +12,10 @@
     .v6 .sec-ttl .sub { margin-top: 0; }
     .v6 .sec-ttl .sub::before { content: '· '; opacity: 0.6; }
 
+    /* 응답필요 더보기 버튼 */
+    .v6 .alerts-more { margin-top: 8px; width: 100%; height: 36px; border: 1px dashed var(--line); background: transparent; color: var(--ink-2); border-radius: 10px; font-size: 12px; font-weight: 600; font-family: inherit; cursor: pointer; letter-spacing: -0.1px; }
+    .v6 .alerts-more:hover { background: var(--surface); }
+
     /* 공지사항 빈 상태 카드 */
     .v6 .notice-empty { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 14px; display: flex; align-items: center; gap: 12px; }
     .v6 .notice-empty .ava { width: 36px; height: 36px; border-radius: 50%; background: var(--soft); color: var(--ink-2); font-weight: 700; font-size: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
@@ -28,6 +32,7 @@
   <div style="font-size:9px;color:#fff;background:rgba(15,23,42,0.85);padding:4px 8px;border-radius:6px;font-weight:700;letter-spacing:0.3px;text-align:center;">CASE</div>
   <a href="6-0-schedule-home.html" style="display:block;padding:8px 12px;border-radius:8px;background:#0F172A;color:#fff;font-size:11px;font-weight:700;text-decoration:none;text-align:center;letter-spacing:-0.1px;box-shadow:0 2px 8px rgba(0,0,0,0.15);">정상</a>
   <a href="6-0-schedule-home.html?notice=empty" style="display:block;padding:8px 12px;border-radius:8px;background:#fff;color:#475569;font-size:11px;font-weight:600;text-decoration:none;text-align:center;letter-spacing:-0.1px;border:1px solid #CBD5E1;box-shadow:0 2px 8px rgba(0,0,0,0.06);">공지없음</a>
+  <a href="6-0-schedule-home.html?alerts=many" style="display:block;padding:8px 12px;border-radius:8px;background:#fff;color:#475569;font-size:11px;font-weight:600;text-decoration:none;text-align:center;letter-spacing:-0.1px;border:1px solid #CBD5E1;box-shadow:0 2px 8px rgba(0,0,0,0.06);">응답 다건</a>
   <a href="6-0a-no-coach.html" style="display:block;padding:8px 12px;border-radius:8px;background:#fff;color:#475569;font-size:11px;font-weight:600;text-decoration:none;text-align:center;letter-spacing:-0.1px;border:1px solid #CBD5E1;box-shadow:0 2px 8px rgba(0,0,0,0.06);">코치 미연결</a>
   <a href="6-0b-guest-no-coach.html" style="display:block;padding:8px 12px;border-radius:8px;background:#fff;color:#475569;font-size:11px;font-weight:600;text-decoration:none;text-align:center;letter-spacing:-0.1px;border:1px solid #CBD5E1;box-shadow:0 2px 8px rgba(0,0,0,0.06);">비로그인</a>
 </div>
@@ -46,6 +51,8 @@
         <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v9a1 1 0 0 1-1 1h-4v-7h-6v7H5a1 1 0 0 1-1-1z"/></symbol>
         <symbol id="i-list" viewBox="0 0 24 24"><path d="M5 6h14M5 12h14M5 18h14"/></symbol>
         <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+        <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 3l2.7 5.5 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.8 1-6.1L3.2 9.4l6.1-.9z"/></symbol>
+        <symbol id="i-pkg" viewBox="0 0 24 24"><path d="M21 8L12 3 3 8l9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></symbol>
       </defs>
     </svg>
 
@@ -89,22 +96,7 @@
             <div class="t">응답 필요</div>
             <div class="sub">코치가 보낸 제안</div>
           </div>
-          <div id="alerts-area">
-            <div class="alert">
-              <div class="lead"><svg class="ic ic-sm"><use href="#i-sync"/></svg></div>
-              <div class="b">
-                <div class="head">
-                  <div class="ttl">보강 일정 제안</div>
-                  <span class="pill alert">8h 32m</span>
-                </div>
-                <div class="sub">4/24 (목) 16:00, 4/25 (금) 10:00 중 1개 선택</div>
-                <div class="actions">
-                  <a href="6-6-booking-detail.html?status=makeup_proposed&dates=4%2F24%20(%EB%AA%A9)%2016%3A00%7C4%2F25%20(%EA%B8%88)%2010%3A00#select" class="alert-cta primary">날짜 선택</a>
-                  <a href="6-6-booking-detail.html?status=makeup_proposed&dates=4%2F24%20(%EB%AA%A9)%2016%3A00%7C4%2F25%20(%EA%B8%88)%2010%3A00" class="alert-cta ghost">자세히</a>
-                </div>
-              </div>
-            </div>
-          </div>
+          <div id="alerts-area"></div>
         </div>
 
         <div id="next-wrap">
@@ -146,8 +138,12 @@ const LESSON_DURATION = 20;
 const HAS_UNPAID = true;
 const UNPAID_AMOUNT = 240000;
 const UNPAID_DUE_DAYS = 2;
-// 공지: URL ?notice=empty 일 때 빈 상태 노출
-const HAS_NOTICE = !new URLSearchParams(location.search).get('notice') || new URLSearchParams(location.search).get('notice') !== 'empty';
+const QS = new URLSearchParams(location.search);
+// 공지: ?notice=empty → 빈 상태
+const HAS_NOTICE = QS.get('notice') !== 'empty';
+// 응답필요: ?alerts=many → 4건+ 노출 (더보기 검증), 기본 1건
+const ALERTS_CASE = QS.get('alerts') === 'many' ? 'many' : 'default';
+const ALERTS_VISIBLE_LIMIT = 3; // 정책: 기본 3건까지 노출, 초과 시 +N 더보기
 const SESSION_DONE = 3;
 const SESSION_TOTAL = 8;
 const MOCK_NOW_MIN = 9*60 + 41;
@@ -276,10 +272,91 @@ function renderEmptyHero(){
   document.getElementById('next-wrap').style.display=(!next)?'none':'block';
 }
 
+// 응답필요 항목 정의
+//  - icon: SVG symbol id  (i-sync 일정류, i-star 리뷰, i-pkg 패키지)
+//  - deadlineMin: 마감까지 남은 분 (정렬 기준, 임박순 오름차순)
+//  - urgent: deadlineMin <= 12h 이면 알림(빨강) 필 사용
+const MOCK_ALERTS_DEFAULT = [
+  {
+    icon: 'i-sync',
+    title: '보강 일정 제안',
+    sub: '4/24 (목) 16:00, 4/25 (금) 10:00 중 1개 선택',
+    deadlineMin: 8*60+32,
+    deadlineLabel: '8h 32m',
+    primary: { label: '날짜 선택', href: '6-6-booking-detail.html?status=makeup_proposed&dates=4%2F24%20(%EB%AA%A9)%2016%3A00%7C4%2F25%20(%EA%B8%88)%2010%3A00#select' },
+    ghost:   { label: '자세히',  href: '6-6-booking-detail.html?status=makeup_proposed&dates=4%2F24%20(%EB%AA%A9)%2016%3A00%7C4%2F25%20(%EA%B8%88)%2010%3A00' }
+  }
+];
+const MOCK_ALERTS_MANY = [
+  {
+    icon: 'i-sync',
+    title: '보강 일정 제안',
+    sub: '4/24 (목) 16:00, 4/25 (금) 10:00 중 1개 선택',
+    deadlineMin: 8*60+32,
+    deadlineLabel: '8h 32m',
+    primary: { label: '날짜 선택', href: '6-6-booking-detail.html?status=makeup_proposed#select' },
+    ghost:   { label: '자세히',  href: '6-6-booking-detail.html?status=makeup_proposed' }
+  },
+  {
+    icon: 'i-sync',
+    title: '일정 변경 슬롯 제안',
+    sub: '4/22 (월) 14:00, 4/22 (월) 16:00 중 1개 선택',
+    deadlineMin: 22*60+10,
+    deadlineLabel: '22h 10m',
+    primary: { label: '슬롯 선택', href: '6-6-booking-detail.html?status=reschedule_completed#select' },
+    ghost:   { label: '자세히',  href: '6-6-booking-detail.html?status=reschedule_completed' }
+  },
+  {
+    icon: 'i-star',
+    title: '리뷰 작성 요청',
+    sub: '5/2 (목) 김민수 코치 레슨',
+    deadlineMin: 3*24*60,
+    deadlineLabel: '3일',
+    primary: { label: '리뷰 작성', href: '6-7-review-write.html' },
+    ghost:   null
+  },
+  {
+    icon: 'i-pkg',
+    title: '재등록 안내',
+    sub: '잔여 1회 — 다음 패키지를 결정해 주세요',
+    deadlineMin: 7*24*60,
+    deadlineLabel: null,
+    primary: { label: '패키지 선택', href: '6-6-booking-detail.html?status=confirmed' },
+    ghost:   null
+  }
+];
+
+let alertsExpanded = false;
+
 function renderAlerts(){
-  const cnt=document.querySelectorAll('#alerts-area .alert').length;
-  document.getElementById('alerts-wrap').style.display=cnt>0?'block':'none';
+  const wrap = document.getElementById('alerts-wrap');
+  const area = document.getElementById('alerts-area');
+  const all = (ALERTS_CASE==='many' ? MOCK_ALERTS_MANY : MOCK_ALERTS_DEFAULT)
+    .slice().sort((a,b)=>a.deadlineMin-b.deadlineMin);
+  if(all.length===0){ wrap.style.display='none'; area.innerHTML=''; return; }
+  wrap.style.display='block';
+  const visible = alertsExpanded ? all : all.slice(0, ALERTS_VISIBLE_LIMIT);
+  const hidden = all.length - visible.length;
+  const cards = visible.map(a => {
+    const urgent = a.deadlineMin <= 12*60;
+    const pill = a.deadlineLabel ? `<span class="pill ${urgent?'alert':''}">${a.deadlineLabel}</span>` : '';
+    const primary = a.primary ? `<a href="${a.primary.href}" class="alert-cta primary">${a.primary.label}</a>` : '';
+    const ghost   = a.ghost   ? `<a href="${a.ghost.href}"   class="alert-cta ghost">${a.ghost.label}</a>`   : '';
+    return `
+      <div class="alert">
+        <div class="lead"><svg class="ic ic-sm"><use href="#${a.icon}"/></svg></div>
+        <div class="b">
+          <div class="head"><div class="ttl">${a.title}</div>${pill}</div>
+          <div class="sub">${a.sub}</div>
+          <div class="actions">${primary}${ghost}</div>
+        </div>
+      </div>`;
+  }).join('');
+  const more = hidden>0 ? `<button type="button" class="alerts-more" onclick="expandAlerts()">+ ${hidden}건 더 있어요</button>` : '';
+  area.innerHTML = cards + more;
 }
+
+function expandAlerts(){ alertsExpanded = true; renderAlerts(); }
 
 function renderNotice(){
   const area=document.getElementById('notice-area');
