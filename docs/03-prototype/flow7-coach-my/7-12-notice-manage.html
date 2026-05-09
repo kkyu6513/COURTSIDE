@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=375, initial-scale=1.0">
+<title>7-12 공지사항 관리 — COURTSIDE</title>
+<link rel="stylesheet" href="../common.css">
+<style>
+  .notice-card { background:#fff; border:1px solid var(--gray-100); border-radius:12px; padding:14px 14px 12px; margin:0 16px 10px; }
+  .notice-card .meta-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+  .notice-card .target { font-size:11px; font-weight:700; padding:3px 8px; border-radius:999px; letter-spacing:-0.1px; }
+  .notice-card .target.all { background:#ECFEFF; color:#0E7490; }
+  .notice-card .target.individual { background:#F1F5F9; color:#475569; }
+  .notice-card .ts { font-size:11px; color:var(--gray-400); margin-left:auto; }
+  .notice-card .body { font-size:13px; line-height:1.55; color:var(--navy); letter-spacing:-0.2px; }
+  .notice-card .targets-detail { margin-top:6px; font-size:11px; color:var(--gray-500); font-weight:500; }
+  .notice-card .actions { display:flex; gap:6px; margin-top:10px; padding-top:10px; border-top:1px dashed var(--gray-100); }
+  .notice-card .actions button { flex:1; height:32px; border:1px solid var(--gray-100); background:#fff; color:var(--navy); border-radius:8px; font-size:12px; font-weight:600; font-family:inherit; cursor:pointer; }
+  .notice-card .actions button.danger { color:#DC2626; border-color:#FECACA; }
+
+  .empty-card { margin:0 16px; padding:36px 20px; text-align:center; background:#fff; border:1px dashed var(--gray-300); border-radius:12px; }
+  .empty-card .icon { font-size:32px; margin-bottom:8px; }
+  .empty-card .ttl { font-size:14px; font-weight:700; color:var(--navy); }
+  .empty-card .sub { font-size:12px; color:var(--gray-500); margin-top:4px; line-height:1.5; }
+
+  .add-btn { margin:0 16px 12px; height:48px; border-radius:12px; background:var(--navy); color:#fff; display:flex; align-items:center; justify-content:center; gap:6px; font-size:14px; font-weight:700; border:none; font-family:inherit; cursor:pointer; letter-spacing:-0.2px; }
+
+  .sec-h { padding:18px 20px 8px; font-size:11px; font-weight:700; color:var(--gray-500); letter-spacing:0.3px; text-transform:uppercase; }
+
+  /* 바텀시트 (작성 폼) */
+  .sheet-overlay { position:absolute; inset:0; background:rgba(0,0,0,0.4); z-index:50; display:none; }
+  .sheet-overlay.show { display:block; }
+  .sheet { position:absolute; bottom:0; left:0; right:0; background:#fff; border-radius:20px 20px 0 0; padding:20px 18px 24px; max-height:88%; overflow-y:auto; }
+  .sheet .handle { width:40px; height:4px; border-radius:2px; background:var(--gray-300); margin:0 auto 14px; }
+  .sheet h3 { margin:0 0 14px; font-size:16px; font-weight:700; color:var(--navy); letter-spacing:-0.3px; }
+  .sheet label { display:block; font-size:12px; font-weight:700; color:var(--navy); margin-bottom:8px; letter-spacing:-0.1px; }
+  .sheet textarea { width:100%; min-height:110px; padding:12px; border:1px solid var(--gray-100); border-radius:10px; font-size:13px; line-height:1.55; font-family:inherit; resize:vertical; box-sizing:border-box; color:var(--navy); }
+  .sheet textarea:focus { outline:none; border-color:var(--navy); }
+  .sheet .target-radio { display:flex; gap:8px; }
+  .sheet .target-radio label { flex:1; display:flex; align-items:center; justify-content:center; height:42px; border:1.5px solid var(--gray-100); border-radius:10px; font-size:13px; font-weight:600; color:var(--gray-500); cursor:pointer; margin:0; }
+  .sheet .target-radio input { display:none; }
+  .sheet .target-radio input:checked + label { border-color:var(--navy); color:var(--navy); background:#F8FAFC; }
+  .sheet .student-list { max-height:160px; overflow-y:auto; border:1px solid var(--gray-100); border-radius:10px; padding:6px; margin-top:8px; }
+  .sheet .student-list.disabled { opacity:0.4; pointer-events:none; }
+  .sheet .student-row { display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:8px; cursor:pointer; }
+  .sheet .student-row:hover { background:var(--gray-50); }
+  .sheet .student-row input { width:18px; height:18px; accent-color:var(--navy); }
+  .sheet .student-row .nm { font-size:13px; color:var(--navy); font-weight:600; }
+  .sheet .student-row .meta { font-size:11px; color:var(--gray-500); margin-left:auto; }
+  .sheet .submit-row { display:flex; gap:8px; margin-top:18px; }
+  .sheet .submit-row button { flex:1; height:48px; border-radius:10px; font-size:14px; font-weight:700; font-family:inherit; cursor:pointer; letter-spacing:-0.2px; }
+  .sheet .submit-row .cancel { border:1px solid var(--gray-100); background:#fff; color:var(--navy); }
+  .sheet .submit-row .submit { border:none; background:var(--navy); color:#fff; flex:2; }
+  .sheet .submit-row .submit:disabled { background:var(--gray-300); cursor:not-allowed; }
+
+  .char-count { text-align:right; font-size:11px; color:var(--gray-400); margin-top:4px; }
+</style>
+</head>
+<body>
+<div class="device-wrap">
+  <div class="device-label"><span class="device-num">7-12</span>공지사항 관리</div>
+  <div class="device" style="position:relative;overflow:hidden;background:var(--gray-50);">
+    <div class="status-bar"><span class="time">9:41</span><div class="status-icons"><span>📶</span><span>🔋</span></div></div>
+    <div class="top-nav">
+      <a href="7-1-coach-mypage.html" class="back">‹</a>
+      <span class="title">공지사항 관리</span>
+      <span class="action"></span>
+    </div>
+
+    <div class="screen" style="padding-top:14px;padding-bottom:24px;">
+      <button type="button" class="add-btn" onclick="openSheet()">＋ 새 공지 등록</button>
+
+      <div class="sec-h" id="list-header">등록된 공지</div>
+
+      <div id="notice-list"></div>
+
+    </div>
+
+    <!-- 작성/수정 바텀시트 -->
+    <div class="sheet-overlay" id="sheet" onclick="closeSheet(event)">
+      <div class="sheet" onclick="event.stopPropagation()">
+        <div class="handle"></div>
+        <h3 id="sheet-title">새 공지 등록</h3>
+
+        <label>대상</label>
+        <div class="target-radio">
+          <input type="radio" name="target" id="t-all" value="all" checked onchange="onTargetChange()">
+          <label for="t-all">전체 수강생</label>
+          <input type="radio" name="target" id="t-ind" value="individual" onchange="onTargetChange()">
+          <label for="t-ind">개별 선택</label>
+        </div>
+
+        <div id="student-picker-wrap" style="margin-top:12px;display:none;">
+          <label>대상 수강생 (<span id="picked-count">0</span>명 선택)</label>
+          <div class="student-list" id="student-list"></div>
+        </div>
+
+        <div style="margin-top:14px;">
+          <label>공지 내용</label>
+          <textarea id="ta-body" maxlength="300" placeholder="예) 이번 주 토요일 코트 점검으로 모든 레슨이 일요일로 이동됩니다." oninput="onBodyInput()"></textarea>
+          <div class="char-count"><span id="cc">0</span> / 300</div>
+        </div>
+
+        <div class="submit-row">
+          <button type="button" class="cancel" onclick="closeSheet()">취소</button>
+          <button type="button" class="submit" id="btn-submit" onclick="submitNotice()" disabled>등록</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 코치 전용 Bottom Nav -->
+    <div style="flex-shrink:0;padding:8px 16px 20px;background:var(--gray-50);">
+      <div style="display:flex;align-items:center;justify-content:space-around;height:60px;background:#fff;border-radius:30px;box-shadow:0 2px 16px rgba(0,0,0,0.1);border:1px solid var(--gray-100);">
+        <a href="7-0-schedule-home.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;padding:8px 14px;"><span style="font-size:18px;">📅</span><span style="font-size:9px;font-weight:600;color:var(--gray-400);">스케줄</span></a><a href="7-2-booking-inbox.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;padding:8px 14px;"><span style="font-size:18px;">📬</span><span style="font-size:9px;font-weight:600;color:var(--gray-400);">신청함</span></a><a href="../flow4-chat/4-1-chat-list.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;padding:8px 14px;"><span style="font-size:18px;">💬</span><span style="font-size:9px;font-weight:600;color:var(--gray-400);">메시지</span></a><a href="7-10-student-search.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;padding:8px 14px;"><span style="font-size:18px;">🔍</span><span style="font-size:9px;font-weight:600;color:var(--gray-400);">검색</span></a><a href="7-1-coach-mypage.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;padding:8px 14px;"><span style="font-size:18px;">👤</span><span style="font-size:9px;font-weight:700;color:var(--green);">마이</span></a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const MOCK_STUDENTS = [
+  { id: 's1', name: '홍길동', meta: '월 14:00' },
+  { id: 's2', name: '김지원', meta: '화 19:00' },
+  { id: 's3', name: '박서준', meta: '수 10:00' },
+  { id: 's4', name: '이수민', meta: '목 16:00' },
+  { id: 's5', name: '정유진', meta: '금 11:00' },
+  { id: 's6', name: '최민호', meta: '토 09:00' }
+];
+
+let notices = [
+  { id: 'n1', target: 'all', studentIds: [], body: '이번 주 토요일(5/10) 코트 정기 점검으로 모든 레슨이 일요일로 이동됩니다. 시간은 그대로 유지되니 양해 부탁드려요.', ts: '3시간 전' },
+  { id: 'n2', target: 'individual', studentIds: ['s1', 's3'], body: '다음 주부터 신규 드릴 도입 예정입니다. 라켓 준비 부탁드려요.', ts: '어제' }
+];
+
+let editingId = null;
+
+function renderList(){
+  const root = document.getElementById('notice-list');
+  const header = document.getElementById('list-header');
+  if(notices.length === 0){
+    header.style.display = 'none';
+    root.innerHTML = `
+      <div class="empty-card">
+        <div class="icon">📭</div>
+        <div class="ttl">아직 등록한 공지가 없어요</div>
+        <div class="sub">새 공지를 등록하면 수강생 홈에 노출돼요</div>
+      </div>`;
+    return;
+  }
+  header.style.display = 'block';
+  root.innerHTML = notices.map(n => {
+    const targetLabel = n.target === 'all'
+      ? `<span class="target all">전체 수강생</span>`
+      : `<span class="target individual">개별 ${n.studentIds.length}명</span>`;
+    const targetDetail = n.target === 'individual'
+      ? `<div class="targets-detail">${n.studentIds.map(id => MOCK_STUDENTS.find(s=>s.id===id)?.name).filter(Boolean).join(', ')}</div>`
+      : '';
+    return `
+      <div class="notice-card">
+        <div class="meta-row">${targetLabel}<span class="ts">${n.ts}</span></div>
+        <div class="body">${escapeHtml(n.body)}</div>
+        ${targetDetail}
+        <div class="actions">
+          <button type="button" onclick="editNotice('${n.id}')">수정</button>
+          <button type="button" class="danger" onclick="deleteNotice('${n.id}')">삭제</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function escapeHtml(s){ return s.replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function renderStudentList(){
+  const root = document.getElementById('student-list');
+  root.innerHTML = MOCK_STUDENTS.map(s => `
+    <div class="student-row" onclick="toggleStudent('${s.id}', event)">
+      <input type="checkbox" id="chk-${s.id}" data-id="${s.id}" onchange="updatePickedCount()">
+      <span class="nm">${s.name}</span>
+      <span class="meta">${s.meta}</span>
+    </div>
+  `).join('');
+}
+
+function toggleStudent(id, event){
+  if(event.target.tagName === 'INPUT') return;
+  const chk = document.getElementById('chk-' + id);
+  chk.checked = !chk.checked;
+  updatePickedCount();
+}
+
+function updatePickedCount(){
+  const count = document.querySelectorAll('#student-list input:checked').length;
+  document.getElementById('picked-count').textContent = count;
+  validateForm();
+}
+
+function onTargetChange(){
+  const isAll = document.getElementById('t-all').checked;
+  document.getElementById('student-picker-wrap').style.display = isAll ? 'none' : 'block';
+  validateForm();
+}
+
+function onBodyInput(){
+  const len = document.getElementById('ta-body').value.length;
+  document.getElementById('cc').textContent = len;
+  validateForm();
+}
+
+function validateForm(){
+  const body = document.getElementById('ta-body').value.trim();
+  const isAll = document.getElementById('t-all').checked;
+  const picked = document.querySelectorAll('#student-list input:checked').length;
+  const ok = body.length > 0 && (isAll || picked > 0);
+  document.getElementById('btn-submit').disabled = !ok;
+}
+
+function openSheet(){
+  editingId = null;
+  document.getElementById('sheet-title').textContent = '새 공지 등록';
+  document.getElementById('btn-submit').textContent = '등록';
+  document.getElementById('t-all').checked = true;
+  document.getElementById('ta-body').value = '';
+  document.getElementById('cc').textContent = '0';
+  document.querySelectorAll('#student-list input').forEach(c => c.checked = false);
+  onTargetChange();
+  document.getElementById('sheet').classList.add('show');
+}
+
+function closeSheet(event){
+  if(event && event.target !== event.currentTarget) return;
+  document.getElementById('sheet').classList.remove('show');
+}
+
+function editNotice(id){
+  const n = notices.find(x => x.id === id);
+  if(!n) return;
+  editingId = id;
+  document.getElementById('sheet-title').textContent = '공지 수정';
+  document.getElementById('btn-submit').textContent = '저장';
+  document.getElementById(n.target === 'all' ? 't-all' : 't-ind').checked = true;
+  document.getElementById('ta-body').value = n.body;
+  document.getElementById('cc').textContent = n.body.length;
+  document.querySelectorAll('#student-list input').forEach(c => {
+    c.checked = n.studentIds.includes(c.dataset.id);
+  });
+  onTargetChange();
+  updatePickedCount();
+  document.getElementById('sheet').classList.add('show');
+}
+
+function deleteNotice(id){
+  if(!confirm('이 공지를 삭제할까요?')) return;
+  notices = notices.filter(n => n.id !== id);
+  renderList();
+}
+
+function submitNotice(){
+  const body = document.getElementById('ta-body').value.trim();
+  const isAll = document.getElementById('t-all').checked;
+  const studentIds = isAll ? [] : Array.from(document.querySelectorAll('#student-list input:checked')).map(c => c.dataset.id);
+  if(editingId){
+    const n = notices.find(x => x.id === editingId);
+    n.target = isAll ? 'all' : 'individual';
+    n.studentIds = studentIds;
+    n.body = body;
+  } else {
+    notices.unshift({
+      id: 'n' + Date.now(),
+      target: isAll ? 'all' : 'individual',
+      studentIds,
+      body,
+      ts: '방금'
+    });
+  }
+  renderList();
+  closeSheet();
+}
+
+renderStudentList();
+renderList();
+</script>
+</body>
+</html>
