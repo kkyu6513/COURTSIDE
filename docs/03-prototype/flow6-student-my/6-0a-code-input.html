@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=375, initial-scale=1.0">
+  <title>6-0a 초대 코드 입력 — COURTSIDE</title>
+  <link rel="stylesheet" href="../common.css">
+  <link rel="stylesheet" href="../common-v6.css">
+  <style>
+    .v6 .code-grid { display:flex; gap:8px; justify-content:space-between; margin-top:8px; }
+    .v6 .code-cell { flex:1 1 0; min-width:0; width:0; height:54px; padding:0; border-radius:10px; border:1.5px solid var(--line-strong); background:var(--surface); font-size:24px; font-weight:800; color:var(--ink); text-align:center; outline:none; font-family:inherit; letter-spacing:-0.5px; box-sizing:border-box; }
+    .v6 .code-cell:focus { border-color:var(--ink); }
+    .v6 .code-cell.filled { background:var(--soft); border-color:var(--ink); }
+    .v6 .help { margin-top:14px; padding:12px 14px; background:var(--soft); border-radius:8px; font-size:12px; color:var(--ink-2); font-weight:500; line-height:1.55; letter-spacing:-0.1px;}
+    .v6 .help strong { color:var(--ink); font-weight:700; }
+    .v6 .err { margin-top:10px; padding:10px 14px; background:var(--alert-bg); border:1px solid var(--alert); border-radius:8px; font-size:12px; color:var(--alert); font-weight:600; line-height:1.55; display:none;}
+    .v6 .err.show { display:block; }
+  </style>
+</head>
+<body>
+<div class="device-wrap">
+  <div class="device-label"><span class="device-num">6-0a-i</span>초대 코드 입력</div>
+  <div class="device v6" style="position:relative;overflow:hidden;background:var(--bg);">
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+      <defs>
+        <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></symbol>
+      </defs>
+    </svg>
+
+    <div class="status-bar"><span class="time">9:41</span><div class="status-icons"><span>●</span><span>●</span></div></div>
+    <div class="topbar">
+      <a class="back" href="6-0a-no-coach.html"><svg class="ic"><use href="#i-back"/></svg></a>
+      <span class="title">초대 코드 입력</span>
+      <span class="action"></span>
+    </div>
+
+    <div class="screen" style="padding:24px 20px;">
+      <div style="font-size:22px;font-weight:800;color:var(--ink);letter-spacing:-0.5px;line-height:1.25;">코치에게 받은<br>6자리 코드를 입력하세요</div>
+      <div style="margin-top:8px;font-size:13px;color:var(--ink-2);font-weight:500;line-height:1.55;letter-spacing:-0.1px;">코드 입력 후 즉시 코치와 연결됩니다.</div>
+
+      <div style="margin-top:24px;">
+        <label class="field-label">초대 코드</label>
+        <div class="code-grid">
+          <input type="tel" maxlength="1" class="code-cell" oninput="moveNext(this,0)" data-i="0">
+          <input type="tel" maxlength="1" class="code-cell" oninput="moveNext(this,1)" data-i="1">
+          <input type="tel" maxlength="1" class="code-cell" oninput="moveNext(this,2)" data-i="2">
+          <input type="tel" maxlength="1" class="code-cell" oninput="moveNext(this,3)" data-i="3">
+          <input type="tel" maxlength="1" class="code-cell" oninput="moveNext(this,4)" data-i="4">
+          <input type="tel" maxlength="1" class="code-cell" oninput="moveNext(this,5)" data-i="5">
+        </div>
+        <div class="err" id="err">잘못된 코드입니다. 코치에게 다시 확인해 주세요.</div>
+        <div class="help">
+          코드는 <strong>6자리 숫자</strong>예요. 코치 화면의 [학생 초대]에서 코드를 받을 수 있어요.
+        </div>
+      </div>
+
+      <div style="margin-top:24px;">
+        <button onclick="submitCode()" class="btn primary block" id="confirm-btn" disabled style="opacity:0.4;">코드 확인</button>
+      </div>
+
+      <div style="margin-top:32px;">
+        <div class="sec-ttl">
+          <div class="t">코드를 받지 못했나요?</div>
+          <div class="sub">코치에게 요청하는 방법</div>
+        </div>
+        <div class="card">
+          <div style="font-size:13px;color:var(--ink-2);font-weight:500;line-height:1.6;letter-spacing:-0.1px;">
+            COURTSIDE는 코치가 학생을 초대하는 방식으로 시작합니다.<br>
+            <strong style="color:var(--ink);font-weight:700;">기존 레슨 받고 있는 코치</strong>에게 초대 코드를 요청하세요.
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+const cells = document.querySelectorAll('.code-cell');
+const btn = document.getElementById('confirm-btn');
+const err = document.getElementById('err');
+
+function moveNext(el, i) {
+  el.value = el.value.replace(/[^0-9]/g, '');
+  el.classList.toggle('filled', el.value.length === 1);
+  if (el.value && i < cells.length - 1) cells[i+1].focus();
+  err.classList.remove('show');
+  const filled = Array.from(cells).every(c => c.value.length === 1);
+  btn.disabled = !filled;
+  btn.style.opacity = filled ? '1' : '0.4';
+}
+
+cells.forEach((c, i) => {
+  c.addEventListener('keydown', (e) => {
+    if (e.key === 'Backspace' && !c.value && i > 0) cells[i-1].focus();
+  });
+});
+
+function submitCode() {
+  const code = Array.from(cells).map(c => c.value).join('');
+  if (code === '123456') {
+    window.location.href = '6-0-schedule-home.html';
+  } else {
+    err.classList.add('show');
+    cells.forEach(c => { c.value = ''; c.classList.remove('filled'); });
+    cells[0].focus();
+    btn.disabled = true;
+    btn.style.opacity = '0.4';
+  }
+}
+
+cells[0].focus();
+</script>
+</body>
+</html>
