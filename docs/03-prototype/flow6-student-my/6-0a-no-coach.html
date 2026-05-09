@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=375, initial-scale=1.0">
+  <title>6-0a 학생 홈 (코치 미연결) — COURTSIDE</title>
+  <link rel="stylesheet" href="../common.css">
+  <link rel="stylesheet" href="../common-v6.css">
+  <style>
+    .v6 .invite-card { background: var(--ink); color: #fff; border-radius: 12px; padding: 18px 16px; display: flex; align-items: center; gap: 14px; text-decoration: none; }
+    .v6 .invite-card .lead { width: 40px; height: 40px; border-radius: 10px; background: rgba(255,255,255,0.15); color: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .v6 .invite-card .body { flex: 1; min-width: 0; }
+    .v6 .invite-card .display { font-size: 18px; font-weight: 800; letter-spacing: -0.4px; line-height: 1.25; }
+    .v6 .invite-card .meta { margin-top: 4px; font-size: 12px; opacity: 0.8; font-weight: 500; line-height: 1.5; }
+    .v6 .invite-card .arrow { color: #fff; opacity: 0.6; flex-shrink: 0; }
+
+    .v6 .step-list { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 4px 16px; }
+    .v6 .step-row { display: flex; align-items: flex-start; gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+    .v6 .step-row:last-child { border-bottom: 0; }
+    .v6 .step-row .num { width: 22px; height: 22px; border-radius: 50%; background: var(--soft); color: var(--ink); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; flex-shrink: 0; letter-spacing: -0.3px;}
+    .v6 .step-row .text { flex: 1; min-width: 0; }
+    .v6 .step-row .text .ttl { font-size: 13px; font-weight: 700; color: var(--ink); letter-spacing: -0.2px; }
+    .v6 .step-row .text .meta { margin-top: 2px; font-size: 12px; color: var(--ink-2); font-weight: 500; line-height: 1.5; }
+  </style>
+</head>
+<body>
+<div class="device-wrap">
+  <div class="device-label"><span class="device-num">6-0a</span>학생 홈 (코치 미연결)</div>
+  <div class="device v6" style="position:relative;overflow:hidden;background:var(--bg);">
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+      <defs>
+        <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+        <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+        <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v.5M12 11v5"/></symbol>
+        <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v9a1 1 0 0 1-1 1h-4v-7h-6v7H5a1 1 0 0 1-1-1z"/></symbol>
+        <symbol id="i-list" viewBox="0 0 24 24"><path d="M5 6h14M5 12h14M5 18h14"/></symbol>
+        <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></symbol>
+        <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+      </defs>
+    </svg>
+
+    <div class="status-bar"><span class="time">9:41</span><div class="status-icons"><span>●</span><span>●</span></div></div>
+    <div class="screen" style="padding-bottom:84px;overflow-y:auto;">
+
+      <div class="hdr">
+        <div class="greet" id="hdr-greet"></div>
+        <div class="date" id="hdr-date"></div>
+        <div class="quote" id="hdr-quote"></div>
+      </div>
+
+      <div style="padding: 16px 16px 0;">
+
+        <div class="sec-ttl first">
+          <div class="t">코치 연결</div>
+          <div class="sub">초대 코드로 시작하세요</div>
+        </div>
+        <a href="../flow1-onboarding/1-8-invite-landing.html" class="invite-card">
+          <div class="lead"><svg class="ic"><use href="#i-plus"/></svg></div>
+          <div class="body">
+            <div class="display">초대 코드 입력</div>
+            <div class="meta">코치에게 받은 6자리 코드를 입력하면<br>레슨 일정이 연결돼요</div>
+          </div>
+          <svg class="ic ic-sm arrow"><use href="#i-arrow"/></svg>
+        </a>
+
+        <div class="sec-ttl">
+          <div class="t">처음이신가요?</div>
+          <div class="sub">3단계로 시작합니다</div>
+        </div>
+        <div class="step-list">
+          <div class="step-row">
+            <div class="num">1</div>
+            <div class="text">
+              <div class="ttl">코치에게 초대 코드 요청</div>
+              <div class="meta">레슨을 받고 있는 코치에게 COURTSIDE 초대 코드를 요청하세요.</div>
+            </div>
+          </div>
+          <div class="step-row">
+            <div class="num">2</div>
+            <div class="text">
+              <div class="ttl">받은 코드를 입력</div>
+              <div class="meta">위 [초대 코드 입력] 카드에 6자리 코드를 입력합니다.</div>
+            </div>
+          </div>
+          <div class="step-row">
+            <div class="num">3</div>
+            <div class="text">
+              <div class="ttl">레슨 일정 자동 연결</div>
+              <div class="meta">코치가 일정을 등록하면 홈 화면에 자동으로 표시됩니다.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sec-ttl">
+          <div class="t">도움이 필요하세요?</div>
+          <div class="sub">담당 코치가 없다면</div>
+        </div>
+        <a href="../flow6-student-my/6-2-mypage.html" class="card-row">
+          <div class="lead"><svg class="ic ic-sm"><use href="#i-info"/></svg></div>
+          <div class="body">
+            <div class="ttl">자주 묻는 질문</div>
+            <div class="meta">초대 코드를 받지 못했어요</div>
+          </div>
+          <svg class="ic ic-sm arrow"><use href="#i-arrow"/></svg>
+        </a>
+
+      </div>
+    </div>
+
+    <div class="navbar">
+      <a href="6-0a-no-coach.html" class="active"><svg class="ic"><use href="#i-home"/></svg><span class="lbl">홈</span></a>
+      <a href="6-5-booking-list.html"><svg class="ic"><use href="#i-list"/></svg><span class="lbl">내 레슨</span></a>
+      <a href="../flow4-chat/4-1-chat-list.html"><svg class="ic"><use href="#i-chat"/></svg><span class="lbl">메시지</span></a>
+      <a href="6-2-mypage.html"><svg class="ic"><use href="#i-user"/></svg><span class="lbl">마이</span></a>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const DAY_NAMES = ['일','월','화','수','목','금','토'];
+const TODAY = new Date();
+TODAY.setHours(0,0,0,0);
+const MOCK_NOW_MIN = 9*60 + 41;
+const QUOTES = [
+  { t: '최고의 샷은 다음 샷이다.', by: '— Tennis Wisdom' },
+  { t: '이길 때보다 질 때 더 많이 배운다.', by: '— Billie Jean King' },
+  { t: '챔피언은 코트가 아니라 연습장에서 만들어진다.', by: '— Andre Agassi' },
+  { t: '실력은 매일의 1%가 1년 뒤 37배가 된다.', by: '— 1% Rule' },
+  { t: '느린 진보가 정체보다 낫다.', by: '— Anonymous' },
+  { t: '오늘의 한 발이 내일의 폼이 된다.', by: '— Anonymous' },
+  { t: '포기하지 않는 한 슬럼프란 없다.', by: '— Roger Federer (paraphrased)' },
+  { t: '폼은 일시적이지만, 클래스는 영원하다.', by: '— Football Adage' },
+  { t: '연습이 완벽을 만드는 게 아니라, 완벽한 연습이 완벽을 만든다.', by: '— Vince Lombardi' }
+];
+
+function timeGreeting(){
+  const h=Math.floor(MOCK_NOW_MIN/60);
+  if(h<5) return '편안한 밤이에요';
+  if(h<11) return '좋은 아침이에요';
+  if(h<14) return '좋은 점심이에요';
+  if(h<17) return '좋은 오후예요';
+  if(h<21) return '좋은 저녁이에요';
+  return '편안한 밤이에요';
+}
+
+function todayQuote(){
+  const seed=TODAY.getFullYear()*1000 + TODAY.getMonth()*40 + TODAY.getDate();
+  return QUOTES[seed % QUOTES.length];
+}
+
+const m=TODAY.getMonth()+1, dd=TODAY.getDate(), dow=DAY_NAMES[TODAY.getDay()];
+document.getElementById('hdr-greet').textContent = timeGreeting();
+document.getElementById('hdr-date').textContent = `${m}월 ${dd}일 (${dow})`;
+const q=todayQuote();
+document.getElementById('hdr-quote').innerHTML = `"${q.t}"<span class="by">${q.by}</span>`;
+</script>
+</body>
+</html>
