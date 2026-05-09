@@ -60,20 +60,20 @@
           </a>
         </div>
 
-        <div id="payment-wrap" style="display:none;">
-          <div class="sec-ttl first">
-            <div class="t">결제</div>
-            <div class="sub">이번 주 레슨료 정산</div>
-          </div>
-          <div id="payment-area"></div>
-        </div>
-
         <div id="next-wrap">
-          <div class="sec-ttl">
+          <div class="sec-ttl first">
             <div class="t">다음 레슨</div>
             <div class="sub">예정된 정기 레슨</div>
           </div>
           <div id="next-lesson-area"></div>
+        </div>
+
+        <div id="payment-wrap" style="display:none;">
+          <div class="sec-ttl">
+            <div class="t">결제</div>
+            <div class="sub">이번 주 레슨료 정산</div>
+          </div>
+          <div id="payment-area"></div>
         </div>
 
         <div id="alerts-wrap">
@@ -277,7 +277,7 @@ function renderAlerts(){
 
 function applyFirstSecTtl(){
   document.querySelectorAll('.sec-ttl').forEach(el=>el.classList.remove('first'));
-  const wraps=['empty-wrap','payment-wrap','next-wrap','alerts-wrap'];
+  const wraps=['empty-wrap','next-wrap','payment-wrap','alerts-wrap'];
   for(const id of wraps){
     const el=document.getElementById(id);
     if(el && getComputedStyle(el).display!=='none'){
