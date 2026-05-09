@@ -6,6 +6,12 @@
   <title>6-0 학생 스케줄 홈 — COURTSIDE</title>
   <link rel="stylesheet" href="../common.css">
   <link rel="stylesheet" href="../common-v6.css">
+  <style>
+    /* 영역 타이틀 한 줄 처리: 타이틀 · 서브타이틀 */
+    .v6 .sec-ttl { display: flex; align-items: baseline; gap: 8px; flex-wrap: nowrap; }
+    .v6 .sec-ttl .sub { margin-top: 0; }
+    .v6 .sec-ttl .sub::before { content: '· '; opacity: 0.6; }
+  </style>
 </head>
 <body>
 <!-- DEV: 학생 홈 케이스 전환 (프로토타입 테스트용) -->
@@ -60,20 +66,24 @@
           </a>
         </div>
 
-        <div id="next-wrap">
+        <div id="notice-wrap">
           <div class="sec-ttl first">
-            <div class="t">다음 레슨</div>
-            <div class="sub">예정된 정기 레슨</div>
+            <div class="t">코치 공지사항</div>
+            <div class="sub">코치가 남긴 안내</div>
           </div>
-          <div id="next-lesson-area"></div>
-        </div>
-
-        <div id="payment-wrap" style="display:none;">
-          <div class="sec-ttl">
-            <div class="t">결제</div>
-            <div class="sub">이번 주 레슨료 정산</div>
+          <div class="notice">
+            <div class="head">
+              <div class="ava">김</div>
+              <div class="who">
+                <div class="nm">김민수 코치</div>
+                <div class="ts">3시간 전</div>
+              </div>
+            </div>
+            <div class="body">
+              이번 주 토요일(<strong>5/10</strong>) 코트 정기 점검으로 모든 레슨이 일요일로 이동됩니다. 시간은 그대로 유지되니 양해 부탁드려요.
+            </div>
+            <a href="../flow4-chat/4-2-chat.html" class="more">자세히 보기</a>
           </div>
-          <div id="payment-area"></div>
         </div>
 
         <div id="alerts-wrap">
@@ -99,24 +109,20 @@
           </div>
         </div>
 
-        <div id="notice-wrap">
+        <div id="next-wrap">
           <div class="sec-ttl">
-            <div class="t">코치 공지사항</div>
-            <div class="sub">코치가 남긴 안내</div>
+            <div class="t">다음 레슨</div>
+            <div class="sub">예정된 정기 레슨</div>
           </div>
-          <div class="notice">
-            <div class="head">
-              <div class="ava">김</div>
-              <div class="who">
-                <div class="nm">김민수 코치</div>
-                <div class="ts">3시간 전</div>
-              </div>
-            </div>
-            <div class="body">
-              이번 주 토요일(<strong>5/10</strong>) 코트 정기 점검으로 모든 레슨이 일요일로 이동됩니다. 시간은 그대로 유지되니 양해 부탁드려요.
-            </div>
-            <a href="../flow4-chat/4-2-chat.html" class="more">자세히 보기</a>
+          <div id="next-lesson-area"></div>
+        </div>
+
+        <div id="payment-wrap" style="display:none;">
+          <div class="sec-ttl">
+            <div class="t">결제</div>
+            <div class="sub">이번 주 레슨료 정산</div>
           </div>
+          <div id="payment-area"></div>
         </div>
 
       </div>
@@ -277,7 +283,7 @@ function renderAlerts(){
 
 function applyFirstSecTtl(){
   document.querySelectorAll('.sec-ttl').forEach(el=>el.classList.remove('first'));
-  const wraps=['empty-wrap','next-wrap','payment-wrap','alerts-wrap'];
+  const wraps=['empty-wrap','notice-wrap','alerts-wrap','next-wrap','payment-wrap'];
   for(const id of wraps){
     const el=document.getElementById(id);
     if(el && getComputedStyle(el).display!=='none'){
