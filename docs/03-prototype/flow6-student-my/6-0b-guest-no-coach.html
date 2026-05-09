@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=375, initial-scale=1.0">
+  <title>6-0b 학생 홈 (비로그인) — COURTSIDE</title>
+  <link rel="stylesheet" href="../common.css">
+  <link rel="stylesheet" href="../common-v6.css">
+  <style>
+    .v6 .auth-card { background: var(--ink); color: #fff; border-radius: 12px; padding: 18px 16px; display: flex; align-items: center; gap: 14px; text-decoration: none; }
+    .v6 .auth-card .lead { width: 40px; height: 40px; border-radius: 10px; background: rgba(255,255,255,0.15); color: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .v6 .auth-card .body { flex: 1; min-width: 0; }
+    .v6 .auth-card .display { font-size: 18px; font-weight: 800; letter-spacing: -0.4px; line-height: 1.25; }
+    .v6 .auth-card .meta { margin-top: 4px; font-size: 12px; opacity: 0.8; font-weight: 500; line-height: 1.5; }
+    .v6 .auth-card .arrow { color: #fff; opacity: 0.6; flex-shrink: 0; }
+
+    .v6 .signup-row { display:flex; align-items:center; justify-content:space-between; padding: 14px 16px; background: var(--surface); border:1px solid var(--line); border-radius: 10px; text-decoration: none;}
+    .v6 .signup-row .l { font-size: 13px; color: var(--ink-2); font-weight: 500; }
+    .v6 .signup-row .r { font-size: 13px; color: var(--ink); font-weight: 700; letter-spacing: -0.2px;}
+
+    .v6 .step-list { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 4px 16px; }
+    .v6 .step-row { display: flex; align-items: flex-start; gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+    .v6 .step-row:last-child { border-bottom: 0; }
+    .v6 .step-row .num { width: 22px; height: 22px; border-radius: 50%; background: var(--soft); color: var(--ink); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; flex-shrink: 0; letter-spacing: -0.3px;}
+    .v6 .step-row .text { flex: 1; min-width: 0; }
+    .v6 .step-row .text .ttl { font-size: 13px; font-weight: 700; color: var(--ink); letter-spacing: -0.2px; }
+    .v6 .step-row .text .meta { margin-top: 2px; font-size: 12px; color: var(--ink-2); font-weight: 500; line-height: 1.5; }
+
+    .v6 .hdr-guest { padding: 24px 20px 22px; background: var(--surface); border-bottom: 1px solid var(--line); }
+    .v6 .hdr-guest .brand { font-size: 12px; font-weight: 700; color: var(--ink-2); letter-spacing: 0.2px; text-transform: uppercase; }
+    .v6 .hdr-guest .ttl { margin-top: 8px; font-size: 26px; font-weight: 800; color: var(--ink); letter-spacing: -0.7px; line-height: 1.2;}
+    .v6 .hdr-guest .sub { margin-top: 6px; font-size: 13px; color: var(--ink-2); font-weight: 500; line-height: 1.55; letter-spacing: -0.1px;}
+  </style>
+</head>
+<body>
+<div class="device-wrap">
+  <div class="device-label"><span class="device-num">6-0b</span>학생 홈 (비로그인)</div>
+  <div class="device v6" style="position:relative;overflow:hidden;background:var(--bg);">
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+      <defs>
+        <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+        <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+        <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v.5M12 11v5"/></symbol>
+        <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v9a1 1 0 0 1-1 1h-4v-7h-6v7H5a1 1 0 0 1-1-1z"/></symbol>
+        <symbol id="i-list" viewBox="0 0 24 24"><path d="M5 6h14M5 12h14M5 18h14"/></symbol>
+        <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></symbol>
+      </defs>
+    </svg>
+
+    <div class="status-bar"><span class="time">9:41</span><div class="status-icons"><span>●</span><span>●</span></div></div>
+    <div class="screen" style="padding-bottom:84px;overflow-y:auto;">
+
+      <div class="hdr-guest">
+        <div class="brand">COURTSIDE</div>
+        <div class="ttl">코치와 함께<br>실력을 키워보세요</div>
+        <div class="sub">로그인하면 코치가 등록한 레슨 일정이<br>홈 화면에 자동으로 표시돼요</div>
+      </div>
+
+      <div style="padding: 16px 16px 0;">
+
+        <div class="sec-ttl first">
+          <div class="t">시작하기</div>
+          <div class="sub">로그인 후 모든 기능을 사용할 수 있어요</div>
+        </div>
+        <a href="../flow1-onboarding/1-2-login.html" class="auth-card">
+          <div class="lead"><svg class="ic"><use href="#i-user"/></svg></div>
+          <div class="body">
+            <div class="display">로그인</div>
+            <div class="meta">이메일 · 카카오 · 애플 계정으로 로그인</div>
+          </div>
+          <svg class="ic ic-sm arrow"><use href="#i-arrow"/></svg>
+        </a>
+        <a href="../flow1-onboarding/1-2b-signup.html" class="signup-row" style="margin-top:10px;">
+          <span class="l">처음 오셨어요?</span>
+          <span class="r">회원가입 ›</span>
+        </a>
+
+        <div class="sec-ttl">
+          <div class="t">코치에게 초대받았다면</div>
+          <div class="sub">로그인 후 초대 코드를 입력하세요</div>
+        </div>
+        <div class="step-list">
+          <div class="step-row">
+            <div class="num">1</div>
+            <div class="text">
+              <div class="ttl">로그인 또는 회원가입</div>
+              <div class="meta">위에서 시작합니다.</div>
+            </div>
+          </div>
+          <div class="step-row">
+            <div class="num">2</div>
+            <div class="text">
+              <div class="ttl">초대 코드 입력</div>
+              <div class="meta">코치에게 받은 6자리 코드를 입력하면 즉시 연결됩니다.</div>
+            </div>
+          </div>
+          <div class="step-row">
+            <div class="num">3</div>
+            <div class="text">
+              <div class="ttl">레슨 일정 자동 연결</div>
+              <div class="meta">코치가 등록한 일정이 홈에 표시됩니다.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sec-ttl">
+          <div class="t">도움이 필요하세요?</div>
+          <div class="sub">서비스 안내</div>
+        </div>
+        <a href="../flow1-onboarding/terms-detail.html" class="card-row">
+          <div class="lead"><svg class="ic ic-sm"><use href="#i-info"/></svg></div>
+          <div class="body">
+            <div class="ttl">자주 묻는 질문</div>
+            <div class="meta">COURTSIDE는 어떻게 시작하나요?</div>
+          </div>
+          <svg class="ic ic-sm arrow"><use href="#i-arrow"/></svg>
+        </a>
+
+      </div>
+    </div>
+
+    <div class="navbar">
+      <a href="6-0b-guest-no-coach.html" class="active"><svg class="ic"><use href="#i-home"/></svg><span class="lbl">홈</span></a>
+      <a href="../flow1-onboarding/1-2-login.html"><svg class="ic"><use href="#i-list"/></svg><span class="lbl">내 레슨</span></a>
+      <a href="../flow1-onboarding/1-2-login.html"><svg class="ic"><use href="#i-chat"/></svg><span class="lbl">메시지</span></a>
+      <a href="6-1-guest.html"><svg class="ic"><use href="#i-user"/></svg><span class="lbl">마이</span></a>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>
