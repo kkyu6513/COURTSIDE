@@ -334,7 +334,7 @@ const PACKAGE_OPTIONS = [
 
 const ALERT_MAKEUP = {
   type: 'makeup',
-  title: '보강 일정 제안',
+  title: '코치가 보강 일정을 보냈어요',
   summary: `${MAKEUP_SLOTS.length}건 제안 · 1개 선택 필요`,
   deadlineAt: NOW_REF + (8*60+32)*60*1000
 };
@@ -346,13 +346,13 @@ const ALERT_RESCHEDULE = {
 };
 const ALERT_REVIEW = {
   type: 'review',
-  title: '리뷰 작성 요청',
+  title: '5/2 레슨, 어땠나요?',
   summary: REVIEW_TARGET,
   deadlineAt: NOW_REF + 3*24*60*60*1000
 };
 const ALERT_PACKAGE = {
   type: 'package',
-  title: '재등록 안내',
+  title: '레슨 잔여 1회 — 이어가시겠어요?',
   summary: '잔여 1회 · 다음 패키지를 결정해 주세요',
   deadlineAt: NOW_REF + 7*24*60*60*1000
 };
