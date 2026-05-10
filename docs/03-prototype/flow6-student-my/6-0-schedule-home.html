@@ -27,17 +27,22 @@
     .v6 .alert .tip-pop { display: none; margin-top: 6px; padding: 8px 10px; background: #1E293B; color: #fff; font-size: 11px; border-radius: 8px; line-height: 1.5; letter-spacing: -0.1px; }
     .v6 .alert .tip-pop.show { display: block; }
 
-    /* 보강 일정 선택 바텀시트 */
+    /* 보강/변경/리뷰/재등록 공용 바텀시트 */
     .v6 .ms-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.4); z-index: 50; display: none; }
     .v6 .ms-overlay.show { display: block; }
-    .v6 .ms-sheet { position: absolute; bottom: 0; left: 0; right: 0; background: #fff; border-radius: 20px 20px 0 0; padding: 20px 18px 24px; }
+    .v6 .ms-sheet { position: absolute; bottom: 0; left: 0; right: 0; background: #fff; border-radius: 20px 20px 0 0; padding: 20px 18px 24px; max-height: 88%; overflow-y: auto; }
     .v6 .ms-sheet .handle { width: 40px; height: 4px; border-radius: 2px; background: var(--line); margin: 0 auto 14px; }
     .v6 .ms-sheet h3 { margin: 0 0 6px; font-size: 16px; font-weight: 700; color: var(--ink); letter-spacing: -0.3px; }
-    .v6 .ms-sheet .lead { font-size: 12px; color: var(--ink-3); margin-bottom: 14px; letter-spacing: -0.1px; }
+    .v6 .ms-sheet .lead { font-size: 12px; color: var(--ink-3); margin-bottom: 14px; letter-spacing: -0.1px; line-height: 1.5; }
     .v6 .ms-sheet .slot { display: flex; align-items: center; padding: 14px 14px; border: 1.5px solid var(--line); border-radius: 12px; margin-bottom: 8px; cursor: pointer; gap: 10px; }
     .v6 .ms-sheet .slot input { width: 18px; height: 18px; accent-color: var(--ink); flex-shrink: 0; margin: 0; }
     .v6 .ms-sheet .slot .txt { font-size: 14px; font-weight: 600; color: var(--ink); }
+    .v6 .ms-sheet .slot .sub { font-size: 12px; color: var(--ink-3); margin-left: auto; font-weight: 500; }
     .v6 .ms-sheet .slot.selected { border-color: var(--ink); background: var(--soft); }
+    .v6 .ms-sheet .stars { display: flex; gap: 6px; justify-content: center; padding: 12px 0 6px; }
+    .v6 .ms-sheet .stars button { background: none; border: none; padding: 6px; cursor: pointer; font-size: 32px; color: var(--line); line-height: 1; font-family: inherit; }
+    .v6 .ms-sheet .stars button.on { color: #FBBF24; }
+    .v6 .ms-sheet .stars-meta { text-align: center; font-size: 12px; color: var(--ink-3); margin-bottom: 14px; min-height: 18px; }
     .v6 .ms-sheet .submit-row { display: flex; gap: 8px; margin-top: 16px; }
     .v6 .ms-sheet .submit-row button { flex: 1; height: 48px; border-radius: 10px; font-size: 14px; font-weight: 700; font-family: inherit; cursor: pointer; letter-spacing: -0.2px; }
     .v6 .ms-sheet .submit-row .cancel { border: 1px solid var(--line); background: #fff; color: var(--ink); }
@@ -146,16 +151,16 @@
       </div>
     </div>
 
-    <!-- 보강 일정 선택 바텀시트 -->
-    <div class="ms-overlay" id="makeup-sheet" onclick="closeMakeupSheet(event)">
+    <!-- 응답필요 공용 바텀시트 (type별 콘텐츠 분기) -->
+    <div class="ms-overlay" id="alert-sheet" onclick="closeAlertSheet(event)">
       <div class="ms-sheet" onclick="event.stopPropagation()">
         <div class="handle"></div>
-        <h3>보강 일정 선택</h3>
-        <div class="lead">코치가 제안한 일정 중 1개를 선택하세요</div>
-        <div id="makeup-slots"></div>
+        <h3 id="alert-sheet-title"></h3>
+        <div class="lead" id="alert-sheet-lead"></div>
+        <div id="alert-sheet-body"></div>
         <div class="submit-row">
-          <button type="button" class="cancel" onclick="closeMakeupSheet()">취소</button>
-          <button type="button" class="submit" id="makeup-confirm" onclick="confirmMakeup()" disabled>선택 확정</button>
+          <button type="button" class="cancel" onclick="closeAlertSheet()">취소</button>
+          <button type="button" class="submit" id="alert-sheet-submit" onclick="submitAlertSheet()" disabled></button>
         </div>
       </div>
     </div>
@@ -314,54 +319,46 @@ function renderEmptyHero(){
   document.getElementById('next-wrap').style.display=(!next)?'none':'block';
 }
 
-// 보강 일정 제안 — 코치가 제안한 슬롯 + 마감 절대 시각 (실시간 카운팅)
+// 응답필요 — 단일 패턴 (compact 카드 + 카드 클릭 → 공용 바텀시트)
+//   type: 'makeup' | 'reschedule' | 'review' | 'package'
+//   deadlineAt: 마감 절대 시각 (실시간 카운팅), 없으면 pill 미노출
+const NOW_REF = Date.now();
 const MAKEUP_SLOTS = ['4/24 (목) 16:00', '4/25 (금) 10:00'];
-const MAKEUP_DEADLINE_AT = Date.now() + (8*60*60*1000) + (32*60*1000); // 지금부터 8h 32m 후
+const RESCHEDULE_SLOTS = ['4/22 (월) 14:00', '4/22 (월) 16:00'];
+const REVIEW_TARGET = '5/2 (목) 김민수 코치 레슨';
+const PACKAGE_OPTIONS = [
+  { id: '4', label: '4회 패키지', sub: '180,000원' },
+  { id: '8', label: '8회 패키지', sub: '340,000원 (5% 할인)' },
+  { id: '12', label: '12회 패키지', sub: '480,000원 (10% 할인)' }
+];
 
-// 응답필요 항목 정의
-//  - compact:true → 보강 변형 (아이콘/버튼 없음, 카드 클릭으로 바텀시트)
-//  - icon: SVG symbol id  (i-sync 일정류, i-star 리뷰, i-pkg 패키지)
-//  - deadlineMin: 마감까지 남은 분 (정렬 기준, 임박순 오름차순)
-//  - urgent: deadlineMin <= 12h 이면 알림(빨강) 필 사용
-const MAKEUP_ALERT = {
+const ALERT_MAKEUP = {
   type: 'makeup',
-  compact: true,
   title: '보강 일정 제안',
   summary: `${MAKEUP_SLOTS.length}건 제안 · 1개 선택 필요`,
-  deadlineAt: MAKEUP_DEADLINE_AT,
-  deadlineMin: 8*60+32
+  deadlineAt: NOW_REF + (8*60+32)*60*1000
 };
-const MOCK_ALERTS_DEFAULT = [ MAKEUP_ALERT ];
-const MOCK_ALERTS_MANY = [
-  MAKEUP_ALERT,
-  {
-    icon: 'i-sync',
-    title: '일정 변경 슬롯 제안',
-    sub: '4/22 (월) 14:00, 4/22 (월) 16:00 중 1개 선택',
-    deadlineMin: 22*60+10,
-    deadlineLabel: '22h 10m',
-    primary: { label: '슬롯 선택', href: '6-6-booking-detail.html?status=reschedule_completed#select' },
-    ghost:   { label: '자세히',  href: '6-6-booking-detail.html?status=reschedule_completed' }
-  },
-  {
-    icon: 'i-star',
-    title: '리뷰 작성 요청',
-    sub: '5/2 (목) 김민수 코치 레슨',
-    deadlineMin: 3*24*60,
-    deadlineLabel: '3일',
-    primary: { label: '리뷰 작성', href: '6-7-review-write.html' },
-    ghost:   null
-  },
-  {
-    icon: 'i-pkg',
-    title: '재등록 안내',
-    sub: '잔여 1회 — 다음 패키지를 결정해 주세요',
-    deadlineMin: 7*24*60,
-    deadlineLabel: null,
-    primary: { label: '패키지 선택', href: '6-6-booking-detail.html?status=confirmed' },
-    ghost:   null
-  }
-];
+const ALERT_RESCHEDULE = {
+  type: 'reschedule',
+  title: '일정 변경 슬롯 제안',
+  summary: `${RESCHEDULE_SLOTS.length}건 제안 · 1개 선택 필요`,
+  deadlineAt: NOW_REF + (22*60+10)*60*1000
+};
+const ALERT_REVIEW = {
+  type: 'review',
+  title: '리뷰 작성 요청',
+  summary: REVIEW_TARGET,
+  deadlineAt: NOW_REF + 3*24*60*60*1000
+};
+const ALERT_PACKAGE = {
+  type: 'package',
+  title: '재등록 안내',
+  summary: '잔여 1회 · 다음 패키지를 결정해 주세요',
+  deadlineAt: NOW_REF + 7*24*60*60*1000
+};
+
+const MOCK_ALERTS_DEFAULT = [ ALERT_MAKEUP ];
+const MOCK_ALERTS_MANY = [ ALERT_MAKEUP, ALERT_RESCHEDULE, ALERT_REVIEW, ALERT_PACKAGE ];
 
 let alertsExpanded = false;
 let countdownTimer = null;
@@ -370,10 +367,14 @@ function formatRemaining(deadlineAt){
   const ms = Math.max(0, deadlineAt - Date.now());
   if(ms === 0) return '마감';
   const total = Math.floor(ms/1000);
-  const h = Math.floor(total/3600);
+  const d = Math.floor(total/86400);
+  const h = Math.floor((total%86400)/3600);
   const m = Math.floor((total%3600)/60);
   const s = total%60;
   const pad = n => String(n).padStart(2,'0');
+  // 24h 미만이면 초 단위, 그 이상이면 일/시간 단위
+  if(d>=2) return `${d}일 ${h}시간`;
+  if(d>=1) return `${24+h}시간 ${pad(m)}분 ${pad(s)}초`;
   if(h>0) return `${h}시간 ${pad(m)}분 ${pad(s)}초`;
   if(m>0) return `${m}분 ${pad(s)}초`;
   return `${s}초`;
@@ -391,100 +392,142 @@ function renderAlerts(){
   const wrap = document.getElementById('alerts-wrap');
   const area = document.getElementById('alerts-area');
   const all = (ALERTS_CASE==='many' ? MOCK_ALERTS_MANY : MOCK_ALERTS_DEFAULT)
-    .slice().sort((a,b)=>a.deadlineMin-b.deadlineMin);
+    .slice().sort((a,b)=>a.deadlineAt-b.deadlineAt);
   if(all.length===0){ wrap.style.display='none'; area.innerHTML=''; return; }
   wrap.style.display='block';
   const visible = alertsExpanded ? all : all.slice(0, ALERTS_VISIBLE_LIMIT);
   const hidden = all.length - visible.length;
-  const cards = visible.map(a => {
-    if(a.compact && a.type === 'makeup'){
-      const urgent = (a.deadlineAt - Date.now()) <= 12*60*60*1000;
-      return `
-        <div class="alert compact alert-clickable" onclick="openMakeupSheet()">
-          <div class="b">
-            <div class="head">
-              <div class="ttl">${a.title}</div>
-              <span class="pill tip-chip ${urgent?'alert':''}" id="makeup-pill" onclick="toggleMakeupTip(event)">${formatRemaining(a.deadlineAt)}</span>
-            </div>
-            <div class="sub">${a.summary}</div>
-            <div class="tip-pop" id="makeup-tip" onclick="event.stopPropagation()">${formatDeadlineAbsolute(a.deadlineAt)}</div>
-          </div>
-          <svg class="ic ic-sm arrow"><use href="#i-arrow"/></svg>
-        </div>`;
-    }
-    const urgent = a.deadlineMin <= 12*60;
-    const pill = a.deadlineLabel ? `<span class="pill ${urgent?'alert':''}">${a.deadlineLabel}</span>` : '';
-    const primary = a.primary ? `<a href="${a.primary.href}" class="alert-cta primary">${a.primary.label}</a>` : '';
-    const ghost   = a.ghost   ? `<a href="${a.ghost.href}"   class="alert-cta ghost">${a.ghost.label}</a>`   : '';
-    return `
-      <div class="alert">
-        <div class="lead"><svg class="ic ic-sm"><use href="#${a.icon}"/></svg></div>
-        <div class="b">
-          <div class="head"><div class="ttl">${a.title}</div>${pill}</div>
-          <div class="sub">${a.sub}</div>
-          <div class="actions">${primary}${ghost}</div>
-        </div>
-      </div>`;
-  }).join('');
+  const cards = visible.map(renderAlertCard).join('');
   const more = hidden>0 ? `<button type="button" class="alerts-more" onclick="expandAlerts()">+ ${hidden}건 더 있어요</button>` : '';
   area.innerHTML = cards + more;
-  startMakeupCountdown();
+  startCountdown();
 }
 
-function startMakeupCountdown(){
+function renderAlertCard(a){
+  const remaining = a.deadlineAt - Date.now();
+  const urgent = remaining <= 12*60*60*1000;
+  const pill = `<span class="pill tip-chip ${urgent?'alert':''}" data-pill="${a.type}" onclick="toggleAlertTip(event,'${a.type}')">${formatRemaining(a.deadlineAt)}</span>`;
+  const tipPop = `<div class="tip-pop" id="tip-${a.type}" onclick="event.stopPropagation()">${formatDeadlineAbsolute(a.deadlineAt)}</div>`;
+  return `
+    <div class="alert compact alert-clickable" onclick="openAlertSheet('${a.type}')">
+      <div class="b">
+        <div class="head"><div class="ttl">${a.title}</div>${pill}</div>
+        <div class="sub">${a.summary}</div>
+        ${tipPop}
+      </div>
+      <svg class="ic ic-sm arrow"><use href="#i-arrow"/></svg>
+    </div>`;
+}
+
+function startCountdown(){
   if(countdownTimer) clearInterval(countdownTimer);
-  const pill = document.getElementById('makeup-pill');
-  if(!pill) return;
-  countdownTimer = setInterval(() => {
-    const el = document.getElementById('makeup-pill');
-    if(!el){ clearInterval(countdownTimer); return; }
-    el.textContent = formatRemaining(MAKEUP_DEADLINE_AT);
-    el.classList.toggle('alert', (MAKEUP_DEADLINE_AT - Date.now()) <= 12*60*60*1000);
-  }, 1000);
+  const tick = () => {
+    const pills = document.querySelectorAll('[data-pill]');
+    if(pills.length === 0){ clearInterval(countdownTimer); return; }
+    pills.forEach(el => {
+      const a = [ALERT_MAKEUP, ALERT_RESCHEDULE, ALERT_REVIEW, ALERT_PACKAGE].find(x => x.type === el.dataset.pill);
+      if(!a) return;
+      el.textContent = formatRemaining(a.deadlineAt);
+      el.classList.toggle('alert', (a.deadlineAt - Date.now()) <= 12*60*60*1000);
+    });
+  };
+  tick();
+  countdownTimer = setInterval(tick, 1000);
 }
 
 function expandAlerts(){ alertsExpanded = true; renderAlerts(); }
 
-function toggleMakeupTip(e){
+function toggleAlertTip(e, type){
   e.stopPropagation();
-  const tip = document.getElementById('makeup-tip');
+  // 다른 툴팁은 닫기
+  document.querySelectorAll('.tip-pop.show').forEach(el => { if(el.id !== `tip-${type}`) el.classList.remove('show'); });
+  const tip = document.getElementById(`tip-${type}`);
   if(tip) tip.classList.toggle('show');
 }
 
-let makeupSelectedSlot = null;
+// ===== 공용 바텀시트 (type별 콘텐츠 분기) =====
+let sheetState = { type: null, value: null };
 
-function openMakeupSheet(){
-  makeupSelectedSlot = null;
-  const slotsEl = document.getElementById('makeup-slots');
-  slotsEl.innerHTML = MAKEUP_SLOTS.map((s,i) => `
-    <label class="slot" onclick="selectMakeupSlot(${i})">
-      <input type="radio" name="makeup-slot" value="${s}" id="ms-slot-${i}">
-      <span class="txt">${s}</span>
-    </label>
-  `).join('');
-  document.getElementById('makeup-confirm').disabled = true;
-  document.getElementById('makeup-sheet').classList.add('show');
+function openAlertSheet(type){
+  sheetState = { type, value: null };
+  const titleEl = document.getElementById('alert-sheet-title');
+  const leadEl  = document.getElementById('alert-sheet-lead');
+  const bodyEl  = document.getElementById('alert-sheet-body');
+  const submit  = document.getElementById('alert-sheet-submit');
+  submit.disabled = true;
+
+  if(type === 'makeup' || type === 'reschedule'){
+    const slots = type === 'makeup' ? MAKEUP_SLOTS : RESCHEDULE_SLOTS;
+    titleEl.textContent = type === 'makeup' ? '보강 일정 선택' : '일정 변경 슬롯 선택';
+    leadEl.textContent  = '코치가 제안한 일정 중 1개를 선택하세요';
+    submit.textContent  = '선택 확정';
+    bodyEl.innerHTML = slots.map((s,i) => `
+      <label class="slot" onclick="selectSheetSlot(${i}, '${s}')">
+        <input type="radio" name="sheet-slot" id="sheet-slot-${i}">
+        <span class="txt">${s}</span>
+      </label>
+    `).join('');
+  } else if(type === 'review'){
+    titleEl.textContent = '리뷰 작성';
+    leadEl.textContent  = `${REVIEW_TARGET}에 대한 별점을 남겨주세요. 자세한 후기는 '리뷰 작성하러 가기'에서 작성할 수 있어요.`;
+    submit.textContent  = '별점 등록';
+    bodyEl.innerHTML = `
+      <div class="stars" id="sheet-stars">
+        ${[1,2,3,4,5].map(n => `<button type="button" data-star="${n}" onclick="selectSheetStar(${n})">★</button>`).join('')}
+      </div>
+      <div class="stars-meta" id="sheet-stars-meta">별점을 선택해 주세요</div>`;
+  } else if(type === 'package'){
+    titleEl.textContent = '재등록 패키지 선택';
+    leadEl.textContent  = '잔여 1회 — 이어서 받을 패키지를 선택하세요. 결제는 다음 단계에서 진행합니다.';
+    submit.textContent  = '결제로 진행';
+    bodyEl.innerHTML = PACKAGE_OPTIONS.map((p,i) => `
+      <label class="slot" onclick="selectSheetSlot(${i}, '${p.id}')">
+        <input type="radio" name="sheet-slot" id="sheet-pkg-${i}">
+        <span class="txt">${p.label}</span>
+        <span class="sub">${p.sub}</span>
+      </label>
+    `).join('');
+  } else {
+    return;
+  }
+
+  document.getElementById('alert-sheet').classList.add('show');
 }
 
-function selectMakeupSlot(i){
-  makeupSelectedSlot = MAKEUP_SLOTS[i];
+function selectSheetSlot(i, value){
+  sheetState.value = value;
   document.querySelectorAll('.ms-sheet .slot').forEach((el, idx) => {
     el.classList.toggle('selected', idx === i);
-    const input = el.querySelector('input');
-    if(input) input.checked = (idx === i);
+    const inp = el.querySelector('input');
+    if(inp) inp.checked = (idx === i);
   });
-  document.getElementById('makeup-confirm').disabled = false;
+  document.getElementById('alert-sheet-submit').disabled = false;
 }
 
-function closeMakeupSheet(event){
+function selectSheetStar(n){
+  sheetState.value = n;
+  document.querySelectorAll('#sheet-stars button').forEach(btn => {
+    const v = parseInt(btn.dataset.star, 10);
+    btn.classList.toggle('on', v <= n);
+  });
+  const labels = ['','별로예요','아쉬워요','보통이에요','좋아요','최고예요'];
+  document.getElementById('sheet-stars-meta').textContent = `${n}점 — ${labels[n]}`;
+  document.getElementById('alert-sheet-submit').disabled = false;
+}
+
+function closeAlertSheet(event){
   if(event && event.target !== event.currentTarget) return;
-  document.getElementById('makeup-sheet').classList.remove('show');
+  document.getElementById('alert-sheet').classList.remove('show');
 }
 
-function confirmMakeup(){
-  if(!makeupSelectedSlot) return;
-  alert(`보강 일정 확정\n${makeupSelectedSlot}`);
-  closeMakeupSheet();
+function submitAlertSheet(){
+  if(sheetState.value === null) return;
+  const t = sheetState.type, v = sheetState.value;
+  if(t === 'makeup')          alert(`보강 일정 확정\n${v}`);
+  else if(t === 'reschedule') alert(`변경 슬롯 확정\n${v}`);
+  else if(t === 'review')     alert(`별점 등록 완료 (${v}점)\n자세한 후기는 별도 페이지에서 작성할 수 있습니다.`);
+  else if(t === 'package')    alert(`패키지 선택: ${v}회\n결제 페이지로 이동합니다.`);
+  closeAlertSheet();
 }
 
 function renderNotice(){
