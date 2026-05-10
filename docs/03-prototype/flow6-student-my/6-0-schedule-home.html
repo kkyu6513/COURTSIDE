@@ -63,9 +63,11 @@
     .v6 #notice-wrap .sec-ttl, .v6 #alerts-wrap .sec-ttl { padding: 0 4px 12px; }
     .v6 #notice-wrap .sec-ttl.first, .v6 #alerts-wrap .sec-ttl.first { padding-top: 0; }
 
-    /* 알림 카드 head: pill 폭 고정 (카운트다운 변동에도 타이틀 줄바꿈 흔들림 방지) */
-    .v6 .alert .head .ttl { flex: 1; min-width: 0; }
-    .v6 .alert .head .pill { flex-shrink: 0; font-variant-numeric: tabular-nums; min-width: 96px; text-align: center; white-space: nowrap; }
+    /* compact alert 레이아웃: 타이틀 단독 1줄(말줄임) + (요약·pill) 1줄 */
+    .v6 .alert.compact .b .ttl { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+    .v6 .alert.compact .meta-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 4px; }
+    .v6 .alert.compact .meta-row .sub { flex: 1; min-width: 0; margin-top: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .v6 .alert.compact .meta-row .pill { flex-shrink: 0; font-variant-numeric: tabular-nums; min-width: 92px; text-align: center; white-space: nowrap; }
   </style>
 </head>
 <body>
@@ -420,8 +422,11 @@ function renderAlertCard(a){
   return `
     <div class="alert compact alert-clickable" onclick="openAlertSheet('${a.type}')">
       <div class="b">
-        <div class="head"><div class="ttl">${a.title}</div>${pill}</div>
-        <div class="sub">${a.summary}</div>
+        <div class="ttl">${a.title}</div>
+        <div class="meta-row">
+          <div class="sub">${a.summary}</div>
+          ${pill}
+        </div>
         ${tipPop}
       </div>
       <svg class="ic ic-sm arrow"><use href="#i-arrow"/></svg>
