@@ -16,6 +16,34 @@
     .v6 .alerts-more { margin-top: 8px; width: 100%; height: 36px; border: 1px dashed var(--line); background: transparent; color: var(--ink-2); border-radius: 10px; font-size: 12px; font-weight: 600; font-family: inherit; cursor: pointer; letter-spacing: -0.1px; }
     .v6 .alerts-more:hover { background: var(--surface); }
 
+    /* compact alert (아이콘/버튼 제거 + 카드 자체 클릭) */
+    .v6 .alert.alert-clickable { cursor: pointer; }
+    .v6 .alert.alert-clickable:hover { background: var(--surface); }
+    .v6 .alert.compact .lead { display: none; }
+    .v6 .alert.compact .actions { display: none; }
+    .v6 .alert .arrow { flex-shrink: 0; align-self: center; color: var(--ink-3); margin-left: 8px; }
+    .v6 .pill.tip-chip { cursor: pointer; user-select: none; }
+    .v6 .pill.tip-chip::after { content: ' ⓘ'; opacity: 0.7; font-size: 9px; }
+    .v6 .alert .tip-pop { display: none; margin-top: 6px; padding: 8px 10px; background: #1E293B; color: #fff; font-size: 11px; border-radius: 8px; line-height: 1.5; letter-spacing: -0.1px; }
+    .v6 .alert .tip-pop.show { display: block; }
+
+    /* 보강 일정 선택 바텀시트 */
+    .v6 .ms-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.4); z-index: 50; display: none; }
+    .v6 .ms-overlay.show { display: block; }
+    .v6 .ms-sheet { position: absolute; bottom: 0; left: 0; right: 0; background: #fff; border-radius: 20px 20px 0 0; padding: 20px 18px 24px; }
+    .v6 .ms-sheet .handle { width: 40px; height: 4px; border-radius: 2px; background: var(--line); margin: 0 auto 14px; }
+    .v6 .ms-sheet h3 { margin: 0 0 6px; font-size: 16px; font-weight: 700; color: var(--ink); letter-spacing: -0.3px; }
+    .v6 .ms-sheet .lead { font-size: 12px; color: var(--ink-3); margin-bottom: 14px; letter-spacing: -0.1px; }
+    .v6 .ms-sheet .slot { display: flex; align-items: center; padding: 14px 14px; border: 1.5px solid var(--line); border-radius: 12px; margin-bottom: 8px; cursor: pointer; gap: 10px; }
+    .v6 .ms-sheet .slot input { width: 18px; height: 18px; accent-color: var(--ink); flex-shrink: 0; margin: 0; }
+    .v6 .ms-sheet .slot .txt { font-size: 14px; font-weight: 600; color: var(--ink); }
+    .v6 .ms-sheet .slot.selected { border-color: var(--ink); background: var(--soft); }
+    .v6 .ms-sheet .submit-row { display: flex; gap: 8px; margin-top: 16px; }
+    .v6 .ms-sheet .submit-row button { flex: 1; height: 48px; border-radius: 10px; font-size: 14px; font-weight: 700; font-family: inherit; cursor: pointer; letter-spacing: -0.2px; }
+    .v6 .ms-sheet .submit-row .cancel { border: 1px solid var(--line); background: #fff; color: var(--ink); }
+    .v6 .ms-sheet .submit-row .submit { border: none; background: var(--ink); color: #fff; flex: 2; }
+    .v6 .ms-sheet .submit-row .submit:disabled { background: var(--line); cursor: not-allowed; color: var(--ink-3); }
+
     /* 공지사항 빈 상태 카드 */
     .v6 .notice-empty { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 14px; display: flex; align-items: center; gap: 12px; }
     .v6 .notice-empty .ava { width: 36px; height: 36px; border-radius: 50%; background: var(--soft); color: var(--ink-2); font-weight: 700; font-size: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
@@ -115,6 +143,20 @@
           <div id="payment-area"></div>
         </div>
 
+      </div>
+    </div>
+
+    <!-- 보강 일정 선택 바텀시트 -->
+    <div class="ms-overlay" id="makeup-sheet" onclick="closeMakeupSheet(event)">
+      <div class="ms-sheet" onclick="event.stopPropagation()">
+        <div class="handle"></div>
+        <h3>보강 일정 선택</h3>
+        <div class="lead">코치가 제안한 일정 중 1개를 선택하세요</div>
+        <div id="makeup-slots"></div>
+        <div class="submit-row">
+          <button type="button" class="cancel" onclick="closeMakeupSheet()">취소</button>
+          <button type="button" class="submit" id="makeup-confirm" onclick="confirmMakeup()" disabled>선택 확정</button>
+        </div>
       </div>
     </div>
 
@@ -272,31 +314,26 @@ function renderEmptyHero(){
   document.getElementById('next-wrap').style.display=(!next)?'none':'block';
 }
 
+// 보강 일정 제안 — 코치가 제안한 슬롯 + 마감 절대 시각 (실시간 카운팅)
+const MAKEUP_SLOTS = ['4/24 (목) 16:00', '4/25 (금) 10:00'];
+const MAKEUP_DEADLINE_AT = Date.now() + (8*60*60*1000) + (32*60*1000); // 지금부터 8h 32m 후
+
 // 응답필요 항목 정의
+//  - compact:true → 보강 변형 (아이콘/버튼 없음, 카드 클릭으로 바텀시트)
 //  - icon: SVG symbol id  (i-sync 일정류, i-star 리뷰, i-pkg 패키지)
 //  - deadlineMin: 마감까지 남은 분 (정렬 기준, 임박순 오름차순)
 //  - urgent: deadlineMin <= 12h 이면 알림(빨강) 필 사용
-const MOCK_ALERTS_DEFAULT = [
-  {
-    icon: 'i-sync',
-    title: '보강 일정 제안',
-    sub: '4/24 (목) 16:00, 4/25 (금) 10:00 중 1개 선택',
-    deadlineMin: 8*60+32,
-    deadlineLabel: '8h 32m',
-    primary: { label: '날짜 선택', href: '6-6-booking-detail.html?status=makeup_proposed&dates=4%2F24%20(%EB%AA%A9)%2016%3A00%7C4%2F25%20(%EA%B8%88)%2010%3A00#select' },
-    ghost:   { label: '자세히',  href: '6-6-booking-detail.html?status=makeup_proposed&dates=4%2F24%20(%EB%AA%A9)%2016%3A00%7C4%2F25%20(%EA%B8%88)%2010%3A00' }
-  }
-];
+const MAKEUP_ALERT = {
+  type: 'makeup',
+  compact: true,
+  title: '보강 일정 제안',
+  summary: `${MAKEUP_SLOTS.length}건 제안 · 1개 선택 필요`,
+  deadlineAt: MAKEUP_DEADLINE_AT,
+  deadlineMin: 8*60+32
+};
+const MOCK_ALERTS_DEFAULT = [ MAKEUP_ALERT ];
 const MOCK_ALERTS_MANY = [
-  {
-    icon: 'i-sync',
-    title: '보강 일정 제안',
-    sub: '4/24 (목) 16:00, 4/25 (금) 10:00 중 1개 선택',
-    deadlineMin: 8*60+32,
-    deadlineLabel: '8h 32m',
-    primary: { label: '날짜 선택', href: '6-6-booking-detail.html?status=makeup_proposed#select' },
-    ghost:   { label: '자세히',  href: '6-6-booking-detail.html?status=makeup_proposed' }
-  },
+  MAKEUP_ALERT,
   {
     icon: 'i-sync',
     title: '일정 변경 슬롯 제안',
@@ -327,6 +364,28 @@ const MOCK_ALERTS_MANY = [
 ];
 
 let alertsExpanded = false;
+let countdownTimer = null;
+
+function formatRemaining(deadlineAt){
+  const ms = Math.max(0, deadlineAt - Date.now());
+  if(ms === 0) return '마감';
+  const total = Math.floor(ms/1000);
+  const h = Math.floor(total/3600);
+  const m = Math.floor((total%3600)/60);
+  const s = total%60;
+  const pad = n => String(n).padStart(2,'0');
+  if(h>0) return `${h}시간 ${pad(m)}분 ${pad(s)}초`;
+  if(m>0) return `${m}분 ${pad(s)}초`;
+  return `${s}초`;
+}
+
+function formatDeadlineAbsolute(deadlineAt){
+  const d = new Date(deadlineAt);
+  const m = d.getMonth()+1, dd = d.getDate(), dow = DAY_NAMES[d.getDay()];
+  const hh = String(d.getHours()).padStart(2,'0');
+  const mm = String(d.getMinutes()).padStart(2,'0');
+  return `마감: ${m}/${dd} (${dow}) ${hh}:${mm}<br>응답이 없으면 제안이 자동 만료됩니다.`;
+}
 
 function renderAlerts(){
   const wrap = document.getElementById('alerts-wrap');
@@ -338,6 +397,21 @@ function renderAlerts(){
   const visible = alertsExpanded ? all : all.slice(0, ALERTS_VISIBLE_LIMIT);
   const hidden = all.length - visible.length;
   const cards = visible.map(a => {
+    if(a.compact && a.type === 'makeup'){
+      const urgent = (a.deadlineAt - Date.now()) <= 12*60*60*1000;
+      return `
+        <div class="alert compact alert-clickable" onclick="openMakeupSheet()">
+          <div class="b">
+            <div class="head">
+              <div class="ttl">${a.title}</div>
+              <span class="pill tip-chip ${urgent?'alert':''}" id="makeup-pill" onclick="toggleMakeupTip(event)">${formatRemaining(a.deadlineAt)}</span>
+            </div>
+            <div class="sub">${a.summary}</div>
+            <div class="tip-pop" id="makeup-tip" onclick="event.stopPropagation()">${formatDeadlineAbsolute(a.deadlineAt)}</div>
+          </div>
+          <svg class="ic ic-sm arrow"><use href="#i-arrow"/></svg>
+        </div>`;
+    }
     const urgent = a.deadlineMin <= 12*60;
     const pill = a.deadlineLabel ? `<span class="pill ${urgent?'alert':''}">${a.deadlineLabel}</span>` : '';
     const primary = a.primary ? `<a href="${a.primary.href}" class="alert-cta primary">${a.primary.label}</a>` : '';
@@ -354,9 +428,64 @@ function renderAlerts(){
   }).join('');
   const more = hidden>0 ? `<button type="button" class="alerts-more" onclick="expandAlerts()">+ ${hidden}건 더 있어요</button>` : '';
   area.innerHTML = cards + more;
+  startMakeupCountdown();
+}
+
+function startMakeupCountdown(){
+  if(countdownTimer) clearInterval(countdownTimer);
+  const pill = document.getElementById('makeup-pill');
+  if(!pill) return;
+  countdownTimer = setInterval(() => {
+    const el = document.getElementById('makeup-pill');
+    if(!el){ clearInterval(countdownTimer); return; }
+    el.textContent = formatRemaining(MAKEUP_DEADLINE_AT);
+    el.classList.toggle('alert', (MAKEUP_DEADLINE_AT - Date.now()) <= 12*60*60*1000);
+  }, 1000);
 }
 
 function expandAlerts(){ alertsExpanded = true; renderAlerts(); }
+
+function toggleMakeupTip(e){
+  e.stopPropagation();
+  const tip = document.getElementById('makeup-tip');
+  if(tip) tip.classList.toggle('show');
+}
+
+let makeupSelectedSlot = null;
+
+function openMakeupSheet(){
+  makeupSelectedSlot = null;
+  const slotsEl = document.getElementById('makeup-slots');
+  slotsEl.innerHTML = MAKEUP_SLOTS.map((s,i) => `
+    <label class="slot" onclick="selectMakeupSlot(${i})">
+      <input type="radio" name="makeup-slot" value="${s}" id="ms-slot-${i}">
+      <span class="txt">${s}</span>
+    </label>
+  `).join('');
+  document.getElementById('makeup-confirm').disabled = true;
+  document.getElementById('makeup-sheet').classList.add('show');
+}
+
+function selectMakeupSlot(i){
+  makeupSelectedSlot = MAKEUP_SLOTS[i];
+  document.querySelectorAll('.ms-sheet .slot').forEach((el, idx) => {
+    el.classList.toggle('selected', idx === i);
+    const input = el.querySelector('input');
+    if(input) input.checked = (idx === i);
+  });
+  document.getElementById('makeup-confirm').disabled = false;
+}
+
+function closeMakeupSheet(event){
+  if(event && event.target !== event.currentTarget) return;
+  document.getElementById('makeup-sheet').classList.remove('show');
+}
+
+function confirmMakeup(){
+  if(!makeupSelectedSlot) return;
+  alert(`보강 일정 확정\n${makeupSelectedSlot}`);
+  closeMakeupSheet();
+}
 
 function renderNotice(){
   const area=document.getElementById('notice-area');
