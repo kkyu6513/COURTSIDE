@@ -58,10 +58,14 @@
     .v6 .notice-empty .b .sub { margin-top: 2px; font-size: 11px; color: var(--ink-3); font-weight: 500; line-height: 1.5; }
     .v6 .notice-empty .icon { font-size: 18px; opacity: 0.6; }
 
-    /* 코치 공지사항 / 응답 필요 영역 — 그룹 박스 */
-    .v6 #notice-wrap, .v6 #alerts-wrap { background: var(--soft); border-radius: 14px; padding: 14px 12px; margin-top: 14px; }
+    /* 코치 공지사항 / 응답 필요 영역 — 그룹 박스 (강조) */
+    .v6 #notice-wrap, .v6 #alerts-wrap { background: #EEF2F7; border: 1px solid var(--line-strong); border-radius: 14px; padding: 14px 12px; margin-top: 16px; box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05); }
     .v6 #notice-wrap .sec-ttl, .v6 #alerts-wrap .sec-ttl { padding: 0 4px 12px; }
     .v6 #notice-wrap .sec-ttl.first, .v6 #alerts-wrap .sec-ttl.first { padding-top: 0; }
+
+    /* 알림 카드 head: pill 폭 고정 (카운트다운 변동에도 타이틀 줄바꿈 흔들림 방지) */
+    .v6 .alert .head .ttl { flex: 1; min-width: 0; }
+    .v6 .alert .head .pill { flex-shrink: 0; font-variant-numeric: tabular-nums; min-width: 96px; text-align: center; white-space: nowrap; }
   </style>
 </head>
 <body>
