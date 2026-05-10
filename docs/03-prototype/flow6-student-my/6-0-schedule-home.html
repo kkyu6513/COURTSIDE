@@ -48,6 +48,9 @@
     .v6 .ms-sheet .submit-row .cancel { border: 1px solid var(--line); background: #fff; color: var(--ink); }
     .v6 .ms-sheet .submit-row .submit { border: none; background: var(--ink); color: #fff; flex: 2; }
     .v6 .ms-sheet .submit-row .submit:disabled { background: var(--line); cursor: not-allowed; color: var(--ink-3); }
+    .v6 .ms-sheet .contact-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 14px; margin-top: 8px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--ink-2); text-decoration: none; font-size: 13px; font-weight: 600; letter-spacing: -0.1px; cursor: pointer; }
+    .v6 .ms-sheet .contact-row:hover { background: var(--soft); }
+    .v6 .ms-sheet .contact-row .ic { color: var(--ink-3); }
 
     /* 공지사항 빈 상태 카드 */
     .v6 .notice-empty { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 14px; display: flex; align-items: center; gap: 12px; }
@@ -478,7 +481,11 @@ function openAlertSheet(type){
         <input type="radio" name="sheet-slot" id="sheet-slot-${i}">
         <span class="txt">${s}</span>
       </label>
-    `).join('');
+    `).join('') + `
+      <a href="../flow4-chat/4-2-chat.html" class="contact-row">
+        <span>코치에게 문의하기</span>
+        <svg class="ic ic-sm"><use href="#i-arrow"/></svg>
+      </a>`;
   } else if(type === 'review'){
     titleEl.textContent = '리뷰 작성';
     leadEl.textContent  = `${REVIEW_TARGET}에 대한 별점을 남겨주세요. 자세한 후기는 '리뷰 작성하러 가기'에서 작성할 수 있어요.`;
