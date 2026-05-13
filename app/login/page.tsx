@@ -16,6 +16,7 @@ export default function LoginPage() {
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
           skipBrowserRedirect: true,
+          scopes: "profile_nickname",
         },
       });
 
