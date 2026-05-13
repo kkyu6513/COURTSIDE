@@ -9,15 +9,33 @@ export default function LoginPage() {
   const handleKakao = async () => {
     setLoading(true);
     const supabase = createClient();
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "kakao",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
-    if (error) {
+
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "kakao",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          skipBrowserRedirect: true,
+        },
+      });
+
+      if (error) {
+        alert(`[1] Supabase 에러: ${error.message}`);
+        setLoading(false);
+        return;
+      }
+
+      if (data?.url) {
+        // 명시적으로 카카오 OAuth URL로 이동
+        window.location.href = data.url;
+      } else {
+        alert("[2] Supabase가 URL을 반환하지 않음");
+        setLoading(false);
+      }
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      alert(`[3] 예외 발생: ${msg}`);
       setLoading(false);
-      alert(`로그인 오류: ${error.message}`);
     }
   };
 
