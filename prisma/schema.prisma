@@ -1,0 +1,32 @@
+// COURTSIDE Prisma Schema
+// Sprint 1: 최소 모델 (User, UserRole)
+// 이후 Sprint에서 docs/02-design/database-schema.md 기준으로 단계적 확장
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum UserRole {
+  STUDENT
+  COACH
+  ADMIN
+}
+
+model User {
+  id        String    @id @default(cuid())
+  email     String    @unique
+  role      UserRole?
+  name      String?
+  phone     String?
+  avatarUrl String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@map("users")
+}
