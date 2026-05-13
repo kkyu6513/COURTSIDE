@@ -1,6 +1,7 @@
 // COURTSIDE Prisma Schema
-// Sprint 1: 최소 모델 (User, UserRole)
-// 이후 Sprint에서 docs/02-design/database-schema.md 기준으로 단계적 확장
+// Sprint 1: 인증/프로필/스케줄 (9개 모델)
+// 기준: docs/02-design/database-schema.md
+// 변경점: User.id = UUID (Supabase auth.users.id와 1:1 매핑)
 
 generator client {
   provider = "prisma-client-js"
@@ -12,21 +13,218 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-enum UserRole {
+// ===== Enums =====
+
+enum Role {
   STUDENT
   COACH
   ADMIN
 }
 
-model User {
-  id        String    @id @default(cuid())
-  email     String    @unique
-  role      UserRole?
-  name      String?
-  phone     String?
-  avatarUrl String?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+enum SocialProvider {
+  KAKAO
+  NAVER
+}
 
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum AgeGroup {
+  TEENS
+  TWENTIES
+  THIRTIES
+  FORTIES
+  FIFTIES_PLUS
+}
+
+enum LessonFormat {
+  INDIVIDUAL
+  GROUP
+}
+
+enum LessonType {
+  REGULAR
+  COUPON
+}
+
+enum PriceVisibility {
+  PUBLIC
+  PRIVATE
+}
+
+// ===== 1. 사용자/인증 =====
+
+model User {
+  id               String          @id @db.Uuid // Supabase auth.users.id와 동기화
+  email            String          @unique
+  name             String?
+  role             Role?
+  socialProvider   SocialProvider?
+  socialId         String?
+  profileImage     String?
+  phone            String?
+  isActive         Boolean         @default(true)
+  marketingConsent Boolean         @default(false)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  studentProfile StudentProfile?
+  coachProfile   CoachProfile?
+  schedules      Schedule[]
+
+  @@unique([socialProvider, socialId])
   @@map("users")
+}
+
+// ===== 2. 수강생 프로필 =====
+
+model StudentProfile {
+  id                    Int           @id @default(autoincrement())
+  userId                String        @unique @db.Uuid
+  gender                Gender
+  ageGroup              AgeGroup
+  ntrpLevel             String
+  preferredAreaSido     String
+  preferredAreaSigungu  String
+  preferredLessonFormat LessonFormat?
+  preferredTimeSlots    String[]
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  user        User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lessonGoals StudentLessonGoalMapping[]
+
+  @@map("student_profiles")
+}
+
+model StudentLessonGoalMapping {
+  id               Int @id @default(autoincrement())
+  studentProfileId Int
+  lessonGoalId     Int
+
+  studentProfile StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  lessonGoal     LessonGoal     @relation(fields: [lessonGoalId], references: [id], onDelete: Cascade)
+
+  @@unique([studentProfileId, lessonGoalId])
+  @@map("student_lesson_goal_mappings")
+}
+
+// ===== 3. 코치 프로필 =====
+
+model CoachProfile {
+  id               Int             @id @default(autoincrement())
+  userId           String          @unique @db.Uuid
+  bio              String
+  gender           Gender
+  experienceYears  Int?
+  lessonPrice      Int?
+  priceVisibility  PriceVisibility @default(PUBLIC)
+  areaSido         String
+  areaSigungu      String
+  ntrpMin          Float?
+  ntrpMax          Float?
+  allowRegular     Boolean         @default(true)
+  allowCoupon      Boolean         @default(false)
+  couponValidWeeks Int?
+  averageRating    Float           @default(0)
+  reviewCount      Int             @default(0)
+  bookingCount     Int             @default(0)
+  isVerified       Boolean         @default(false)
+  verifiedAt       DateTime?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  user        User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  images      CoachProfileImage[]
+  specialties CoachSpecialtyMapping[]
+  lessonTypes CoachLessonType[]
+
+  @@map("coach_profiles")
+}
+
+model CoachProfileImage {
+  id             Int      @id @default(autoincrement())
+  coachProfileId Int
+  url            String
+  sortOrder      Int      @default(0)
+  createdAt      DateTime @default(now())
+
+  coachProfile CoachProfile @relation(fields: [coachProfileId], references: [id], onDelete: Cascade)
+
+  @@index([coachProfileId, sortOrder])
+  @@map("coach_profile_images")
+}
+
+model CoachLessonType {
+  id             Int          @id @default(autoincrement())
+  coachProfileId Int
+  lessonFormat   LessonFormat
+
+  coachProfile CoachProfile @relation(fields: [coachProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([coachProfileId, lessonFormat])
+  @@map("coach_lesson_types")
+}
+
+// ===== 4. 어드민 코드 (FR-14c, FR-14d) =====
+
+model CoachSpecialty {
+  id        Int      @id @default(autoincrement())
+  code      String   @unique
+  label     String
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  mappings CoachSpecialtyMapping[]
+
+  @@map("coach_specialties")
+}
+
+model CoachSpecialtyMapping {
+  id             Int @id @default(autoincrement())
+  coachProfileId Int
+  specialtyId    Int
+
+  coachProfile CoachProfile   @relation(fields: [coachProfileId], references: [id], onDelete: Cascade)
+  specialty    CoachSpecialty @relation(fields: [specialtyId], references: [id], onDelete: Cascade)
+
+  @@unique([coachProfileId, specialtyId])
+  @@map("coach_specialty_mappings")
+}
+
+model LessonGoal {
+  id        Int      @id @default(autoincrement())
+  code      String   @unique
+  label     String
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  mappings StudentLessonGoalMapping[]
+
+  @@map("lesson_goals")
+}
+
+// ===== 5. 코치 스케줄 =====
+
+model Schedule {
+  id           Int       @id @default(autoincrement())
+  coachId      String    @db.Uuid
+  dayOfWeek    Int?
+  specificDate DateTime? @db.Date
+  slotTime     String // "HH:mm" 10분 단위
+  isRecurring  Boolean   @default(true)
+  isBlocked    Boolean   @default(false)
+  bookingId    Int?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  coach User @relation(fields: [coachId], references: [id], onDelete: Cascade)
+
+  @@index([coachId, dayOfWeek, slotTime])
+  @@map("schedules")
 }
