@@ -23,7 +23,7 @@ export async function selectRole(formData: FormData) {
 
   const admin = createAdminClient();
 
-  // 1. Supabase auth user의 app_metadata.role 설정 (세션 인식용)
+  // 1. 가장 중요 — app_metadata에 role 저장 (세션 인식용)
   const { error: metaError } = await admin.auth.admin.updateUserById(user.id, {
     app_metadata: {
       ...(user.app_metadata || {}),
@@ -36,21 +36,22 @@ export async function selectRole(formData: FormData) {
     throw new Error(metaError.message);
   }
 
-  // 2. public.users 테이블에도 동기화
+  // 2. public.users 동기화는 fire-and-forget (대기 X, 빠른 응답)
   const nickname =
     (user.user_metadata?.nickname as string | undefined) || null;
 
-  const { error: upsertError } = await admin.from("users").upsert({
-    id: user.id,
-    email: user.email!,
-    name: nickname,
-    role,
-    updatedAt: new Date().toISOString(),
-  });
-
-  if (upsertError) {
-    console.error("[selectRole] upsert users error:", upsertError);
-  }
+  admin
+    .from("users")
+    .upsert({
+      id: user.id,
+      email: user.email!,
+      name: nickname,
+      role,
+      updatedAt: new Date().toISOString(),
+    })
+    .then(({ error }) => {
+      if (error) console.error("[selectRole] upsert users error:", error);
+    });
 
   revalidatePath("/");
 
