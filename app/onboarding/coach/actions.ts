@@ -70,5 +70,5 @@ export async function submitCoachProfile(formData: FormData) {
   }
 
   revalidatePath("/");
-  redirect("/");
+  redirect("/onboarding/coach/schedule");
 }
