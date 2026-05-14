@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Field, RadioGroup, TextInput } from "@/components/onboarding-form";
+import { Field, TextInput } from "@/components/onboarding-form";
 import { AlertModal } from "@/components/alert-modal";
 import { PhoneVerification } from "@/components/phone-verification";
 import { submitStudentProfile } from "./actions";
@@ -42,6 +42,7 @@ export function StudentForm() {
   const [coachName, setCoachName] = useState("");
   const [coachPhone, setCoachPhone] = useState("");
   const [pending, startTransition] = useTransition();
+  const [debugMsg, setDebugMsg] = useState<string>("");
   const [alert, setAlert] = useState<AlertState>({
     open: false,
     variant: "warning",
@@ -51,6 +52,9 @@ export function StudentForm() {
   const close = () => setAlert((a) => ({ ...a, open: false }));
 
   const handleSubmit = () => {
+    // 진단용: 클릭 즉시 visible debug
+    setDebugMsg(`click@${new Date().toISOString().slice(11, 19)} gender=${gender || "∅"} age=${ageGroup || "∅"} phone=${verifiedPhone ? "✓" : "∅"}`);
+
     const missing: string[] = [];
     if (!gender) missing.push("성별을 선택해주세요");
     if (!ageGroup) missing.push("연령대를 선택해주세요");
@@ -102,7 +106,6 @@ export function StudentForm() {
         router.push("/");
         router.refresh();
       } catch (e) {
-        // Server Action의 redirect()가 throw하는 NEXT_REDIRECT는 Next가 처리하도록 다시 throw
         if (isNextRedirectError(e)) throw e;
         setAlert({
           open: true,
@@ -117,6 +120,13 @@ export function StudentForm() {
   return (
     <>
       {pending && <div className="courtside-progress-bar" aria-hidden style={{ position: "fixed" }} />}
+
+      {/* 진단용 visible debug banner */}
+      {debugMsg && (
+        <div className="mt-3 rounded-lg bg-yellow-100 border border-yellow-300 px-3 py-2 text-xs text-yellow-900 font-mono break-all">
+          DEBUG: {debugMsg}
+        </div>
+      )}
 
       <div className="mt-8 space-y-6">
         <Field label="성별" required>
