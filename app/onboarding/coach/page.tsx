@@ -8,8 +8,8 @@ import {
   RadioGroup,
   TextInput,
   Textarea,
-  SubmitButton,
 } from "@/components/onboarding-form";
+import { SubmitButton } from "@/components/submit-button";
 import { RegionSelectPair } from "@/components/region-select";
 
 export default async function CoachOnboardingPage() {

@@ -164,13 +164,5 @@ export function Textarea(
   );
 }
 
-export function SubmitButton({ children }: { children: React.ReactNode }) {
-  return (
-    <button
-      type="submit"
-      className="w-full h-12 rounded-xl bg-ink text-white font-semibold text-sm hover:opacity-90 transition active:scale-[0.98]"
-    >
-      {children}
-    </button>
-  );
-}
+// SubmitButton은 useFormStatus 사용을 위해 별도 파일로 분리:
+// import { SubmitButton } from "@/components/submit-button";

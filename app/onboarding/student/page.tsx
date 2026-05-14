@@ -7,8 +7,8 @@ import {
   Field,
   RadioGroup,
   TextInput,
-  SubmitButton,
 } from "@/components/onboarding-form";
+import { SubmitButton } from "@/components/submit-button";
 
 export default async function StudentOnboardingPage() {
   const supabase = createClient();
