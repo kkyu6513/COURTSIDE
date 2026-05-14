@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { selectRole } from "./actions";
 import { OnboardingHeader } from "@/components/onboarding-form";
+import { FormPendingIndicator } from "@/components/form-pending-indicator";
 
 export default async function RoleOnboardingPage() {
   const supabase = createClient();
@@ -40,6 +41,7 @@ export default async function RoleOnboardingPage() {
         </div>
 
         <form action={selectRole} className="space-y-3">
+          <FormPendingIndicator />
           <button
             name="role"
             value="STUDENT"

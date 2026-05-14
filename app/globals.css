@@ -12,3 +12,39 @@ body {
     "Apple SD Gothic Neo",
     sans-serif;
 }
+
+/* Server Action 폼 전송 중 상단 진행 바 (indeterminate) */
+@keyframes courtside-progress {
+  0% {
+    left: -35%;
+    right: 100%;
+  }
+  60% {
+    left: 100%;
+    right: -90%;
+  }
+  100% {
+    left: 100%;
+    right: -90%;
+  }
+}
+.courtside-progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  z-index: 99999;
+  background-color: rgba(16, 185, 129, 0.15);
+  overflow: hidden;
+  pointer-events: none;
+}
+.courtside-progress-bar::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background-color: #10b981;
+  box-shadow: 0 0 10px #10b981, 0 0 5px #10b981;
+  animation: courtside-progress 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
