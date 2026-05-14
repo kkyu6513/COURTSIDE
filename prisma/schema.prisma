@@ -1,10 +1,10 @@
 // COURTSIDE Prisma Schema
-// Sprint 1: 인증/프로필/스케줄/구독 플랜
-// 기준: docs/02-design/database-schema.md
+// Sprint 1: 인증/프로필/스케줄/구독 플랜/셀프신청/전화번호인증
 // 변경점:
 //   - User.id = UUID (Supabase auth.users.id와 1:1 매핑)
-//   - SubscriptionPlan / SubscriptionPlanFeature 추가 (어드민 동적 관리)
-//   - StudentSelfClaim 추가 (학생 셀프 신청 → 코치 매칭)
+//   - SubscriptionPlan / SubscriptionPlanFeature
+//   - StudentSelfClaim
+//   - PhoneVerification (휴대폰 본인인증)
 
 generator client {
   provider = "prisma-client-js"
@@ -16,49 +16,13 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-// ===== Enums =====
-
-enum Role {
-  STUDENT
-  COACH
-  ADMIN
-}
-
-enum SocialProvider {
-  KAKAO
-  NAVER
-}
-
-enum Gender {
-  MALE
-  FEMALE
-  OTHER
-}
-
-enum AgeGroup {
-  TEENS
-  TWENTIES
-  THIRTIES
-  FORTIES
-  FIFTIES_PLUS
-}
-
-enum LessonFormat {
-  INDIVIDUAL
-  GROUP
-}
-
-enum LessonType {
-  REGULAR
-  COUPON
-}
-
-enum PriceVisibility {
-  PUBLIC
-  PRIVATE
-}
-
-// ===== 1. 사용자/인증 =====
+enum Role { STUDENT COACH ADMIN }
+enum SocialProvider { KAKAO NAVER }
+enum Gender { MALE FEMALE OTHER }
+enum AgeGroup { TEENS TWENTIES THIRTIES FORTIES FIFTIES_PLUS }
+enum LessonFormat { INDIVIDUAL GROUP }
+enum LessonType { REGULAR COUPON }
+enum PriceVisibility { PUBLIC PRIVATE }
 
 model User {
   id               String          @id @db.Uuid
@@ -81,8 +45,6 @@ model User {
   @@unique([socialProvider, socialId])
   @@map("users")
 }
-
-// ===== 2. 수강생 프로필 =====
 
 model StudentProfile {
   id                    Int           @id @default(autoincrement())
@@ -114,8 +76,6 @@ model StudentLessonGoalMapping {
   @@unique([studentProfileId, lessonGoalId])
   @@map("student_lesson_goal_mappings")
 }
-
-// ===== 3. 코치 프로필 =====
 
 model CoachProfile {
   id               Int             @id @default(autoincrement())
@@ -172,8 +132,6 @@ model CoachLessonType {
   @@map("coach_lesson_types")
 }
 
-// ===== 4. 어드민 코드 =====
-
 model CoachSpecialty {
   id        Int      @id @default(autoincrement())
   code      String   @unique
@@ -212,8 +170,6 @@ model LessonGoal {
   @@map("lesson_goals")
 }
 
-// ===== 5. 코치 스케줄 =====
-
 model Schedule {
   id           Int       @id @default(autoincrement())
   coachId      String    @db.Uuid
@@ -231,8 +187,6 @@ model Schedule {
   @@index([coachId, dayOfWeek, slotTime])
   @@map("schedules")
 }
-
-// ===== 6. 구독 플랜 =====
 
 model SubscriptionPlan {
   id           Int     @id @default(autoincrement())
@@ -276,8 +230,6 @@ model SubscriptionPlanFeature {
   @@map("subscription_plan_features")
 }
 
-// ===== 7. 학생 셀프 신청 (코치 매칭 사전 신청) =====
-
 model StudentSelfClaim {
   id                 Int       @id @default(autoincrement())
   studentUserId      String    @db.Uuid
@@ -295,4 +247,19 @@ model StudentSelfClaim {
   @@index([matchedCoachUserId])
   @@index([claimedCoachPhone])
   @@map("student_self_claims")
+}
+
+model PhoneVerification {
+  id           Int       @id @default(autoincrement())
+  phone        String
+  code         String
+  expiresAt    DateTime
+  verifiedAt   DateTime?
+  attemptCount Int       @default(0)
+  ip           String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([phone, createdAt])
+  @@map("phone_verifications")
 }

@@ -48,3 +48,19 @@ body {
   box-shadow: 0 0 10px #10b981, 0 0 5px #10b981;
   animation: courtside-progress 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
+
+/* Alert 모달 애니메이션 */
+@keyframes courtside-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes courtside-pop-in {
+  0% { opacity: 0; transform: scale(0.92) translateY(8px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+.courtside-backdrop-anim {
+  animation: courtside-fade-in 180ms ease-out both;
+}
+.courtside-pop-anim {
+  animation: courtside-pop-in 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}

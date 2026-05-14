@@ -1,0 +1,60 @@
+name: Migrate Phone Verifications
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/migrate-phone-verifications.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Wait for Vercel deployment (poll for 401)
+        run: |
+          URL="https://courtside-two-silk.vercel.app/api/admin/migrate-phone-verifications"
+          for i in {1..36}; do
+            code=$(curl -sS -o /dev/null -w "%{http_code}" "$URL")
+            echo "Attempt $i: HTTP $code"
+            if [ "$code" = "401" ]; then
+              echo "Route deployed."
+              break
+            fi
+            if [ "$i" = "36" ]; then
+              echo "Route never returned 401 after 6 minutes — abort."
+              exit 1
+            fi
+            sleep 10
+          done
+
+      - name: Call migrate endpoint
+        run: |
+          URL="https://courtside-two-silk.vercel.app/api/admin/migrate-phone-verifications?token=courtside-phoneverif-2026-05-14-Hk8nP3qLwR"
+          HTTP_CODE=$(curl -sS -X POST "$URL" -o /tmp/migrate-result.json -w "%{http_code}")
+          echo "HTTP $HTTP_CODE"
+          cat /tmp/migrate-result.json
+          echo ""
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "Migration failed (HTTP $HTTP_CODE)"
+            exit 1
+          fi
+
+      - name: Cleanup migration route + workflow (success only)
+        if: success()
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "courtside-bot"
+          git pull --rebase origin main
+          git rm -r app/api/admin/migrate-phone-verifications
+          git rm .github/workflows/migrate-phone-verifications.yml
+          RESULT=$(cat /tmp/migrate-result.json)
+          git commit -m "chore: phone_verifications 마이그레이션 적용 완료
+
+결과:
+$RESULT"
+          git push
