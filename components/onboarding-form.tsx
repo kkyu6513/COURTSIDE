@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export const SIDO_LIST = [
   "서울특별시",
   "부산광역시",
@@ -17,6 +19,47 @@ export const SIDO_LIST = [
   "경상남도",
   "제주특별자치도",
 ];
+
+export function OnboardingHeader({
+  backHref,
+  step,
+  total,
+}: {
+  backHref?: string;
+  step: number;
+  total: number;
+}) {
+  return (
+    <div className="flex items-center h-12 -mx-2">
+      {backHref ? (
+        <Link
+          href={backHref}
+          aria-label="뒤로가기"
+          className="w-10 h-10 flex items-center justify-center text-ink hover:bg-soft rounded-full transition"
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
+        </Link>
+      ) : (
+        <div className="w-10 h-10" />
+      )}
+      <div className="flex-1 text-center text-xs text-ink-3">
+        {step} / {total}
+      </div>
+      <div className="w-10 h-10" />
+    </div>
+  );
+}
 
 export function Field({
   label,

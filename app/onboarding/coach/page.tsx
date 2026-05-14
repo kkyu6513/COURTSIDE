@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { submitCoachProfile } from "./actions";
 import {
   SIDO_LIST,
+  OnboardingHeader,
   Field,
   RadioGroup,
   Select,
@@ -36,12 +37,15 @@ export default async function CoachOnboardingPage() {
 
   return (
     <main className="min-h-screen bg-bg pb-12">
-      <div className="max-w-md mx-auto px-6 pt-10">
-        <div className="text-xs text-ink-3 mb-1">2 / 2</div>
-        <h1 className="text-2xl font-bold text-ink">코치 프로필 등록</h1>
-        <p className="mt-1.5 text-sm text-ink-2">
-          학생들에게 보여줄 정보를 입력해주세요
-        </p>
+      <div className="max-w-md mx-auto px-6 pt-4">
+        <OnboardingHeader backHref="/onboarding/role" step={2} total={2} />
+
+        <div className="mt-4">
+          <h1 className="text-2xl font-bold text-ink">코치 프로필 등록</h1>
+          <p className="mt-1.5 text-sm text-ink-2">
+            학생들에게 보여줄 정보를 입력해주세요
+          </p>
+        </div>
 
         <form action={submitCoachProfile} className="mt-8 space-y-6">
           <Field label="성별" required>
