@@ -24,9 +24,7 @@ export async function submitStudentProfile(formData: FormData) {
 
   const gender = formData.get("gender")?.toString();
   const ageGroup = formData.get("ageGroup")?.toString();
-  const ntrpLevel = formData.get("ntrpLevel")?.toString();
-  const areaSido = formData.get("areaSido")?.toString();
-  const areaSigungu = formData.get("areaSigungu")?.toString()?.trim();
+  const phoneRaw = formData.get("phone")?.toString()?.trim();
 
   // 검증
   if (
@@ -41,19 +39,23 @@ export async function submitStudentProfile(formData: FormData) {
   ) {
     throw new Error("연령대를 선택해주세요");
   }
-  if (!ntrpLevel) throw new Error("NTRP 레벨을 선택해주세요");
-  if (!areaSido) throw new Error("시·도를 선택해주세요");
-  if (!areaSigungu) throw new Error("시·군·구를 입력해주세요");
+
+  // 전화번호 정규화 (숫자만)
+  const phone = phoneRaw?.replace(/[^\d]/g, "");
+  if (!phone || phone.length < 10 || phone.length > 11) {
+    throw new Error("전화번호는 10~11자리 숫자로 입력해주세요");
+  }
 
   const admin = createAdminClient();
 
+  // 1. student_profiles insert (NTRP/지역은 추후 입력)
   const { error: insertError } = await admin.from("student_profiles").insert({
     userId: user.id,
     gender,
     ageGroup,
-    ntrpLevel,
-    preferredAreaSido: areaSido,
-    preferredAreaSigungu: areaSigungu,
+    ntrpLevel: "",
+    preferredAreaSido: "",
+    preferredAreaSigungu: "",
     preferredTimeSlots: [],
     updatedAt: new Date().toISOString(),
   });
@@ -62,6 +64,16 @@ export async function submitStudentProfile(formData: FormData) {
     console.error("[submitStudentProfile] insert error:", insertError);
     throw new Error(insertError.message);
   }
+
+  // 2. users 테이블의 phone 업데이트 (코치 초대 매칭용) - fire-and-forget
+  admin
+    .from("users")
+    .update({ phone, updatedAt: new Date().toISOString() })
+    .eq("id", user.id)
+    .then(({ error }) => {
+      if (error)
+        console.error("[submitStudentProfile] phone update error:", error);
+    });
 
   revalidatePath("/");
   redirect("/");

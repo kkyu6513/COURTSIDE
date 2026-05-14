@@ -6,20 +6,9 @@ import {
   OnboardingHeader,
   Field,
   RadioGroup,
-  Select,
   TextInput,
   SubmitButton,
 } from "@/components/onboarding-form";
-import { RegionSelectPair } from "@/components/region-select";
-import { NtrpTooltipButton } from "@/components/ntrp-tooltip";
-
-const NTRP_OPTIONS = [
-  { value: "1.0-2.0", label: "1.0 ~ 2.0 (입문)" },
-  { value: "2.5-3.0", label: "2.5 ~ 3.0 (초급)" },
-  { value: "3.5-4.0", label: "3.5 ~ 4.0 (중급)" },
-  { value: "4.5-5.0", label: "4.5 ~ 5.0 (상급)" },
-  { value: "5.5+", label: "5.5+ (프로)" },
-];
 
 export default async function StudentOnboardingPage() {
   const supabase = createClient();
@@ -48,9 +37,9 @@ export default async function StudentOnboardingPage() {
         <OnboardingHeader backHref="/onboarding/role" step={2} total={2} />
 
         <div className="mt-4">
-          <h1 className="text-2xl font-bold text-ink">학생 프로필 등록</h1>
+          <h1 className="text-2xl font-bold text-ink">기본 정보 입력</h1>
           <p className="mt-1.5 text-sm text-ink-2">
-            코치 매칭을 위해 정보를 입력해주세요
+            코치에게 초대받기 위한 기본 정보를 입력해주세요
           </p>
         </div>
 
@@ -91,34 +80,26 @@ export default async function StudentOnboardingPage() {
             </div>
           </Field>
 
-          <Field label="NTRP 레벨" required>
-            <Select
-              name="ntrpLevel"
-              required
-              placeholder="레벨을 선택하세요"
-              options={NTRP_OPTIONS}
-            />
-            <div className="mt-2">
-              <NtrpTooltipButton />
-            </div>
-          </Field>
-
-          <RegionSelectPair
-            sidoName="areaSido"
-            sigunguName="areaSigungu"
-            sidoLabel="희망 레슨 지역 (시·도)"
-            sigunguLabel="희망 레슨 지역 (시·군·구)"
-            required
-          />
-
-          <Field label="레슨 목표 (선택)">
+          <Field label="전화번호" required>
             <TextInput
-              name="goal"
-              type="text"
-              placeholder="예: 포핸드 개선, 실전 게임"
-              maxLength={100}
+              name="phone"
+              required
+              type="tel"
+              inputMode="numeric"
+              placeholder="01012345678 (- 없이)"
+              pattern="[0-9]{10,11}"
+              maxLength={11}
             />
+            <p className="mt-1.5 text-xs text-ink-3">
+              코치가 카카오톡 또는 SMS로 초대할 때 사용됩니다
+            </p>
           </Field>
+
+          <div className="rounded-xl bg-soft p-4 text-xs text-ink-2 leading-relaxed">
+            <div className="font-semibold text-ink mb-1">💡 안내</div>
+            가입 후 코치에게 초대받으면 자동으로 연결됩니다.
+            NTRP 레벨, 레슨 목표 등 추가 정보는 마이페이지에서 입력할 수 있어요.
+          </div>
 
           <div className="pt-4">
             <SubmitButton>등록 완료</SubmitButton>
