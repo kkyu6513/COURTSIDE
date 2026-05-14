@@ -3,7 +3,6 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { submitStudentProfile } from "./actions";
 import {
-  SIDO_LIST,
   OnboardingHeader,
   Field,
   RadioGroup,
@@ -11,6 +10,8 @@ import {
   TextInput,
   SubmitButton,
 } from "@/components/onboarding-form";
+import { RegionSelectPair } from "@/components/region-select";
+import { NtrpTooltipButton } from "@/components/ntrp-tooltip";
 
 const NTRP_OPTIONS = [
   { value: "1.0-2.0", label: "1.0 ~ 2.0 (입문)" },
@@ -32,7 +33,6 @@ export default async function StudentOnboardingPage() {
   if (!role) redirect("/onboarding/role");
   if (role === "COACH") redirect("/onboarding/coach");
 
-  // 이미 학생 프로필 있으면 홈
   const admin = createAdminClient();
   const { data: existing } = await admin
     .from("student_profiles")
@@ -58,10 +58,10 @@ export default async function StudentOnboardingPage() {
           <Field label="성별" required>
             <RadioGroup
               name="gender"
+              cols={2}
               options={[
                 { value: "MALE", label: "남성" },
                 { value: "FEMALE", label: "여성" },
-                { value: "OTHER", label: "기타" },
               ]}
             />
           </Field>
@@ -98,29 +98,18 @@ export default async function StudentOnboardingPage() {
               placeholder="레벨을 선택하세요"
               options={NTRP_OPTIONS}
             />
-            <p className="mt-1.5 text-xs text-ink-3">
-              NTRP는 미국테니스협회 실력 등급입니다 (1.0 입문 ~ 7.0 프로)
-            </p>
+            <div className="mt-2">
+              <NtrpTooltipButton />
+            </div>
           </Field>
 
-          <Field label="희망 레슨 지역 (시·도)" required>
-            <Select
-              name="areaSido"
-              required
-              placeholder="시·도를 선택하세요"
-              options={SIDO_LIST.map((s) => ({ value: s, label: s }))}
-            />
-          </Field>
-
-          <Field label="희망 레슨 지역 (시·군·구)" required>
-            <TextInput
-              name="areaSigungu"
-              required
-              type="text"
-              placeholder="예: 강남구"
-              maxLength={30}
-            />
-          </Field>
+          <RegionSelectPair
+            sidoName="areaSido"
+            sigunguName="areaSigungu"
+            sidoLabel="희망 레슨 지역 (시·도)"
+            sigunguLabel="희망 레슨 지역 (시·군·구)"
+            required
+          />
 
           <Field label="레슨 목표 (선택)">
             <TextInput
