@@ -1439,28 +1439,53 @@ GET /api/coaches/:id/schedule [공개]
 
 ## 8. 약관 버전 관리
 
+### 8.0 데이터 모델 (Sprint 1 — Phase 1A 구현 완료)
+
+```
+Terms             — 약관 종류 (code, title, isRequired, sortOrder)
+TermsVersion      — 약관 버전 (termsId, version, content, effectiveDate, isActive)
+UserTermsAgreement — 동의 기록 (userId, termsVersionId, agreedAt, ip)
+```
+
+**시드된 약관 (`code`):**
+- `TERMS_OF_USE` — 이용약관 (필수)
+- `PRIVACY_POLICY` — 개인정보 처리방침 (필수)
+- `MARKETING_CONSENT` — 마케팅 수신 동의 (선택, 별도로 `User.marketingConsent`에도 미러링)
+
 ### 8.1 약관 개정 플로우
 
 ```
 어드민이 약관 개정 시:
-  1. Terms 테이블에 동일 code로 새 레코드 생성 (version 증가)
-  2. 기존 동일 code의 isActive = false
-  3. 신규 레코드 isActive = true
+  1. TermsVersion 테이블에 동일 termsId로 새 레코드 생성 (version 증가)
+  2. 기존 동일 termsId 레코드의 isActive = false
+  3. 신규 레코드 isActive = true (effectiveDate 세팅)
 ```
 
-### 8.2 재동의 요청 로직
+### 8.2 가입 시 동의 (Phase 1B — 학생 폼 구현 완료)
 
 ```
-사용자 로그인 시:
+학생 온보딩 (/onboarding/student):
+  1. 서버: terms_versions.isActive=true 인 모든 약관 로드
+  2. 폼에서 전체 동의 + 개별 동의 토글
+  3. "등록 완료" 시:
+     - 서버에서 isRequired=true 약관의 동의 여부 재검증
+     - 동의한 모든 termsVersionId 를 user_terms_agreements 에 upsert (ip 기록)
+     - MARKETING_CONSENT 동의 시 users.marketingConsent = true
+```
+
+### 8.3 재동의 요청 로직
+
+```
+사용자 로그인 시 (TODO Sprint 2+):
   1. GET /api/terms (isActive=true인 필수 약관 목록)
-  2. GET /api/users/me/terms (사용자가 동의한 termsId 목록)
+  2. GET /api/users/me/terms (사용자가 동의한 termsVersionId 목록)
   3. 비교:
-     필수 약관의 현재 활성 termsId ≠ 사용자 동의 termsId
+     필수 약관의 현재 활성 termsVersionId ≠ 사용자 동의 termsVersionId
      → 불일치 약관에 대해 재동의 바텀시트 표시
-     → 동의 완료 시 UserTermsAgreement 갱신 (새 termsId로)
+     → 동의 완료 시 UserTermsAgreement 신규 행 추가 (새 termsVersionId 로)
 ```
 
-### 8.3 미동의 시 서비스 제한
+### 8.4 미동의 시 서비스 제한
 
 ```
 필수 약관 미동의 상태:

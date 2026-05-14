@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Field, TextInput } from "@/components/onboarding-form";
 import { AlertModal } from "@/components/alert-modal";
 import { PhoneVerification } from "@/components/phone-verification";
+import { TermsAgreement, type TermsItem } from "./terms-agreement";
 import { submitStudentProfile } from "./actions";
 
 type AlertState = {
@@ -34,31 +35,43 @@ function isNextRedirectError(e: unknown): boolean {
   );
 }
 
-export function StudentForm() {
+export function StudentForm({ terms }: { terms: TermsItem[] }) {
   const router = useRouter();
+  const [realName, setRealName] = useState("");
   const [gender, setGender] = useState("");
   const [ageGroup, setAgeGroup] = useState("");
   const [verifiedPhone, setVerifiedPhone] = useState<string | null>(null);
   const [coachName, setCoachName] = useState("");
   const [coachPhone, setCoachPhone] = useState("");
+  const [agreed, setAgreed] = useState<Record<number, boolean>>({});
   const [pending, startTransition] = useTransition();
-  const [debugMsg, setDebugMsg] = useState<string>("");
   const [alert, setAlert] = useState<AlertState>({
     open: false,
     variant: "warning",
     title: "",
   });
 
+  const requiredTermsIds = useMemo(
+    () => terms.filter((t) => t.isRequired).map((t) => t.versionId),
+    [terms],
+  );
+  const marketingTerms = useMemo(
+    () => terms.find((t) => t.code === "MARKETING_CONSENT"),
+    [terms],
+  );
+
   const close = () => setAlert((a) => ({ ...a, open: false }));
 
   const handleSubmit = () => {
-    // 진단용: 클릭 즉시 visible debug
-    setDebugMsg(`click@${new Date().toISOString().slice(11, 19)} gender=${gender || "∅"} age=${ageGroup || "∅"} phone=${verifiedPhone ? "✓" : "∅"}`);
-
+    const trimmedName = realName.trim();
     const missing: string[] = [];
+    if (!trimmedName) missing.push("이름(실명)을 입력해주세요");
     if (!gender) missing.push("성별을 선택해주세요");
     if (!ageGroup) missing.push("연령대를 선택해주세요");
     if (!verifiedPhone) missing.push("전화번호 본인 인증을 완료해주세요");
+
+    const missingRequiredTerms = requiredTermsIds.filter((id) => !agreed[id]);
+    if (missingRequiredTerms.length > 0) missing.push("필수 약관에 동의해주세요");
 
     if (missing.length > 0) {
       setAlert({
@@ -67,6 +80,16 @@ export function StudentForm() {
         title: "입력하지 않은 항목이 있어요",
         description: "아래 항목을 확인하고 다시 시도해 주세요.",
         items: missing,
+      });
+      return;
+    }
+
+    if (trimmedName.length < 2 || trimmedName.length > 30) {
+      setAlert({
+        open: true,
+        variant: "warning",
+        title: "이름을 확인해 주세요",
+        description: "이름은 2~30자로 입력해 주세요.",
       });
       return;
     }
@@ -92,11 +115,20 @@ export function StudentForm() {
       return;
     }
 
+    const agreedIds = Object.entries(agreed)
+      .filter(([, v]) => v)
+      .map(([k]) => Number(k))
+      .filter((n) => Number.isFinite(n));
+    const marketingAgreed = marketingTerms ? !!agreed[marketingTerms.versionId] : false;
+
     const fd = new FormData();
+    fd.set("realName", trimmedName);
     fd.set("gender", gender);
     fd.set("ageGroup", ageGroup);
     fd.set("phone", verifiedPhone!);
     fd.set("phoneVerified", "1");
+    fd.set("agreedTermsVersionIds", agreedIds.join(","));
+    fd.set("marketingConsent", marketingAgreed ? "1" : "0");
     if (cName) fd.set("claimedCoachName", cName);
     if (cPhone) fd.set("claimedCoachPhone", cPhone);
 
@@ -121,14 +153,21 @@ export function StudentForm() {
     <>
       {pending && <div className="courtside-progress-bar" aria-hidden style={{ position: "fixed" }} />}
 
-      {/* 진단용 visible debug banner */}
-      {debugMsg && (
-        <div className="mt-3 rounded-lg bg-yellow-100 border border-yellow-300 px-3 py-2 text-xs text-yellow-900 font-mono break-all">
-          DEBUG: {debugMsg}
-        </div>
-      )}
-
       <div className="mt-8 space-y-6">
+        <Field label="이름(실명)" required>
+          <TextInput
+            type="text"
+            value={realName}
+            onChange={(e) => setRealName(e.target.value)}
+            placeholder="예: 홍길동"
+            maxLength={30}
+            autoComplete="name"
+          />
+          <p className="mt-1.5 text-xs text-ink-3">
+            본인 확인용으로만 사용되며, 다른 회원에게는 마스킹되어 표시됩니다.
+          </p>
+        </Field>
+
         <Field label="성별" required>
           <RadioGroupControlled value={gender} onChange={setGender} options={[{ value: "MALE", label: "남성" }, { value: "FEMALE", label: "여성" }]} />
         </Field>
@@ -178,6 +217,10 @@ export function StudentForm() {
             />
           </Field>
         </div>
+
+        <Field label="약관 동의" required>
+          <TermsAgreement terms={terms} agreed={agreed} onChange={setAgreed} />
+        </Field>
 
         <div className="rounded-xl bg-soft p-4 text-xs text-ink-2 leading-relaxed space-y-3">
           <div className="font-semibold text-ink text-sm">💡 가입 이후 흐름을 알려드릴게요</div>
