@@ -95,10 +95,36 @@ export default async function StudentOnboardingPage() {
             </p>
           </Field>
 
-          <div className="rounded-xl bg-soft p-4 text-xs text-ink-2 leading-relaxed">
-            <div className="font-semibold text-ink mb-1">💡 안내</div>
-            가입 후 코치에게 초대받으면 자동으로 연결됩니다.
-            NTRP 레벨, 레슨 목표 등 추가 정보는 마이페이지에서 입력할 수 있어요.
+          <div className="rounded-xl bg-soft p-4 text-xs text-ink-2 leading-relaxed space-y-3">
+            <div className="font-semibold text-ink text-sm">💡 가입 이후 흐름을 알려드릴게요</div>
+
+            <div>
+              <div className="font-semibold text-ink mb-1">① 코치님에게 알려주세요</div>
+              <p>
+                레슨받고 계신(또는 받으실) 코치님께 <b>방금 입력하신 전화번호로 가입했다고 말씀</b>해 주세요. 코치님이
+                회원님을 조회해서 본인의 학생으로 등록(초대)해 드립니다.
+              </p>
+            </div>
+
+            <div>
+              <div className="font-semibold text-ink mb-1">② 자동으로 연결됩니다</div>
+              <p>
+                코치님이 초대를 보내면 카카오 알림톡(또는 SMS)이 도착하고, 별도 작업 없이 회원님 홈에 코치님과 레슨
+                스케줄이 자동으로 표시됩니다.
+              </p>
+            </div>
+
+            <div>
+              <div className="font-semibold text-ink mb-1">③ 추가 정보는 나중에 채워도 돼요</div>
+              <p>
+                NTRP 레벨, 레슨 목표, 선호 시간대 등은 가입 후 <b>마이페이지 → 내 정보</b>에서 언제든 추가하거나 수정할
+                수 있어요.
+              </p>
+            </div>
+
+            <p className="pt-1 text-ink-3">
+              ※ 입력하신 전화번호는 코치님이 회원님을 찾고 알림을 보내는 용도로만 사용됩니다.
+            </p>
           </div>
 
           <div className="pt-4">
