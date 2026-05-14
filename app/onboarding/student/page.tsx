@@ -5,7 +5,12 @@ import { OnboardingHeader } from "@/components/onboarding-form";
 import { StudentForm } from "./student-form";
 import { getActiveTerms } from "@/lib/terms";
 
-export default async function StudentOnboardingPage() {
+export default async function StudentOnboardingPage({
+  searchParams,
+}: {
+  searchParams?: { force?: string };
+}) {
+  const force = searchParams?.force === "1";
   const supabase = createClient();
   const {
     data: { user },
@@ -24,7 +29,7 @@ export default async function StudentOnboardingPage() {
     .eq("userId", user.id)
     .maybeSingle();
 
-  if (existing) redirect("/");
+  if (existing && !force) redirect("/");
 
   const terms = await getActiveTerms();
 

@@ -6,7 +6,12 @@ import { OnboardingHeader } from "@/components/onboarding-form";
 import { PlanSubmitButton } from "./submit-button";
 import { getActivePlans, type Plan } from "@/lib/subscriptions";
 
-export default async function CoachPlanSelectPage() {
+export default async function CoachPlanSelectPage({
+  searchParams,
+}: {
+  searchParams?: { force?: string };
+}) {
+  const force = searchParams?.force === "1";
   const supabase = createClient();
   const {
     data: { user },
@@ -27,7 +32,7 @@ export default async function CoachPlanSelectPage() {
     .eq("userId", user.id)
     .maybeSingle();
 
-  if (existing) redirect("/");
+  if (existing && !force) redirect("/");
 
   const plans = await getActivePlans();
 
@@ -50,7 +55,7 @@ export default async function CoachPlanSelectPage() {
         ) : (
           <div className="mt-8 space-y-4">
             {plans.map((plan) => (
-              <PlanCard key={plan.id} plan={plan} />
+              <PlanCard key={plan.id} plan={plan} force={force} />
             ))}
           </div>
         )}
@@ -64,7 +69,7 @@ export default async function CoachPlanSelectPage() {
   );
 }
 
-function PlanCard({ plan }: { plan: Plan }) {
+function PlanCard({ plan, force }: { plan: Plan; force?: boolean }) {
   const popular = plan.isBest;
   // MVP: 토스페이먼츠 미연동 — 유료 플랜은 "결제 준비 중"
   const comingSoon = plan.code !== "FREE";
@@ -143,6 +148,7 @@ function PlanCard({ plan }: { plan: Plan }) {
 
       <form action={selectPlan} className="mt-5">
         <input type="hidden" name="plan" value={plan.code} />
+        {force && <input type="hidden" name="force" value="1" />}
         <PlanSubmitButton
           variant={plan.ctaStyle}
           disabled={comingSoon}

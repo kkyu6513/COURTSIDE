@@ -7,6 +7,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function selectRole(formData: FormData) {
   const role = formData.get("role")?.toString();
+  const force = formData.get("force")?.toString() === "1";
 
   if (role !== "STUDENT" && role !== "COACH") {
     throw new Error("Invalid role");
@@ -55,11 +56,12 @@ export async function selectRole(formData: FormData) {
 
   revalidatePath("/");
 
-  // 3. 역할별 다음 단계로 분기
+  // 3. 역할별 다음 단계로 분기 (테스트용 force=1 우회 시 그대로 전달)
+  const suffix = force ? "?force=1" : "";
   if (role === "STUDENT") {
-    redirect("/onboarding/student");
+    redirect(`/onboarding/student${suffix}`);
   } else {
     // 코치: 플랜 선택 → 프로필 등록 (3-step)
-    redirect("/onboarding/coach/plan");
+    redirect(`/onboarding/coach/plan${suffix}`);
   }
 }

@@ -3,7 +3,12 @@ import { createClient } from "@/lib/supabase/server";
 import { OnboardingHeader } from "@/components/onboarding-form";
 import { RoleButtons } from "./role-buttons";
 
-export default async function RoleOnboardingPage() {
+export default async function RoleOnboardingPage({
+  searchParams,
+}: {
+  searchParams?: { force?: string };
+}) {
+  const force = searchParams?.force === "1";
   const supabase = createClient();
   const {
     data: { user },
@@ -39,7 +44,7 @@ export default async function RoleOnboardingPage() {
           )}
         </div>
 
-        <RoleButtons currentRole={currentRole} />
+        <RoleButtons currentRole={currentRole} force={force} />
 
         <p className="mt-8 text-center text-xs text-ink-3 leading-relaxed">
           역할은 나중에 마이페이지에서 변경할 수 있어요

@@ -6,12 +6,14 @@ import { selectRole } from "./actions";
 
 type Props = {
   currentRole?: string;
+  force?: boolean;
 };
 
-export function RoleButtons({ currentRole }: Props) {
+export function RoleButtons({ currentRole, force }: Props) {
   return (
     <form action={selectRole} className="space-y-3">
       <FormPendingIndicator />
+      {force && <input type="hidden" name="force" value="1" />}
       <RoleButton
         value="STUDENT"
         currentRole={currentRole}

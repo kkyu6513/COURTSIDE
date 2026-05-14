@@ -10,6 +10,7 @@ type Plan = (typeof VALID_PLANS)[number];
 
 export async function selectPlan(formData: FormData) {
   const plan = formData.get("plan")?.toString() as Plan | undefined;
+  const force = formData.get("force")?.toString() === "1";
 
   if (!plan || !VALID_PLANS.includes(plan)) {
     throw new Error("Invalid plan");
@@ -49,5 +50,5 @@ export async function selectPlan(formData: FormData) {
   }
 
   revalidatePath("/");
-  redirect("/onboarding/coach");
+  redirect(force ? "/onboarding/coach?force=1" : "/onboarding/coach");
 }
