@@ -11,13 +11,45 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-enum Role { STUDENT COACH ADMIN }
-enum SocialProvider { KAKAO NAVER }
-enum Gender { MALE FEMALE OTHER }
-enum AgeGroup { TEENS TWENTIES THIRTIES FORTIES FIFTIES_PLUS }
-enum LessonFormat { INDIVIDUAL GROUP }
-enum LessonType { REGULAR COUPON }
-enum PriceVisibility { PUBLIC PRIVATE }
+enum Role {
+  STUDENT
+  COACH
+  ADMIN
+}
+
+enum SocialProvider {
+  KAKAO
+  NAVER
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum AgeGroup {
+  TEENS
+  TWENTIES
+  THIRTIES
+  FORTIES
+  FIFTIES_PLUS
+}
+
+enum LessonFormat {
+  INDIVIDUAL
+  GROUP
+}
+
+enum LessonType {
+  REGULAR
+  COUPON
+}
+
+enum PriceVisibility {
+  PUBLIC
+  PRIVATE
+}
 
 model User {
   id               String          @id @db.Uuid
@@ -137,7 +169,9 @@ model CoachSpecialty {
   isActive  Boolean  @default(true)
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())
-  mappings  CoachSpecialtyMapping[]
+
+  mappings CoachSpecialtyMapping[]
+
   @@map("coach_specialties")
 }
 
@@ -160,7 +194,9 @@ model LessonGoal {
   isActive  Boolean  @default(true)
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())
-  mappings  StudentLessonGoalMapping[]
+
+  mappings StudentLessonGoalMapping[]
+
   @@map("lesson_goals")
 }
 
@@ -194,6 +230,7 @@ model SubscriptionPlan {
   ctaStyle     String
   sortOrder    Int     @default(0)
   isActive     Boolean @default(true)
+
   studentLimit       Int?
   alimtalkLimit      Int?
   hasStats           Boolean @default(false)
@@ -201,9 +238,11 @@ model SubscriptionPlan {
   hasCsvExport       Boolean @default(false)
   hasPrioritySupport Boolean @default(false)
   hasAutoRegular     Boolean @default(false)
+
   features  SubscriptionPlanFeature[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
   @@map("subscription_plans")
 }
 
@@ -214,7 +253,9 @@ model SubscriptionPlanFeature {
   label     String
   enabled   Boolean @default(true)
   sortOrder Int     @default(0)
+
   plan SubscriptionPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+
   @@index([planId, sortOrder])
   @@map("subscription_plan_features")
 }
@@ -257,14 +298,14 @@ model PhoneVerification {
 
 model Terms {
   id          Int      @id @default(autoincrement())
-  code        String   @unique // TERMS_OF_USE | PRIVACY_POLICY | MARKETING_CONSENT
+  code        String   @unique
   title       String
   isRequired  Boolean  @default(true)
   sortOrder   Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  versions    TermsVersion[]
+  versions TermsVersion[]
 
   @@map("terms")
 }
@@ -278,19 +319,19 @@ model TermsVersion {
   isActive      Boolean  @default(false)
   createdAt     DateTime @default(now())
 
-  terms       Terms                @relation(fields: [termsId], references: [id], onDelete: Cascade)
-  agreements  UserTermsAgreement[]
+  terms      Terms                @relation(fields: [termsId], references: [id], onDelete: Cascade)
+  agreements UserTermsAgreement[]
 
   @@index([termsId, isActive])
   @@map("terms_versions")
 }
 
 model UserTermsAgreement {
-  id              Int       @id @default(autoincrement())
-  userId          String    @db.Uuid
-  termsVersionId  Int
-  agreedAt        DateTime  @default(now())
-  ip              String?
+  id             Int      @id @default(autoincrement())
+  userId         String   @db.Uuid
+  termsVersionId Int
+  agreedAt       DateTime @default(now())
+  ip             String?
 
   user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   termsVersion TermsVersion @relation(fields: [termsVersionId], references: [id], onDelete: Cascade)
