@@ -4,6 +4,7 @@
 // 변경점:
 //   - User.id = UUID (Supabase auth.users.id와 1:1 매핑)
 //   - SubscriptionPlan / SubscriptionPlanFeature 추가 (어드민 동적 관리)
+//   - StudentSelfClaim 추가 (학생 셀프 신청 → 코치 매칭)
 
 generator client {
   provider = "prisma-client-js"
@@ -60,7 +61,7 @@ enum PriceVisibility {
 // ===== 1. 사용자/인증 =====
 
 model User {
-  id               String          @id @db.Uuid // Supabase auth.users.id와 동기화
+  id               String          @id @db.Uuid
   email            String          @unique
   name             String?
   role             Role?
@@ -171,7 +172,7 @@ model CoachLessonType {
   @@map("coach_lesson_types")
 }
 
-// ===== 4. 어드민 코드 (FR-14c, FR-14d) =====
+// ===== 4. 어드민 코드 =====
 
 model CoachSpecialty {
   id        Int      @id @default(autoincrement())
@@ -218,7 +219,7 @@ model Schedule {
   coachId      String    @db.Uuid
   dayOfWeek    Int?
   specificDate DateTime? @db.Date
-  slotTime     String // "HH:mm" 10분 단위
+  slotTime     String
   isRecurring  Boolean   @default(true)
   isBlocked    Boolean   @default(false)
   bookingId    Int?
@@ -231,29 +232,28 @@ model Schedule {
   @@map("schedules")
 }
 
-// ===== 6. 구독 플랜 (어드민 동적 관리) =====
+// ===== 6. 구독 플랜 =====
 
 model SubscriptionPlan {
   id           Int     @id @default(autoincrement())
-  code         String  @unique // FREE, MONTHLY, YEARLY
+  code         String  @unique
   name         String
   price        Int
-  billingCycle String  // "monthly" | "yearly"
+  billingCycle String
   isBest       Boolean @default(false)
   discount     String?
   ctaText      String
-  ctaStyle     String  // "primary" | "secondary"
+  ctaStyle     String
   sortOrder    Int     @default(0)
   isActive     Boolean @default(true)
 
-  // 정책 값 (null = 무제한)
   studentLimit       Int?
   alimtalkLimit      Int?
   hasStats           Boolean @default(false)
   hasMemberSearch    Boolean @default(false)
   hasCsvExport       Boolean @default(false)
   hasPrioritySupport Boolean @default(false)
-  hasAutoRegular     Boolean @default(false) // 정기 레슨 자동 생성
+  hasAutoRegular     Boolean @default(false)
 
   features  SubscriptionPlanFeature[]
   createdAt DateTime @default(now())
@@ -265,7 +265,7 @@ model SubscriptionPlan {
 model SubscriptionPlanFeature {
   id        Int     @id @default(autoincrement())
   planId    Int
-  code      String  // STUDENT_LIMIT, ALIMTALK_UNLIMITED 등
+  code      String
   label     String
   enabled   Boolean @default(true)
   sortOrder Int     @default(0)
@@ -274,4 +274,25 @@ model SubscriptionPlanFeature {
 
   @@index([planId, sortOrder])
   @@map("subscription_plan_features")
+}
+
+// ===== 7. 학생 셀프 신청 (코치 매칭 사전 신청) =====
+
+model StudentSelfClaim {
+  id                 Int       @id @default(autoincrement())
+  studentUserId      String    @db.Uuid
+  claimedCoachName   String
+  claimedCoachPhone  String
+  matchedCoachUserId String?   @db.Uuid
+  status             String    @default("PENDING")
+  notifiedAt         DateTime?
+  notifyAttempts     Int       @default(0)
+  notifyLastError    String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@index([studentUserId])
+  @@index([matchedCoachUserId])
+  @@index([claimedCoachPhone])
+  @@map("student_self_claims")
 }

@@ -95,22 +95,52 @@ export default async function StudentOnboardingPage() {
             </p>
           </Field>
 
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50/40 p-4 space-y-3">
+            <div>
+              <div className="font-semibold text-ink text-sm">🎾 코치 정보 (선택)</div>
+              <p className="mt-1 text-xs text-ink-2 leading-relaxed">
+                레슨받고 계시는 코치님 정보를 미리 입력해 두시면, 등록 완료 시 코치님께 알림이 자동으로 발송되어 본인의
+                학생으로 빠르게 등록받을 수 있어요. 정보가 일치하지 않으면 알림은 발송되지 않습니다.
+              </p>
+            </div>
+
+            <Field label="코치 이름">
+              <TextInput
+                name="claimedCoachName"
+                type="text"
+                placeholder="예: 김코치"
+                maxLength={30}
+              />
+            </Field>
+
+            <Field label="코치 전화번호">
+              <TextInput
+                name="claimedCoachPhone"
+                type="tel"
+                inputMode="numeric"
+                placeholder="01012345678 (- 없이)"
+                pattern="[0-9]{10,11}"
+                maxLength={11}
+              />
+            </Field>
+          </div>
+
           <div className="rounded-xl bg-soft p-4 text-xs text-ink-2 leading-relaxed space-y-3">
             <div className="font-semibold text-ink text-sm">💡 가입 이후 흐름을 알려드릴게요</div>
 
             <div>
-              <div className="font-semibold text-ink mb-1">① 코치님에게 알려주세요</div>
+              <div className="font-semibold text-ink mb-1">① 위에 코치 정보를 입력했다면</div>
               <p>
-                레슨받고 계신(또는 받으실) 코치님께 <b>방금 입력하신 전화번호로 가입했다고 말씀</b>해 주세요. 코치님이
-                회원님을 조회해서 본인의 학생으로 등록(초대)해 드립니다.
+                등록 완료 즉시 시스템이 해당 코치님을 찾아 알림톡을 발송합니다. 코치님이 알림을 받고 회원님을 본인의
+                학생으로 등록하면 자동 연결됩니다.
               </p>
             </div>
 
             <div>
-              <div className="font-semibold text-ink mb-1">② 자동으로 연결됩니다</div>
+              <div className="font-semibold text-ink mb-1">② 코치 정보를 입력하지 않았거나 매칭이 안 되는 경우</div>
               <p>
-                코치님이 초대를 보내면 카카오 알림톡(또는 SMS)이 도착하고, 별도 작업 없이 회원님 홈에 코치님과 레슨
-                스케줄이 자동으로 표시됩니다.
+                레슨받으실 코치님께 <b>방금 입력하신 회원님 전화번호로 가입했다고 직접 말씀</b>해 주세요. 코치님이
+                회원님을 조회해서 학생으로 등록해 드립니다.
               </p>
             </div>
 

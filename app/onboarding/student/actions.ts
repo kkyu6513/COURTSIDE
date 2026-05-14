@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { sendSms, buildStudentClaimMessage } from "@/lib/notification";
 
 const VALID_GENDERS = ["MALE", "FEMALE", "OTHER"] as const;
 const VALID_AGE_GROUPS = [
@@ -25,8 +26,15 @@ export async function submitStudentProfile(formData: FormData) {
   const gender = formData.get("gender")?.toString();
   const ageGroup = formData.get("ageGroup")?.toString();
   const phoneRaw = formData.get("phone")?.toString()?.trim();
+  const claimedCoachNameRaw = formData
+    .get("claimedCoachName")
+    ?.toString()
+    ?.trim();
+  const claimedCoachPhoneRaw = formData
+    .get("claimedCoachPhone")
+    ?.toString()
+    ?.trim();
 
-  // 검증
   if (
     !gender ||
     !VALID_GENDERS.includes(gender as (typeof VALID_GENDERS)[number])
@@ -40,15 +48,21 @@ export async function submitStudentProfile(formData: FormData) {
     throw new Error("연령대를 선택해주세요");
   }
 
-  // 전화번호 정규화 (숫자만)
   const phone = phoneRaw?.replace(/[^\d]/g, "");
   if (!phone || phone.length < 10 || phone.length > 11) {
     throw new Error("전화번호는 10~11자리 숫자로 입력해주세요");
   }
 
+  const claimedCoachName = claimedCoachNameRaw || null;
+  const claimedCoachPhone =
+    claimedCoachPhoneRaw?.replace(/[^\d]/g, "") || null;
+
+  if (claimedCoachPhone && (claimedCoachPhone.length < 10 || claimedCoachPhone.length > 11)) {
+    throw new Error("코치 전화번호는 10~11자리 숫자로 입력해주세요");
+  }
+
   const admin = createAdminClient();
 
-  // 1. student_profiles insert (NTRP/지역은 추후 입력)
   const { error: insertError } = await admin.from("student_profiles").insert({
     userId: user.id,
     gender,
@@ -65,7 +79,6 @@ export async function submitStudentProfile(formData: FormData) {
     throw new Error(insertError.message);
   }
 
-  // 2. users 테이블의 phone 업데이트 (코치 초대 매칭용) - fire-and-forget
   admin
     .from("users")
     .update({ phone, updatedAt: new Date().toISOString() })
@@ -74,6 +87,62 @@ export async function submitStudentProfile(formData: FormData) {
       if (error)
         console.error("[submitStudentProfile] phone update error:", error);
     });
+
+  // 학생 셀프 신청 — 코치 정보를 입력한 경우만
+  if (claimedCoachName && claimedCoachPhone) {
+    const { data: candidates } = await admin
+      .from("users")
+      .select("id, name, phone, role")
+      .eq("phone", claimedCoachPhone)
+      .eq("role", "COACH");
+
+    const matched = candidates?.[0];
+
+    const claimRow = {
+      studentUserId: user.id,
+      claimedCoachName,
+      claimedCoachPhone,
+      matchedCoachUserId: matched?.id ?? null,
+      status: "PENDING",
+      updatedAt: new Date().toISOString(),
+    };
+
+    const { data: claim, error: claimError } = await admin
+      .from("student_self_claims")
+      .insert(claimRow)
+      .select("id")
+      .single();
+
+    if (claimError) {
+      console.error("[submitStudentProfile] claim insert error:", claimError);
+    } else if (matched && claim) {
+      const studentName =
+        (user.user_metadata?.nickname as string | undefined) ||
+        user.email ||
+        "신규 학생";
+
+      sendSms(
+        claimedCoachPhone,
+        buildStudentClaimMessage(studentName),
+      ).then(async (res) => {
+        const update: Record<string, unknown> = {
+          notifyAttempts: 1,
+          updatedAt: new Date().toISOString(),
+        };
+        if (res.ok) {
+          update.notifiedAt = new Date().toISOString();
+        } else if ("error" in res) {
+          update.notifyLastError = res.error;
+        } else if (res.skipped) {
+          update.notifyLastError = `SKIPPED: ${res.reason}`;
+        }
+        await admin
+          .from("student_self_claims")
+          .update(update)
+          .eq("id", claim.id);
+      });
+    }
+  }
 
   revalidatePath("/");
   redirect("/");
