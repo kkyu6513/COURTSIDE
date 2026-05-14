@@ -1,7 +1,9 @@
 // COURTSIDE Prisma Schema
-// Sprint 1: 인증/프로필/스케줄 (9개 모델)
+// Sprint 1: 인증/프로필/스케줄/구독 플랜
 // 기준: docs/02-design/database-schema.md
-// 변경점: User.id = UUID (Supabase auth.users.id와 1:1 매핑)
+// 변경점:
+//   - User.id = UUID (Supabase auth.users.id와 1:1 매핑)
+//   - SubscriptionPlan / SubscriptionPlanFeature 추가 (어드민 동적 관리)
 
 generator client {
   provider = "prisma-client-js"
@@ -227,4 +229,49 @@ model Schedule {
 
   @@index([coachId, dayOfWeek, slotTime])
   @@map("schedules")
+}
+
+// ===== 6. 구독 플랜 (어드민 동적 관리) =====
+
+model SubscriptionPlan {
+  id           Int     @id @default(autoincrement())
+  code         String  @unique // FREE, MONTHLY, YEARLY
+  name         String
+  price        Int
+  billingCycle String  // "monthly" | "yearly"
+  isBest       Boolean @default(false)
+  discount     String?
+  ctaText      String
+  ctaStyle     String  // "primary" | "secondary"
+  sortOrder    Int     @default(0)
+  isActive     Boolean @default(true)
+
+  // 정책 값 (null = 무제한)
+  studentLimit       Int?
+  alimtalkLimit      Int?
+  hasStats           Boolean @default(false)
+  hasMemberSearch    Boolean @default(false)
+  hasCsvExport       Boolean @default(false)
+  hasPrioritySupport Boolean @default(false)
+  hasAutoRegular     Boolean @default(false) // 정기 레슨 자동 생성
+
+  features  SubscriptionPlanFeature[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("subscription_plans")
+}
+
+model SubscriptionPlanFeature {
+  id        Int     @id @default(autoincrement())
+  planId    Int
+  code      String  // STUDENT_LIMIT, ALIMTALK_UNLIMITED 등
+  label     String
+  enabled   Boolean @default(true)
+  sortOrder Int     @default(0)
+
+  plan SubscriptionPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  @@index([planId, sortOrder])
+  @@map("subscription_plan_features")
 }

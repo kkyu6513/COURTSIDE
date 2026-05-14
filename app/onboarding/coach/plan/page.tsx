@@ -4,66 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { selectPlan } from "./actions";
 import { OnboardingHeader } from "@/components/onboarding-form";
 import { PlanSubmitButton } from "./submit-button";
-
-type Plan = {
-  id: "FREE" | "MONTHLY" | "YEARLY";
-  name: string;
-  price: number;
-  billingCycle: string;
-  isBest: boolean;
-  discount: string | null;
-  ctaText: string;
-  ctaStyle: "primary" | "secondary";
-  features: string[];
-  comingSoon?: boolean;
-};
-
-const PLANS: Plan[] = [
-  {
-    id: "FREE",
-    name: "무료",
-    price: 0,
-    billingCycle: "/월",
-    isBest: false,
-    discount: null,
-    ctaText: "무료로 시작",
-    ctaStyle: "secondary",
-    features: ["프로필 기본 노출", "월 5건 신청 수신"],
-  },
-  {
-    id: "MONTHLY",
-    name: "월간 PRO",
-    price: 29900,
-    billingCycle: "/월",
-    isBest: true,
-    discount: null,
-    ctaText: "PRO 시작하기",
-    ctaStyle: "primary",
-    features: [
-      "검색 상위 노출",
-      "무제한 신청 수신",
-      "통계 대시보드",
-      "PRO 배지 부여",
-    ],
-    comingSoon: true,
-  },
-  {
-    id: "YEARLY",
-    name: "연간 PRO",
-    price: 19900,
-    billingCycle: "/월",
-    isBest: false,
-    discount: "33% 할인 — 연 ₩238,800",
-    ctaText: "연간 플랜 선택",
-    ctaStyle: "secondary",
-    features: [
-      "월간 PRO 전체 기능",
-      "인증 배지 우선 심사",
-      "ANNUAL 배지 부여",
-    ],
-    comingSoon: true,
-  },
-];
+import { getActivePlans, type Plan } from "@/lib/subscriptions";
 
 export default async function CoachPlanSelectPage() {
   const supabase = createClient();
@@ -88,6 +29,8 @@ export default async function CoachPlanSelectPage() {
 
   if (existing) redirect("/");
 
+  const plans = await getActivePlans();
+
   return (
     <main className="min-h-screen bg-bg pb-12">
       <div className="max-w-md mx-auto px-6 pt-4">
@@ -100,11 +43,17 @@ export default async function CoachPlanSelectPage() {
           <p className="mt-1.5 text-sm text-ink-2">언제든 변경할 수 있어요</p>
         </div>
 
-        <div className="mt-8 space-y-4">
-          {PLANS.map((plan) => (
-            <PlanCard key={plan.id} plan={plan} />
-          ))}
-        </div>
+        {plans.length === 0 ? (
+          <div className="mt-8 rounded-xl border border-line bg-surface p-6 text-center text-sm text-ink-2">
+            플랜 정보를 불러올 수 없습니다. 잠시 후 다시 시도해주세요.
+          </div>
+        ) : (
+          <div className="mt-8 space-y-4">
+            {plans.map((plan) => (
+              <PlanCard key={plan.id} plan={plan} />
+            ))}
+          </div>
+        )}
 
         <p className="mt-6 text-center text-xs text-ink-3">
           유료 플랜 결제는 곧 출시됩니다. 가입 후 마이페이지 → 구독 플랜에서
@@ -117,6 +66,9 @@ export default async function CoachPlanSelectPage() {
 
 function PlanCard({ plan }: { plan: Plan }) {
   const popular = plan.isBest;
+  // MVP: 토스페이먼츠 미연동 — 유료 플랜은 "결제 준비 중"
+  const comingSoon = plan.code !== "FREE";
+
   return (
     <div
       className={`relative rounded-2xl border bg-surface p-5 ${
@@ -131,7 +83,7 @@ function PlanCard({ plan }: { plan: Plan }) {
 
       <div className="flex items-baseline justify-between">
         <div className="text-base font-bold text-ink">{plan.name}</div>
-        {plan.comingSoon && (
+        {comingSoon && (
           <span className="rounded-full bg-soft px-2 py-0.5 text-[10px] font-semibold text-ink-2">
             결제 준비 중
           </span>
@@ -142,43 +94,59 @@ function PlanCard({ plan }: { plan: Plan }) {
         <span className="text-2xl font-extrabold text-ink">
           ₩{plan.price.toLocaleString()}
         </span>
-        <span className="text-xs text-ink-3">{plan.billingCycle}</span>
+        <span className="text-xs text-ink-3">
+          {plan.billingCycle === "yearly" ? "/월 (연납)" : "/월"}
+        </span>
       </div>
 
       {plan.discount && (
         <div className="mt-1.5 text-xs font-semibold text-red-500">
-          🔥 {plan.discount}
+          {plan.discount}
         </div>
       )}
 
       <ul className="mt-4 space-y-2">
         {plan.features.map((f) => (
           <li
-            key={f}
-            className="flex items-start gap-2 text-sm text-ink-2"
+            key={f.code}
+            className={`flex items-start gap-2 text-sm ${
+              f.enabled ? "text-ink-2" : "text-ink-3"
+            }`}
           >
-            <svg
-              className="mt-0.5 h-4 w-4 flex-none text-emerald-500"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path
-                fillRule="evenodd"
-                d="M16.7 5.3a1 1 0 0 1 0 1.4l-7 7a1 1 0 0 1-1.4 0l-3-3a1 1 0 1 1 1.4-1.4l2.3 2.3 6.3-6.3a1 1 0 0 1 1.4 0Z"
-                clipRule="evenodd"
-              />
-            </svg>
-            {f}
+            {f.enabled ? (
+              <svg
+                className="mt-0.5 h-4 w-4 flex-none text-emerald-500"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                aria-hidden
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M16.7 5.3a1 1 0 0 1 0 1.4l-7 7a1 1 0 0 1-1.4 0l-3-3a1 1 0 1 1 1.4-1.4l2.3 2.3 6.3-6.3a1 1 0 0 1 1.4 0Z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            ) : (
+              <svg
+                className="mt-0.5 h-4 w-4 flex-none text-ink-3"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                aria-hidden
+              >
+                <path d="M5 10a1 1 0 0 1 1-1h8a1 1 0 1 1 0 2H6a1 1 0 0 1-1-1Z" />
+              </svg>
+            )}
+            <span className={f.enabled ? "" : "line-through"}>{f.label}</span>
           </li>
         ))}
       </ul>
 
       <form action={selectPlan} className="mt-5">
-        <input type="hidden" name="plan" value={plan.id} />
+        <input type="hidden" name="plan" value={plan.code} />
         <PlanSubmitButton
           variant={plan.ctaStyle}
-          disabled={plan.comingSoon}
-          label={plan.comingSoon ? "결제 준비 중" : plan.ctaText}
+          disabled={comingSoon}
+          label={comingSoon ? "결제 준비 중" : plan.ctaText}
         />
       </form>
     </div>
