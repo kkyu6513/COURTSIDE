@@ -1,0 +1,45 @@
+name: Migrate Terms
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/migrate-terms.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Wait for Vercel build (3 minutes)
+        run: sleep 180
+
+      - name: Call migrate endpoint
+        run: |
+          URL="https://courtside-two-silk.vercel.app/api/admin/migrate-terms?token=courtside-terms-2026-05-14-Rk9wXt7vMpQz"
+          HTTP_CODE=$(curl -sS -X POST "$URL" -o /tmp/migrate-result.json -w "%{http_code}")
+          echo "HTTP $HTTP_CODE"
+          cat /tmp/migrate-result.json
+          echo ""
+
+      - name: Commit result
+        if: always()
+        run: |
+          mkdir -p .migration-debug
+          OUT=".migration-debug/terms-$(date -u +%Y%m%d-%H%M%S).log"
+          cp /tmp/migrate-result.json "$OUT" 2>/dev/null || echo "(no result file)" > "$OUT"
+
+          git config user.email "actions@github.com"
+          git config user.name "courtside-bot"
+          git add .migration-debug/
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "debug: terms migration result"
+            git pull --rebase origin main || true
+            git push
+          fi

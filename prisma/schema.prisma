@@ -1,10 +1,5 @@
 // COURTSIDE Prisma Schema
-// Sprint 1: 인증/프로필/스케줄/구독 플랜/셀프신청/전화번호인증
-// 변경점:
-//   - User.id = UUID (Supabase auth.users.id와 1:1 매핑)
-//   - SubscriptionPlan / SubscriptionPlanFeature
-//   - StudentSelfClaim
-//   - PhoneVerification (휴대폰 본인인증)
+// Sprint 1: 인증/프로필/스케줄/구독플랜/셀프신청/전화번호인증/약관관리
 
 generator client {
   provider = "prisma-client-js"
@@ -28,6 +23,8 @@ model User {
   id               String          @id @db.Uuid
   email            String          @unique
   name             String?
+  realName         String?
+  birthDate        DateTime?       @db.Date
   role             Role?
   socialProvider   SocialProvider?
   socialId         String?
@@ -38,9 +35,10 @@ model User {
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
 
-  studentProfile StudentProfile?
-  coachProfile   CoachProfile?
-  schedules      Schedule[]
+  studentProfile  StudentProfile?
+  coachProfile    CoachProfile?
+  schedules       Schedule[]
+  termsAgreements UserTermsAgreement[]
 
   @@unique([socialProvider, socialId])
   @@map("users")
@@ -84,7 +82,7 @@ model CoachProfile {
   gender           Gender
   experienceYears  Int?
   lessonPrice      Int?
-  priceVisibility  PriceVisibility @default(PUBLIC)
+  priceVisibility  PriceVisibility @default(PRIVATE)
   areaSido         String
   areaSigungu      String
   ntrpMin          Float?
@@ -139,9 +137,7 @@ model CoachSpecialty {
   isActive  Boolean  @default(true)
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())
-
-  mappings CoachSpecialtyMapping[]
-
+  mappings  CoachSpecialtyMapping[]
   @@map("coach_specialties")
 }
 
@@ -164,9 +160,7 @@ model LessonGoal {
   isActive  Boolean  @default(true)
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())
-
-  mappings StudentLessonGoalMapping[]
-
+  mappings  StudentLessonGoalMapping[]
   @@map("lesson_goals")
 }
 
@@ -200,7 +194,6 @@ model SubscriptionPlan {
   ctaStyle     String
   sortOrder    Int     @default(0)
   isActive     Boolean @default(true)
-
   studentLimit       Int?
   alimtalkLimit      Int?
   hasStats           Boolean @default(false)
@@ -208,11 +201,9 @@ model SubscriptionPlan {
   hasCsvExport       Boolean @default(false)
   hasPrioritySupport Boolean @default(false)
   hasAutoRegular     Boolean @default(false)
-
   features  SubscriptionPlanFeature[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
   @@map("subscription_plans")
 }
 
@@ -223,9 +214,7 @@ model SubscriptionPlanFeature {
   label     String
   enabled   Boolean @default(true)
   sortOrder Int     @default(0)
-
   plan SubscriptionPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
-
   @@index([planId, sortOrder])
   @@map("subscription_plan_features")
 }
@@ -262,4 +251,51 @@ model PhoneVerification {
 
   @@index([phone, createdAt])
   @@map("phone_verifications")
+}
+
+// ===== 9. 약관 관리 (이용약관 / 개인정보 처리방침 / 마케팅 동의) =====
+
+model Terms {
+  id          Int      @id @default(autoincrement())
+  code        String   @unique // TERMS_OF_USE | PRIVACY_POLICY | MARKETING_CONSENT
+  title       String
+  isRequired  Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  versions    TermsVersion[]
+
+  @@map("terms")
+}
+
+model TermsVersion {
+  id            Int      @id @default(autoincrement())
+  termsId       Int
+  version       String
+  content       String
+  effectiveDate DateTime @db.Date
+  isActive      Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  terms       Terms                @relation(fields: [termsId], references: [id], onDelete: Cascade)
+  agreements  UserTermsAgreement[]
+
+  @@index([termsId, isActive])
+  @@map("terms_versions")
+}
+
+model UserTermsAgreement {
+  id              Int       @id @default(autoincrement())
+  userId          String    @db.Uuid
+  termsVersionId  Int
+  agreedAt        DateTime  @default(now())
+  ip              String?
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  termsVersion TermsVersion @relation(fields: [termsVersionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, termsVersionId])
+  @@index([userId])
+  @@map("user_terms_agreements")
 }
