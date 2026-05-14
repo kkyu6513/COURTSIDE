@@ -1,0 +1,79 @@
+name: Migrate Debug
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/migrate-debug.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Wait for Vercel build (2 minutes)
+        run: sleep 120
+
+      - name: Probe all migration endpoints
+        run: |
+          BASE="https://courtside-two-silk.vercel.app"
+          mkdir -p .migration-debug
+          OUT=".migration-debug/$(date -u +%Y%m%d-%H%M%S).log"
+
+          {
+            echo "=== Migration Debug $(date -u +%Y-%m-%dT%H:%M:%SZ) ==="
+            echo "Commit: $(git rev-parse HEAD)"
+            echo ""
+
+            ROUTES=(
+              "migrate-subscription-plans|courtside-migrate-2026-05-14-aXZpL3uK9q"
+              "migrate-student-self-claims|courtside-claims-2026-05-14-bM4qV7zRsT"
+              "migrate-phone-verifications|courtside-phoneverif-2026-05-14-Hk8nP3qLwR"
+            )
+
+            for entry in "${ROUTES[@]}"; do
+              ROUTE="${entry%%|*}"
+              TOKEN="${entry##*|}"
+              URL="$BASE/api/admin/$ROUTE"
+
+              echo ""
+              echo "--- $ROUTE ---"
+              echo ""
+
+              echo "[1] Probe without token (expect 401 if deployed, 404 if not built):"
+              CODE=$(curl -sS -o /tmp/probe-body.txt -w "%{http_code}" "$URL" || echo "curl-failed")
+              echo "  HTTP: $CODE"
+              echo "  Body (first 500 chars):"
+              head -c 500 /tmp/probe-body.txt | sed 's/^/    /'
+              echo ""
+              echo ""
+
+              echo "[2] POST with token:"
+              CODE=$(curl -sS -X POST -o /tmp/call-body.txt -w "%{http_code}" "$URL?token=$TOKEN" || echo "curl-failed")
+              echo "  HTTP: $CODE"
+              echo "  Body (first 2000 chars):"
+              head -c 2000 /tmp/call-body.txt | sed 's/^/    /'
+              echo ""
+            done
+
+            echo ""
+            echo "=== End ==="
+          } | tee "$OUT"
+
+      - name: Commit results
+        if: always()
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "courtside-bot"
+          git add .migration-debug/
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "debug: migration probe result"
+            git pull --rebase origin main || true
+            git push
+          fi
