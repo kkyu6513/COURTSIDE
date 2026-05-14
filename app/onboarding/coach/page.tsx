@@ -96,26 +96,7 @@ export default async function CoachOnboardingPage() {
             />
           </Field>
 
-          <Field label="레슨 가격 (1회, 원)">
-            <TextInput
-              name="lessonPrice"
-              type="number"
-              min={0}
-              step={1000}
-              placeholder="예: 50000 (비공개 시 비워두기)"
-            />
-          </Field>
-
-          <Field label="가격 공개 여부" required>
-            <RadioGroup
-              name="priceVisibility"
-              cols={2}
-              options={[
-                { value: "PUBLIC", label: "공개" },
-                { value: "PRIVATE", label: "비공개" },
-              ]}
-            />
-          </Field>
+          {/* 레슨 가격 + 가격 공개 여부는 다음 스프린트에서 코치 마이페이지에서 설정하도록 임시 숨김 */}
 
           <div className="pt-4">
             <SubmitButton>등록 완료</SubmitButton>

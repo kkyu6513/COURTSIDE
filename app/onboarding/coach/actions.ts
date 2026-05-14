@@ -6,7 +6,6 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const VALID_GENDERS = ["MALE", "FEMALE", "OTHER"] as const;
-const VALID_PRICE_VIS = ["PUBLIC", "PRIVATE"] as const;
 
 export async function submitCoachProfile(formData: FormData) {
   const supabase = createClient();
@@ -21,8 +20,6 @@ export async function submitCoachProfile(formData: FormData) {
   const areaSido = formData.get("areaSido")?.toString();
   const areaSigungu = formData.get("areaSigungu")?.toString()?.trim();
   const experienceYearsRaw = formData.get("experienceYears")?.toString();
-  const lessonPriceRaw = formData.get("lessonPrice")?.toString();
-  const priceVisibility = formData.get("priceVisibility")?.toString();
 
   // 검증
   if (
@@ -36,19 +33,14 @@ export async function submitCoachProfile(formData: FormData) {
   }
   if (!areaSido) throw new Error("시·도를 선택해주세요");
   if (!areaSigungu) throw new Error("시·군·구를 입력해주세요");
-  if (
-    !priceVisibility ||
-    !VALID_PRICE_VIS.includes(
-      priceVisibility as (typeof VALID_PRICE_VIS)[number]
-    )
-  ) {
-    throw new Error("가격 공개 여부를 선택해주세요");
-  }
 
   const experienceYears = experienceYearsRaw
     ? Number(experienceYearsRaw)
     : null;
-  const lessonPrice = lessonPriceRaw ? Number(lessonPriceRaw) : null;
+
+  // 가격/공개여부는 UI에서 일시 숨김 — 기본값으로 저장 (이후 마이페이지에서 수정 가능)
+  const lessonPrice = null;
+  const priceVisibility = "PRIVATE";
 
   const admin = createAdminClient();
 
