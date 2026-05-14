@@ -1,43 +1,25 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
 
-  const handleKakao = async () => {
+  const handleKakao = () => {
     setLoading(true);
-    const supabase = createClient();
-
-    try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: "kakao",
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-          skipBrowserRedirect: true,
-          scopes: "profile_nickname",
-        },
-      });
-
-      if (error) {
-        alert(`[1] Supabase 에러: ${error.message}`);
-        setLoading(false);
-        return;
-      }
-
-      if (data?.url) {
-        // 명시적으로 카카오 OAuth URL로 이동
-        window.location.href = data.url;
-      } else {
-        alert("[2] Supabase가 URL을 반환하지 않음");
-        setLoading(false);
-      }
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : String(e);
-      alert(`[3] 예외 발생: ${msg}`);
+    const clientId = process.env.NEXT_PUBLIC_KAKAO_REST_API_KEY;
+    if (!clientId) {
+      alert("카카오 클라이언트 ID가 설정되지 않았습니다.");
       setLoading(false);
+      return;
     }
+    const redirectUri = `${window.location.origin}/auth/callback`;
+    const url = new URL("https://kauth.kakao.com/oauth/authorize");
+    url.searchParams.set("response_type", "code");
+    url.searchParams.set("client_id", clientId);
+    url.searchParams.set("redirect_uri", redirectUri);
+    url.searchParams.set("scope", "profile_nickname");
+    window.location.href = url.toString();
   };
 
   return (
@@ -57,7 +39,7 @@ export default function LoginPage() {
             disabled={loading}
             className="w-full h-12 rounded-xl bg-[#FEE500] text-[#191919] font-semibold text-sm flex items-center justify-center gap-2 hover:opacity-90 transition disabled:opacity-50"
           >
-            {loading ? "로그인 중…" : "카카오로 시작하기"}
+            {loading ? "이동 중…" : "카카오로 시작하기"}
           </button>
 
           <button
