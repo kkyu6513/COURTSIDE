@@ -8,7 +8,7 @@ export function BackButton() {
     <button
       type="button"
       aria-label="뒤로가기"
-      onClick={() => router.back()}
+      onClick={() => router.push("/onboarding/role")}
       className="flex-none w-10 h-10 flex items-center justify-center rounded-full bg-surface border border-line text-ink"
     >
       <svg
