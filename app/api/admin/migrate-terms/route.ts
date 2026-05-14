@@ -1,5 +1,5 @@
 /**
- * 일회성 마이그레이션 라우트 — users.realName/birthDate 컴럼 + Terms/TermsVersion/UserTermsAgreement 테이블 + 약관 seed
+ * 일회성 마이그레이션 라우트 — users.realName/birthDate 컬럼 + Terms/TermsVersion/UserTermsAgreement 테이블 + 약관 seed
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -17,7 +17,7 @@ const TOU_CONTENT = `# 이용약관
 
 제2조 (서비스 이용) 회원은 회사가 제공하는 서비스를 제3자에게 양도·대여·담보 제공 등을 할 수 없으며, 최종 이용자는 본인으로 제한됩니다.
 
-제3조 (계정 관리) 회원은 자신의 계정 정보(카카오 소셜 로그인, 전화번호 인증 등)을 안전하게 관리해야 하며, 계정 도용·방치로 인한 피해는 회사가 책임지지 않습니다.
+제3조 (계정 관리) 회원은 자신의 계정 정보(카카오 소셜 로그인, 전화번호 인증 등)를 안전하게 관리해야 하며, 계정 도용·방치로 인한 피해는 회사가 책임지지 않습니다.
 
 제4조 (서비스 제공 범위) 회사는 코치 프로필·스케줄·레슨 관리·채팅·알림톡·결제 제공 등의 기능을 제공합니다. 일부 기능은 유료 구독 회원(PRO)에게만 제공될 수 있습니다.
 
@@ -93,10 +93,10 @@ const MARKETING_CONTENT = `# 마케팅 수신 동의 (선택)
 
 COURTSIDE는 회원님께 도움이 될 수 있는 이벤트·프로모션·서비스 이용 팁 정보를 알림톡, SMS, 이메일로 보내드리고자 합니다.
 
-## 동의 재항
+## 동의 사항
 
 - 수집 항목: 전화번호, 이메일
-- 이용 목적: 이벤트·절액·신장 안내
+- 이용 목적: 이벤트·절약·신장 안내
 - 보유 기간: 동의 철회 시까지
 
 ## 철회 방법
@@ -105,51 +105,48 @@ COURTSIDE는 회원님께 도움이 될 수 있는 이벤트·프로모션·서�
 
 부칙: 본 동의는 선택 항목입니다.`;
 
-const STATEMENTS: { sql: string; params?: unknown[] }[] = [
-  { sql: `ALTER TABLE users ADD COLUMN IF NOT EXISTS "realName" TEXT` },
-  { sql: `ALTER TABLE users ADD COLUMN IF NOT EXISTS "birthDate" DATE` },
-  {
-    sql: `CREATE TABLE IF NOT EXISTS terms (
-      id          SERIAL PRIMARY KEY,
-      code        TEXT UNIQUE NOT NULL,
-      title       TEXT NOT NULL,
-      "isRequired" BOOLEAN NOT NULL DEFAULT true,
-      "sortOrder"  INTEGER NOT NULL DEFAULT 0,
-      "createdAt"  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-      "updatedAt"  TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    )`,
-  },
-  {
-    sql: `CREATE TABLE IF NOT EXISTS terms_versions (
-      id             SERIAL PRIMARY KEY,
-      "termsId"      INTEGER NOT NULL REFERENCES terms(id) ON DELETE CASCADE,
-      version        TEXT NOT NULL,
-      content        TEXT NOT NULL,
-      "effectiveDate" DATE NOT NULL,
-      "isActive"     BOOLEAN NOT NULL DEFAULT false,
-      "createdAt"    TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    )`,
-  },
-  { sql: `CREATE INDEX IF NOT EXISTS idx_terms_versions ON terms_versions("termsId", "isActive")` },
-  {
-    sql: `CREATE TABLE IF NOT EXISTS user_terms_agreements (
-      id              SERIAL PRIMARY KEY,
-      "userId"        UUID NOT NULL,
-      "termsVersionId" INTEGER NOT NULL REFERENCES terms_versions(id) ON DELETE CASCADE,
-      "agreedAt"      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-      ip              TEXT,
-      UNIQUE("userId", "termsVersionId")
-    )`,
-  },
-  { sql: `CREATE INDEX IF NOT EXISTS idx_uta_user ON user_terms_agreements("userId")` },
-  // Seed Terms
-  {
-    sql: `INSERT INTO terms (code, title, "isRequired", "sortOrder") VALUES
-      ('TERMS_OF_USE', '이용약관', true, 1),
-      ('PRIVACY_POLICY', '개인정보 처리방침', true, 2),
-      ('MARKETING_CONSENT', '마케팅 수신 동의', false, 3)
-      ON CONFLICT (code) DO NOTHING`,
-  },
+const STATEMENTS: string[] = [
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS "realName" TEXT`,
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS "birthDate" DATE`,
+  `CREATE TABLE IF NOT EXISTS terms (
+    id          SERIAL PRIMARY KEY,
+    code        TEXT UNIQUE NOT NULL,
+    title       TEXT NOT NULL,
+    "isRequired" BOOLEAN NOT NULL DEFAULT true,
+    "sortOrder"  INTEGER NOT NULL DEFAULT 0,
+    "createdAt"  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    "updatedAt"  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`,
+  `CREATE TABLE IF NOT EXISTS terms_versions (
+    id             SERIAL PRIMARY KEY,
+    "termsId"      INTEGER NOT NULL REFERENCES terms(id) ON DELETE CASCADE,
+    version        TEXT NOT NULL,
+    content        TEXT NOT NULL,
+    "effectiveDate" DATE NOT NULL,
+    "isActive"     BOOLEAN NOT NULL DEFAULT false,
+    "createdAt"    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_terms_versions ON terms_versions("termsId", "isActive")`,
+  `CREATE TABLE IF NOT EXISTS user_terms_agreements (
+    id              SERIAL PRIMARY KEY,
+    "userId"        UUID NOT NULL,
+    "termsVersionId" INTEGER NOT NULL REFERENCES terms_versions(id) ON DELETE CASCADE,
+    "agreedAt"      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    ip              TEXT,
+    UNIQUE("userId", "termsVersionId")
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_uta_user ON user_terms_agreements("userId")`,
+  `INSERT INTO terms (code, title, "isRequired", "sortOrder") VALUES
+    ('TERMS_OF_USE', '이용약관', true, 1),
+    ('PRIVACY_POLICY', '개인정보 처리방침', true, 2),
+    ('MARKETING_CONSENT', '마케팅 수신 동의', false, 3)
+    ON CONFLICT (code) DO NOTHING`,
+];
+
+const SEED_VERSIONS: { code: string; content: string }[] = [
+  { code: "TERMS_OF_USE", content: TOU_CONTENT },
+  { code: "PRIVACY_POLICY", content: PRIVACY_CONTENT },
+  { code: "MARKETING_CONSENT", content: MARKETING_CONTENT },
 ];
 
 async function runMigration(): Promise<NextResponse> {
@@ -160,34 +157,38 @@ async function runMigration(): Promise<NextResponse> {
   const results: { ok: boolean; statement: string; error?: string }[] = [];
 
   try {
-    for (const { sql, params } of STATEMENTS) {
+    for (const sql of STATEMENTS) {
       try {
-        if (params) await prisma.$executeRawUnsafe(sql, ...params);
-        else await prisma.$executeRawUnsafe(sql);
+        await prisma.$executeRawUnsafe(sql);
         results.push({ ok: true, statement: sql.slice(0, 80).replace(/\s+/g, " ") + "..." });
       } catch (e) {
-        results.push({ ok: false, statement: sql.slice(0, 80).replace(/\s+/g, " ") + "...", error: e instanceof Error ? e.message : String(e) });
+        results.push({
+          ok: false,
+          statement: sql.slice(0, 80).replace(/\s+/g, " ") + "...",
+          error: e instanceof Error ? e.message : String(e),
+        });
       }
     }
 
-    // Seed TermsVersion content (각 코드별 v1.0)
-    const seedVersions: { code: string; content: string }[] = [
-      { code: "TERMS_OF_USE", content: ${JSON.stringify(TOU_CONTENT)} },
-      { code: "PRIVACY_POLICY", content: ${JSON.stringify(PRIVACY_CONTENT)} },
-      { code: "MARKETING_CONSENT", content: ${JSON.stringify(MARKETING_CONTENT)} },
-    ];
-
-    for (const sv of seedVersions) {
+    // Seed TermsVersion content
+    for (const sv of SEED_VERSIONS) {
       try {
         await prisma.$executeRaw`
           INSERT INTO terms_versions ("termsId", version, content, "effectiveDate", "isActive")
           SELECT id, '1.0', ${sv.content}, '2026-05-14'::date, true
           FROM terms WHERE code = ${sv.code}
-          AND NOT EXISTS (SELECT 1 FROM terms_versions tv WHERE tv."termsId" = terms.id AND tv.version = '1.0')
+          AND NOT EXISTS (
+            SELECT 1 FROM terms_versions tv
+            WHERE tv."termsId" = terms.id AND tv.version = '1.0'
+          )
         `;
         results.push({ ok: true, statement: `seed version: ${sv.code} v1.0` });
       } catch (e) {
-        results.push({ ok: false, statement: `seed version: ${sv.code} v1.0`, error: e instanceof Error ? e.message : String(e) });
+        results.push({
+          ok: false,
+          statement: `seed version: ${sv.code} v1.0`,
+          error: e instanceof Error ? e.message : String(e),
+        });
       }
     }
 
