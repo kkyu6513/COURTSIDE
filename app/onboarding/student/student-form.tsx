@@ -34,22 +34,9 @@ function isNextRedirectError(e: unknown): boolean {
   );
 }
 
-// YYYY-MM-DD 기본 검증
-function isValidDate(s: string): boolean {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
-  const d = new Date(s + "T00:00:00Z");
-  if (Number.isNaN(d.getTime())) return false;
-  const now = new Date();
-  if (d.getTime() > now.getTime()) return false;
-  const yyyy = parseInt(s.slice(0, 4), 10);
-  if (yyyy < 1900) return false;
-  return true;
-}
-
 export function StudentForm({ terms }: { terms: TermItem[] }) {
   const router = useRouter();
   const [realName, setRealName] = useState("");
-  const [birthDate, setBirthDate] = useState("");
   const [gender, setGender] = useState("");
   const [ageGroup, setAgeGroup] = useState("");
   const [verifiedPhone, setVerifiedPhone] = useState<string | null>(null);
@@ -84,16 +71,6 @@ export function StudentForm({ terms }: { terms: TermItem[] }) {
       return;
     }
 
-    if (birthDate && !isValidDate(birthDate)) {
-      setAlert({
-        open: true,
-        variant: "warning",
-        title: "생년월일을 확인해 주세요",
-        description: "YYYY-MM-DD 형식의 올바른 날짜를 입력해 주세요.",
-      });
-      return;
-    }
-
     const cName = coachName.trim();
     const cPhone = coachPhone.replace(/[^\d]/g, "");
     if ((cName && !cPhone) || (!cName && cPhone)) {
@@ -117,7 +94,6 @@ export function StudentForm({ terms }: { terms: TermItem[] }) {
 
     const fd = new FormData();
     fd.set("realName", realName.trim());
-    if (birthDate) fd.set("birthDate", birthDate);
     fd.set("gender", gender);
     fd.set("ageGroup", ageGroup);
     fd.set("phone", verifiedPhone!);
@@ -177,15 +153,7 @@ export function StudentForm({ terms }: { terms: TermItem[] }) {
           />
         </Field>
 
-        <Field label="생년월일 (선택)">
-          <TextInput
-            type="date"
-            value={birthDate}
-            onChange={(e) => setBirthDate(e.target.value)}
-            max={new Date().toISOString().slice(0, 10)}
-            min="1900-01-01"
-          />
-        </Field>
+        {/* 생년월일 필드는 일시 숨김 — 추후 마이페이지에서 입력하도록 이동 */}
 
         <Field label="성별" required>
           <RadioGroupControlled
