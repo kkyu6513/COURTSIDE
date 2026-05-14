@@ -42,7 +42,9 @@ export async function GET(request: Request) {
     if (!tokenRes.ok) {
       const errBody = await tokenRes.text();
       console.error("[callback] kakao token error:", errBody);
-      return NextResponse.redirect(`${origin}/login?error=kakao_token`);
+      return NextResponse.redirect(
+        `${origin}/login?error=kakao_token&detail=${encodeURIComponent(errBody.slice(0, 300))}`
+      );
     }
 
     const tokenData = (await tokenRes.json()) as { access_token?: string };
