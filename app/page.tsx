@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export default async function Home() {
   const supabase = createClient();
@@ -29,10 +30,28 @@ export default async function Home() {
     );
   }
 
-  // 로그인 됐는데 역할 없음 - 온보딩
+  // 로그인 됐는데 역할 없음 - 역할 선택
   const role = (user.app_metadata as { role?: string } | undefined)?.role;
   if (!role) {
     redirect("/onboarding/role");
+  }
+
+  // 역할은 있는데 프로필 미등록 - 프로필 등록 페이지
+  const admin = createAdminClient();
+  if (role === "STUDENT") {
+    const { data: studentProfile } = await admin
+      .from("student_profiles")
+      .select("id")
+      .eq("userId", user.id)
+      .maybeSingle();
+    if (!studentProfile) redirect("/onboarding/student");
+  } else if (role === "COACH") {
+    const { data: coachProfile } = await admin
+      .from("coach_profiles")
+      .select("id")
+      .eq("userId", user.id)
+      .maybeSingle();
+    if (!coachProfile) redirect("/onboarding/coach");
   }
 
   const nickname =
@@ -40,7 +59,7 @@ export default async function Home() {
     user.email ||
     "사용자";
 
-  // 정상 홈
+  // 정상 홈 (가입 + 프로필 완료)
   return (
     <main className="min-h-screen flex items-center justify-center p-6">
       <div className="text-center max-w-md w-full">
@@ -49,11 +68,20 @@ export default async function Home() {
         </h1>
         <p className="mt-3 text-sm text-ink-2">환영해요, {nickname}님 🎾</p>
 
+        <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs text-emerald-700">
+          <span className="h-2 w-2 rounded-full bg-emerald-500" />
+          가입 + 프로필 등록 완료
+        </div>
+
         <div className="mt-8 bg-surface border border-line rounded-xl p-5 text-left space-y-3">
           <div>
             <div className="text-xs text-ink-3">역할</div>
             <div className="mt-1 text-lg font-semibold text-ink">
-              {role === "STUDENT" ? "🎾 학생" : role === "COACH" ? "👨‍🏫 코치" : role}
+              {role === "STUDENT"
+                ? "🎾 학생"
+                : role === "COACH"
+                  ? "👨‍🏫 코치"
+                  : role}
             </div>
           </div>
           <div className="pt-3 border-t border-line">
@@ -69,7 +97,7 @@ export default async function Home() {
         </div>
 
         <p className="mt-6 text-xs text-ink-3">
-          다음 단계: 프로필 등록 (작업 중)
+          다음 단계: {role === "COACH" ? "스케줄 등록" : "코치 둘러보기"} (작업 중)
         </p>
       </div>
     </main>

@@ -50,10 +50,14 @@ export async function selectRole(formData: FormData) {
 
   if (upsertError) {
     console.error("[selectRole] upsert users error:", upsertError);
-    // app_metadata는 이미 set됐으니 일단 진행 (다음 페이지에서 자동 보정 가능)
   }
 
-  // 3. 홈으로 (나중에 학생/코치별 프로필 등록 페이지로 분기 예정)
   revalidatePath("/");
-  redirect("/");
+
+  // 3. 역할별 프로필 등록 페이지로 분기
+  if (role === "STUDENT") {
+    redirect("/onboarding/student");
+  } else {
+    redirect("/onboarding/coach");
+  }
 }
