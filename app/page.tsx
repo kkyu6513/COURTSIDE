@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { BottomNav } from "@/components/bottom-nav";
+import { BackButton } from "@/components/back-button";
 import { todayQuote, timeGreeting, todayLabel } from "@/lib/quotes";
 
 export default async function Home() {
@@ -76,8 +77,9 @@ function StudentHome({ nickname }: { nickname: string }) {
     <main className="min-h-screen bg-bg pb-24">
       <div className="max-w-md mx-auto px-5 pt-6">
         {/* 헤더 */}
-        <div className="flex items-start justify-between">
-          <div className="min-w-0">
+        <div className="flex items-start justify-between gap-3">
+          <BackButton />
+          <div className="min-w-0 flex-1">
             <div className="text-base font-bold text-ink">
               {nickname}님, {greeting}
             </div>
@@ -150,8 +152,9 @@ function CoachHome({ nickname }: { nickname: string }) {
     <main className="min-h-screen bg-bg pb-24">
       <div className="max-w-md mx-auto px-5 pt-6">
         {/* 헤더 */}
-        <div className="flex items-start justify-between">
-          <div className="min-w-0">
+        <div className="flex items-start justify-between gap-3">
+          <BackButton />
+          <div className="min-w-0 flex-1">
             <div className="text-base font-bold text-ink">
               {nickname} 코치님, {greeting}
             </div>
