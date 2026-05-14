@@ -1,0 +1,229 @@
+"use client";
+
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { Field, TextInput, Textarea } from "@/components/onboarding-form";
+import { RegionSelectPair } from "@/components/region-select";
+import { AlertModal } from "@/components/alert-modal";
+import { TermsAgreement, type TermItem } from "@/components/terms-agreement";
+import { submitCoachProfile } from "./actions";
+
+type AlertState = {
+  open: boolean;
+  variant: "warning" | "error" | "success" | "info";
+  title: string;
+  description?: string;
+  items?: string[];
+};
+
+function isNextRedirectError(e: unknown): boolean {
+  return (
+    !!e &&
+    typeof e === "object" &&
+    "digest" in e &&
+    typeof (e as { digest: unknown }).digest === "string" &&
+    (e as { digest: string }).digest.startsWith("NEXT_REDIRECT")
+  );
+}
+
+function isValidDate(s: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
+  const d = new Date(s + "T00:00:00Z");
+  if (Number.isNaN(d.getTime())) return false;
+  if (d.getTime() > Date.now()) return false;
+  const yyyy = parseInt(s.slice(0, 4), 10);
+  return yyyy >= 1900;
+}
+
+export function CoachForm({ terms }: { terms: TermItem[] }) {
+  const router = useRouter();
+  const [realName, setRealName] = useState("");
+  const [birthDate, setBirthDate] = useState("");
+  const [gender, setGender] = useState("");
+  const [bio, setBio] = useState("");
+  const [areaSido, setAreaSido] = useState("");
+  const [areaSigungu, setAreaSigungu] = useState("");
+  const [experienceYears, setExperienceYears] = useState("");
+  const [agreedTerms, setAgreedTerms] = useState<number[]>([]);
+  const [pending, startTransition] = useTransition();
+  const [alert, setAlert] = useState<AlertState>({ open: false, variant: "warning", title: "" });
+
+  const close = () => setAlert((a) => ({ ...a, open: false }));
+  const requiredTermVersions = terms.filter((t) => t.isRequired).map((t) => t.versionId);
+
+  const handleSubmit = () => {
+    const missing: string[] = [];
+    if (!realName.trim()) missing.push("이름을 입력해주세요");
+    if (!birthDate) missing.push("생년월일을 입력해주세요");
+    if (!gender) missing.push("성별을 선택해주세요");
+    if (!bio.trim() || bio.trim().length < 10) missing.push("자기소개는 10자 이상 입력해주세요");
+    if (!areaSido) missing.push("활동 지역 (시·도)를 선택해주세요");
+    if (!areaSigungu) missing.push("활동 지역 (시·군·구)를 선택해주세요");
+    if (!requiredTermVersions.every((id) => agreedTerms.includes(id))) {
+      missing.push("필수 약관에 동의해주세요");
+    }
+
+    if (missing.length > 0) {
+      setAlert({
+        open: true,
+        variant: "warning",
+        title: "입력하지 않은 항목이 있어요",
+        description: "아래 항목을 확인하고 다시 시도해 주세요.",
+        items: missing,
+      });
+      return;
+    }
+
+    if (!isValidDate(birthDate)) {
+      setAlert({
+        open: true,
+        variant: "warning",
+        title: "생년월일을 확인해 주세요",
+        description: "YYYY-MM-DD 형식의 올바른 날짜를 입력해 주세요.",
+      });
+      return;
+    }
+
+    const fd = new FormData();
+    fd.set("realName", realName.trim());
+    fd.set("birthDate", birthDate);
+    fd.set("gender", gender);
+    fd.set("bio", bio.trim());
+    fd.set("areaSido", areaSido);
+    fd.set("areaSigungu", areaSigungu);
+    if (experienceYears) fd.set("experienceYears", experienceYears);
+    fd.set("agreedTermVersionIds", agreedTerms.join(","));
+
+    startTransition(async () => {
+      try {
+        await submitCoachProfile(fd);
+        router.push("/onboarding/coach/schedule");
+        router.refresh();
+      } catch (e) {
+        if (isNextRedirectError(e)) throw e;
+        setAlert({
+          open: true,
+          variant: "error",
+          title: "등록 중 오류가 발생했어요",
+          description: e instanceof Error ? e.message : "잠시 후 다시 시도해주세요.",
+        });
+      }
+    });
+  };
+
+  return (
+    <>
+      {pending && <div className="courtside-progress-bar" aria-hidden style={{ position: "fixed" }} />}
+
+      <div className="mt-8 space-y-6">
+        <Field label="이름" required>
+          <TextInput
+            type="text"
+            value={realName}
+            onChange={(e) => setRealName(e.target.value)}
+            placeholder="실명으로 입력해주세요"
+            maxLength={20}
+          />
+        </Field>
+
+        <Field label="생년월일" required>
+          <TextInput
+            type="date"
+            value={birthDate}
+            onChange={(e) => setBirthDate(e.target.value)}
+            max={new Date().toISOString().slice(0, 10)}
+            min="1900-01-01"
+          />
+        </Field>
+
+        <Field label="성별" required>
+          <RadioGroupControlled
+            value={gender}
+            onChange={setGender}
+            options={[{ value: "MALE", label: "남성" }, { value: "FEMALE", label: "여성" }]}
+          />
+        </Field>
+
+        <Field label="자기소개" required>
+          <Textarea
+            value={bio}
+            onChange={(e) => setBio(e.target.value)}
+            minLength={10}
+            maxLength={500}
+            rows={4}
+            placeholder="간단한 자기소개와 강점을 적어주세요 (10자 이상)"
+          />
+        </Field>
+
+        <RegionSelectPair
+          sidoName="areaSido"
+          sigunguName="areaSigungu"
+          sidoLabel="활동 지역 (시·도)"
+          sigunguLabel="활동 지역 (시·군·구)"
+          required
+          value={{ sido: areaSido, sigungu: areaSigungu }}
+          onChange={(v) => {
+            setAreaSido(v.sido);
+            setAreaSigungu(v.sigungu);
+          }}
+        />
+
+        <Field label="경력 (년, 선택)">
+          <TextInput
+            type="number"
+            min={0}
+            max={50}
+            value={experienceYears}
+            onChange={(e) => setExperienceYears(e.target.value)}
+            placeholder="예: 5"
+          />
+        </Field>
+
+        {/* 약관 동의 */}
+        <div>
+          <div className="mb-2 text-sm font-semibold text-ink flex items-center gap-1">
+            약관 동의
+            <span className="text-red-500">*</span>
+          </div>
+          <TermsAgreement terms={terms} agreed={agreedTerms} onChange={setAgreedTerms} />
+        </div>
+
+        <div className="pt-2">
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={pending}
+            className="w-full h-12 rounded-xl bg-ink text-white font-semibold text-sm hover:opacity-90 transition active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
+          >
+            {pending && (
+              <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4zm2 5.3A7.96 7.96 0 014 12H0c0 3 1.1 5.8 3 7.9l3-2.6z" />
+              </svg>
+            )}
+            {pending ? "등록 중…" : "등록 완료"}
+          </button>
+        </div>
+      </div>
+
+      <AlertModal open={alert.open} onClose={close} title={alert.title} description={alert.description} variant={alert.variant} items={alert.items} />
+    </>
+  );
+}
+
+function RadioGroupControlled({ value, onChange, options }: { value: string; onChange: (v: string) => void; options: { value: string; label: string }[] }) {
+  return (
+    <div className="grid grid-cols-2 gap-2">
+      {options.map((o) => (
+        <button
+          key={o.value}
+          type="button"
+          onClick={() => onChange(o.value)}
+          className={`h-11 flex items-center justify-center rounded-lg border text-sm transition ${value === o.value ? "border-ink bg-ink text-white font-semibold" : "border-line bg-surface text-ink-2"}`}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
+  );
+}
