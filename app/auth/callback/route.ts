@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 /**
@@ -9,7 +10,9 @@ import { createAdminClient } from "@/lib/supabase/admin";
  * 2. code → access_token (카카오 token 엔드포인트)
  * 3. access_token → 사용자 정보 (카카오 user/me)
  * 4. Supabase admin으로 user 생성 (가짜 이메일: kakao_{id}@courtside.local)
- * 5. magic link 생성 → 그 URL로 redirect → Supabase가 자동 세션 발급
+ * 5. magic link로 token_hash 받음
+ * 6. 우리 server에서 verifyOtp 호출 → 세션 cookie 설정
+ * 7. 홈으로 redirect
  */
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -84,7 +87,6 @@ export async function GET(request: Request) {
       },
     });
 
-    // 이미 가입된 user면 에러가 나지만 무시 (다음 단계에서 magic link 발급)
     if (createError && !/already|exists|registered/i.test(createError.message)) {
       console.error("[callback] createUser error:", createError);
       return NextResponse.redirect(
@@ -92,22 +94,37 @@ export async function GET(request: Request) {
       );
     }
 
-    // 4. Magic link 생성
+    // 4. Magic link 생성 (token_hash 추출용)
     const { data: linkData, error: linkError } =
       await admin.auth.admin.generateLink({
         type: "magiclink",
         email: fakeEmail,
       });
 
-    if (linkError || !linkData?.properties?.action_link) {
+    const hashedToken = linkData?.properties?.hashed_token;
+    if (linkError || !hashedToken) {
       console.error("[callback] magicLink error:", linkError);
       return NextResponse.redirect(
-        `${origin}/login?error=magic_link&msg=${encodeURIComponent(linkError?.message || "no_link")}`
+        `${origin}/login?error=magic_link&msg=${encodeURIComponent(linkError?.message || "no_hash")}`
       );
     }
 
-    // 5. Magic link로 redirect (Supabase가 token 검증 후 세션 cookie 설정 + 홈으로 이동)
-    return NextResponse.redirect(linkData.properties.action_link);
+    // 5. 우리 server에서 verifyOtp 호출 → 세션 cookie 자동 설정
+    const supabase = createClient();
+    const { error: verifyError } = await supabase.auth.verifyOtp({
+      token_hash: hashedToken,
+      type: "email",
+    });
+
+    if (verifyError) {
+      console.error("[callback] verifyOtp error:", verifyError);
+      return NextResponse.redirect(
+        `${origin}/login?error=verify&msg=${encodeURIComponent(verifyError.message)}`
+      );
+    }
+
+    // 6. 홈으로 redirect (세션 cookie는 응답에 자동 포함)
+    return NextResponse.redirect(`${origin}/`);
   } catch (e) {
     console.error("[callback] exception:", e);
     const msg = e instanceof Error ? e.message : String(e);
