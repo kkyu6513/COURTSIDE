@@ -26,19 +26,9 @@ function isNextRedirectError(e: unknown): boolean {
   );
 }
 
-function isValidDate(s: string): boolean {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
-  const d = new Date(s + "T00:00:00Z");
-  if (Number.isNaN(d.getTime())) return false;
-  if (d.getTime() > Date.now()) return false;
-  const yyyy = parseInt(s.slice(0, 4), 10);
-  return yyyy >= 1900;
-}
-
 export function CoachForm({ terms }: { terms: TermItem[] }) {
   const router = useRouter();
   const [realName, setRealName] = useState("");
-  const [birthDate, setBirthDate] = useState("");
   const [gender, setGender] = useState("");
   const [bio, setBio] = useState("");
   const [areaSido, setAreaSido] = useState("");
@@ -54,7 +44,6 @@ export function CoachForm({ terms }: { terms: TermItem[] }) {
   const handleSubmit = () => {
     const missing: string[] = [];
     if (!realName.trim()) missing.push("이름을 입력해주세요");
-    if (!birthDate) missing.push("생년월일을 입력해주세요");
     if (!gender) missing.push("성별을 선택해주세요");
     if (!bio.trim() || bio.trim().length < 10) missing.push("자기소개는 10자 이상 입력해주세요");
     if (!areaSido) missing.push("활동 지역 (시·도)를 선택해주세요");
@@ -74,19 +63,8 @@ export function CoachForm({ terms }: { terms: TermItem[] }) {
       return;
     }
 
-    if (!isValidDate(birthDate)) {
-      setAlert({
-        open: true,
-        variant: "warning",
-        title: "생년월일을 확인해 주세요",
-        description: "YYYY-MM-DD 형식의 올바른 날짜를 입력해 주세요.",
-      });
-      return;
-    }
-
     const fd = new FormData();
     fd.set("realName", realName.trim());
-    fd.set("birthDate", birthDate);
     fd.set("gender", gender);
     fd.set("bio", bio.trim());
     fd.set("areaSido", areaSido);
@@ -145,15 +123,7 @@ export function CoachForm({ terms }: { terms: TermItem[] }) {
           />
         </Field>
 
-        <Field label="생년월일" required>
-          <TextInput
-            type="date"
-            value={birthDate}
-            onChange={(e) => setBirthDate(e.target.value)}
-            max={new Date().toISOString().slice(0, 10)}
-            min="1900-01-01"
-          />
-        </Field>
+        {/* 생년월일 필드는 일시 숨김 — 추후 마이페이지에서 입력하도록 이동 */}
 
         <Field label="성별" required>
           <RadioGroupControlled

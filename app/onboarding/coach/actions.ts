@@ -47,7 +47,8 @@ export async function submitCoachProfile(formData: FormData) {
   if (!user) throw new Error("로그인이 필요합니다");
 
   const realName = formData.get("realName")?.toString()?.trim();
-  const birthDate = formData.get("birthDate")?.toString()?.trim();
+  // 생년월일은 폼에서 일시 숨김 — 추후 마이페이지에서 입력
+  const birthDate = formData.get("birthDate")?.toString()?.trim() || null;
   const gender = formData.get("gender")?.toString();
   const bio = formData.get("bio")?.toString()?.trim();
   const areaSido = formData.get("areaSido")?.toString();
@@ -60,7 +61,7 @@ export async function submitCoachProfile(formData: FormData) {
     .filter((n) => Number.isFinite(n) && n > 0);
 
   if (!realName) throw new Error("이름을 입력해주세요");
-  if (!birthDate || !/^\d{4}-\d{2}-\d{2}$/.test(birthDate)) {
+  if (birthDate && !/^\d{4}-\d{2}-\d{2}$/.test(birthDate)) {
     throw new Error("생년월일을 올바른 형식으로 입력해주세요");
   }
   if (!gender || !VALID_GENDERS.includes(gender as (typeof VALID_GENDERS)[number])) {
