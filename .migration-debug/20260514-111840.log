@@ -1,0 +1,50 @@
+=== Deployment Debug 2026-05-14T11:18:40Z ===
+Commit: 3ab7cf03a0b6bc85cc7b7f1428f294aaad14951c
+
+================ API ROUTES ================
+
+--- GET /api/admin/migrate-phone-verifications ---
+  HTTP: 404
+  Body (first 300 chars):
+    <!DOCTYPE html><html lang="ko"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="/_next/static/css/f46a8bcc23e2b3c9.css" data-precedence="next"/><link rel="preload" as="script" fetchPriority="low" href="/_next/static/chunks
+
+--- POST /api/auth/send-phone-code ---
+  HTTP: 404
+  Body (first 300 chars):
+    <!DOCTYPE html><html lang="ko"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="/_next/static/css/f46a8bcc23e2b3c9.css" data-precedence="next"/><link rel="preload" as="script" fetchPriority="low" href="/_next/static/chunks
+
+--- POST /api/auth/verify-phone-code ---
+  HTTP: 404
+  Body (first 300 chars):
+    <!DOCTYPE html><html lang="ko"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="/_next/static/css/f46a8bcc23e2b3c9.css" data-precedence="next"/><link rel="preload" as="script" fetchPriority="low" href="/_next/static/chunks
+
+================ PAGES ================
+
+--- GET /onboarding/student ---
+  HTTP: 307
+  Contains 'courtside-pop-anim': 0
+0
+  Contains '본인 인증': 0
+0
+  Contains 'PhoneVerification': 0
+0
+
+--- GET /onboarding/coach/plan ---
+  HTTP: 307
+  Contains 'courtside-pop-anim': 0
+0
+  Contains '본인 인증': 0
+0
+  Contains 'PhoneVerification': 0
+0
+
+--- GET /onboarding/coach/schedule ---
+  HTTP: 307
+  Contains 'courtside-pop-anim': 0
+0
+  Contains '본인 인증': 0
+0
+  Contains 'PhoneVerification': 0
+0
+
+=== End ===
