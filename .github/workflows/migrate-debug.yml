@@ -15,8 +15,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Wait for Vercel build (2 minutes)
-        run: sleep 120
+      - name: Wait for Vercel build (3 minutes)
+        run: sleep 180
 
       - name: Probe all migration endpoints
         run: |
@@ -30,8 +30,6 @@ jobs:
             echo ""
 
             ROUTES=(
-              "migrate-subscription-plans|courtside-migrate-2026-05-14-aXZpL3uK9q"
-              "migrate-student-self-claims|courtside-claims-2026-05-14-bM4qV7zRsT"
               "migrate-phone-verifications|courtside-phoneverif-2026-05-14-Hk8nP3qLwR"
             )
 
@@ -73,7 +71,7 @@ jobs:
           if git diff --cached --quiet; then
             echo "No changes to commit."
           else
-            git commit -m "debug: migration probe result"
+            git commit -m "debug: phone_verifications probe result"
             git pull --rebase origin main || true
             git push
           fi
