@@ -6,10 +6,15 @@ on:
     paths:
       - '.github/workflows/migrate-subscription-plans.yml'
 
+permissions:
+  contents: write
+
 jobs:
   migrate:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
       - name: Wait for Vercel deployment (poll for 401)
         run: |
           URL="https://courtside-two-silk.vercel.app/api/admin/migrate-subscription-plans"
@@ -28,9 +33,9 @@ jobs:
           done
 
       - name: Call migrate endpoint
+        id: migrate
         run: |
           URL="https://courtside-two-silk.vercel.app/api/admin/migrate-subscription-plans?token=courtside-migrate-2026-05-14-aXZpL3uK9q"
-          echo "Calling: $URL"
           HTTP_CODE=$(curl -sS -X POST "$URL" -o /tmp/migrate-result.json -w "%{http_code}")
           echo "HTTP $HTTP_CODE"
           cat /tmp/migrate-result.json
@@ -39,4 +44,18 @@ jobs:
             echo "Migration failed (HTTP $HTTP_CODE)"
             exit 1
           fi
-          echo "Migration succeeded."
+
+      - name: Cleanup migration route + workflow (success only)
+        if: success()
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "courtside-bot"
+          git pull --rebase origin main
+          git rm -r app/api/admin/migrate-subscription-plans
+          git rm .github/workflows/migrate-subscription-plans.yml
+          RESULT=$(cat /tmp/migrate-result.json)
+          git commit -m "chore: 마이그레이션 적용 완료 + 일회성 라우트/워크플로우 삭제
+
+결과:
+$RESULT"
+          git push
