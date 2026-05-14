@@ -31,7 +31,10 @@ export default async function Home() {
   }
 
   // 로그인 됐는데 역할 없음 - 역할 선택
-  const role = (user.app_metadata as { role?: string } | undefined)?.role;
+  const meta = user.app_metadata as
+    | { role?: string; plan?: string }
+    | undefined;
+  const role = meta?.role;
   if (!role) {
     redirect("/onboarding/role");
   }
@@ -46,6 +49,8 @@ export default async function Home() {
       .maybeSingle();
     if (!studentProfile) redirect("/onboarding/student");
   } else if (role === "COACH") {
+    // 코치는 플랜 선택 → 프로필 등록 순서
+    if (!meta?.plan) redirect("/onboarding/coach/plan");
     const { data: coachProfile } = await admin
       .from("coach_profiles")
       .select("id")

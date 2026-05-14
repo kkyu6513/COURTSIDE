@@ -20,9 +20,15 @@ export default async function CoachOnboardingPage() {
 
   if (!user) redirect("/login");
 
-  const role = (user.app_metadata as { role?: string } | undefined)?.role;
+  const meta = user.app_metadata as
+    | { role?: string; plan?: string }
+    | undefined;
+  const role = meta?.role;
   if (!role) redirect("/onboarding/role");
   if (role === "STUDENT") redirect("/onboarding/student");
+
+  // 플랜 미선택 시 플랜 선택부터
+  if (!meta?.plan) redirect("/onboarding/coach/plan");
 
   const admin = createAdminClient();
   const { data: existing } = await admin
@@ -36,7 +42,11 @@ export default async function CoachOnboardingPage() {
   return (
     <main className="min-h-screen bg-bg pb-12">
       <div className="max-w-md mx-auto px-6 pt-4">
-        <OnboardingHeader backHref="/onboarding/role" step={2} total={2} />
+        <OnboardingHeader
+          backHref="/onboarding/coach/plan"
+          step={3}
+          total={3}
+        />
 
         <div className="mt-4">
           <h1 className="text-2xl font-bold text-ink">코치 프로필 등록</h1>

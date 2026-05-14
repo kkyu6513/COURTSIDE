@@ -55,10 +55,11 @@ export async function selectRole(formData: FormData) {
 
   revalidatePath("/");
 
-  // 3. 역할별 프로필 등록 페이지로 분기
+  // 3. 역할별 다음 단계로 분기
   if (role === "STUDENT") {
     redirect("/onboarding/student");
   } else {
-    redirect("/onboarding/coach");
+    // 코치: 플랜 선택 → 프로필 등록 (3-step)
+    redirect("/onboarding/coach/plan");
   }
 }
