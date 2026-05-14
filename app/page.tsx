@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function Home() {
@@ -7,6 +8,7 @@ export default async function Home() {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // 비로그인 - 랜딩
   if (!user) {
     return (
       <main className="min-h-screen flex items-center justify-center p-6">
@@ -22,14 +24,15 @@ export default async function Home() {
           >
             로그인하기
           </Link>
-
-          <div className="mt-8 inline-flex items-center gap-2 rounded-full border border-line bg-surface px-3 py-1 text-xs text-ink-2">
-            <span className="h-2 w-2 rounded-full bg-emerald-500" />
-            Sprint 1 — 카카오 로그인 테스트 단계
-          </div>
         </div>
       </main>
     );
+  }
+
+  // 로그인 됐는데 역할 없음 - 온보딩
+  const role = (user.app_metadata as { role?: string } | undefined)?.role;
+  if (!role) {
+    redirect("/onboarding/role");
   }
 
   const nickname =
@@ -37,26 +40,25 @@ export default async function Home() {
     user.email ||
     "사용자";
 
+  // 정상 홈
   return (
     <main className="min-h-screen flex items-center justify-center p-6">
       <div className="text-center max-w-md w-full">
         <h1 className="text-4xl font-bold tracking-tight text-ink">
           COURTSIDE
         </h1>
-        <p className="mt-3 text-sm text-ink-2">로그인 성공! 🎉</p>
+        <p className="mt-3 text-sm text-ink-2">환영해요, {nickname}님 🎾</p>
 
         <div className="mt-8 bg-surface border border-line rounded-xl p-5 text-left space-y-3">
           <div>
-            <div className="text-xs text-ink-3">닉네임</div>
-            <div className="mt-1 text-lg font-semibold text-ink">{nickname}</div>
+            <div className="text-xs text-ink-3">역할</div>
+            <div className="mt-1 text-lg font-semibold text-ink">
+              {role === "STUDENT" ? "🎾 학생" : role === "COACH" ? "👨‍🏫 코치" : role}
+            </div>
           </div>
           <div className="pt-3 border-t border-line">
-            <div className="text-xs text-ink-3">로그인 방식</div>
-            <div className="mt-1 text-sm text-ink">
-              {(user.user_metadata?.provider as string | undefined) === "kakao"
-                ? "카카오"
-                : "이메일"}
-            </div>
+            <div className="text-xs text-ink-3">닉네임</div>
+            <div className="mt-1 text-sm text-ink">{nickname}</div>
           </div>
           <div className="pt-3 border-t border-line">
             <div className="text-xs text-ink-3">User ID</div>
@@ -67,7 +69,7 @@ export default async function Home() {
         </div>
 
         <p className="mt-6 text-xs text-ink-3">
-          다음 단계: 역할 선택 (학생/코치) + 프로필 등록
+          다음 단계: 프로필 등록 (작업 중)
         </p>
       </div>
     </main>
