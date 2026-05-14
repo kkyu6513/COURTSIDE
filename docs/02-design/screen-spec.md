@@ -244,37 +244,37 @@
 
 ## 1-4. 학생 프로필 등록
 
-- **파일**: `flow1-onboarding/1-4-student-profile.html`
+- **파일**: `flow1-onboarding/1-4-student-profile.html` (참고용 프로토타입), 개발 구현: `app/onboarding/student/page.tsx` + `student-form.tsx`
 - **FR**: FR-01c
 - **진입 경로**: 역할 선택 → 수강생 선택 → 다음
-- **스텝 인디케이터**: 2/3
+- **스텝 인디케이터**: 2/2 (Phase 2 SaaS 피벗에서 NTRP·지역·레슨목표는 마이페이지로 이동, Sprint 1 폼은 기본 정보 + 약관 동의로 단축)
 
 | 요소 | 동작 | 로직 | 이동 |
 |------|------|------|------|
 | ← 뒤로가기 | 클릭 | 입력 데이터 유지, 화면 전환 | → **1-3 역할선택** |
-| 성별 칩 | 클릭 | 단일 선택 (남성/여성/기타) | |
+| 이름(실명) 입력 | 입력 | **[필수]** 2~30자. `User.realName`에 저장. 본인/연결 코치 외에는 마스킹 노출 (`lib/masking.ts`) | |
+| 성별 칩 | 클릭 | 단일 선택 (남성/여성) | |
 | 연령대 칩 | 클릭 | 단일 선택 (10대~50대+) | |
-| NTRP 레벨 칩 | 클릭 | 단일 선택 (1.0~2.0 / 2.5~3.0 / 3.5~4.0 / 4.5+) | |
-| ⓘ NTRP란? | 클릭 | 툴팁 토글 표시/숨김 | |
-| 시·도 셀렉트 | 변경 | 선택한 시·도에 해당하는 시·군·구 목록 동적 로드 | |
-| 시·군·구 셀렉트 | 변경 | 선택 저장 | |
-| 레슨 목표 칩 | 클릭 | 다중 선택 토글 (on/off). 데이터: `GET /api/admin/lesson-goals` (isActive=true만) | |
-| 전체 동의 | 체크 | 하위 3개 약관 모두 체크/해제 토글 | |
-| [필수] 이용약관 동의 | 체크 | 개별 토글. 해제 시 전체 동의도 해제 | |
+| 전화번호 본인 인증 | 입력+버튼 | SMS 인증번호 발송 → 6자리 코드 검증 → `phone_verifications.verifiedAt` 세팅 후 `User.phone` 저장 | |
+| 코치 이름·전화 (선택) | 입력 | 둘 다 입력 또는 둘 다 공란만 허용. 입력 시 `student_self_claims` 생성 + 매칭된 코치에게 알림톡 발송 | |
+| 전체 동의 | 체크 | 활성 약관 3종 모두 체크/해제 토글 | |
+| [필수] 이용약관 | 체크 | 개별 토글. 해제 시 전체 동의도 해제 | |
 | [필수] 개인정보 처리방침 | 체크 | 개별 토글. 해제 시 전체 동의도 해제 | |
-| [선택] 마케팅 수신 | 체크 | 개별 토글. User.marketingConsent에 저장 | |
-| 이용약관 › | 클릭 | 약관 본문 보기 (모달, Terms 테이블 데이터) | |
-| 개인정보 처리방침 › | 클릭 | 약관 본문 보기 (모달) | |
-| 완료 | 클릭 | ① 프로필 유효성 검사 + 필수 약관 동의 확인 → ② `POST /api/users/me/student-profile` → ③ 약관 동의 저장 `POST /api/users/terms` | → **1-4b 가입완료** |
+| [선택] 마케팅 수신 | 체크 | 개별 토글. `User.marketingConsent`에 저장 | |
+| 약관 보기 › | 클릭 | 약관 본문 모달 — `TermsVersion.content` 표시 (마크다운 형식 텍스트) | |
+| 등록 완료 | 클릭 | ① 폼 유효성 검사 → ② 필수 약관 동의 확인 → ③ `student_profiles` insert + `users.realName/phone/marketingConsent` 업데이트 → ④ 동의한 모든 `TermsVersion`을 `user_terms_agreements`에 insert (ip 기록) → ⑤ 코치 셀프 매칭 처리 | → 학생 홈 (`/`) |
 
 **유효성 검사**:
-- 성별, 연령대, NTRP, 시·도, 시·군·구 모두 필수 → 미입력 시 "완료" 버튼 비활성화
-- 필수 약관 (이용약관 + 개인정보) 미동의 시 → "완료" 버튼 비활성화
-- 레슨 목표는 선택사항 (0개 가능)
+- 이름(실명) 2~30자 필수
+- 성별, 연령대, 전화번호 본인 인증 모두 필수
+- 필수 약관 (이용약관 + 개인정보 처리방침) 미동의 시 "등록 완료" 시 경고 모달
+- 코치 이름·전화는 둘 다 입력하거나 둘 다 비워야 통과 (한쪽만 입력 시 경고)
+- NTRP/희망 지역/레슨 목표는 본 폼에서 제외 — 마이페이지 → 내 정보에서 추가 입력
 
-**API 호출**:
-- `GET /api/admin/lesson-goals` — 레슨 목표 코드 목록 (어드민 관리)
-- `POST /api/users/me/student-profile` — 수강생 프로필 생성
+**서버 처리**:
+- `app/onboarding/student/actions.ts` `submitStudentProfile` Server Action
+- 필수 약관 검증: DB에서 `terms_versions.isActive=true AND terms.isRequired=true` 목록을 가져와 모두 동의했는지 확인
+- 약관 동의 저장: `user_terms_agreements`에 `(userId, termsVersionId)` upsert (중복 방지)
 
 ---
 
@@ -314,9 +314,11 @@
 **URL 파라미터별 약관**:
 | code | 약관명 |
 |------|--------|
-| `TERMS_OF_SERVICE` | 이용약관 |
+| `TERMS_OF_USE` | 이용약관 |
 | `PRIVACY_POLICY` | 개인정보 처리방침 |
-| `MARKETING` | 마케팅 정보 수신 동의 |
+| `MARKETING_CONSENT` | 마케팅 정보 수신 동의 |
+
+> Sprint 1 구현 기준: `Terms.code` 값은 `TERMS_OF_USE` / `PRIVACY_POLICY` / `MARKETING_CONSENT` 로 정규화 (Phase 1A migrate-terms 시드 기준).
 
 **표시 데이터**: 제목(title), 버전(version), 시행일(effectiveDate), 본문(content — 어드민에서 입력한 HTML)
 
