@@ -1,0 +1,42 @@
+name: Migrate Subscription Plans
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/migrate-subscription-plans.yml'
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for Vercel deployment (poll for 401)
+        run: |
+          URL="https://courtside-two-silk.vercel.app/api/admin/migrate-subscription-plans"
+          for i in {1..36}; do
+            code=$(curl -sS -o /dev/null -w "%{http_code}" "$URL")
+            echo "Attempt $i: HTTP $code"
+            if [ "$code" = "401" ]; then
+              echo "Route deployed."
+              break
+            fi
+            if [ "$i" = "36" ]; then
+              echo "Route never returned 401 after 6 minutes — abort."
+              exit 1
+            fi
+            sleep 10
+          done
+
+      - name: Call migrate endpoint
+        run: |
+          URL="https://courtside-two-silk.vercel.app/api/admin/migrate-subscription-plans?token=courtside-migrate-2026-05-14-aXZpL3uK9q"
+          echo "Calling: $URL"
+          HTTP_CODE=$(curl -sS -X POST "$URL" -o /tmp/migrate-result.json -w "%{http_code}")
+          echo "HTTP $HTTP_CODE"
+          cat /tmp/migrate-result.json
+          echo ""
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "Migration failed (HTTP $HTTP_CODE)"
+            exit 1
+          fi
+          echo "Migration succeeded."
