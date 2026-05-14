@@ -18,44 +18,54 @@ jobs:
       - name: Wait for Vercel build (3 minutes)
         run: sleep 180
 
-      - name: Probe all migration endpoints
+      - name: Probe deployment endpoints
         run: |
           BASE="https://courtside-two-silk.vercel.app"
           mkdir -p .migration-debug
           OUT=".migration-debug/$(date -u +%Y%m%d-%H%M%S).log"
 
           {
-            echo "=== Migration Debug $(date -u +%Y-%m-%dT%H:%M:%SZ) ==="
+            echo "=== Deployment Debug $(date -u +%Y-%m-%dT%H:%M:%SZ) ==="
             echo "Commit: $(git rev-parse HEAD)"
             echo ""
 
-            ROUTES=(
-              "migrate-phone-verifications|courtside-phoneverif-2026-05-14-Hk8nP3qLwR"
+            # 1. 새로 추가된 API 라우트들 확인
+            echo "================ API ROUTES ================"
+            ENDPOINTS=(
+              "GET|/api/admin/migrate-phone-verifications"
+              "POST|/api/auth/send-phone-code"
+              "POST|/api/auth/verify-phone-code"
             )
-
-            for entry in "${ROUTES[@]}"; do
-              ROUTE="${entry%%|*}"
-              TOKEN="${entry##*|}"
-              URL="$BASE/api/admin/$ROUTE"
-
+            for entry in "${ENDPOINTS[@]}"; do
+              METHOD="${entry%%|*}"
+              PATH_="${entry##*|}"
+              URL="$BASE$PATH_"
               echo ""
-              echo "--- $ROUTE ---"
-              echo ""
-
-              echo "[1] Probe without token (expect 401 if deployed, 404 if not built):"
-              CODE=$(curl -sS -o /tmp/probe-body.txt -w "%{http_code}" "$URL" || echo "curl-failed")
+              echo "--- $METHOD $PATH_ ---"
+              CODE=$(curl -sS -X "$METHOD" -o /tmp/body.txt -w "%{http_code}" "$URL" || echo "curl-failed")
               echo "  HTTP: $CODE"
-              echo "  Body (first 500 chars):"
-              head -c 500 /tmp/probe-body.txt | sed 's/^/    /'
+              echo "  Body (first 300 chars):"
+              head -c 300 /tmp/body.txt | sed 's/^/    /'
               echo ""
-              echo ""
+            done
 
-              echo "[2] POST with token:"
-              CODE=$(curl -sS -X POST -o /tmp/call-body.txt -w "%{http_code}" "$URL?token=$TOKEN" || echo "curl-failed")
-              echo "  HTTP: $CODE"
-              echo "  Body (first 2000 chars):"
-              head -c 2000 /tmp/call-body.txt | sed 's/^/    /'
+            echo ""
+            echo "================ PAGES ================"
+            PAGES=(
+              "/onboarding/student"
+              "/onboarding/coach/plan"
+              "/onboarding/coach/schedule"
+            )
+            for P in "${PAGES[@]}"; do
+              URL="$BASE$P"
               echo ""
+              echo "--- GET $P ---"
+              CODE=$(curl -sS -o /tmp/body.txt -w "%{http_code}" "$URL" || echo "curl-failed")
+              echo "  HTTP: $CODE"
+              # AlertModal 컴포넌트 또는 PhoneVerification 단어 검색 (새 빌드 여부 추정)
+              echo "  Contains 'courtside-pop-anim': $(grep -c 'courtside-pop-anim' /tmp/body.txt 2>/dev/null || echo 0)"
+              echo "  Contains '본인 인증': $(grep -c '본인 인증' /tmp/body.txt 2>/dev/null || echo 0)"
+              echo "  Contains 'PhoneVerification': $(grep -c 'PhoneVerification' /tmp/body.txt 2>/dev/null || echo 0)"
             done
 
             echo ""
@@ -71,7 +81,7 @@ jobs:
           if git diff --cached --quiet; then
             echo "No changes to commit."
           else
-            git commit -m "debug: phone_verifications probe result"
+            git commit -m "debug: deployment probe result"
             git pull --rebase origin main || true
             git push
           fi
