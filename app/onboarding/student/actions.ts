@@ -62,7 +62,8 @@ export async function submitStudentProfile(formData: FormData) {
     .filter((n) => Number.isFinite(n) && n > 0);
 
   if (!realName) throw new Error("이름을 입력해주세요");
-  if (!birthDate || !/^\d{4}-\d{2}-\d{2}$/.test(birthDate)) {
+  // 생년월일은 선택 항목 — 입력된 경우에만 형식 검증
+  if (birthDate && !/^\d{4}-\d{2}-\d{2}$/.test(birthDate)) {
     throw new Error("생년월일을 올바른 형식으로 입력해주세요");
   }
   if (!gender || !VALID_GENDERS.includes(gender as (typeof VALID_GENDERS)[number])) {
@@ -135,7 +136,7 @@ export async function submitStudentProfile(formData: FormData) {
     .from("users")
     .update({
       realName,
-      birthDate,
+      birthDate: birthDate || null,
       phone,
       marketingConsent: marketingConsented,
       updatedAt: new Date().toISOString(),

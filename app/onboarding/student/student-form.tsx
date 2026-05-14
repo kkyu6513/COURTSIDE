@@ -66,7 +66,6 @@ export function StudentForm({ terms }: { terms: TermItem[] }) {
   const handleSubmit = () => {
     const missing: string[] = [];
     if (!realName.trim()) missing.push("이름을 입력해주세요");
-    if (!birthDate) missing.push("생년월일을 입력해주세요");
     if (!gender) missing.push("성별을 선택해주세요");
     if (!ageGroup) missing.push("연령대를 선택해주세요");
     if (!verifiedPhone) missing.push("전화번호 본인 인증을 완료해주세요");
@@ -118,7 +117,7 @@ export function StudentForm({ terms }: { terms: TermItem[] }) {
 
     const fd = new FormData();
     fd.set("realName", realName.trim());
-    fd.set("birthDate", birthDate);
+    if (birthDate) fd.set("birthDate", birthDate);
     fd.set("gender", gender);
     fd.set("ageGroup", ageGroup);
     fd.set("phone", verifiedPhone!);
@@ -178,7 +177,7 @@ export function StudentForm({ terms }: { terms: TermItem[] }) {
           />
         </Field>
 
-        <Field label="생년월일" required>
+        <Field label="생년월일 (선택)">
           <TextInput
             type="date"
             value={birthDate}
