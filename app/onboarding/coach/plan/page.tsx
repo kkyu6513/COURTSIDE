@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { selectPlan } from "./actions";
 import { OnboardingHeader } from "@/components/onboarding-form";
 import { PlanSubmitButton } from "./submit-button";
+import { PlanFeatures } from "./plan-features";
 import { getActivePlans, type Plan } from "@/lib/subscriptions";
 
 export default async function CoachPlanSelectPage({
@@ -110,41 +111,7 @@ function PlanCard({ plan, force }: { plan: Plan; force?: boolean }) {
         </div>
       )}
 
-      <ul className="mt-4 space-y-2">
-        {plan.features.map((f) => (
-          <li
-            key={f.code}
-            className={`flex items-start gap-2 text-sm ${
-              f.enabled ? "text-ink-2" : "text-ink-3"
-            }`}
-          >
-            {f.enabled ? (
-              <svg
-                className="mt-0.5 h-4 w-4 flex-none text-emerald-500"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-                aria-hidden
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M16.7 5.3a1 1 0 0 1 0 1.4l-7 7a1 1 0 0 1-1.4 0l-3-3a1 1 0 1 1 1.4-1.4l2.3 2.3 6.3-6.3a1 1 0 0 1 1.4 0Z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            ) : (
-              <svg
-                className="mt-0.5 h-4 w-4 flex-none text-ink-3"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-                aria-hidden
-              >
-                <path d="M5 10a1 1 0 0 1 1-1h8a1 1 0 1 1 0 2H6a1 1 0 0 1-1-1Z" />
-              </svg>
-            )}
-            <span className={f.enabled ? "" : "line-through"}>{f.label}</span>
-          </li>
-        ))}
-      </ul>
+      <PlanFeatures features={plan.features} />
 
       <form action={selectPlan} className="mt-5">
         <input type="hidden" name="plan" value={plan.code} />
