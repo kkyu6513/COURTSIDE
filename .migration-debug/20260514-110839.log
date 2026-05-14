@@ -1,0 +1,41 @@
+=== Migration Debug 2026-05-14T11:08:39Z ===
+Commit: d67e42c9940785d233a0cd382fc58d42ebaead2a
+
+
+--- migrate-subscription-plans ---
+
+[1] Probe without token (expect 401 if deployed, 404 if not built):
+  HTTP: 401
+  Body (first 500 chars):
+    {"error":"Unauthorized"}
+
+[2] POST with token:
+  HTTP: 200
+  Body (first 2000 chars):
+    {"ok":true,"results":[{"ok":true,"statement":"CREATE TABLE IF NOT EXISTS subscription_plans ( id SERIAL P..."},{"ok":true,"statement":"CREATE TABLE IF NOT EXISTS subscription_plan_features ( id SERIAL PR..."},{"ok":true,"statement":"CREATE INDEX IF NOT EXISTS idx_plan_features_plan_sort ON subscription_plan_feat..."},{"ok":true,"statement":"DELETE FROM subscription_plan_features..."},{"ok":true,"statement":"DELETE FROM subscription_plans..."},{"ok":true,"statement":"SELECT setval(pg_get_serial_sequence('subscription_plans', 'id'), 1, false)..."},{"ok":true,"statement":"SELECT setval(pg_get_serial_sequence('subscription_plan_features', 'id'), 1, fal..."},{"ok":true,"statement":"INSERT INTO subscription_plans (code, name, price, \"billingCycle\", \"isBest\",..."},{"ok":true,"statement":"INSERT INTO subscription_plan_features (\"planId\", code, label, enabled, \"sortOrd..."},{"ok":true,"statement":"INSERT INTO subscription_plan_features (\"planId\", code, label, enabled, \"sortOrd..."},{"ok":true,"statement":"INSERT INTO subscription_plan_features (\"planId\", code, label, enabled, \"sortOrd..."},{"ok":true,"statement":"INSERT INTO subscription_plan_features (\"planId\", code, label, enabled, \"sortOrd..."},{"ok":true,"statement":"INSERT INTO subscription_plan_features (\"planId\", code, label, enabled, \"sortOrd..."},{"ok":true,"statement":"INSERT INTO subscription_plan_features (\"planId\", code, label, enabled, \"sortOrd..."},{"ok":true,"statement":"INSERT INTO subscription_plans (code, name, price, \"billingCycle\", \"isBest\",..."},{"ok":true,"statement":"INSERT INTO subscription_plan_features (\"planId\", code, label, enabled, \"sortOrd..."},{"ok":true,"statement":"INSERT INTO subscription_plan_features (\"planId\", code, label, enabled, \"sortOrd..."},{"ok":true,"statement":"INSERT INTO subscription_plan_features (\"planId\", code, label, enabled, \"sortOrd..."},{"ok":true,"statement":"INSERT INTO subscription_plan_features (\"planId\", code, label, enabled, \"s
+
+--- migrate-student-self-claims ---
+
+[1] Probe without token (expect 401 if deployed, 404 if not built):
+  HTTP: 401
+  Body (first 500 chars):
+    {"error":"Unauthorized"}
+
+[2] POST with token:
+  HTTP: 200
+  Body (first 2000 chars):
+    {"ok":true,"results":[{"ok":true,"statement":"CREATE TABLE IF NOT EXISTS student_self_claims ( id SERIAL..."},{"ok":true,"statement":"CREATE INDEX IF NOT EXISTS idx_claims_student ON student_self_claims(\"studentUse..."},{"ok":true,"statement":"CREATE INDEX IF NOT EXISTS idx_claims_matched ON student_self_claims(\"matchedCoa..."},{"ok":true,"statement":"CREATE INDEX IF NOT EXISTS idx_claims_phone ON student_self_claims(\"claimedCoach..."}],"tableExists":true}
+
+--- migrate-phone-verifications ---
+
+[1] Probe without token (expect 401 if deployed, 404 if not built):
+  HTTP: 404
+  Body (first 500 chars):
+    <!DOCTYPE html><html lang="ko"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="/_next/static/css/f46a8bcc23e2b3c9.css" data-precedence="next"/><link rel="preload" as="script" fetchPriority="low" href="/_next/static/chunks/webpack-1ea540f0e26c2248.js"/><script src="/_next/static/chunks/fd9d1056-81e1bdc9da71e40f.js" async=""></script><script src="/_next/static/chunks/117-ded37453d4d75f95.js" async=""></script><script sr
+
+[2] POST with token:
+  HTTP: 404
+  Body (first 2000 chars):
+    <!DOCTYPE html><html lang="ko"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="/_next/static/css/f46a8bcc23e2b3c9.css" data-precedence="next"/><link rel="preload" as="script" fetchPriority="low" href="/_next/static/chunks/webpack-1ea540f0e26c2248.js"/><script src="/_next/static/chunks/fd9d1056-81e1bdc9da71e40f.js" async=""></script><script src="/_next/static/chunks/117-ded37453d4d75f95.js" async=""></script><script src="/_next/static/chunks/main-app-2dcde4753ea0d175.js" async=""></script><script src="/_next/static/chunks/app/layout-42ccf1bb95c322cc.js" async=""></script><meta name="robots" content="noindex"/><title>404: This page could not be found.</title><title>COURTSIDE</title><meta name="description" content="테니스 코치 SaaS"/><script src="/_next/static/chunks/polyfills-42372ed130431b0a.js" noModule=""></script></head><body class="bg-bg text-ink min-h-screen"><style>#nprogress{pointer-events:none}#nprogress .bar{background:#10B981;position:fixed;z-index:9999;top: 0;left:0;width:100%;height:4px}#nprogress .peg{display:block;position:absolute;right:0;width:100px;height:100%;box-shadow:0 0 10px #10B981, 0 0 5px #10B981;opacity:1;-webkit-transform:rotate(3deg) translate(0px,-4px);-ms-transform:rotate(3deg) translate(0px,-4px);transform:rotate(3deg) translate(0px,-4px)}#nprogress .spinner{display:block;position:fixed;z-index:9999;top: 15px;right:15px}#nprogress .spinner-icon{width:18px;height:18px;box-sizing:border-box;border:2px solid transparent;border-top-color:#10B981;border-left-color:#10B981;border-radius:50%;-webkit-animation:nprogress-spinner 400ms linear infinite;animation:nprogress-spinner 400ms linear infinite}.nprogress-custom-parent{overflow:hidden;position:relative}.nprogress-custom-parent #nprogress .bar,.nprogress-custom-parent #nprogress .spinner{position:absolute}@-webkit-keyframes nprogress-spinner{0%{-webkit-transform:rotate(0deg)}100%{-webkit-transform:rotate(360
+
+=== End ===
