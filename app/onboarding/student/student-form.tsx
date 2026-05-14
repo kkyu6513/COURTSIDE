@@ -1,11 +1,11 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Field, TextInput } from "@/components/onboarding-form";
 import { AlertModal } from "@/components/alert-modal";
 import { PhoneVerification } from "@/components/phone-verification";
-import { TermsAgreement, type TermsItem } from "./terms-agreement";
+import { TermsAgreement, type TermItem } from "@/components/terms-agreement";
 import { submitStudentProfile } from "./actions";
 
 type AlertState = {
@@ -24,7 +24,6 @@ const AGE_GROUPS = [
   { value: "FIFTIES_PLUS", label: "50+" },
 ];
 
-// Server Action의 redirect()가 throw하는 특수 error인지 판별
 function isNextRedirectError(e: unknown): boolean {
   return (
     !!e &&
@@ -35,43 +34,45 @@ function isNextRedirectError(e: unknown): boolean {
   );
 }
 
-export function StudentForm({ terms }: { terms: TermsItem[] }) {
+// YYYY-MM-DD 기본 검증
+function isValidDate(s: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
+  const d = new Date(s + "T00:00:00Z");
+  if (Number.isNaN(d.getTime())) return false;
+  const now = new Date();
+  if (d.getTime() > now.getTime()) return false;
+  const yyyy = parseInt(s.slice(0, 4), 10);
+  if (yyyy < 1900) return false;
+  return true;
+}
+
+export function StudentForm({ terms }: { terms: TermItem[] }) {
   const router = useRouter();
   const [realName, setRealName] = useState("");
+  const [birthDate, setBirthDate] = useState("");
   const [gender, setGender] = useState("");
   const [ageGroup, setAgeGroup] = useState("");
   const [verifiedPhone, setVerifiedPhone] = useState<string | null>(null);
   const [coachName, setCoachName] = useState("");
   const [coachPhone, setCoachPhone] = useState("");
-  const [agreed, setAgreed] = useState<Record<number, boolean>>({});
+  const [agreedTerms, setAgreedTerms] = useState<number[]>([]);
   const [pending, startTransition] = useTransition();
-  const [alert, setAlert] = useState<AlertState>({
-    open: false,
-    variant: "warning",
-    title: "",
-  });
-
-  const requiredTermsIds = useMemo(
-    () => terms.filter((t) => t.isRequired).map((t) => t.versionId),
-    [terms],
-  );
-  const marketingTerms = useMemo(
-    () => terms.find((t) => t.code === "MARKETING_CONSENT"),
-    [terms],
-  );
+  const [alert, setAlert] = useState<AlertState>({ open: false, variant: "warning", title: "" });
 
   const close = () => setAlert((a) => ({ ...a, open: false }));
 
+  const requiredTermVersions = terms.filter((t) => t.isRequired).map((t) => t.versionId);
+
   const handleSubmit = () => {
-    const trimmedName = realName.trim();
     const missing: string[] = [];
-    if (!trimmedName) missing.push("이름(실명)을 입력해주세요");
+    if (!realName.trim()) missing.push("이름을 입력해주세요");
+    if (!birthDate) missing.push("생년월일을 입력해주세요");
     if (!gender) missing.push("성별을 선택해주세요");
     if (!ageGroup) missing.push("연령대를 선택해주세요");
     if (!verifiedPhone) missing.push("전화번호 본인 인증을 완료해주세요");
-
-    const missingRequiredTerms = requiredTermsIds.filter((id) => !agreed[id]);
-    if (missingRequiredTerms.length > 0) missing.push("필수 약관에 동의해주세요");
+    if (!requiredTermVersions.every((id) => agreedTerms.includes(id))) {
+      missing.push("필수 약관에 동의해주세요");
+    }
 
     if (missing.length > 0) {
       setAlert({
@@ -84,12 +85,12 @@ export function StudentForm({ terms }: { terms: TermsItem[] }) {
       return;
     }
 
-    if (trimmedName.length < 2 || trimmedName.length > 30) {
+    if (birthDate && !isValidDate(birthDate)) {
       setAlert({
         open: true,
         variant: "warning",
-        title: "이름을 확인해 주세요",
-        description: "이름은 2~30자로 입력해 주세요.",
+        title: "생년월일을 확인해 주세요",
+        description: "YYYY-MM-DD 형식의 올바른 날짜를 입력해 주세요.",
       });
       return;
     }
@@ -101,7 +102,7 @@ export function StudentForm({ terms }: { terms: TermsItem[] }) {
         open: true,
         variant: "warning",
         title: "코치 정보를 확인해 주세요",
-        description: "코치 이름과 코치 전화번호는 함께 입력해야 자동 매칭이 가능해요. 둘 다 입력하거나, 둘 다 비워주세요.",
+        description: "코치 이름과 전화번호는 함께 입력해야 자동 매칭이 가능해요.",
       });
       return;
     }
@@ -115,20 +116,14 @@ export function StudentForm({ terms }: { terms: TermsItem[] }) {
       return;
     }
 
-    const agreedIds = Object.entries(agreed)
-      .filter(([, v]) => v)
-      .map(([k]) => Number(k))
-      .filter((n) => Number.isFinite(n));
-    const marketingAgreed = marketingTerms ? !!agreed[marketingTerms.versionId] : false;
-
     const fd = new FormData();
-    fd.set("realName", trimmedName);
+    fd.set("realName", realName.trim());
+    fd.set("birthDate", birthDate);
     fd.set("gender", gender);
     fd.set("ageGroup", ageGroup);
     fd.set("phone", verifiedPhone!);
     fd.set("phoneVerified", "1");
-    fd.set("agreedTermsVersionIds", agreedIds.join(","));
-    fd.set("marketingConsent", marketingAgreed ? "1" : "0");
+    fd.set("agreedTermVersionIds", agreedTerms.join(","));
     if (cName) fd.set("claimedCoachName", cName);
     if (cPhone) fd.set("claimedCoachPhone", cPhone);
 
@@ -154,22 +149,32 @@ export function StudentForm({ terms }: { terms: TermsItem[] }) {
       {pending && <div className="courtside-progress-bar" aria-hidden style={{ position: "fixed" }} />}
 
       <div className="mt-8 space-y-6">
-        <Field label="이름(실명)" required>
+        <Field label="이름" required>
           <TextInput
             type="text"
             value={realName}
             onChange={(e) => setRealName(e.target.value)}
-            placeholder="예: 홍길동"
-            maxLength={30}
-            autoComplete="name"
+            placeholder="실명으로 입력해주세요"
+            maxLength={20}
           />
-          <p className="mt-1.5 text-xs text-ink-3">
-            본인 확인용으로만 사용되며, 다른 회원에게는 마스킹되어 표시됩니다.
-          </p>
+        </Field>
+
+        <Field label="생년월일" required>
+          <TextInput
+            type="date"
+            value={birthDate}
+            onChange={(e) => setBirthDate(e.target.value)}
+            max={new Date().toISOString().slice(0, 10)}
+            min="1900-01-01"
+          />
         </Field>
 
         <Field label="성별" required>
-          <RadioGroupControlled value={gender} onChange={setGender} options={[{ value: "MALE", label: "남성" }, { value: "FEMALE", label: "여성" }]} />
+          <RadioGroupControlled
+            value={gender}
+            onChange={setGender}
+            options={[{ value: "MALE", label: "남성" }, { value: "FEMALE", label: "여성" }]}
+          />
         </Field>
 
         <Field label="연령대" required>
@@ -196,8 +201,8 @@ export function StudentForm({ terms }: { terms: TermsItem[] }) {
           <div>
             <div className="font-semibold text-ink text-sm">🎾 코치 정보 (선택)</div>
             <p className="mt-1 text-xs text-ink-2 leading-relaxed">
-              레슨받고 계시는 코치님 정보를 미리 입력해 두시면, 등록 완료 시 코치님께 알림이 자동으로 발송되어 본인의 학생으로
-              빠르게 등록받을 수 있어요. 정보가 일치하지 않으면 알림은 발송되지 않습니다.
+              레슨받고 계시는 코치님 정보를 미리 입력해 두시면 등록 완료 시 알림이 발송됩니다.
+              가입 후 홈에서도 다시 신청할 수 있어요.
             </p>
           </div>
 
@@ -218,32 +223,16 @@ export function StudentForm({ terms }: { terms: TermsItem[] }) {
           </Field>
         </div>
 
-        <Field label="약관 동의" required>
-          <TermsAgreement terms={terms} agreed={agreed} onChange={setAgreed} />
-        </Field>
-
-        <div className="rounded-xl bg-soft p-4 text-xs text-ink-2 leading-relaxed space-y-3">
-          <div className="font-semibold text-ink text-sm">💡 가입 이후 흐름을 알려드릴게요</div>
-
-          <div>
-            <div className="font-semibold text-ink mb-1">① 위에 코치 정보를 입력했다면</div>
-            <p>등록 완료 즉시 시스템이 해당 코치님을 찾아 알림톡을 발송합니다. 코치님이 알림을 받고 회원님을 본인의 학생으로 등록하면 자동 연결됩니다.</p>
+        {/* 약관 동의 */}
+        <div>
+          <div className="mb-2 text-sm font-semibold text-ink flex items-center gap-1">
+            약관 동의
+            <span className="text-red-500">*</span>
           </div>
-
-          <div>
-            <div className="font-semibold text-ink mb-1">② 코치 정보를 입력하지 않았거나 매칭이 안 되는 경우</div>
-            <p>레슨받으실 코치님께 <b>방금 입력하신 회원님 전화번호로 가입했다고 직접 말씀</b>해 주세요. 코치님이 회원님을 조회해서 학생으로 등록해 드립니다.</p>
-          </div>
-
-          <div>
-            <div className="font-semibold text-ink mb-1">③ 추가 정보는 나중에 채워도 돼요</div>
-            <p>NTRP 레벨, 레슨 목표, 선호 시간대 등은 가입 후 <b>마이페이지 → 내 정보</b>에서 언제든 추가하거나 수정할 수 있어요.</p>
-          </div>
-
-          <p className="pt-1 text-ink-3">※ 입력하신 전화번호는 코치님이 회원님을 찾고 알림을 보내는 용도로만 사용됩니다.</p>
+          <TermsAgreement terms={terms} agreed={agreedTerms} onChange={setAgreedTerms} />
         </div>
 
-        <div className="pt-4">
+        <div className="pt-2">
           <button
             type="button"
             onClick={handleSubmit}
