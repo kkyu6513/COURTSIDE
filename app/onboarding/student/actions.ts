@@ -113,5 +113,7 @@ export async function submitStudentProfile(formData: FormData) {
   }
 
   revalidatePath("/");
-  redirect("/");
+  // 주의: 여기서 redirect() 호출 안 함.
+  // Server Action redirect는 NEXT_REDIRECT 에러를 throw해서 client try/catch에 잘못 잡힔.
+  // 클라이언트 쪽에서 router.push("/")로 이동.
 }

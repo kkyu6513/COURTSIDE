@@ -23,6 +23,17 @@ const AGE_GROUPS = [
   { value: "FIFTIES_PLUS", label: "50+" },
 ];
 
+// Server Action의 redirect()가 throw하는 특수 error인지 판별
+function isNextRedirectError(e: unknown): boolean {
+  return (
+    !!e &&
+    typeof e === "object" &&
+    "digest" in e &&
+    typeof (e as { digest: unknown }).digest === "string" &&
+    (e as { digest: string }).digest.startsWith("NEXT_REDIRECT")
+  );
+}
+
 export function StudentForm() {
   const router = useRouter();
   const [gender, setGender] = useState("");
@@ -89,7 +100,10 @@ export function StudentForm() {
       try {
         await submitStudentProfile(fd);
         router.push("/");
+        router.refresh();
       } catch (e) {
+        // Server Action의 redirect()가 throw하는 NEXT_REDIRECT는 Next가 처리하도록 다시 throw
+        if (isNextRedirectError(e)) throw e;
         setAlert({
           open: true,
           variant: "error",
