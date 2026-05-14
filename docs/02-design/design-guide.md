@@ -17,37 +17,69 @@
 
 ---
 
-## 2. 컬러 시스템
+## 2. 컬러 시스템 (Phase 2 SaaS — Hybrid Palette)
 
-### 2.1 Primary Palette
+> **Phase 2 적용 원칙 (v0.4, 2026-05-14)**
+> - **베이스는 뉴트럴(Ink/Line/Soft)** — 정보 밀도가 높은 코치 SaaS에 맞춘 차분한 톤
+> - **브랜드 강조는 Primary Green 1종** — CTA, 활성 상태, 진행률
+> - **카테고리 구분은 Accent 3종**으로 제한 — Coral / Orange / Purple
+> - 그 외 컬러풀 컬러(Pink/Sky/Navy/Yellow…)는 Phase 1 마켓플레이스용으로 deprecated — 프로토타입 HTML 참고용으로만 유지
+> - 모든 토큰은 `tailwind.config.ts`에 정의되어 Tailwind 클래스로 직접 사용 (예: `bg-primary`, `text-accent-coral`)
 
-| 이름 | Hex | 용도 |
+### 2.1 Neutral Base (베이스 — 텍스트·배경·라인)
+
+| 토큰 | Hex | Tailwind 클래스 | 용도 |
+|------|-----|-----------------|------|
+| `ink` | `#0F172A` | `text-ink`, `bg-ink` | 본문 헤드라인, 주요 텍스트, **CTA 솔리드 버튼 배경** |
+| `ink-2` | `#475569` | `text-ink-2` | 보조 본문, 라벨 |
+| `ink-3` | `#94A3B8` | `text-ink-3` | placeholder, 캡션, 비활성 |
+| `line` | `#E2E8F0` | `border-line` | 기본 보더 |
+| `line-strong` | `#CBD5E1` | `border-line-strong` | 강조 보더 |
+| `surface` | `#FFFFFF` | `bg-surface` | 카드·모달 배경 |
+| `bg` | `#F8FAFC` | `bg-bg` | 페이지 배경 |
+| `soft` | `#F1F5F9` | `bg-soft` | 인풋 필드·소프트 영역 |
+
+### 2.2 Brand Primary — Courtside Green
+
+| 토큰 | Hex | 용도 |
 |------|-----|------|
-| **Courtside Green** | `#2DD4BF` | Primary CTA 버튼, 활성 탭, 체크 상태 |
-| **Courtside Navy** | `#1E3A5F` | 헤드라인, 주요 텍스트, 아이콘 |
-| **Courtside Yellow** | `#F9C846` | 평점 별, 하이라이트, 배지 |
-| **White** | `#FFFFFF` | 카드 배경, 기본 배경 |
-| **Light Gray** | `#F5F5F7` | 페이지 배경, 인풋 필드 배경 |
+| `primary-50` | `#F0FDFA` | 매우 옅은 틴트 (성공 메시지 배경) |
+| `primary-100` | `#CCFBF1` | 옅은 틴트 (활성 칩 배경) |
+| `primary` / `primary-400` | `#2DD4BF` | ★ **Courtside Green** — 브랜드 베이스, 활성 탭, 진행률, 강조 링크 |
+| `primary-500` | `#14B8A6` | 중간 톤 |
+| `primary-600` | `#0D9488` | hover / pressed |
+| `primary-700` | `#0F766E` | 어두운 강조 |
 
-### 2.2 Accent Palette (Habitz 스타일 — 레슨/카테고리 구분)
+**적용 가이드**:
+- **솔리드 CTA**: 현재 dev 코드는 `bg-ink` (검정) 사용. Primary Green은 **보조 CTA / 활성 상태 / 진행 표시**에 사용 (전체 CTA를 Green으로 통일하는 결정은 별도 PRD에서 다룸)
+- 활성 라디오·체크박스 채움: `bg-primary` + 흰색 ✓
+- 진행률 바 / 로딩 인디케이터: `primary` 베이스
 
-| 이름 | Hex | 용도 |
+### 2.3 Accent Palette (3종 — 카테고리/상태 구분 전용)
+
+| 토큰 | Hex | 용도 |
 |------|-----|------|
-| **Coral** | `#FF6B6B` | 정규레슨 카드 |
-| **Orange** | `#FF9F43` | 쿠폰레슨 카드 |
-| **Teal** | `#2DD4BF` | 완료 상태, 확정 예약 |
-| **Purple** | `#7C5CBF` | 프리미엄 구독 배지, 강조 배너 |
-| **Pink** | `#F9A8D4` | 신규 코치 배지, 추천 섹션 |
-| **Sky Blue** | `#93C5FD` | 무료 플랜 배지 |
+| `accent-coral` | `#FF6B6B` | 정규레슨 카드, 응답필요(변경요청·재등록), 긴급 강조 |
+| `accent-coral-soft` | `#FFEDED` | coral 텍스트의 옅은 배경 (`bg-accent-coral-soft text-accent-coral`) |
+| `accent-orange` | `#FF9F43` | 쿠폰레슨 카드, 진행중 레슨 |
+| `accent-orange-soft` | `#FFF1E0` | orange 텍스트의 옅은 배경 |
+| `accent-purple` | `#7C5CBF` | 프리미엄 구독 배지, 강조 배너 |
+| `accent-purple-soft` | `#EFE7FA` | purple 텍스트의 옅은 배경 |
 
-### 2.3 Semantic Colors
+**원칙**: Accent는 의미가 명확한 곳에만 사용. 디자인이 화려해질 때마다 Accent 추가하지 않는다. 새 카테고리가 필요하면 먼저 기존 3종으로 표현 가능한지 검토.
 
-| 이름 | Hex | 용도 |
-|------|-----|------|
-| **Success** | `#22C55E` | 예약 확정, 결제 성공 |
-| **Warning** | `#F59E0B` | 대기 중(Pending) 상태 |
-| **Error** | `#EF4444` | 거절, 오류 메시지 |
-| **Info** | `#3B82F6` | 알림, 안내 메시지 |
+### 2.4 Semantic Colors (Tailwind 기본 사용)
+
+별도 토큰을 정의하지 않고 Tailwind 기본 팔레트를 그대로 사용한다.
+
+| 의미 | Tailwind 베이스 | 예시 클래스 |
+|------|----------------|------------|
+| 성공 (예약 확정, 결제 성공) | emerald | `text-emerald-600 bg-emerald-50` |
+| 경고 (Pending, 임박) | amber | `text-amber-600 bg-amber-50` |
+| 오류 (실패, 거절) | red | `text-red-600 bg-red-50` |
+| 안내 (Info) | sky | `text-sky-600 bg-sky-50` |
+
+> ⚠️ Phase 1 가이드에서 정의했던 Pink (`#F9A8D4`) / Sky Blue (`#93C5FD`) / Courtside Yellow (`#F9C846`) / Courtside Navy (`#1E3A5F`)는 Phase 2에서 deprecated. 기존 프로토타입 HTML(`docs/03-prototype/`)에는 남아있지만 **새 dev 컴포넌트에서는 사용 금지**.
 
 ---
 
@@ -387,3 +419,4 @@ MVP에서는 **라이트 모드만** 지원. 다크모드는 v2 이후 검토.
 | 0.1 | 2026-04-09 | Habitz 레퍼런스 분석 기반 초안 작성 |
 | 0.2 | 2026-04-21 | 6.5a 체크박스/라디오 규칙 추가 — **사각형 형태로 통일** (동그라미 사용 금지) |
 | 0.3 | 2026-04-23 | 6.5a 의미별 분리 — 체크박스 사각형(다중선택) / 라디오 동그라미(단일선택). 6.5b 토스트 공통 컴포넌트 추가. |
+| 0.4 | 2026-05-14 | **Phase 2 SaaS Hybrid Palette** — 베이스를 Habitz 컬러풀 톤 → Ink/Line 뉴트럴로 전환. Primary Green 1종 유지 + Accent 3종(Coral/Orange/Purple)으로 제한. Pink/Sky/Yellow/Navy deprecated. 모든 컬러 토큰을 `tailwind.config.ts`에 정의해 코드와 일치. §2 전면 개편. §6.x 컴포넌트 명세는 Phase 1 마켓플레이스 기준이라 dev 코드와 부분적으로 불일치 — 신규 화면은 §2 토큰을 우선 적용하고 §6은 점진적으로 업데이트 예정. |

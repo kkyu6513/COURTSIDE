@@ -35,7 +35,7 @@ body {
   right: 0;
   height: 4px;
   z-index: 99999;
-  background-color: rgba(16, 185, 129, 0.15);
+  background-color: rgba(45, 212, 191, 0.15);
   overflow: hidden;
   pointer-events: none;
 }
@@ -44,8 +44,8 @@ body {
   position: absolute;
   top: 0;
   bottom: 0;
-  background-color: #10b981;
-  box-shadow: 0 0 10px #10b981, 0 0 5px #10b981;
+  background-color: #2dd4bf;
+  box-shadow: 0 0 10px #2dd4bf, 0 0 5px #2dd4bf;
   animation: courtside-progress 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
