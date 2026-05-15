@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { BottomNav } from "@/components/bottom-nav";
 import { BackButton } from "@/components/back-button";
 import { CoachRequestForm, CoachRequestPending } from "@/components/coach-request-form";
+import { StudentSplash } from "@/components/student-splash";
 import { todayQuote, timeGreeting, todayLabel } from "@/lib/quotes";
 
 export default async function Home() {
@@ -101,6 +102,7 @@ function StudentHome({
 
   return (
     <main className="min-h-screen bg-bg pb-24">
+      <StudentSplash quote={quote} />
       <div className="max-w-md mx-auto px-5 pt-6">
         <div className="flex items-start justify-between gap-3">
           <BackButton />
@@ -114,11 +116,6 @@ function StudentHome({
               <path d="M13.73 21a2 2 0 0 1-3.46 0" />
             </svg>
           </button>
-        </div>
-
-        <div className="mt-3 rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-emerald-50/40 p-4">
-          <div className="text-sm text-ink leading-relaxed">“{quote.t}”</div>
-          <div className="mt-1.5 text-xs text-emerald-700 font-semibold">{quote.by}</div>
         </div>
 
         <div className="mt-6">
