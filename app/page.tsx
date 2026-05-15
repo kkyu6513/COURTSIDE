@@ -221,7 +221,7 @@ function CoachHome({
           <button
             type="button"
             disabled
-            className="flex-none inline-flex items-center gap-1 rounded-full bg-emerald-500 text-white text-xs font-semibold px-3.5 py-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
+            className="flex-none inline-flex items-center gap-1 rounded-full bg-primary text-white text-xs font-semibold px-3.5 py-1.5 shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
             title="곧 제공 예정"
           >
             <span>📋</span>
@@ -261,10 +261,10 @@ function CoachHome({
             <div
               key={d.iso}
               className={`flex-1 text-center py-2 rounded-xl transition ${
-                d.isToday ? "bg-emerald-500 text-white shadow-sm" : "bg-soft"
+                d.isToday ? "bg-primary text-white shadow-[0_4px_12px_rgba(45,212,191,0.35)]" : "bg-soft"
               }`}
             >
-              <div className={`text-[10px] ${d.isToday ? "text-white/80" : "text-ink-3"}`}>
+              <div className={`text-[10px] ${d.isToday ? "text-white/85" : "text-ink-3"}`}>
                 {d.dowKor}
               </div>
               <div className={`text-sm font-semibold mt-0.5 ${d.isToday ? "text-white" : "text-ink"}`}>
