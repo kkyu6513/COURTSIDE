@@ -54,6 +54,12 @@ body {
   animation: courtside-progress 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
+/* 바텀시트 슬라이드업 */
+@keyframes courtside-sheet-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
 /* 스플래시 화면 진행 바 (determinate, 2초 동안 0 → 100%) */
 @keyframes courtside-splash-progress {
   from { transform: scaleX(0); }

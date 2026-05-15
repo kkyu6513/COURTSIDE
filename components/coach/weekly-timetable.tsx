@@ -4,6 +4,7 @@ import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AlertModal } from "@/components/alert-modal";
+import { EmptySlotSheet } from "@/components/coach/empty-slot-sheet";
 import { toggleHourSlot } from "@/app/coach/schedule/actions";
 
 type ScheduleSlot = {
@@ -55,6 +56,12 @@ export function WeeklyTimetable({ schedules }: Props) {
     open: false,
     title: "",
   });
+  const [sheet, setSheet] = useState<{
+    open: boolean;
+    dayOfWeek: number;
+    hour: number;
+    date: Date;
+  } | null>(null);
 
   const weekDays = useMemo(() => {
     const days: { date: Date; m: number; day: number; dowKor: string; isToday: boolean }[] = [];
@@ -101,9 +108,17 @@ export function WeeklyTimetable({ schedules }: Props) {
     return m;
   }, [localSlots]);
 
-  const onCellToggle = (dayOfWeek: number, hour: number) => {
+  const onCellClick = (dayOfWeek: number, hour: number, date: Date) => {
+    if (pendingKey) return;
+    setSheet({ open: true, dayOfWeek, hour, date });
+  };
+
+  const closeSheet = () => setSheet((s) => (s ? { ...s, open: false } : null));
+
+  const runToggleAvailability = () => {
+    if (!sheet) return;
+    const { dayOfWeek, hour } = sheet;
     const key = `${dayOfWeek}-${hour}`;
-    if (pendingKey) return; // 다른 셀 처리 중에는 무시
     const hh = String(hour).padStart(2, "0");
     const hasSlot = (slotByDayHour.get(key)?.length ?? 0) > 0;
 
@@ -119,12 +134,12 @@ export function WeeklyTimetable({ schedules }: Props) {
       setLocalSlots((prev) => [...prev, ...added]);
     }
     setPendingKey(key);
+    closeSheet();
 
     startTransition(async () => {
       const res = await toggleHourSlot(dayOfWeek, hour);
       setPendingKey(null);
       if (!res.ok) {
-        // 롤백
         setLocalSlots(schedules);
         setAlert({ open: true, title: "저장 실패", description: res.error });
         return;
@@ -198,14 +213,14 @@ export function WeeklyTimetable({ schedules }: Props) {
               hour={h}
               weekDays={weekDays}
               slotByDayHour={slotByDayHour}
-              onToggle={onCellToggle}
+              onCellClick={onCellClick}
               pendingKey={pendingKey}
             />
           ))}
         </div>
 
         <p className="mt-3 text-[11px] text-ink-3 px-1">
-          빈 시간 칸을 탭하면 가용 시간이 등록되고, 다시 탭하면 해제됩니다. (매주 반복)
+          시간 칸을 탭하면 가용 시간 등록·해제 / 레슨 잡기 / 시간 블록 옵션이 표시됩니다.
         </p>
 
         {/* 범례 */}
@@ -227,6 +242,21 @@ export function WeeklyTimetable({ schedules }: Props) {
         title={alert.title}
         description={alert.description}
       />
+
+      {sheet && (
+        <EmptySlotSheet
+          open={sheet.open}
+          onClose={closeSheet}
+          timeLabel={(() => {
+            const f = formatKstDate(sheet.date);
+            const hh = String(sheet.hour).padStart(2, "0");
+            return `${f.m}월 ${f.day}일 ${DOW_KOR[f.dow]}요일 · ${hh}:00`;
+          })()}
+          hasSlot={(slotByDayHour.get(`${sheet.dayOfWeek}-${sheet.hour}`)?.length ?? 0) > 0}
+          pending={pendingKey === `${sheet.dayOfWeek}-${sheet.hour}`}
+          onToggleAvailability={runToggleAvailability}
+        />
+      )}
     </div>
   );
 }
@@ -235,13 +265,13 @@ function RowGroup({
   hour,
   weekDays,
   slotByDayHour,
-  onToggle,
+  onCellClick,
   pendingKey,
 }: {
   hour: number;
   weekDays: { date: Date; isToday: boolean }[];
   slotByDayHour: Map<string, ScheduleSlot[]>;
-  onToggle: (dayOfWeek: number, hour: number) => void;
+  onCellClick: (dayOfWeek: number, hour: number, date: Date) => void;
   pendingKey: string | null;
 }) {
   const hourLabel = `${String(hour).padStart(2, "0")}:00`;
@@ -260,14 +290,14 @@ function RowGroup({
           <button
             type="button"
             key={i}
-            onClick={() => onToggle(dow, hour)}
+            onClick={() => onCellClick(dow, hour, wd.date)}
             disabled={isPending}
             className={`h-9 border-t border-line border-l border-line/60 transition active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-primary/40 focus:relative ${
               hasSlot
                 ? "bg-primary/15 hover:bg-primary/25"
                 : "bg-surface hover:bg-soft"
             } ${isPending ? "opacity-50 cursor-wait" : "cursor-pointer"}`}
-            aria-label={`${hourLabel} ${hasSlot ? "가용 시간 해제" : "가용 시간 등록"}`}
+            aria-label={`${hourLabel} 슬롯 ${hasSlot ? "(가용 시간)" : "(빈 시간)"} 옵션`}
           />
         );
       })}
