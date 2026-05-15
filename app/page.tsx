@@ -6,6 +6,7 @@ import { BottomNav } from "@/components/bottom-nav";
 import { BackButton } from "@/components/back-button";
 import { CoachRequestForm, CoachRequestPending } from "@/components/coach-request-form";
 import { StudentSplash } from "@/components/student-splash";
+import { CoachTestCases } from "@/components/coach-test-cases";
 import { randomQuote, timeGreeting, todayLabel } from "@/lib/quotes";
 
 export default async function Home() {
@@ -269,14 +270,15 @@ function CoachHome({
           ))}
         </div>
 
-        {/* 오늘 레슨 (빈 상태) */}
+        {/* 오늘 레슨 — 테스트 데이터 (12종 상태 케이스) */}
         <div className="mt-6">
-          <div className="rounded-2xl border border-line bg-surface p-10 text-center">
-            <p className="text-sm text-ink-2">오늘 예정된 레슨이 없어요</p>
-            <p className="mt-1.5 text-xs text-ink-3">
-              스케줄을 등록하거나 학생을 받으면 여기에 표시됩니다.
-            </p>
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-sm font-bold text-ink">오늘 레슨</h2>
+            <span className="text-[10px] font-semibold text-ink-3 bg-soft px-2 py-0.5 rounded-full">
+              테스트 데이터
+            </span>
           </div>
+          <CoachTestCases />
         </div>
       </div>
 
