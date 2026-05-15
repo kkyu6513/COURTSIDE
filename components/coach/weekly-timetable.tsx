@@ -6,6 +6,7 @@ import { AlertModal } from "@/components/alert-modal";
 import { EmptySlotSheet } from "@/components/coach/empty-slot-sheet";
 import { StudentPickerSheet, type StudentOption } from "@/components/coach/student-picker-sheet";
 import { LessonDetailSheet, type LessonDetail } from "@/components/coach/lesson-detail-sheet";
+import { LessonListSheet } from "@/components/coach/lesson-list-sheet";
 import { bookLesson, cancelLesson } from "@/app/coach/schedule/actions";
 
 export type LessonRow = {
@@ -96,6 +97,13 @@ export function WeeklyTimetable({ lessons = [], students = [] }: Props) {
     baseTimeLabel: string;
   } | null>(null);
   const [lessonDetail, setLessonDetail] = useState<{ open: boolean; lesson: LessonDetail } | null>(null);
+  const [lessonList, setLessonList] = useState<{
+    open: boolean;
+    hourLabel: string;
+    lessons: LessonDetail[];
+    date: Date;
+    hour: number;
+  } | null>(null);
   const [pendingStudentId, setPendingStudentId] = useState<string | null>(null);
   const [pendingCancel, setPendingCancel] = useState(false);
   const [, startTransition] = useTransition();
@@ -132,9 +140,16 @@ export function WeeklyTimetable({ lessons = [], students = [] }: Props) {
   }, [weekStart]);
 
   const lessonByCell = useMemo(() => {
-    const m = new Map<string, LessonRow>();
+    const m = new Map<string, LessonRow[]>();
     for (const l of lessons) {
-      m.set(lessonCellKey(l.scheduledAt), l);
+      const key = lessonCellKey(l.scheduledAt);
+      const arr = m.get(key) ?? [];
+      arr.push(l);
+      m.set(key, arr);
+    }
+    // 시간 오름차순 정렬
+    for (const arr of m.values()) {
+      arr.sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime());
     }
     return m;
   }, [lessons]);
@@ -154,26 +169,57 @@ export function WeeklyTimetable({ lessons = [], students = [] }: Props) {
   const goPrevWeek = () => setWeekStart((d) => addDays(d, -7));
   const goNextWeek = () => setWeekStart((d) => addDays(d, 7));
 
+  const toLessonDetail = (l: LessonRow): LessonDetail => {
+    const student = studentMap.get(l.studentId);
+    return {
+      id: l.id,
+      studentName: student?.name ?? "이름 미입력",
+      studentPhone: student?.phone ?? null,
+      scheduledAt: l.scheduledAt,
+      durationMinutes: l.durationMinutes,
+      status: l.status,
+    };
+  };
+
   const onCellClick = (dayOfWeek: number, hour: number, date: Date) => {
-    // 셀에 레슨이 있으면 상세 시트, 없으면 빈 슬롯 액션 시트
     const f = formatKstDate(date);
-    const lesson = lessonByCell.get(`${f.y}-${f.m}-${f.day}-${hour}`);
-    if (lesson) {
-      const student = studentMap.get(lesson.studentId);
-      setLessonDetail({
-        open: true,
-        lesson: {
-          id: lesson.id,
-          studentName: student?.name ?? "이름 미입력",
-          studentPhone: student?.phone ?? null,
-          scheduledAt: lesson.scheduledAt,
-          durationMinutes: lesson.durationMinutes,
-          status: lesson.status,
-        },
-      });
+    const arr = lessonByCell.get(`${f.y}-${f.m}-${f.day}-${hour}`) ?? [];
+
+    if (arr.length === 0) {
+      setSheet({ open: true, dayOfWeek, hour, date });
       return;
     }
-    setSheet({ open: true, dayOfWeek, hour, date });
+
+    if (arr.length === 1) {
+      setLessonDetail({ open: true, lesson: toLessonDetail(arr[0]) });
+      return;
+    }
+
+    // 2개 이상 — 리스트 시트
+    const hh = String(hour).padStart(2, "0");
+    setLessonList({
+      open: true,
+      hourLabel: `${f.m}월 ${f.day}일 ${DOW_KOR[f.dow]}요일 · ${hh}시`,
+      lessons: arr.map(toLessonDetail),
+      date,
+      hour,
+    });
+  };
+
+  const closeLessonList = () => setLessonList((s) => (s ? { ...s, open: false } : null));
+
+  const onPickLessonFromList = (lesson: LessonDetail) => {
+    setLessonList(null);
+    setLessonDetail({ open: true, lesson });
+  };
+
+  const onBookNewFromList = () => {
+    if (!lessonList) return;
+    const f = formatKstDate(lessonList.date);
+    const hh = String(lessonList.hour).padStart(2, "0");
+    const baseTimeLabel = `${f.m}월 ${f.day}일 ${DOW_KOR[f.dow]}요일 · ${hh}시`;
+    setLessonList(null);
+    setStudentPicker({ open: true, date: lessonList.date, hour: lessonList.hour, baseTimeLabel });
   };
 
   const closeLessonDetail = () => setLessonDetail((s) => (s ? { ...s, open: false } : null));
@@ -361,6 +407,17 @@ export function WeeklyTimetable({ lessons = [], students = [] }: Props) {
         />
       )}
 
+      {lessonList && (
+        <LessonListSheet
+          open={lessonList.open}
+          onClose={closeLessonList}
+          hourLabel={lessonList.hourLabel}
+          lessons={lessonList.lessons}
+          onPickLesson={onPickLessonFromList}
+          onBookNew={onBookNewFromList}
+        />
+      )}
+
       <AlertModal
         open={alert.open}
         onClose={() => setAlert((a) => ({ ...a, open: false }))}
@@ -380,7 +437,7 @@ function RowGroup({
 }: {
   hour: number;
   weekDays: { date: Date; isToday: boolean }[];
-  lessonByCell: Map<string, LessonRow>;
+  lessonByCell: Map<string, LessonRow[]>;
   onCellClick: (dayOfWeek: number, hour: number, date: Date) => void;
 }) {
   const hourLabel = `${String(hour).padStart(2, "0")}:00`;
@@ -393,18 +450,25 @@ function RowGroup({
         const dow = wd.date.getUTCDay();
         const f = formatKstDate(wd.date);
         const key = `${f.y}-${f.m}-${f.day}-${hour}`;
-        const lesson = lessonByCell.get(key);
-        const hasLesson = !!lesson;
+        const arr = lessonByCell.get(key) ?? [];
+        const count = arr.length;
+        const first = arr[0];
         return (
           <button
             type="button"
             key={i}
             onClick={() => onCellClick(dow, hour, wd.date)}
-            className={`h-9 border-t border-line border-l border-line/60 transition active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-primary/40 focus:relative cursor-pointer ${
-              hasLesson ? statusToClass(lesson!.status) : "bg-surface hover:bg-soft"
+            className={`relative h-9 border-t border-line border-l border-line/60 transition active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-primary/40 focus:relative cursor-pointer ${
+              count > 0 ? statusToClass(first.status) : "bg-surface hover:bg-soft"
             }`}
-            aria-label={`${hourLabel} ${hasLesson ? "레슨 있음" : "빈 시간"} 옵션`}
-          />
+            aria-label={`${hourLabel} ${count > 0 ? `레슨 ${count}개` : "빈 시간"} 옵션`}
+          >
+            {count >= 2 && (
+              <span className="absolute top-0.5 right-0.5 inline-flex items-center justify-center min-w-[14px] h-3.5 px-1 rounded-full bg-ink text-white text-[9px] font-bold">
+                {count}
+              </span>
+            )}
+          </button>
         );
       })}
     </>
