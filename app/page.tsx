@@ -207,7 +207,7 @@ function CoachHome({
 }) {
   const today = getKstParts(new Date());
   const week = thisWeekDates();
-  const todayLabel = `📅 오늘 · ${today.month}월 ${today.day}일 (${DOW_KOR[today.dow]})`;
+  const todayLabel = `오늘 · ${today.month}월 ${today.day}일 (${DOW_KOR[today.dow]})`;
 
   return (
     <main className="min-h-screen bg-bg pb-24">
@@ -221,11 +221,10 @@ function CoachHome({
           <button
             type="button"
             disabled
-            className="flex-none inline-flex items-center gap-1 rounded-full bg-primary text-white text-xs font-semibold px-3.5 py-1.5 shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+            className="flex-none inline-flex items-center rounded-full bg-primary text-white text-xs font-semibold px-4 py-1.5 shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
             title="곧 제공 예정"
           >
-            <span>📋</span>
-            <span>전체 스케줄 관리</span>
+            전체 스케줄 관리
           </button>
         </div>
 
@@ -233,11 +232,8 @@ function CoachHome({
         {pendingClaimCount > 0 && (
           <Link
             href="/coach/notifications"
-            className="mt-4 flex items-center gap-2.5 rounded-xl border-[1.5px] border-amber-300 bg-amber-50 px-3.5 py-3 transition active:scale-[0.99]"
+            className="mt-4 flex items-center gap-3 rounded-xl border-[1.5px] border-amber-300 bg-amber-50 px-3.5 py-3 transition active:scale-[0.99]"
           >
-            <div className="w-9 h-9 rounded-lg bg-amber-100 flex items-center justify-center text-lg flex-none">
-              ⏳
-            </div>
             <div className="flex-1 min-w-0">
               <div className="text-xs font-bold text-amber-700">
                 새로운 학생 등록 요청이 {pendingClaimCount}건 있어요
@@ -278,9 +274,8 @@ function CoachHome({
         {/* 오늘 레슨 (빈 상태) */}
         <div className="mt-6">
           <div className="rounded-2xl border border-line bg-surface p-10 text-center">
-            <div className="text-3xl">📅</div>
-            <p className="mt-3 text-sm text-ink-2">오늘 예정된 레슨이 없어요</p>
-            <p className="mt-1 text-xs text-ink-3">
+            <p className="text-sm text-ink-2">오늘 예정된 레슨이 없어요</p>
+            <p className="mt-1.5 text-xs text-ink-3">
               스케줄을 등록하거나 학생을 받으면 여기에 표시됩니다.
             </p>
           </div>
