@@ -70,6 +70,12 @@ export function todayQuote(now: Date = new Date()): Quote {
   return QUOTES[dayOfYear % QUOTES.length];
 }
 
+/** 매 호출마다 랜덤 1개 반환. 서버에서 호출하면 매 요청(새로고침)마다 새 명언 */
+export function randomQuote(): Quote {
+  const idx = Math.floor(Math.random() * QUOTES.length);
+  return QUOTES[idx];
+}
+
 /** 시간대별 인사 (오전/오후/저녁/밤) */
 export function timeGreeting(now: Date = new Date()): string {
   const kstMs = now.getTime() + 9 * 60 * 60 * 1000;

@@ -6,7 +6,7 @@ import { BottomNav } from "@/components/bottom-nav";
 import { BackButton } from "@/components/back-button";
 import { CoachRequestForm, CoachRequestPending } from "@/components/coach-request-form";
 import { StudentSplash } from "@/components/student-splash";
-import { todayQuote, timeGreeting, todayLabel } from "@/lib/quotes";
+import { todayQuote, randomQuote, timeGreeting, todayLabel } from "@/lib/quotes";
 
 export default async function Home() {
   const supabase = createClient();
@@ -90,7 +90,7 @@ function StudentHome({
 }) {
   const greeting = timeGreeting();
   const date = todayLabel();
-  const quote = todayQuote();
+  const quote = randomQuote();
 
   // 상태 분기:
   // - latestClaim 없음 → 신청 폼
