@@ -48,7 +48,10 @@ async function runMigration(): Promise<NextResponse> {
       ON "lessons" ("studentId", "scheduledAt")
     `);
 
-    // 3. 검증
+    // 3. PostgREST 스키마 캐시 즉시 갱신 (Supabase가 새 테이블을 바로 인식하도록)
+    await prisma.$executeRawUnsafe(`NOTIFY pgrst, 'reload schema'`);
+
+    // 4. 검증
     const verify = await prisma.$queryRawUnsafe<Array<{ table_name: string }>>(`
       SELECT table_name FROM information_schema.tables
       WHERE table_schema = 'public' AND table_name = 'lessons'
@@ -56,7 +59,7 @@ async function runMigration(): Promise<NextResponse> {
 
     return NextResponse.json({
       ok: true,
-      message: "lessons 테이블 마이그레이션 완료",
+      message: "lessons 테이블 마이그레이션 + 스키마 캐시 갱신 완료",
       tableExists: verify.length > 0,
     });
   } catch (e) {
