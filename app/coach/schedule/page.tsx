@@ -5,6 +5,9 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { WeeklyTimetable, type LessonRow } from "@/components/coach/weekly-timetable";
 import type { StudentOption } from "@/components/coach/student-picker-sheet";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function CoachSchedulePage() {
   const supabase = createClient();
   const {
