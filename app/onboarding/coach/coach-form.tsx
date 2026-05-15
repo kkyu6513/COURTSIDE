@@ -94,17 +94,26 @@ export function CoachForm({ terms }: { terms: TermItem[] }) {
       {pending && <div className="courtside-progress-bar" aria-hidden style={{ position: "fixed" }} />}
 
       <div className="mt-8 space-y-6">
-        <div className="rounded-xl border border-sky-200 bg-sky-50/50 p-4">
-          <div className="flex items-start gap-2.5">
-            <div className="w-7 h-7 rounded-full bg-sky-100 text-sky-600 flex items-center justify-center flex-none mt-0.5">
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+        <div className="rounded-2xl border border-line bg-surface p-4">
+          <Field label="이름" required>
+            <TextInput
+              type="text"
+              value={realName}
+              onChange={(e) => setRealName(e.target.value)}
+              placeholder="실명으로 입력해주세요"
+              maxLength={20}
+            />
+          </Field>
+          <div className="mt-4 pt-4 border-t border-line/70 flex items-start gap-2.5">
+            <div className="w-6 h-6 rounded-full bg-sky-100 text-sky-600 flex items-center justify-center flex-none mt-0.5">
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                 <path d="M7 11V7a5 5 0 0 1 10 0v4" />
               </svg>
             </div>
             <div className="flex-1 min-w-0">
-              <div className="text-sm font-semibold text-ink">왜 본명이 필요해요?</div>
-              <ul className="mt-1.5 space-y-1 text-xs text-ink-2 leading-relaxed list-disc pl-4">
+              <div className="text-xs font-semibold text-ink">왜 본명이 필요해요?</div>
+              <ul className="mt-1 space-y-0.5 text-[11px] text-ink-2 leading-relaxed list-disc pl-4">
                 <li>학생이 코치님께 등록을 요청할 때 본명·연락처로 매칭돼요.</li>
                 <li>구독 결제·세금계산서 등 사업자 의무 처리를 위해 본인 확인이 필요해요.</li>
                 <li>등록된 학생에게는 본명이 공개되고, 다른 회원에게는 마스킹(홍**)되어 표시돼요.</li>
@@ -112,16 +121,6 @@ export function CoachForm({ terms }: { terms: TermItem[] }) {
             </div>
           </div>
         </div>
-
-        <Field label="이름" required>
-          <TextInput
-            type="text"
-            value={realName}
-            onChange={(e) => setRealName(e.target.value)}
-            placeholder="실명으로 입력해주세요"
-            maxLength={20}
-          />
-        </Field>
 
         {/* 생년월일 필드는 일시 숨김 — 추후 마이페이지에서 입력하도록 이동 */}
 
