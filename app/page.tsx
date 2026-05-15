@@ -218,14 +218,12 @@ function CoachHome({
             <div className="text-xl font-extrabold text-ink leading-tight">나의 스케줄</div>
             <div className="mt-1.5 text-xs text-ink-3">안녕하세요, {nickname} 코치님</div>
           </div>
-          <button
-            type="button"
-            disabled
-            className="flex-none inline-flex items-center rounded-full bg-primary text-white text-xs font-semibold px-4 py-1.5 shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
-            title="곧 제공 예정"
+          <Link
+            href="/coach/schedule"
+            className="flex-none inline-flex items-center rounded-full bg-primary text-white text-xs font-semibold px-4 py-1.5 shadow-sm hover:opacity-90 transition active:scale-[0.98]"
           >
             전체 스케줄 관리
-          </button>
+          </Link>
         </div>
 
         {/* PENDING 배너 */}
