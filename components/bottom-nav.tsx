@@ -16,6 +16,7 @@ const STUDENT_TABS: Tab[] = [
 
 const COACH_TABS: Tab[] = [
   { href: "/", label: "스케줄", icon: <CalendarIcon /> },
+  { href: "/coach/notifications", label: "알림", icon: <BellIcon /> },
   { href: "/chat", label: "메시지", icon: <ChatIcon />, disabled: true },
   { href: "/search", label: "회원 검색", icon: <SearchIcon />, disabled: true },
   { href: "/my", label: "마이", icon: <UserIcon />, disabled: true },
