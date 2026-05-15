@@ -154,37 +154,44 @@ export function StudentForm({ terms }: { terms: TermItem[] }) {
 
         {/* 생년월일 필드는 일시 숨김 — 추후 마이페이지에서 입력하도록 이동 */}
 
-        <Field label="성별" required>
-          <RadioGroupControlled
-            value={gender}
-            onChange={setGender}
-            options={[{ value: "MALE", label: "남성" }, { value: "FEMALE", label: "여성" }]}
+        <div className="rounded-2xl border border-line bg-surface p-4 space-y-5">
+          <Field label="성별" required>
+            <RadioGroupControlled
+              value={gender}
+              onChange={setGender}
+              options={[{ value: "MALE", label: "남성" }, { value: "FEMALE", label: "여성" }]}
+            />
+          </Field>
+
+          <Field label="연령대" required>
+            <div className="grid grid-cols-5 gap-2">
+              {AGE_GROUPS.map((o) => (
+                <button
+                  key={o.value}
+                  type="button"
+                  onClick={() => setAgeGroup(o.value)}
+                  className={`h-11 flex items-center justify-center rounded-lg border text-xs transition ${ageGroup === o.value ? "border-ink bg-ink text-white font-semibold" : "border-line bg-surface text-ink-2"}`}
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
+          </Field>
+        </div>
+
+        <div className="rounded-2xl border border-line bg-surface p-4">
+          <PhoneVerification
+            onVerifiedChange={setVerifiedPhone}
+            onError={(msg) => setAlert({ open: true, variant: "error", title: "인증 중 오류", description: msg })}
           />
-        </Field>
+        </div>
 
-        <Field label="연령대" required>
-          <div className="grid grid-cols-5 gap-2">
-            {AGE_GROUPS.map((o) => (
-              <button
-                key={o.value}
-                type="button"
-                onClick={() => setAgeGroup(o.value)}
-                className={`h-11 flex items-center justify-center rounded-lg border text-xs transition ${ageGroup === o.value ? "border-ink bg-ink text-white font-semibold" : "border-line bg-surface text-ink-2"}`}
-              >
-                {o.label}
-              </button>
-            ))}
-          </div>
-        </Field>
-
-        <PhoneVerification
-          onVerifiedChange={setVerifiedPhone}
-          onError={(msg) => setAlert({ open: true, variant: "error", title: "인증 중 오류", description: msg })}
-        />
-
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50/40 p-4 space-y-3">
+        <div className="rounded-2xl border border-line bg-surface p-4 space-y-4">
           <div>
-            <div className="font-semibold text-ink text-sm">🎾 코치 정보 (선택)</div>
+            <div className="text-sm font-semibold text-ink flex items-center gap-1">
+              🎾 코치 정보
+              <span className="ml-1 text-[11px] font-normal text-ink-3">(선택)</span>
+            </div>
             <p className="mt-1 text-xs text-ink-2 leading-relaxed">
               레슨받고 계시는 코치님 정보를 미리 입력해 두시면 등록 완료 시 알림이 발송됩니다.
               가입 후 홈에서도 다시 신청할 수 있어요.

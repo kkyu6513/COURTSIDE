@@ -124,48 +124,50 @@ export function CoachForm({ terms }: { terms: TermItem[] }) {
 
         {/* 생년월일 필드는 일시 숨김 — 추후 마이페이지에서 입력하도록 이동 */}
 
-        <Field label="성별" required>
-          <RadioGroupControlled
-            value={gender}
-            onChange={setGender}
-            options={[{ value: "MALE", label: "남성" }, { value: "FEMALE", label: "여성" }]}
-          />
-        </Field>
+        <div className="rounded-2xl border border-line bg-surface p-4 space-y-5">
+          <Field label="성별" required>
+            <RadioGroupControlled
+              value={gender}
+              onChange={setGender}
+              options={[{ value: "MALE", label: "남성" }, { value: "FEMALE", label: "여성" }]}
+            />
+          </Field>
 
-        <Field label="자기소개" required>
-          <Textarea
-            value={bio}
-            onChange={(e) => setBio(e.target.value)}
-            minLength={10}
-            maxLength={500}
-            rows={4}
-            placeholder="간단한 자기소개와 강점을 적어주세요 (10자 이상)"
-          />
-        </Field>
+          <Field label="자기소개" required>
+            <Textarea
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              minLength={10}
+              maxLength={500}
+              rows={4}
+              placeholder="간단한 자기소개와 강점을 적어주세요 (10자 이상)"
+            />
+          </Field>
 
-        <RegionSelectPair
-          sidoName="areaSido"
-          sigunguName="areaSigungu"
-          sidoLabel="활동 지역 (시·도)"
-          sigunguLabel="활동 지역 (시·군·구)"
-          required
-          value={{ sido: areaSido, sigungu: areaSigungu }}
-          onChange={(v) => {
-            setAreaSido(v.sido);
-            setAreaSigungu(v.sigungu);
-          }}
-        />
-
-        <Field label="경력 (년, 선택)">
-          <TextInput
-            type="number"
-            min={0}
-            max={50}
-            value={experienceYears}
-            onChange={(e) => setExperienceYears(e.target.value)}
-            placeholder="예: 5"
+          <RegionSelectPair
+            sidoName="areaSido"
+            sigunguName="areaSigungu"
+            sidoLabel="활동 지역 (시·도)"
+            sigunguLabel="활동 지역 (시·군·구)"
+            required
+            value={{ sido: areaSido, sigungu: areaSigungu }}
+            onChange={(v) => {
+              setAreaSido(v.sido);
+              setAreaSigungu(v.sigungu);
+            }}
           />
-        </Field>
+
+          <Field label="경력 (년, 선택)">
+            <TextInput
+              type="number"
+              min={0}
+              max={50}
+              value={experienceYears}
+              onChange={(e) => setExperienceYears(e.target.value)}
+              placeholder="예: 5"
+            />
+          </Field>
+        </div>
 
         {/* 약관 동의 */}
         <div>
