@@ -48,7 +48,27 @@ async function runMigration(): Promise<NextResponse> {
       ON "lessons" ("studentId", "scheduledAt")
     `);
 
-    // 3. PostgREST 스키마 캐시 즉시 갱신 (Supabase가 새 테이블을 바로 인식하도록)
+    // 2b. 확장 컬럼 추가 (스키마 확장 후 추가된 필드들 — 이미 있으면 skip)
+    await prisma.$executeRawUnsafe(`
+      ALTER TABLE "lessons"
+        ADD COLUMN IF NOT EXISTS "paymentStatus" TEXT NOT NULL DEFAULT 'PAID',
+        ADD COLUMN IF NOT EXISTS "lessonFormat" TEXT NOT NULL DEFAULT 'PRIVATE',
+        ADD COLUMN IF NOT EXISTS "roundNumber" INTEGER,
+        ADD COLUMN IF NOT EXISTS "totalRounds" INTEGER,
+        ADD COLUMN IF NOT EXISTS "originalScheduledAt" TIMESTAMP,
+        ADD COLUMN IF NOT EXISTS "originalLessonId" INTEGER,
+        ADD COLUMN IF NOT EXISTS "parentLessonId" INTEGER,
+        ADD COLUMN IF NOT EXISTS "splitIndex" INTEGER,
+        ADD COLUMN IF NOT EXISTS "splitTotal" INTEGER
+    `);
+    await prisma.$executeRawUnsafe(`
+      CREATE INDEX IF NOT EXISTS "lessons_originalLessonId_idx" ON "lessons" ("originalLessonId")
+    `);
+    await prisma.$executeRawUnsafe(`
+      CREATE INDEX IF NOT EXISTS "lessons_parentLessonId_idx" ON "lessons" ("parentLessonId")
+    `);
+
+    // 3. PostgREST 스키마 캐시 즉시 갱신
     await prisma.$executeRawUnsafe(`NOTIFY pgrst, 'reload schema'`);
 
     // 4. 검증
