@@ -84,6 +84,7 @@ export function PlanFeatures({ features }: { features: Feature[] }) {
         variant="info"
         title={info?.title ?? selected?.label ?? ""}
         description={info?.description}
+        items={info?.bullets}
         confirmText="알겠어요"
       />
     </>
