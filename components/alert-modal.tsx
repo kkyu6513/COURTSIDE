@@ -110,17 +110,15 @@ export function AlertModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-6">
-          <div className="flex items-start gap-3">
+          <div className="flex items-center gap-3">
             <div className={`flex-none w-11 h-11 rounded-full ${v.bg} ${v.fg} flex items-center justify-center`}>
               {v.icon}
             </div>
-            <div className="flex-1 min-w-0 pt-0.5">
-              <h3 className="text-base font-bold text-ink leading-snug">{title}</h3>
-              {description && (
-                <p className="mt-1.5 text-sm text-ink-2 leading-relaxed whitespace-pre-wrap">{description}</p>
-              )}
-            </div>
+            <h3 className="flex-1 min-w-0 text-base font-bold text-ink leading-snug">{title}</h3>
           </div>
+          {description && (
+            <p className="mt-3 text-sm text-ink-2 leading-relaxed whitespace-pre-wrap">{description}</p>
+          )}
 
           {items && items.length > 0 && (
             <div className="mt-4 space-y-1.5 rounded-xl bg-soft p-3.5">
