@@ -7,6 +7,18 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontSize: {
+        // ─── 가독성 강화 (디자인 가이드 §3.1 기반 +1~2px) ────────────────────────
+        // Tailwind 기본보다 한 단계 키워 모바일 한국어 가독성 확보
+        xs: ["13px", { lineHeight: "1.55" }],     // 보조 설명, 캡션 (was 12)
+        sm: ["15px", { lineHeight: "1.6" }],      // 본문, 라벨 (was 14)
+        base: ["16px", { lineHeight: "1.6" }],    // 큰 본문, 강조 텍스트
+        lg: ["18px", { lineHeight: "1.5" }],      // 카드 타이틀, 코치 이름
+        xl: ["20px", { lineHeight: "1.4" }],      // 섹션 타이틀
+        "2xl": ["24px", { lineHeight: "1.3" }],   // 페이지 타이틀
+        "3xl": ["28px", { lineHeight: "1.25" }],
+        "4xl": ["32px", { lineHeight: "1.2" }],   // 디스플레이
+      },
       colors: {
         // ─── Neutral base (베이스 — 텍스트/배경/라인) ────────────────────────────
         ink: "#0F172A",         // 본문 헤드라인, 주요 텍스트
