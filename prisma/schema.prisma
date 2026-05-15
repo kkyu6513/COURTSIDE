@@ -219,18 +219,49 @@ model Schedule {
 }
 
 model Lesson {
-  id               Int      @id @default(autoincrement())
-  coachId          String   @db.Uuid
-  studentId        String   @db.Uuid
-  scheduledAt      DateTime
-  durationMinutes  Int      @default(60)
-  status           String   @default("CONFIRMED")
-  notes            String?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id                  Int       @id @default(autoincrement())
+  coachId             String    @db.Uuid
+  studentId           String    @db.Uuid
+  scheduledAt         DateTime
+  durationMinutes     Int       @default(60)
+
+  // status: PENDING | CONFIRMED | IN_PROGRESS | COMPLETED | ABSENT
+  //       | RESCHEDULE_REQUESTED | RESCHEDULE_COMPLETED
+  //       | MAKEUP_PENDING | MAKEUP_CONFIRMED | MAKEUP_REQUESTED
+  //       | MERGE | SPLIT
+  status              String    @default("CONFIRMED")
+
+  // paymentStatus: PAID | UNPAID | EXTERNAL | NONE (정기·보강 등 결제 무관 회차)
+  paymentStatus       String    @default("PAID")
+
+  // lessonFormat: PRIVATE | GROUP
+  lessonFormat        String    @default("PRIVATE")
+
+  // 회차 표시용 (예: 5/8회)
+  roundNumber         Int?
+  totalRounds         Int?
+
+  // 변경 회차의 원래 일정 시각 (RESCHEDULE_COMPLETED 카드에서 이전 시간 취소선 표시)
+  originalScheduledAt DateTime?
+
+  // 변경/보강 회차의 원본 회차 참조
+  originalLessonId    Int?
+
+  // 통합/분할 회차의 부모 참조
+  parentLessonId      Int?
+
+  // 분할 회차 정보 (예: 1/2, 2/2)
+  splitIndex          Int?
+  splitTotal          Int?
+
+  notes               String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
   @@index([coachId, scheduledAt])
   @@index([studentId, scheduledAt])
+  @@index([originalLessonId])
+  @@index([parentLessonId])
   @@map("lessons")
 }
 

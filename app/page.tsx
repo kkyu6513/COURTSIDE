@@ -1,12 +1,14 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+
+export const dynamic = "force-dynamic";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { BottomNav } from "@/components/bottom-nav";
 import { BackButton } from "@/components/back-button";
 import { CoachRequestForm, CoachRequestPending } from "@/components/coach-request-form";
 import { StudentSplash } from "@/components/student-splash";
-import { CoachTestCases } from "@/components/coach-test-cases";
+import { CoachTodayLessons, type TodayLesson } from "@/components/coach-today-lessons";
 import { randomQuote, timeGreeting, todayLabel } from "@/lib/quotes";
 
 export default async function Home() {
@@ -79,7 +81,62 @@ export default async function Home() {
     .eq("matchedCoachUserId", user.id)
     .eq("status", "PENDING");
 
-  return <CoachHome nickname={nickname} pendingClaimCount={pendingClaimCount ?? 0} />;
+  // 코치 오늘의 레슨 조회 (KST 기준 오늘 00:00 ~ 24:00)
+  const now = new Date();
+  const kstNow = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+  const kstStart = new Date(Date.UTC(kstNow.getUTCFullYear(), kstNow.getUTCMonth(), kstNow.getUTCDate(), 0, 0, 0));
+  const kstEnd = new Date(Date.UTC(kstNow.getUTCFullYear(), kstNow.getUTCMonth(), kstNow.getUTCDate() + 1, 0, 0, 0));
+  const startIso = new Date(kstStart.getTime() - 9 * 60 * 60 * 1000).toISOString();
+  const endIso = new Date(kstEnd.getTime() - 9 * 60 * 60 * 1000).toISOString();
+
+  const { data: lessonRows } = await admin
+    .from("lessons")
+    .select(`
+      id, scheduledAt, durationMinutes, status, paymentStatus, lessonFormat,
+      roundNumber, totalRounds, originalScheduledAt, splitIndex, splitTotal,
+      notes, studentId
+    `)
+    .eq("coachId", user.id)
+    .gte("scheduledAt", startIso)
+    .lt("scheduledAt", endIso)
+    .order("scheduledAt", { ascending: true });
+
+  // 학생 이름 조인 (한 번에 묶어서)
+  const studentIds = Array.from(new Set((lessonRows ?? []).map((l) => l.studentId)));
+  const studentNameMap = new Map<string, string>();
+  if (studentIds.length > 0) {
+    const { data: students } = await admin
+      .from("users")
+      .select("id, name, realName")
+      .in("id", studentIds);
+    for (const s of students ?? []) {
+      studentNameMap.set(s.id, s.realName || s.name || "학생");
+    }
+  }
+
+  const todayLessons: TodayLesson[] = (lessonRows ?? []).map((l) => ({
+    id: l.id,
+    scheduledAt: l.scheduledAt,
+    durationMinutes: l.durationMinutes,
+    status: l.status,
+    paymentStatus: l.paymentStatus,
+    lessonFormat: l.lessonFormat,
+    roundNumber: l.roundNumber,
+    totalRounds: l.totalRounds,
+    originalScheduledAt: l.originalScheduledAt,
+    splitIndex: l.splitIndex,
+    splitTotal: l.splitTotal,
+    notes: l.notes,
+    studentName: studentNameMap.get(l.studentId) ?? "학생",
+  }));
+
+  return (
+    <CoachHome
+      nickname={nickname}
+      pendingClaimCount={pendingClaimCount ?? 0}
+      todayLessons={todayLessons}
+    />
+  );
 }
 
 type LatestClaim = {
@@ -202,9 +259,11 @@ function thisWeekDates(now: Date = new Date()) {
 function CoachHome({
   nickname,
   pendingClaimCount,
+  todayLessons,
 }: {
   nickname: string;
   pendingClaimCount: number;
+  todayLessons: TodayLesson[];
 }) {
   const today = getKstParts(new Date());
   const week = thisWeekDates();
@@ -270,15 +329,10 @@ function CoachHome({
           ))}
         </div>
 
-        {/* 오늘 레슨 — 테스트 데이터 (12종 상태 케이스) */}
+        {/* 오늘 레슨 — 실 DB 데이터 (lessons 테이블) */}
         <div className="mt-6">
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-sm font-bold text-ink">오늘 레슨</h2>
-            <span className="text-[10px] font-semibold text-ink-3 bg-soft px-2 py-0.5 rounded-full">
-              테스트 데이터
-            </span>
-          </div>
-          <CoachTestCases />
+          <h2 className="text-sm font-bold text-ink mb-2">오늘 레슨</h2>
+          <CoachTodayLessons lessons={todayLessons} />
         </div>
       </div>
 
