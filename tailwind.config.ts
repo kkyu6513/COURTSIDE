@@ -11,7 +11,7 @@ const config: Config = {
         // ─── 가독성 강화 (디자인 가이드 §3.1 기반 +1~2px) ────────────────────────
         // Tailwind 기본보다 한 단계 키워 모바일 한국어 가독성 확보
         xs: ["13px", { lineHeight: "1.55" }],     // 보조 설명, 캡션 (was 12)
-        sm: ["15px", { lineHeight: "1.6" }],      // 본문, 라벨 (was 14)
+        sm: ["16px", { lineHeight: "1.6" }],      // 본문, 라벨 (was 14 → 15 → 16)
         base: ["16px", { lineHeight: "1.6" }],    // 큰 본문, 강조 텍스트
         lg: ["18px", { lineHeight: "1.5" }],      // 카드 타이틀, 코치 이름
         xl: ["20px", { lineHeight: "1.4" }],      // 섹션 타이틀
