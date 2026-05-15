@@ -328,7 +328,8 @@ function CoachHome({
     <main className="min-h-screen bg-bg pb-24">
       <div className="max-w-md mx-auto px-5 pt-6">
         {/* 헤더 */}
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex items-start gap-3">
+          <BackButton />
           <div className="min-w-0 flex-1">
             <div className="text-xl font-extrabold text-ink leading-tight">나의 스케줄</div>
             <div className="mt-1.5 text-xs text-ink-3">안녕하세요, {nickname} 코치님</div>
