@@ -9,9 +9,15 @@ import { BackButton } from "@/components/back-button";
 import { CoachRequestForm, CoachRequestPending } from "@/components/coach-request-form";
 import { StudentSplash } from "@/components/student-splash";
 import { CoachTodayLessons, type TodayLesson } from "@/components/coach-today-lessons";
+import { StudentTestCases } from "@/components/student-test-cases";
 import { randomQuote, timeGreeting, todayLabel } from "@/lib/quotes";
 
-export default async function Home() {
+export default async function Home({
+  searchParams,
+}: {
+  searchParams?: { test?: string };
+}) {
+  const testMode = searchParams?.test;
   const supabase = createClient();
   const {
     data: { user },
@@ -71,7 +77,13 @@ export default async function Home() {
       .limit(1)
       .maybeSingle();
 
-    return <StudentHome nickname={nickname} latestClaim={latestClaim} />;
+    return (
+      <StudentHome
+        nickname={nickname}
+        latestClaim={latestClaim}
+        testMode={testMode === "scheduled" ? "scheduled" : null}
+      />
+    );
   }
 
   // 코치: 매칭된 PENDING 학생 등록요청 카운트 (헤더 배너용)
@@ -150,13 +162,43 @@ type LatestClaim = {
 function StudentHome({
   nickname,
   latestClaim,
+  testMode,
 }: {
   nickname: string;
   latestClaim: LatestClaim;
+  testMode: "scheduled" | null;
 }) {
   const greeting = timeGreeting();
   const date = todayLabel();
   const quote = randomQuote();
+
+  // 테스트 모드 — 정상 스케줄 등록된 케이스
+  if (testMode === "scheduled") {
+    return (
+      <main className="min-h-screen bg-bg pb-24">
+        <div className="max-w-md mx-auto px-5 pt-6">
+          <div className="flex items-start justify-between gap-3">
+            <BackButton />
+            <div className="min-w-0 flex-1">
+              <div className="text-base font-bold text-ink">{nickname}님, {greeting}</div>
+              <div className="mt-1 text-xs text-ink-3">{date}</div>
+            </div>
+            <button type="button" aria-label="알림" className="flex-none w-10 h-10 flex items-center justify-center rounded-full bg-surface border border-line">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+              </svg>
+            </button>
+          </div>
+
+          <div className="mt-6">
+            <StudentTestCases />
+          </div>
+        </div>
+        <BottomNav role="STUDENT" active="/" />
+      </main>
+    );
+  }
 
   // 상태 분기:
   // - latestClaim 없음 → 신청 폼
