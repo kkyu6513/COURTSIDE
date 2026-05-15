@@ -65,7 +65,6 @@ const LESSONS: StudentLesson[] = [
 export function StudentTestCases() {
   const week = thisWeekDates();
   const today = getKstParts(new Date());
-  const todayLabel = `오늘 · ${today.month}월 ${today.day}일 (${DOW_KOR[today.dow]})`;
   const todayIdx = (today.dow + 6) % 7; // 0=월
 
   // 오늘 진행중 레슨 추가 (오늘이 평일이면)
@@ -73,13 +72,6 @@ export function StudentTestCases() {
     ? [...LESSONS.filter((l) => l.dayIdx !== todayIdx), { dayIdx: todayIdx, time: "10:00", state: "in_progress" as const, rounds: "진행중", format: "1:1" as const }]
         .sort((a, b) => a.dayIdx - b.dayIdx || a.time.localeCompare(b.time))
     : LESSONS;
-
-  const lessonByDay = new Map<number, StudentLesson[]>();
-  for (const l of lessonsWithToday) {
-    const arr = lessonByDay.get(l.dayIdx) ?? [];
-    arr.push(l);
-    lessonByDay.set(l.dayIdx, arr);
-  }
 
   // 다음 예정 레슨 (D-N 표시용)
   const nextUpcoming = lessonsWithToday.find((l) => l.state === "upcoming" && l.dayIdx >= todayIdx);
@@ -119,36 +111,7 @@ export function StudentTestCases() {
         )}
       </div>
 
-      {/* 주간 미니 캘린더 */}
-      <div>
-        <div className="text-sm font-bold text-ink mb-2">{todayLabel}</div>
-        <div className="flex gap-1.5">
-          {week.map((d) => {
-            const has = (lessonByDay.get(d.idx)?.length ?? 0) > 0;
-            return (
-              <div
-                key={d.iso}
-                className={`flex-1 text-center py-2 rounded-xl transition ${
-                  d.isToday ? "bg-primary text-white shadow-[0_4px_12px_rgba(45,212,191,0.35)]" : "bg-soft"
-                }`}
-              >
-                <div className={`text-[10px] ${d.isToday ? "text-white/85" : "text-ink-3"}`}>{d.dowKor}</div>
-                <div className={`text-sm font-semibold mt-0.5 ${d.isToday ? "text-white" : "text-ink"}`}>{d.day}</div>
-                <div className="flex gap-1 justify-center mt-1 h-1.5">
-                  {has && (
-                    <span
-                      className={`w-1 h-1 rounded-full ${d.isToday ? "bg-white" : "bg-primary"}`}
-                      aria-hidden
-                    />
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* 이번 주 레슨 카드 */}
+      {/* 이번 주 레슨 — 그룹핑된 단일 카드 */}
       <div>
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-sm font-bold text-ink">이번 주 레슨</h2>
@@ -156,9 +119,15 @@ export function StudentTestCases() {
             테스트 데이터
           </span>
         </div>
-        <div className="space-y-2">
+        <div className="rounded-2xl border border-line bg-surface overflow-hidden">
           {lessonsWithToday.map((l, idx) => (
-            <StudentLessonCard key={`${l.dayIdx}-${l.time}-${idx}`} lesson={l} todayIdx={todayIdx} weekDays={week} />
+            <StudentLessonRow
+              key={`${l.dayIdx}-${l.time}-${idx}`}
+              lesson={l}
+              todayIdx={todayIdx}
+              weekDays={week}
+              isFirst={idx === 0}
+            />
           ))}
         </div>
       </div>
@@ -175,22 +144,22 @@ export function StudentTestCases() {
   );
 }
 
-function StudentLessonCard({
+function StudentLessonRow({
   lesson,
   todayIdx,
   weekDays,
+  isFirst,
 }: {
   lesson: StudentLesson;
   todayIdx: number;
   weekDays: { day: number; dowKor: string; isToday: boolean; idx: number }[];
+  isFirst: boolean;
 }) {
   const day = weekDays[lesson.dayIdx];
   const dowDate = `${day.dowKor} ${day.day}일`;
 
   const styles = {
     completed: {
-      bg: "bg-surface",
-      border: "border-line",
       faded: true,
       timeColor: "text-ink-3",
       badgeBg: "bg-blue-100",
@@ -198,8 +167,6 @@ function StudentLessonCard({
       badgeText: "✓ 완료",
     },
     in_progress: {
-      bg: "bg-surface",
-      border: "border-line",
       faded: false,
       timeColor: "text-orange-500",
       badgeBg: "bg-red-100",
@@ -207,8 +174,6 @@ function StudentLessonCard({
       badgeText: "🎾 진행중",
     },
     upcoming: {
-      bg: "bg-surface",
-      border: "border-line",
       faded: false,
       timeColor: lesson.dayIdx === todayIdx ? "text-orange-500" : "text-ink",
       badgeBg: "bg-purple-100",
@@ -219,7 +184,7 @@ function StudentLessonCard({
 
   return (
     <div
-      className={`rounded-xl border ${styles.bg} ${styles.border} px-4 py-3 flex items-center justify-between gap-3 ${styles.faded ? "opacity-70" : ""}`}
+      className={`px-4 py-3 flex items-center justify-between gap-3 ${isFirst ? "" : "border-t border-line/70"} ${styles.faded ? "opacity-70" : ""}`}
     >
       <div className="min-w-0 flex-1">
         <div className={`text-sm font-bold ${styles.timeColor}`}>
