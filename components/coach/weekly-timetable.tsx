@@ -220,7 +220,7 @@ export function WeeklyTimetable({ schedules }: Props) {
         </div>
 
         <p className="mt-3 text-[11px] text-ink-3 px-1">
-          시간 칸을 탭하면 가용 시간 등록·해제 / 레슨 잡기 / 시간 블록 옵션이 표시됩니다.
+          시간 칸을 탭하면 레슨 받기·닫기 / 레슨 잡기 / 시간 블록 옵션이 표시됩니다.
         </p>
 
         {/* 범례 */}
@@ -230,8 +230,8 @@ export function WeeklyTimetable({ schedules }: Props) {
           <LegendItem color="bg-violet-100 border-violet-200" label="레슨 예정" />
           <LegendItem color="bg-orange-100 border-orange-200" label="변경 요청" />
           <LegendItem color="bg-blue-100 border-blue-200" label="완료" />
-          <LegendItem color="bg-primary/10 border-primary/30" label="가용 시간" />
-          <LegendItem color="bg-surface border-line" label="빈 시간" />
+          <LegendItem color="bg-primary/10 border-primary/30" label="레슨 받는 시간" />
+          <LegendItem color="bg-surface border-line" label="안 받는 시간" />
         </div>
       </div>
 
@@ -297,7 +297,7 @@ function RowGroup({
                 ? "bg-primary/15 hover:bg-primary/25"
                 : "bg-surface hover:bg-soft"
             } ${isPending ? "opacity-50 cursor-wait" : "cursor-pointer"}`}
-            aria-label={`${hourLabel} 슬롯 ${hasSlot ? "(가용 시간)" : "(빈 시간)"} 옵션`}
+            aria-label={`${hourLabel} ${hasSlot ? "레슨 받는 시간" : "안 받는 시간"} 옵션`}
           />
         );
       })}
@@ -321,9 +321,9 @@ export function ScheduleManageEmptyHint() {
       className="mx-3 mt-3 mb-1 flex items-center justify-between rounded-xl border border-line bg-surface px-3.5 py-3 transition active:scale-[0.99]"
     >
       <div className="min-w-0">
-        <div className="text-xs font-semibold text-ink">기본 가용 시간을 등록하세요</div>
+        <div className="text-xs font-semibold text-ink">레슨 받을 시간을 등록하세요</div>
         <div className="mt-0.5 text-[11px] text-ink-3">
-          요일별 반복 슬롯을 한 번 등록하면 매주 자동 반영됩니다.
+          요일별로 한 번 등록하면 매주 같은 시간에 자동 반영됩니다.
         </div>
       </div>
       <span className="text-ink-3 flex-none">›</span>
