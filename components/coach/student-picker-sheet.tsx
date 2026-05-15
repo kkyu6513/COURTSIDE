@@ -11,6 +11,7 @@ export type StudentOption = {
 };
 
 const MINUTES = [0, 10, 20, 30, 40, 50];
+const DURATIONS = [20, 30, 40, 50, 60, 90];
 
 type Props = {
   open: boolean;
@@ -19,7 +20,7 @@ type Props = {
   hour: number;
   students: StudentOption[];
   pendingStudentId: string | null;
-  onPick: (studentId: string, minute: number) => void;
+  onPick: (studentId: string, minute: number, durationMinutes: number) => void;
 };
 
 export function StudentPickerSheet({
@@ -33,6 +34,7 @@ export function StudentPickerSheet({
 }: Props) {
   const [search, setSearch] = useState("");
   const [minute, setMinute] = useState(0);
+  const [duration, setDuration] = useState(60);
 
   useEffect(() => {
     if (!open) return;
@@ -50,6 +52,7 @@ export function StudentPickerSheet({
     if (!open) {
       setSearch("");
       setMinute(0);
+      setDuration(60);
     }
   }, [open]);
 
@@ -65,6 +68,11 @@ export function StudentPickerSheet({
 
   const hh = String(hour).padStart(2, "0");
   const mm = String(minute).padStart(2, "0");
+  const totalEndMin = hour * 60 + minute + duration;
+  const endHour = Math.floor(totalEndMin / 60);
+  const endMin = totalEndMin % 60;
+  const endHh = String(endHour).padStart(2, "0");
+  const endMm = String(endMin).padStart(2, "0");
 
   return createPortal(
     <div
@@ -89,6 +97,7 @@ export function StudentPickerSheet({
         </div>
 
         <div className="px-5 pt-3 pb-1 flex-none">
+          <div className="text-[11px] font-semibold text-ink-2 mb-1.5">시작 분</div>
           <div className="grid grid-cols-6 gap-1.5">
             {MINUTES.map((m) => {
               const active = m === minute;
@@ -109,8 +118,35 @@ export function StudentPickerSheet({
               );
             })}
           </div>
+        </div>
+
+        <div className="px-5 pt-3 pb-1 flex-none">
+          <div className="text-[11px] font-semibold text-ink-2 mb-1.5">레슨 길이</div>
+          <div className="grid grid-cols-6 gap-1.5">
+            {DURATIONS.map((d) => {
+              const active = d === duration;
+              return (
+                <button
+                  key={d}
+                  type="button"
+                  onClick={() => setDuration(d)}
+                  disabled={!!pendingStudentId}
+                  className={`h-10 rounded-lg text-xs font-bold transition active:scale-[0.97] disabled:opacity-60 ${
+                    active
+                      ? "bg-primary text-white shadow-sm"
+                      : "bg-soft text-ink-2 hover:bg-line"
+                  }`}
+                >
+                  {d}분
+                </button>
+              );
+            })}
+          </div>
           <p className="mt-2 text-[11px] text-ink-3">
-            선택된 시각:&nbsp;<span className="font-semibold text-ink">{hh}:{mm}</span>
+            <span className="font-semibold text-ink">{hh}:{mm}</span>
+            &nbsp;~&nbsp;
+            <span className="font-semibold text-ink">{endHh}:{endMm}</span>
+            &nbsp;({duration}분)
           </p>
         </div>
 
@@ -146,7 +182,7 @@ export function StudentPickerSheet({
                   <li key={s.id}>
                     <button
                       type="button"
-                      onClick={() => onPick(s.id, minute)}
+                      onClick={() => onPick(s.id, minute, duration)}
                       disabled={isDisabled}
                       className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl hover:bg-soft transition active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed"
                     >

@@ -265,15 +265,19 @@ export function WeeklyTimetable({ lessons = [], students = [] }: Props) {
   const closeStudentPicker = () =>
     setStudentPicker((s) => (s ? { ...s, open: false } : null));
 
-  const onPickStudent = (studentId: string, minute: number) => {
+  const onPickStudent = (studentId: string, minute: number, durationMinutes: number) => {
     if (!studentPicker) return;
     const iso = cellToIso(studentPicker.date, studentPicker.hour, minute);
     const hh = String(studentPicker.hour).padStart(2, "0");
     const mm = String(minute).padStart(2, "0");
-    const fullTimeLabel = `${studentPicker.baseTimeLabel.replace(/·.*$/, "")} · ${hh}:${mm}`;
+    const totalEnd = studentPicker.hour * 60 + minute + durationMinutes;
+    const endHh = String(Math.floor(totalEnd / 60)).padStart(2, "0");
+    const endMm = String(totalEnd % 60).padStart(2, "0");
+    const baseDate = studentPicker.baseTimeLabel.replace(/ · .*$/, "");
+    const fullTimeLabel = `${baseDate} · ${hh}:${mm} ~ ${endHh}:${endMm} (${durationMinutes}분)`;
     setPendingStudentId(studentId);
     startTransition(async () => {
-      const res = await bookLesson(studentId, iso, 60);
+      const res = await bookLesson(studentId, iso, durationMinutes);
       setPendingStudentId(null);
       if (!res.ok) {
         setAlert({
@@ -464,8 +468,10 @@ function RowGroup({
             aria-label={`${hourLabel} ${count > 0 ? `레슨 ${count}개` : "빈 시간"} 옵션`}
           >
             {count >= 2 && (
-              <span className="absolute top-0.5 right-0.5 inline-flex items-center justify-center min-w-[14px] h-3.5 px-1 rounded-full bg-ink text-white text-[9px] font-bold">
-                {count}
+              <span className="absolute inset-0 flex items-center justify-center">
+                <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-ink text-white text-[10px] font-bold leading-none">
+                  {count}
+                </span>
               </span>
             )}
           </button>
