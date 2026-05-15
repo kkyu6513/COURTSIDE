@@ -1,7 +1,5 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-
-export const dynamic = "force-dynamic";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { BottomNav } from "@/components/bottom-nav";
@@ -10,7 +8,10 @@ import { CoachRequestForm, CoachRequestPending } from "@/components/coach-reques
 import { StudentSplash } from "@/components/student-splash";
 import { CoachTodayLessons, type TodayLesson } from "@/components/coach-today-lessons";
 import { StudentTestCases } from "@/components/student-test-cases";
+import { signOutAction } from "@/app/actions/sign-out";
 import { randomQuote, timeGreeting, todayLabel } from "@/lib/quotes";
+
+export const dynamic = "force-dynamic";
 
 export default async function Home({
   searchParams,
@@ -320,6 +321,15 @@ function CoachHome({
             <div className="text-xl font-extrabold text-ink leading-tight">나의 스케줄</div>
             <div className="mt-1.5 text-xs text-ink-3">안녕하세요, {nickname} 코치님</div>
           </div>
+          <form action={signOutAction} className="flex-none">
+            <button
+              type="submit"
+              className="inline-flex items-center rounded-full border border-line bg-surface text-ink-2 text-[11px] font-semibold px-3 py-1.5 hover:bg-soft transition active:scale-[0.98]"
+              title="임시 로그아웃 (테스트용)"
+            >
+              로그아웃
+            </button>
+          </form>
           <Link
             href="/coach/schedule"
             className="flex-none inline-flex items-center rounded-full bg-primary text-white text-xs font-semibold px-4 py-1.5 shadow-sm hover:opacity-90 transition active:scale-[0.98]"
