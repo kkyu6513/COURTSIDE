@@ -143,11 +143,11 @@ export function StudentForm({ terms }: { terms: TermItem[] }) {
             </div>
             <div className="flex-1 min-w-0">
               <div className="text-xs font-semibold text-ink">왜 본명이 필요해요?</div>
-              <ul className="mt-1 space-y-0.5 text-[11px] text-ink-2 leading-relaxed list-disc pl-4">
-                <li>코치님이 회원님을 정확히 알아보고 학생으로 등록할 수 있어요.</li>
-                <li>결제·환불 등 안전한 거래를 위해 본인 확인이 필요해요.</li>
-                <li>다른 회원에게는 공개되지 않고, 코치님 외에는 마스킹(김**)되어 표시돼요.</li>
-              </ul>
+              <div className="mt-1 space-y-1 text-[11px] text-ink-2 leading-relaxed">
+                <p>코치님이 회원님을 정확히 알아보고 학생으로 등록할 수 있어요.</p>
+                <p>결제·환불 등 안전한 거래를 위해 본인 확인이 필요해요.</p>
+                <p>다른 회원에게는 공개되지 않고, 코치님 외에는 마스킹(김**)되어 표시돼요.</p>
+              </div>
             </div>
           </div>
         </div>

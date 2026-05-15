@@ -113,11 +113,11 @@ export function CoachForm({ terms }: { terms: TermItem[] }) {
             </div>
             <div className="flex-1 min-w-0">
               <div className="text-xs font-semibold text-ink">왜 본명이 필요해요?</div>
-              <ul className="mt-1 space-y-0.5 text-[11px] text-ink-2 leading-relaxed list-disc pl-4">
-                <li>학생이 코치님께 등록을 요청할 때 본명·연락처로 매칭돼요.</li>
-                <li>구독 결제·세금계산서 등 사업자 의무 처리를 위해 본인 확인이 필요해요.</li>
-                <li>등록된 학생에게는 본명이 공개되고, 다른 회원에게는 마스킹(홍**)되어 표시돼요.</li>
-              </ul>
+              <div className="mt-1 space-y-1 text-[11px] text-ink-2 leading-relaxed">
+                <p>학생이 코치님께 등록을 요청할 때 본명·연락처로 매칭돼요.</p>
+                <p>구독 결제·세금계산서 등 사업자 의무 처리를 위해 본인 확인이 필요해요.</p>
+                <p>등록된 학생에게는 본명이 공개되고, 다른 회원에게는 마스킹(홍**)되어 표시돼요.</p>
+              </div>
             </div>
           </div>
         </div>

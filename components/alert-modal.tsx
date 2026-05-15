@@ -123,14 +123,11 @@ export function AlertModal({
           </div>
 
           {items && items.length > 0 && (
-            <ul className="mt-4 space-y-1.5 rounded-xl bg-soft p-3.5">
+            <div className="mt-4 space-y-1.5 rounded-xl bg-soft p-3.5">
               {items.map((it, idx) => (
-                <li key={idx} className="flex items-start gap-2 text-xs text-ink-2">
-                  <span className={`mt-1 inline-block w-1.5 h-1.5 rounded-full flex-none ${v.fg.replace("text-", "bg-")}`} />
-                  <span className="flex-1">{it}</span>
-                </li>
+                <p key={idx} className="text-xs text-ink-2 leading-relaxed">{it}</p>
               ))}
-            </ul>
+            </div>
           )}
 
           <div className="mt-6 flex gap-2">
