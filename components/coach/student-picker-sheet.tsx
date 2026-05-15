@@ -10,24 +10,29 @@ export type StudentOption = {
   phone: string | null;
 };
 
+const MINUTES = [0, 10, 20, 30, 40, 50];
+
 type Props = {
   open: boolean;
   onClose: () => void;
-  timeLabel: string;
+  baseTimeLabel: string;
+  hour: number;
   students: StudentOption[];
   pendingStudentId: string | null;
-  onPick: (studentId: string) => void;
+  onPick: (studentId: string, minute: number) => void;
 };
 
 export function StudentPickerSheet({
   open,
   onClose,
-  timeLabel,
+  baseTimeLabel,
+  hour,
   students,
   pendingStudentId,
   onPick,
 }: Props) {
   const [search, setSearch] = useState("");
+  const [minute, setMinute] = useState(0);
 
   useEffect(() => {
     if (!open) return;
@@ -42,7 +47,10 @@ export function StudentPickerSheet({
   }, [open, onClose]);
 
   useEffect(() => {
-    if (!open) setSearch("");
+    if (!open) {
+      setSearch("");
+      setMinute(0);
+    }
   }, [open]);
 
   if (!open) return null;
@@ -54,6 +62,9 @@ export function StudentPickerSheet({
         (s) => s.name.includes(q) || (s.phone ?? "").includes(q.replace(/[^\d]/g, "")),
       )
     : students;
+
+  const hh = String(hour).padStart(2, "0");
+  const mm = String(minute).padStart(2, "0");
 
   return createPortal(
     <div
@@ -67,17 +78,44 @@ export function StudentPickerSheet({
         onClick={onClose}
       />
       <div
-        className="absolute left-0 right-0 bottom-0 bg-surface rounded-t-3xl shadow-2xl flex flex-col max-h-[80vh]"
+        className="absolute left-0 right-0 bottom-0 bg-surface rounded-t-3xl shadow-2xl flex flex-col max-h-[85vh]"
         style={{ animation: "courtside-sheet-up 0.25s ease-out" }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="px-5 pt-3 pb-1">
+        <div className="px-5 pt-3 pb-1 flex-none">
           <div className="w-10 h-1 rounded-full bg-line mx-auto mb-4" />
-          <div className="text-base font-extrabold text-ink">수강생 선택</div>
-          <div className="mt-1 text-xs text-ink-3">{timeLabel}에 레슨을 잡습니다</div>
+          <div className="text-base font-extrabold text-ink">레슨 시작 시간</div>
+          <div className="mt-1 text-xs text-ink-3">{baseTimeLabel}</div>
         </div>
 
-        <div className="px-5 pt-3 pb-2">
+        <div className="px-5 pt-3 pb-1 flex-none">
+          <div className="grid grid-cols-6 gap-1.5">
+            {MINUTES.map((m) => {
+              const active = m === minute;
+              return (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => setMinute(m)}
+                  disabled={!!pendingStudentId}
+                  className={`h-10 rounded-lg text-xs font-bold transition active:scale-[0.97] disabled:opacity-60 ${
+                    active
+                      ? "bg-primary text-white shadow-sm"
+                      : "bg-soft text-ink-2 hover:bg-line"
+                  }`}
+                >
+                  :{String(m).padStart(2, "0")}
+                </button>
+              );
+            })}
+          </div>
+          <p className="mt-2 text-[11px] text-ink-3">
+            선택된 시각:&nbsp;<span className="font-semibold text-ink">{hh}:{mm}</span>
+          </p>
+        </div>
+
+        <div className="px-5 pt-4 pb-1 flex-none">
+          <div className="text-sm font-bold text-ink mb-2">수강생 선택</div>
           <input
             type="text"
             value={search}
@@ -89,7 +127,7 @@ export function StudentPickerSheet({
 
         <div className="flex-1 overflow-y-auto px-3 pb-4">
           {filtered.length === 0 ? (
-            <div className="py-12 text-center">
+            <div className="py-10 text-center">
               <p className="text-sm text-ink-2">
                 {students.length === 0 ? "등록된 수강생이 없어요" : "검색 결과가 없어요"}
               </p>
@@ -100,7 +138,7 @@ export function StudentPickerSheet({
               )}
             </div>
           ) : (
-            <ul className="space-y-1.5">
+            <ul className="space-y-1.5 mt-2">
               {filtered.map((s) => {
                 const isPending = pendingStudentId === s.id;
                 const isDisabled = !!pendingStudentId;
@@ -108,7 +146,7 @@ export function StudentPickerSheet({
                   <li key={s.id}>
                     <button
                       type="button"
-                      onClick={() => onPick(s.id)}
+                      onClick={() => onPick(s.id, minute)}
                       disabled={isDisabled}
                       className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl hover:bg-soft transition active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed"
                     >
@@ -135,7 +173,7 @@ export function StudentPickerSheet({
           )}
         </div>
 
-        <div className="px-5 pb-6 pt-2 border-t border-line">
+        <div className="px-5 pb-6 pt-2 border-t border-line flex-none">
           <button
             type="button"
             onClick={onClose}

@@ -55,12 +55,10 @@ function lessonCellKey(iso: string): string {
   return `${kst.getUTCFullYear()}-${kst.getUTCMonth() + 1}-${kst.getUTCDate()}-${kst.getUTCHours()}`;
 }
 
-/** 캘린더 셀 → 클릭 시 그 셀이 가리키는 KST 시각 ISO 반환 */
-function cellToIso(date: Date, hour: number): string {
-  // date는 이미 startOfWeekMon에서 만든 KST 자정 + i일치
-  // 그 날짜의 hour시(KST) → UTC로 변환해서 ISO
+/** 캘린더 셀 → 클릭 시 그 셀이 가리키는 KST 시각 ISO 반환 (분 옵션) */
+function cellToIso(date: Date, hour: number, minute: number = 0): string {
   const utc = new Date(date);
-  utc.setUTCHours(hour - 9, 0, 0, 0); // KST = UTC+9
+  utc.setUTCHours(hour - 9, minute, 0, 0); // KST = UTC+9
   return utc.toISOString();
 }
 
@@ -92,8 +90,9 @@ export function WeeklyTimetable({ lessons = [], students = [] }: Props) {
   } | null>(null);
   const [studentPicker, setStudentPicker] = useState<{
     open: boolean;
-    iso: string;
-    timeLabel: string;
+    date: Date;
+    hour: number;
+    baseTimeLabel: string;
   } | null>(null);
   const [pendingStudentId, setPendingStudentId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
@@ -156,20 +155,23 @@ export function WeeklyTimetable({ lessons = [], students = [] }: Props) {
     if (!sheet) return;
     const f = formatKstDate(sheet.date);
     const hh = String(sheet.hour).padStart(2, "0");
-    const timeLabel = `${f.m}월 ${f.day}일 ${DOW_KOR[f.dow]}요일 · ${hh}:00`;
-    const iso = cellToIso(sheet.date, sheet.hour);
+    const baseTimeLabel = `${f.m}월 ${f.day}일 ${DOW_KOR[f.dow]}요일 · ${hh}시`;
     closeSheet();
-    setStudentPicker({ open: true, iso, timeLabel });
+    setStudentPicker({ open: true, date: sheet.date, hour: sheet.hour, baseTimeLabel });
   };
 
   const closeStudentPicker = () =>
     setStudentPicker((s) => (s ? { ...s, open: false } : null));
 
-  const onPickStudent = (studentId: string) => {
+  const onPickStudent = (studentId: string, minute: number) => {
     if (!studentPicker) return;
+    const iso = cellToIso(studentPicker.date, studentPicker.hour, minute);
+    const hh = String(studentPicker.hour).padStart(2, "0");
+    const mm = String(minute).padStart(2, "0");
+    const fullTimeLabel = `${studentPicker.baseTimeLabel.replace(/·.*$/, "")} · ${hh}:${mm}`;
     setPendingStudentId(studentId);
     startTransition(async () => {
-      const res = await bookLesson(studentId, studentPicker.iso, 60);
+      const res = await bookLesson(studentId, iso, 60);
       setPendingStudentId(null);
       if (!res.ok) {
         setAlert({
@@ -185,7 +187,7 @@ export function WeeklyTimetable({ lessons = [], students = [] }: Props) {
         open: true,
         variant: "success",
         title: "레슨이 등록되었어요",
-        description: `${studentPicker.timeLabel}에 레슨이 잡혔습니다.`,
+        description: `${fullTimeLabel}에 레슨이 잡혔습니다.`,
       });
       router.refresh();
     });
@@ -285,7 +287,8 @@ export function WeeklyTimetable({ lessons = [], students = [] }: Props) {
         <StudentPickerSheet
           open={studentPicker.open}
           onClose={closeStudentPicker}
-          timeLabel={studentPicker.timeLabel}
+          baseTimeLabel={studentPicker.baseTimeLabel}
+          hour={studentPicker.hour}
           students={students}
           pendingStudentId={pendingStudentId}
           onPick={onPickStudent}
