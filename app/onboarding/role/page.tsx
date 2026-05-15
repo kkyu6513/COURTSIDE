@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { OnboardingHeader } from "@/components/onboarding-form";
+import { randomQuote } from "@/lib/quotes";
 import { RoleButtons } from "./role-buttons";
 
 export default async function RoleOnboardingPage({
@@ -24,6 +25,8 @@ export default async function RoleOnboardingPage({
   const nickname =
     (user.user_metadata?.nickname as string | undefined) || "회원";
 
+  const quote = randomQuote();
+
   return (
     <main className="min-h-screen bg-bg p-6">
       <div className="w-full max-w-sm mx-auto">
@@ -44,7 +47,7 @@ export default async function RoleOnboardingPage({
           )}
         </div>
 
-        <RoleButtons currentRole={currentRole} force={force} />
+        <RoleButtons currentRole={currentRole} force={force} quote={quote} />
 
         <p className="mt-8 text-center text-xs text-ink-3 leading-relaxed">
           역할은 나중에 마이페이지에서 변경할 수 있어요

@@ -2,17 +2,20 @@
 
 import { useFormStatus } from "react-dom";
 import { FormPendingIndicator } from "@/components/form-pending-indicator";
+import type { Quote } from "@/lib/quotes";
 import { selectRole } from "./actions";
 
 type Props = {
   currentRole?: string;
   force?: boolean;
+  quote: Quote;
 };
 
-export function RoleButtons({ currentRole, force }: Props) {
+export function RoleButtons({ currentRole, force, quote }: Props) {
   return (
     <form action={selectRole} className="space-y-3">
       <FormPendingIndicator />
+      <RoleTransitionSplash quote={quote} />
       {force && <input type="hidden" name="force" value="1" />}
       <RoleButton
         value="STUDENT"
@@ -29,6 +32,48 @@ export function RoleButtons({ currentRole, force }: Props) {
         desc="학생을 관리하고 레슨을 운영합니다"
       />
     </form>
+  );
+}
+
+function RoleTransitionSplash({ quote }: { quote: Quote }) {
+  const { pending, data } = useFormStatus();
+  if (!pending) return null;
+
+  const role = data?.get("role")?.toString();
+  const message =
+    role === "STUDENT"
+      ? "학생 가입을 준비하고 있어요"
+      : role === "COACH"
+        ? "코치 가입을 준비하고 있어요"
+        : "잠시만요";
+
+  return (
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-gradient-to-br from-emerald-50 via-white to-emerald-100"
+      role="status"
+      aria-live="polite"
+    >
+      <div className="px-8 max-w-md text-center">
+        <div className="text-emerald-500/70 text-7xl leading-none font-serif select-none" aria-hidden>
+          &ldquo;
+        </div>
+        <p className="mt-1 text-lg font-semibold text-ink leading-relaxed">{quote.t}</p>
+        <p className="mt-3 text-sm text-emerald-700 font-medium">{quote.by}</p>
+
+        <div className="mt-10">
+          <div
+            className="h-1.5 w-full rounded-full bg-emerald-100 overflow-hidden"
+            role="progressbar"
+            aria-label={message}
+            aria-valuemin={0}
+            aria-valuemax={100}
+          >
+            <div className="courtside-splash-progress-fill h-full w-full rounded-full bg-gradient-to-r from-emerald-400 to-emerald-600 shadow-[0_0_8px_rgba(16,185,129,0.45)]" />
+          </div>
+          <div className="mt-2.5 text-[11px] text-emerald-700/70 font-medium tracking-wide">{message}…</div>
+        </div>
+      </div>
+    </div>
   );
 }
 
