@@ -49,6 +49,16 @@ body {
   animation: courtside-progress 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
+/* 스플래시 화면 진행 바 (determinate, 2초 동안 0 → 100%) */
+@keyframes courtside-splash-progress {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+.courtside-splash-progress-fill {
+  transform-origin: left center;
+  animation: courtside-splash-progress 2s linear forwards;
+}
+
 /* Alert 모달 애니메이션 */
 @keyframes courtside-fade-in {
   from { opacity: 0; }
