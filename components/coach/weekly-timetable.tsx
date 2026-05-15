@@ -1,7 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { AlertModal } from "@/components/alert-modal";
+import { toggleHourSlot } from "@/app/coach/schedule/actions";
 
 type ScheduleSlot = {
   dayOfWeek: number; // 0=일 ... 6=토
@@ -41,8 +44,17 @@ function formatKstDate(d: Date) {
 }
 
 export function WeeklyTimetable({ schedules }: Props) {
+  const router = useRouter();
   // 주의 시작(월요일) 기준 state
   const [weekStart, setWeekStart] = useState<Date>(() => startOfWeekMon(new Date()));
+  // 낙관적 슬롯 state — 클릭 즉시 반영, 서버 실패 시 롤백
+  const [localSlots, setLocalSlots] = useState<ScheduleSlot[]>(schedules);
+  const [, startTransition] = useTransition();
+  const [pendingKey, setPendingKey] = useState<string | null>(null);
+  const [alert, setAlert] = useState<{ open: boolean; title: string; description?: string }>({
+    open: false,
+    title: "",
+  });
 
   const weekDays = useMemo(() => {
     const days: { date: Date; m: number; day: number; dowKor: string; isToday: boolean }[] = [];
@@ -76,10 +88,10 @@ export function WeeklyTimetable({ schedules }: Props) {
     return days;
   }, [weekStart]);
 
-  // 슬롯을 (dayOfWeek, hour) 키로 그룹 — 해당 시간대에 슬롯이 있으면 표시
+  // 슬롯을 (dayOfWeek, hour) 키로 그룹
   const slotByDayHour = useMemo(() => {
     const m = new Map<string, ScheduleSlot[]>();
-    for (const s of schedules) {
+    for (const s of localSlots) {
       const hour = parseInt(s.slotTime.slice(0, 2), 10);
       const key = `${s.dayOfWeek}-${hour}`;
       const arr = m.get(key) ?? [];
@@ -87,7 +99,39 @@ export function WeeklyTimetable({ schedules }: Props) {
       m.set(key, arr);
     }
     return m;
-  }, [schedules]);
+  }, [localSlots]);
+
+  const onCellToggle = (dayOfWeek: number, hour: number) => {
+    const key = `${dayOfWeek}-${hour}`;
+    if (pendingKey) return; // 다른 셀 처리 중에는 무시
+    const hh = String(hour).padStart(2, "0");
+    const hasSlot = (slotByDayHour.get(key)?.length ?? 0) > 0;
+
+    // 낙관적 업데이트
+    if (hasSlot) {
+      setLocalSlots((prev) => prev.filter((s) => !(s.dayOfWeek === dayOfWeek && s.slotTime.startsWith(`${hh}:`))));
+    } else {
+      const added: ScheduleSlot[] = [];
+      for (let m = 0; m < 60; m += 10) {
+        const mm = String(m).padStart(2, "0");
+        added.push({ dayOfWeek, slotTime: `${hh}:${mm}`, isRecurring: true });
+      }
+      setLocalSlots((prev) => [...prev, ...added]);
+    }
+    setPendingKey(key);
+
+    startTransition(async () => {
+      const res = await toggleHourSlot(dayOfWeek, hour);
+      setPendingKey(null);
+      if (!res.ok) {
+        // 롤백
+        setLocalSlots(schedules);
+        setAlert({ open: true, title: "저장 실패", description: res.error });
+        return;
+      }
+      router.refresh();
+    });
+  };
 
   const weekStartLabel = formatKstDate(weekStart);
   const weekEnd = addDays(weekStart, 6);
@@ -149,12 +193,23 @@ export function WeeklyTimetable({ schedules }: Props) {
       <div className="px-3">
         <div className="grid grid-cols-[36px_repeat(7,1fr)] gap-0">
           {HOURS.map((h) => (
-            <RowGroup key={h} hour={h} weekDays={weekDays} slotByDayHour={slotByDayHour} />
+            <RowGroup
+              key={h}
+              hour={h}
+              weekDays={weekDays}
+              slotByDayHour={slotByDayHour}
+              onToggle={onCellToggle}
+              pendingKey={pendingKey}
+            />
           ))}
         </div>
 
+        <p className="mt-3 text-[11px] text-ink-3 px-1">
+          빈 시간 칸을 탭하면 가용 시간이 등록되고, 다시 탭하면 해제됩니다. (매주 반복)
+        </p>
+
         {/* 범례 */}
-        <div className="mt-4 mb-6 flex flex-wrap gap-x-3 gap-y-1.5 p-3 bg-soft rounded-xl">
+        <div className="mt-3 mb-6 flex flex-wrap gap-x-3 gap-y-1.5 p-3 bg-soft rounded-xl">
           <LegendItem color="bg-emerald-100 border-emerald-200" label="레슨 확정" />
           <LegendItem color="bg-amber-100 border-amber-200" label="대기 신청" />
           <LegendItem color="bg-violet-100 border-violet-200" label="레슨 예정" />
@@ -164,6 +219,14 @@ export function WeeklyTimetable({ schedules }: Props) {
           <LegendItem color="bg-surface border-line" label="빈 시간" />
         </div>
       </div>
+
+      <AlertModal
+        open={alert.open}
+        onClose={() => setAlert((a) => ({ ...a, open: false }))}
+        variant="error"
+        title={alert.title}
+        description={alert.description}
+      />
     </div>
   );
 }
@@ -172,10 +235,14 @@ function RowGroup({
   hour,
   weekDays,
   slotByDayHour,
+  onToggle,
+  pendingKey,
 }: {
   hour: number;
   weekDays: { date: Date; isToday: boolean }[];
   slotByDayHour: Map<string, ScheduleSlot[]>;
+  onToggle: (dayOfWeek: number, hour: number) => void;
+  pendingKey: string | null;
 }) {
   const hourLabel = `${String(hour).padStart(2, "0")}:00`;
   return (
@@ -185,15 +252,22 @@ function RowGroup({
       </div>
       {weekDays.map((wd, i) => {
         const dow = wd.date.getUTCDay();
-        const slots = slotByDayHour.get(`${dow}-${hour}`) ?? [];
+        const key = `${dow}-${hour}`;
+        const slots = slotByDayHour.get(key) ?? [];
         const hasSlot = slots.length > 0;
+        const isPending = pendingKey === key;
         return (
-          <div
+          <button
+            type="button"
             key={i}
-            className={`h-9 border-t border-line border-l border-line/60 ${
-              hasSlot ? "bg-primary/10" : "bg-surface"
-            }`}
-            title={hasSlot ? `${slots.length}개 슬롯` : ""}
+            onClick={() => onToggle(dow, hour)}
+            disabled={isPending}
+            className={`h-9 border-t border-line border-l border-line/60 transition active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-primary/40 focus:relative ${
+              hasSlot
+                ? "bg-primary/15 hover:bg-primary/25"
+                : "bg-surface hover:bg-soft"
+            } ${isPending ? "opacity-50 cursor-wait" : "cursor-pointer"}`}
+            aria-label={`${hourLabel} ${hasSlot ? "가용 시간 해제" : "가용 시간 등록"}`}
           />
         );
       })}
