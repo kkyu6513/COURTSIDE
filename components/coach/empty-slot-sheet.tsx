@@ -7,23 +7,11 @@ type Props = {
   open: boolean;
   onClose: () => void;
   timeLabel: string;
-  hasSlot: boolean;
-  pending: boolean;
-  onToggleAvailability: () => void;
-  onBookLesson?: () => void; // 곧 제공
-  onBlock?: () => void; // 곧 제공
+  onBookLesson?: () => void; // Sprint 2 lessons 테이블 추가 후 활성화
+  onBlock?: () => void; // 추후 활성화
 };
 
-export function EmptySlotSheet({
-  open,
-  onClose,
-  timeLabel,
-  hasSlot,
-  pending,
-  onToggleAvailability,
-  onBookLesson,
-  onBlock,
-}: Props) {
+export function EmptySlotSheet({ open, onClose, timeLabel, onBookLesson, onBlock }: Props) {
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -61,43 +49,32 @@ export function EmptySlotSheet({
 
         <div className="mt-4 space-y-2">
           <SheetButton
-            onClick={onToggleAvailability}
-            disabled={pending}
+            onClick={onBookLesson}
+            disabled={!onBookLesson}
             iconBg="bg-primary/15"
             icon={
-              <svg className="w-5 h-5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                {hasSlot ? <path d="M6 18L18 6M6 6l12 12" /> : (<>
-                  <rect x="3" y="4" width="18" height="18" rx="2" />
-                  <path d="M8 2v4M16 2v4M3 10h18M9 16l2 2 4-4" />
-                </>)}
-              </svg>
-            }
-            title={hasSlot ? "이 시간 레슨 안 받기" : "이 시간 레슨 받기"}
-            desc={
-              hasSlot
-                ? "이 시간을 닫아 수강생이 신청하지 못하게 합니다. (매주 반복 해제)"
-                : "수강생이 이 시간에 레슨 신청을 할 수 있게 열어둡니다. (매주 반복)"
-            }
-            tone={hasSlot ? "danger" : "primary"}
-          />
-
-          <SheetButton
-            onClick={onBookLesson}
-            disabled
-            iconBg="bg-soft"
-            icon={
-              <svg className="w-5 h-5 text-ink-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+              <svg
+                className={`w-5 h-5 ${onBookLesson ? "text-primary" : "text-ink-3"}`}
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
+                <rect x="3" y="4" width="18" height="18" rx="2" />
+                <path d="M8 2v4M16 2v4M3 10h18" />
               </svg>
             }
             title="이 시간에 레슨 잡기"
-            desc="수강생을 선택해 직접 레슨을 잡습니다 (곧 제공)"
-            tone="muted"
+            desc={onBookLesson ? "수강생을 선택해 이 시간에 레슨을 잡습니다." : "수강생을 선택해 레슨을 잡습니다 (곧 제공)"}
+            tone="primary"
           />
 
           <SheetButton
             onClick={onBlock}
-            disabled
+            disabled={!onBlock}
             iconBg="bg-soft"
             icon={
               <svg className="w-5 h-5 text-ink-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>

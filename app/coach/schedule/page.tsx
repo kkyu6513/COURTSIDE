@@ -2,13 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { WeeklyTimetable, ScheduleManageEmptyHint } from "@/components/coach/weekly-timetable";
-
-type ScheduleRow = {
-  dayOfWeek: number;
-  slotTime: string;
-  isRecurring: boolean;
-};
+import { WeeklyTimetable } from "@/components/coach/weekly-timetable";
 
 export default async function CoachSchedulePage() {
   const supabase = createClient();
@@ -21,7 +15,6 @@ export default async function CoachSchedulePage() {
   if (meta?.role !== "COACH") redirect("/");
 
   const admin = createAdminClient();
-
   const { data: profile } = await admin
     .from("coach_profiles")
     .select("id")
@@ -29,16 +22,10 @@ export default async function CoachSchedulePage() {
     .maybeSingle();
   if (!profile) redirect("/onboarding/coach");
 
-  const { data: schedulesRaw } = await admin
-    .from("schedules")
-    .select("dayOfWeek, slotTime, isRecurring")
-    .eq("coachId", user.id);
-  const schedules = (schedulesRaw ?? []) as ScheduleRow[];
-
+  // 추후 lessons 테이블 조회 후 props로 전달 (Sprint 2)
   return (
     <main className="min-h-screen bg-bg">
       <div className="max-w-md mx-auto">
-        {/* 상단 헤더 */}
         <div className="flex items-center h-14 px-3 sticky top-0 z-10 bg-bg/85 backdrop-blur border-b border-line">
           <Link
             href="/"
@@ -50,18 +37,10 @@ export default async function CoachSchedulePage() {
             </svg>
           </Link>
           <div className="flex-1 text-center text-sm font-bold text-ink">전체 스케줄</div>
-          <Link
-            href="/onboarding/coach/schedule"
-            className="text-xs font-semibold text-primary px-3"
-            title="기본 가용 시간 등록"
-          >
-            슬롯 등록
-          </Link>
+          <div className="w-10 h-10" />
         </div>
 
-        {schedules.length === 0 && <ScheduleManageEmptyHint />}
-
-        <WeeklyTimetable schedules={schedules} />
+        <WeeklyTimetable />
       </div>
     </main>
   );

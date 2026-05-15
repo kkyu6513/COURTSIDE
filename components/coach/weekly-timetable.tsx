@@ -1,20 +1,17 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { AlertModal } from "@/components/alert-modal";
+import { useMemo, useState } from "react";
 import { EmptySlotSheet } from "@/components/coach/empty-slot-sheet";
-import { toggleHourSlot } from "@/app/coach/schedule/actions";
 
-type ScheduleSlot = {
-  dayOfWeek: number; // 0=일 ... 6=토
-  slotTime: string; // "HH:MM"
-  isRecurring: boolean;
+type LessonSlot = {
+  // Sprint 2 lessons 테이블 추가 후 확장 예정
+  dayOfWeek: number;
+  hour: number;
+  status: "CONFIRMED" | "PENDING" | "UPCOMING" | "CHANGE_REQUEST" | "COMPLETED" | "BLOCKED";
 };
 
 type Props = {
-  schedules: ScheduleSlot[];
+  lessons?: LessonSlot[];
 };
 
 const DOW_KOR = ["일", "월", "화", "수", "목", "금", "토"];
@@ -44,18 +41,8 @@ function formatKstDate(d: Date) {
   };
 }
 
-export function WeeklyTimetable({ schedules }: Props) {
-  const router = useRouter();
-  // 주의 시작(월요일) 기준 state
+export function WeeklyTimetable({ lessons = [] }: Props) {
   const [weekStart, setWeekStart] = useState<Date>(() => startOfWeekMon(new Date()));
-  // 낙관적 슬롯 state — 클릭 즉시 반영, 서버 실패 시 롤백
-  const [localSlots, setLocalSlots] = useState<ScheduleSlot[]>(schedules);
-  const [, startTransition] = useTransition();
-  const [pendingKey, setPendingKey] = useState<string | null>(null);
-  const [alert, setAlert] = useState<{ open: boolean; title: string; description?: string }>({
-    open: false,
-    title: "",
-  });
   const [sheet, setSheet] = useState<{
     open: boolean;
     dayOfWeek: number;
@@ -65,8 +52,6 @@ export function WeeklyTimetable({ schedules }: Props) {
 
   const weekDays = useMemo(() => {
     const days: { date: Date; m: number; day: number; dowKor: string; isToday: boolean }[] = [];
-    const today = formatKstDate(startOfWeekMon(new Date()));
-    const todayKey = `${today.m}-${today.day}`;
     for (let i = 0; i < 7; i++) {
       const d = addDays(weekStart, i);
       const f = formatKstDate(d);
@@ -75,10 +60,9 @@ export function WeeklyTimetable({ schedules }: Props) {
         m: f.m,
         day: f.day,
         dowKor: DOW_KOR[(weekStart.getUTCDay() + i) % 7],
-        isToday: false, // 단순 비교: 오늘 표기는 컴포넌트에서 다시 계산
+        isToday: false,
       });
     }
-    // 오늘 마킹: 현재 KST 일자와 일치
     const nowKst = new Date(new Date().getTime() + 9 * 60 * 60 * 1000);
     const yyyy = nowKst.getUTCFullYear();
     const mm = nowKst.getUTCMonth();
@@ -95,58 +79,13 @@ export function WeeklyTimetable({ schedules }: Props) {
     return days;
   }, [weekStart]);
 
-  // 슬롯을 (dayOfWeek, hour) 키로 그룹
-  const slotByDayHour = useMemo(() => {
-    const m = new Map<string, ScheduleSlot[]>();
-    for (const s of localSlots) {
-      const hour = parseInt(s.slotTime.slice(0, 2), 10);
-      const key = `${s.dayOfWeek}-${hour}`;
-      const arr = m.get(key) ?? [];
-      arr.push(s);
-      m.set(key, arr);
+  const lessonByDayHour = useMemo(() => {
+    const m = new Map<string, LessonSlot>();
+    for (const l of lessons) {
+      m.set(`${l.dayOfWeek}-${l.hour}`, l);
     }
     return m;
-  }, [localSlots]);
-
-  const onCellClick = (dayOfWeek: number, hour: number, date: Date) => {
-    if (pendingKey) return;
-    setSheet({ open: true, dayOfWeek, hour, date });
-  };
-
-  const closeSheet = () => setSheet((s) => (s ? { ...s, open: false } : null));
-
-  const runToggleAvailability = () => {
-    if (!sheet) return;
-    const { dayOfWeek, hour } = sheet;
-    const key = `${dayOfWeek}-${hour}`;
-    const hh = String(hour).padStart(2, "0");
-    const hasSlot = (slotByDayHour.get(key)?.length ?? 0) > 0;
-
-    // 낙관적 업데이트
-    if (hasSlot) {
-      setLocalSlots((prev) => prev.filter((s) => !(s.dayOfWeek === dayOfWeek && s.slotTime.startsWith(`${hh}:`))));
-    } else {
-      const added: ScheduleSlot[] = [];
-      for (let m = 0; m < 60; m += 10) {
-        const mm = String(m).padStart(2, "0");
-        added.push({ dayOfWeek, slotTime: `${hh}:${mm}`, isRecurring: true });
-      }
-      setLocalSlots((prev) => [...prev, ...added]);
-    }
-    setPendingKey(key);
-    closeSheet();
-
-    startTransition(async () => {
-      const res = await toggleHourSlot(dayOfWeek, hour);
-      setPendingKey(null);
-      if (!res.ok) {
-        setLocalSlots(schedules);
-        setAlert({ open: true, title: "저장 실패", description: res.error });
-        return;
-      }
-      router.refresh();
-    });
-  };
+  }, [lessons]);
 
   const weekStartLabel = formatKstDate(weekStart);
   const weekEnd = addDays(weekStart, 6);
@@ -156,6 +95,12 @@ export function WeeklyTimetable({ schedules }: Props) {
 
   const goPrevWeek = () => setWeekStart((d) => addDays(d, -7));
   const goNextWeek = () => setWeekStart((d) => addDays(d, 7));
+
+  const onCellClick = (dayOfWeek: number, hour: number, date: Date) => {
+    setSheet({ open: true, dayOfWeek, hour, date });
+  };
+
+  const closeSheet = () => setSheet((s) => (s ? { ...s, open: false } : null));
 
   return (
     <div className="flex flex-col">
@@ -212,15 +157,14 @@ export function WeeklyTimetable({ schedules }: Props) {
               key={h}
               hour={h}
               weekDays={weekDays}
-              slotByDayHour={slotByDayHour}
+              lessonByDayHour={lessonByDayHour}
               onCellClick={onCellClick}
-              pendingKey={pendingKey}
             />
           ))}
         </div>
 
         <p className="mt-3 text-[11px] text-ink-3 px-1">
-          시간 칸을 탭하면 레슨 받기·닫기 / 레슨 잡기 / 시간 블록 옵션이 표시됩니다.
+          빈 시간을 탭하면 그 시간에 레슨을 잡거나 일정을 차단할 수 있어요.
         </p>
 
         {/* 범례 */}
@@ -230,18 +174,10 @@ export function WeeklyTimetable({ schedules }: Props) {
           <LegendItem color="bg-violet-100 border-violet-200" label="레슨 예정" />
           <LegendItem color="bg-orange-100 border-orange-200" label="변경 요청" />
           <LegendItem color="bg-blue-100 border-blue-200" label="완료" />
-          <LegendItem color="bg-primary/10 border-primary/30" label="레슨 받는 시간" />
-          <LegendItem color="bg-surface border-line" label="안 받는 시간" />
+          <LegendItem color="bg-soft border-line" label="블록" />
+          <LegendItem color="bg-surface border-line" label="빈 시간" />
         </div>
       </div>
-
-      <AlertModal
-        open={alert.open}
-        onClose={() => setAlert((a) => ({ ...a, open: false }))}
-        variant="error"
-        title={alert.title}
-        description={alert.description}
-      />
 
       {sheet && (
         <EmptySlotSheet
@@ -252,27 +188,39 @@ export function WeeklyTimetable({ schedules }: Props) {
             const hh = String(sheet.hour).padStart(2, "0");
             return `${f.m}월 ${f.day}일 ${DOW_KOR[f.dow]}요일 · ${hh}:00`;
           })()}
-          hasSlot={(slotByDayHour.get(`${sheet.dayOfWeek}-${sheet.hour}`)?.length ?? 0) > 0}
-          pending={pendingKey === `${sheet.dayOfWeek}-${sheet.hour}`}
-          onToggleAvailability={runToggleAvailability}
         />
       )}
     </div>
   );
 }
 
+function statusToClass(status: LessonSlot["status"]): string {
+  switch (status) {
+    case "CONFIRMED":
+      return "bg-emerald-100 hover:bg-emerald-200";
+    case "PENDING":
+      return "bg-amber-100 hover:bg-amber-200";
+    case "UPCOMING":
+      return "bg-violet-100 hover:bg-violet-200";
+    case "CHANGE_REQUEST":
+      return "bg-orange-100 hover:bg-orange-200";
+    case "COMPLETED":
+      return "bg-blue-100 hover:bg-blue-200";
+    case "BLOCKED":
+      return "bg-soft hover:bg-soft cursor-not-allowed";
+  }
+}
+
 function RowGroup({
   hour,
   weekDays,
-  slotByDayHour,
+  lessonByDayHour,
   onCellClick,
-  pendingKey,
 }: {
   hour: number;
   weekDays: { date: Date; isToday: boolean }[];
-  slotByDayHour: Map<string, ScheduleSlot[]>;
+  lessonByDayHour: Map<string, LessonSlot>;
   onCellClick: (dayOfWeek: number, hour: number, date: Date) => void;
-  pendingKey: string | null;
 }) {
   const hourLabel = `${String(hour).padStart(2, "0")}:00`;
   return (
@@ -283,21 +231,17 @@ function RowGroup({
       {weekDays.map((wd, i) => {
         const dow = wd.date.getUTCDay();
         const key = `${dow}-${hour}`;
-        const slots = slotByDayHour.get(key) ?? [];
-        const hasSlot = slots.length > 0;
-        const isPending = pendingKey === key;
+        const lesson = lessonByDayHour.get(key);
+        const hasLesson = !!lesson;
         return (
           <button
             type="button"
             key={i}
             onClick={() => onCellClick(dow, hour, wd.date)}
-            disabled={isPending}
-            className={`h-9 border-t border-line border-l border-line/60 transition active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-primary/40 focus:relative ${
-              hasSlot
-                ? "bg-primary/15 hover:bg-primary/25"
-                : "bg-surface hover:bg-soft"
-            } ${isPending ? "opacity-50 cursor-wait" : "cursor-pointer"}`}
-            aria-label={`${hourLabel} ${hasSlot ? "레슨 받는 시간" : "안 받는 시간"} 옵션`}
+            className={`h-9 border-t border-line border-l border-line/60 transition active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-primary/40 focus:relative cursor-pointer ${
+              hasLesson ? statusToClass(lesson!.status) : "bg-surface hover:bg-soft"
+            }`}
+            aria-label={`${hourLabel} ${hasLesson ? "레슨 있음" : "빈 시간"} 옵션`}
           />
         );
       })}
@@ -311,22 +255,5 @@ function LegendItem({ color, label }: { color: string; label: string }) {
       <span className={`inline-block w-2.5 h-2.5 rounded-sm border ${color}`} />
       <span className="text-[10px] text-ink-3">{label}</span>
     </div>
-  );
-}
-
-export function ScheduleManageEmptyHint() {
-  return (
-    <Link
-      href="/onboarding/coach/schedule"
-      className="mx-3 mt-3 mb-1 flex items-center justify-between rounded-xl border border-line bg-surface px-3.5 py-3 transition active:scale-[0.99]"
-    >
-      <div className="min-w-0">
-        <div className="text-xs font-semibold text-ink">레슨 받을 시간을 등록하세요</div>
-        <div className="mt-0.5 text-[11px] text-ink-3">
-          요일별로 한 번 등록하면 매주 같은 시간에 자동 반영됩니다.
-        </div>
-      </div>
-      <span className="text-ink-3 flex-none">›</span>
-    </Link>
   );
 }
