@@ -6,6 +6,8 @@ import { PrismaClient } from "@prisma/client";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { saveUserTermsAgreements } from "@/lib/terms";
+import { isPhoneVerified } from "@/lib/phone";
+import { rematchClaimsForCoach } from "@/lib/claim-rematch";
 
 const VALID_GENDERS = ["MALE", "FEMALE", "OTHER"] as const;
 
@@ -54,6 +56,8 @@ export async function submitCoachProfile(formData: FormData) {
   const areaSido = formData.get("areaSido")?.toString();
   const areaSigungu = formData.get("areaSigungu")?.toString()?.trim();
   const experienceYearsRaw = formData.get("experienceYears")?.toString();
+  const phoneRaw = formData.get("phone")?.toString()?.trim();
+  const phoneVerifiedFlag = formData.get("phoneVerified")?.toString() === "1";
   const agreedRaw = formData.get("agreedTermVersionIds")?.toString() ?? "";
   const agreedIds = agreedRaw
     .split(",")
@@ -70,6 +74,14 @@ export async function submitCoachProfile(formData: FormData) {
   if (!bio || bio.length < 10) throw new Error("자기소개는 10자 이상 입력해주세요");
   if (!areaSido) throw new Error("시·도를 선택해주세요");
   if (!areaSigungu) throw new Error("시·군·구를 입력해주세요");
+
+  const phone = phoneRaw?.replace(/[^\d]/g, "");
+  if (!phone || phone.length < 10 || phone.length > 11) {
+    throw new Error("전화번호는 10~11자리 숫자로 입력해주세요");
+  }
+  if (!phoneVerifiedFlag || !(await isPhoneVerified(phone))) {
+    throw new Error("전화번호 본인 인증을 완료해주세요");
+  }
 
   const required = await getRequiredTermVersionIds();
   if (!required.every((id) => agreedIds.includes(id))) {
@@ -104,24 +116,32 @@ export async function submitCoachProfile(formData: FormData) {
   const marketingVid = await getMarketingVersionId();
   const marketingConsented = !!(marketingVid && agreedIds.includes(marketingVid));
 
-  // users 컴럼 업데이트 (fire-and-forget)
-  admin
+  // users 컬럼 업데이트 (phone 포함, 동기 처리 — rematch 전에 저장돼야 함)
+  const { error: userUpdateError } = await admin
     .from("users")
     .update({
       realName,
       birthDate,
+      phone,
       marketingConsent: marketingConsented,
       updatedAt: new Date().toISOString(),
     })
-    .eq("id", user.id)
-    .then(({ error }) => {
-      if (error) console.error("[submitCoachProfile] users update error:", error);
-    });
+    .eq("id", user.id);
+  if (userUpdateError) {
+    console.error("[submitCoachProfile] users update error:", userUpdateError);
+  }
 
   // 약관 동의 이력
   const ip = headers().get("x-forwarded-for")?.split(",")[0]?.trim() || null;
   const saveRes = await saveUserTermsAgreements(user.id, agreedIds, ip);
   if (!saveRes.ok) console.error("[submitCoachProfile] terms save error:", saveRes.error);
+
+  // 미매칭 학생 등록 요청 자동 매칭 (retroactive)
+  const rematched = await rematchClaimsForCoach(user.id, phone);
+  if (rematched > 0) {
+    console.log(`[submitCoachProfile] retroactively matched ${rematched} claim(s) for coach ${user.id}`);
+    revalidatePath("/coach/notifications");
+  }
 
   revalidatePath("/");
 }

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Field, TextInput, Textarea } from "@/components/onboarding-form";
 import { RegionSelectPair } from "@/components/region-select";
 import { AlertModal } from "@/components/alert-modal";
+import { PhoneVerification } from "@/components/phone-verification";
 import { TermsAgreement, type TermItem } from "@/components/terms-agreement";
 import { submitCoachProfile } from "./actions";
 
@@ -34,6 +35,7 @@ export function CoachForm({ terms }: { terms: TermItem[] }) {
   const [areaSido, setAreaSido] = useState("");
   const [areaSigungu, setAreaSigungu] = useState("");
   const [experienceYears, setExperienceYears] = useState("");
+  const [verifiedPhone, setVerifiedPhone] = useState<string | null>(null);
   const [agreedTerms, setAgreedTerms] = useState<number[]>([]);
   const [pending, startTransition] = useTransition();
   const [alert, setAlert] = useState<AlertState>({ open: false, variant: "warning", title: "" });
@@ -48,6 +50,7 @@ export function CoachForm({ terms }: { terms: TermItem[] }) {
     if (!bio.trim() || bio.trim().length < 10) missing.push("자기소개는 10자 이상 입력해주세요");
     if (!areaSido) missing.push("활동 지역 (시·도)를 선택해주세요");
     if (!areaSigungu) missing.push("활동 지역 (시·군·구)를 선택해주세요");
+    if (!verifiedPhone) missing.push("전화번호 본인 인증을 완료해주세요");
     if (!requiredTermVersions.every((id) => agreedTerms.includes(id))) {
       missing.push("필수 약관에 동의해주세요");
     }
@@ -70,6 +73,8 @@ export function CoachForm({ terms }: { terms: TermItem[] }) {
     fd.set("areaSido", areaSido);
     fd.set("areaSigungu", areaSigungu);
     if (experienceYears) fd.set("experienceYears", experienceYears);
+    fd.set("phone", verifiedPhone!);
+    fd.set("phoneVerified", "1");
     fd.set("agreedTermVersionIds", agreedTerms.join(","));
 
     startTransition(async () => {
@@ -167,6 +172,16 @@ export function CoachForm({ terms }: { terms: TermItem[] }) {
               placeholder="예: 5"
             />
           </Field>
+        </div>
+
+        <div className="rounded-2xl border border-line bg-surface p-4">
+          <PhoneVerification
+            onVerifiedChange={setVerifiedPhone}
+            onError={(msg) => setAlert({ open: true, variant: "error", title: "인증 중 오류", description: msg })}
+          />
+          <p className="mt-2 text-xs text-ink-3 leading-relaxed">
+            인증된 번호로 학생이 회원님을 찾고 등록을 요청할 수 있어요.
+          </p>
         </div>
 
         {/* 약관 동의 */}

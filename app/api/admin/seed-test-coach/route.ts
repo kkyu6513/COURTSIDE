@@ -7,6 +7,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import { rematchClaimsForCoach } from "@/lib/claim-rematch";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -80,11 +81,15 @@ async function runSeed(): Promise<NextResponse> {
       FROM users WHERE id = ${TEST_COACH_USER_ID}::uuid
     `;
 
+    // 4. 미매칭 학생 등록요청 자동 매칭 (이 코치의 phone으로 들어온 PENDING claim)
+    const rematched = await rematchClaimsForCoach(TEST_COACH_USER_ID, TEST_COACH_PHONE);
+
     return NextResponse.json({
       ok: true,
       message: "테스트 코치 (홍길동 / 01012345678) 시드 완료",
       userInsertedRows: userResult,
       profileInsertedRows: profileResult,
+      retroactivelyMatchedClaims: rematched,
       verify: verify[0],
     });
   } catch (e) {
