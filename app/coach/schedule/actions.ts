@@ -82,3 +82,47 @@ export async function bookLesson(
   revalidatePath("/");
   return { ok: true, lessonId: inserted!.id };
 }
+
+type SimpleResult = { ok: true } | { ok: false; error: string };
+
+/**
+ * 레슨 취소 — 본인 코치의 lesson만 status=CANCELLED 처리 (soft delete).
+ */
+export async function cancelLesson(lessonId: number): Promise<SimpleResult> {
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "로그인이 필요합니다" };
+
+  const meta = user.app_metadata as { role?: string } | undefined;
+  if (meta?.role !== "COACH") return { ok: false, error: "코치만 가능해요" };
+
+  const admin = createAdminClient();
+
+  const { data: lesson } = await admin
+    .from("lessons")
+    .select("id, coachId, status")
+    .eq("id", lessonId)
+    .maybeSingle();
+
+  if (!lesson) return { ok: false, error: "레슨을 찾을 수 없어요" };
+  if (lesson.coachId !== user.id) return { ok: false, error: "취소 권한이 없어요" };
+  if (lesson.status === "CANCELLED") return { ok: false, error: "이미 취소된 레슨이에요" };
+
+  const { error: updateError } = await admin
+    .from("lessons")
+    .update({ status: "CANCELLED", updatedAt: new Date().toISOString() })
+    .eq("id", lessonId);
+
+  if (updateError) {
+    console.error("[cancelLesson] update error:", updateError);
+    return { ok: false, error: updateError.message };
+  }
+
+  // TODO(Sprint 3): 학생에게 레슨 취소 알림톡
+
+  revalidatePath("/coach/schedule");
+  revalidatePath("/");
+  return { ok: true };
+}

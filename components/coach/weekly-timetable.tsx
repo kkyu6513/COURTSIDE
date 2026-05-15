@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { AlertModal } from "@/components/alert-modal";
 import { EmptySlotSheet } from "@/components/coach/empty-slot-sheet";
 import { StudentPickerSheet, type StudentOption } from "@/components/coach/student-picker-sheet";
-import { bookLesson } from "@/app/coach/schedule/actions";
+import { LessonDetailSheet, type LessonDetail } from "@/components/coach/lesson-detail-sheet";
+import { bookLesson, cancelLesson } from "@/app/coach/schedule/actions";
 
 export type LessonRow = {
   id: number;
@@ -94,7 +95,9 @@ export function WeeklyTimetable({ lessons = [], students = [] }: Props) {
     hour: number;
     baseTimeLabel: string;
   } | null>(null);
+  const [lessonDetail, setLessonDetail] = useState<{ open: boolean; lesson: LessonDetail } | null>(null);
   const [pendingStudentId, setPendingStudentId] = useState<string | null>(null);
+  const [pendingCancel, setPendingCancel] = useState(false);
   const [, startTransition] = useTransition();
   const [alert, setAlert] = useState<{ open: boolean; variant: "error" | "success"; title: string; description?: string }>({
     open: false,
@@ -136,6 +139,12 @@ export function WeeklyTimetable({ lessons = [], students = [] }: Props) {
     return m;
   }, [lessons]);
 
+  const studentMap = useMemo(() => {
+    const m = new Map<string, StudentOption>();
+    for (const s of students) m.set(s.id, s);
+    return m;
+  }, [students]);
+
   const weekStartLabel = formatKstDate(weekStart);
   const weekEnd = addDays(weekStart, 6);
   const weekEndLabel = formatKstDate(weekEnd);
@@ -146,7 +155,54 @@ export function WeeklyTimetable({ lessons = [], students = [] }: Props) {
   const goNextWeek = () => setWeekStart((d) => addDays(d, 7));
 
   const onCellClick = (dayOfWeek: number, hour: number, date: Date) => {
+    // 셀에 레슨이 있으면 상세 시트, 없으면 빈 슬롯 액션 시트
+    const f = formatKstDate(date);
+    const lesson = lessonByCell.get(`${f.y}-${f.m}-${f.day}-${hour}`);
+    if (lesson) {
+      const student = studentMap.get(lesson.studentId);
+      setLessonDetail({
+        open: true,
+        lesson: {
+          id: lesson.id,
+          studentName: student?.name ?? "이름 미입력",
+          studentPhone: student?.phone ?? null,
+          scheduledAt: lesson.scheduledAt,
+          durationMinutes: lesson.durationMinutes,
+          status: lesson.status,
+        },
+      });
+      return;
+    }
     setSheet({ open: true, dayOfWeek, hour, date });
+  };
+
+  const closeLessonDetail = () => setLessonDetail((s) => (s ? { ...s, open: false } : null));
+
+  const onCancelLesson = () => {
+    if (!lessonDetail) return;
+    const lessonId = lessonDetail.lesson.id;
+    setPendingCancel(true);
+    startTransition(async () => {
+      const res = await cancelLesson(lessonId);
+      setPendingCancel(false);
+      if (!res.ok) {
+        setAlert({
+          open: true,
+          variant: "error",
+          title: "레슨 취소 실패",
+          description: res.error,
+        });
+        return;
+      }
+      setLessonDetail(null);
+      setAlert({
+        open: true,
+        variant: "success",
+        title: "레슨이 취소되었어요",
+        description: "수강생에게 안내가 전달돼요. (알림톡은 곧 적용 예정)",
+      });
+      router.refresh();
+    });
   };
 
   const closeSheet = () => setSheet((s) => (s ? { ...s, open: false } : null));
@@ -292,6 +348,16 @@ export function WeeklyTimetable({ lessons = [], students = [] }: Props) {
           students={students}
           pendingStudentId={pendingStudentId}
           onPick={onPickStudent}
+        />
+      )}
+
+      {lessonDetail && (
+        <LessonDetailSheet
+          open={lessonDetail.open}
+          onClose={closeLessonDetail}
+          lesson={lessonDetail.lesson}
+          pendingCancel={pendingCancel}
+          onCancel={onCancelLesson}
         />
       )}
 
