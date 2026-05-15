@@ -218,6 +218,22 @@ model Schedule {
   @@map("schedules")
 }
 
+model Lesson {
+  id               Int      @id @default(autoincrement())
+  coachId          String   @db.Uuid
+  studentId        String   @db.Uuid
+  scheduledAt      DateTime
+  durationMinutes  Int      @default(60)
+  status           String   @default("CONFIRMED")
+  notes            String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([coachId, scheduledAt])
+  @@index([studentId, scheduledAt])
+  @@map("lessons")
+}
+
 model SubscriptionPlan {
   id           Int     @id @default(autoincrement())
   code         String  @unique

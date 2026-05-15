@@ -1,17 +1,23 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { AlertModal } from "@/components/alert-modal";
 import { EmptySlotSheet } from "@/components/coach/empty-slot-sheet";
+import { StudentPickerSheet, type StudentOption } from "@/components/coach/student-picker-sheet";
+import { bookLesson } from "@/app/coach/schedule/actions";
 
-type LessonSlot = {
-  // Sprint 2 lessons 테이블 추가 후 확장 예정
-  dayOfWeek: number;
-  hour: number;
-  status: "CONFIRMED" | "PENDING" | "UPCOMING" | "CHANGE_REQUEST" | "COMPLETED" | "BLOCKED";
+export type LessonRow = {
+  id: number;
+  studentId: string;
+  scheduledAt: string; // ISO
+  durationMinutes: number;
+  status: "CONFIRMED" | "PENDING" | "UPCOMING" | "CHANGE_REQUEST" | "COMPLETED" | "CANCELLED";
 };
 
 type Props = {
-  lessons?: LessonSlot[];
+  lessons?: LessonRow[];
+  students?: StudentOption[];
 };
 
 const DOW_KOR = ["일", "월", "화", "수", "목", "금", "토"];
@@ -35,13 +41,48 @@ function addDays(d: Date, days: number): Date {
 
 function formatKstDate(d: Date) {
   return {
+    y: d.getUTCFullYear(),
     m: d.getUTCMonth() + 1,
     day: d.getUTCDate(),
     dow: d.getUTCDay(),
   };
 }
 
-export function WeeklyTimetable({ lessons = [] }: Props) {
+/** lesson.scheduledAt → KST 기준 (year, month, day, hour) 키 생성 */
+function lessonCellKey(iso: string): string {
+  const d = new Date(iso);
+  const kst = new Date(d.getTime() + 9 * 60 * 60 * 1000);
+  return `${kst.getUTCFullYear()}-${kst.getUTCMonth() + 1}-${kst.getUTCDate()}-${kst.getUTCHours()}`;
+}
+
+/** 캘린더 셀 → 클릭 시 그 셀이 가리키는 KST 시각 ISO 반환 */
+function cellToIso(date: Date, hour: number): string {
+  // date는 이미 startOfWeekMon에서 만든 KST 자정 + i일치
+  // 그 날짜의 hour시(KST) → UTC로 변환해서 ISO
+  const utc = new Date(date);
+  utc.setUTCHours(hour - 9, 0, 0, 0); // KST = UTC+9
+  return utc.toISOString();
+}
+
+function statusToClass(status: LessonRow["status"]): string {
+  switch (status) {
+    case "CONFIRMED":
+      return "bg-emerald-100 hover:bg-emerald-200";
+    case "PENDING":
+      return "bg-amber-100 hover:bg-amber-200";
+    case "UPCOMING":
+      return "bg-violet-100 hover:bg-violet-200";
+    case "CHANGE_REQUEST":
+      return "bg-orange-100 hover:bg-orange-200";
+    case "COMPLETED":
+      return "bg-blue-100 hover:bg-blue-200";
+    case "CANCELLED":
+      return "bg-soft hover:bg-soft cursor-not-allowed line-through";
+  }
+}
+
+export function WeeklyTimetable({ lessons = [], students = [] }: Props) {
+  const router = useRouter();
   const [weekStart, setWeekStart] = useState<Date>(() => startOfWeekMon(new Date()));
   const [sheet, setSheet] = useState<{
     open: boolean;
@@ -49,6 +90,18 @@ export function WeeklyTimetable({ lessons = [] }: Props) {
     hour: number;
     date: Date;
   } | null>(null);
+  const [studentPicker, setStudentPicker] = useState<{
+    open: boolean;
+    iso: string;
+    timeLabel: string;
+  } | null>(null);
+  const [pendingStudentId, setPendingStudentId] = useState<string | null>(null);
+  const [, startTransition] = useTransition();
+  const [alert, setAlert] = useState<{ open: boolean; variant: "error" | "success"; title: string; description?: string }>({
+    open: false,
+    variant: "success",
+    title: "",
+  });
 
   const weekDays = useMemo(() => {
     const days: { date: Date; m: number; day: number; dowKor: string; isToday: boolean }[] = [];
@@ -64,14 +117,11 @@ export function WeeklyTimetable({ lessons = [] }: Props) {
       });
     }
     const nowKst = new Date(new Date().getTime() + 9 * 60 * 60 * 1000);
-    const yyyy = nowKst.getUTCFullYear();
-    const mm = nowKst.getUTCMonth();
-    const dd = nowKst.getUTCDate();
     days.forEach((wd) => {
       if (
-        wd.date.getUTCFullYear() === yyyy &&
-        wd.date.getUTCMonth() === mm &&
-        wd.date.getUTCDate() === dd
+        wd.date.getUTCFullYear() === nowKst.getUTCFullYear() &&
+        wd.date.getUTCMonth() === nowKst.getUTCMonth() &&
+        wd.date.getUTCDate() === nowKst.getUTCDate()
       ) {
         wd.isToday = true;
       }
@@ -79,10 +129,10 @@ export function WeeklyTimetable({ lessons = [] }: Props) {
     return days;
   }, [weekStart]);
 
-  const lessonByDayHour = useMemo(() => {
-    const m = new Map<string, LessonSlot>();
+  const lessonByCell = useMemo(() => {
+    const m = new Map<string, LessonRow>();
     for (const l of lessons) {
-      m.set(`${l.dayOfWeek}-${l.hour}`, l);
+      m.set(lessonCellKey(l.scheduledAt), l);
     }
     return m;
   }, [lessons]);
@@ -101,6 +151,45 @@ export function WeeklyTimetable({ lessons = [] }: Props) {
   };
 
   const closeSheet = () => setSheet((s) => (s ? { ...s, open: false } : null));
+
+  const onBookLessonAction = () => {
+    if (!sheet) return;
+    const f = formatKstDate(sheet.date);
+    const hh = String(sheet.hour).padStart(2, "0");
+    const timeLabel = `${f.m}월 ${f.day}일 ${DOW_KOR[f.dow]}요일 · ${hh}:00`;
+    const iso = cellToIso(sheet.date, sheet.hour);
+    closeSheet();
+    setStudentPicker({ open: true, iso, timeLabel });
+  };
+
+  const closeStudentPicker = () =>
+    setStudentPicker((s) => (s ? { ...s, open: false } : null));
+
+  const onPickStudent = (studentId: string) => {
+    if (!studentPicker) return;
+    setPendingStudentId(studentId);
+    startTransition(async () => {
+      const res = await bookLesson(studentId, studentPicker.iso, 60);
+      setPendingStudentId(null);
+      if (!res.ok) {
+        setAlert({
+          open: true,
+          variant: "error",
+          title: "레슨 등록 실패",
+          description: res.error,
+        });
+        return;
+      }
+      setStudentPicker(null);
+      setAlert({
+        open: true,
+        variant: "success",
+        title: "레슨이 등록되었어요",
+        description: `${studentPicker.timeLabel}에 레슨이 잡혔습니다.`,
+      });
+      router.refresh();
+    });
+  };
 
   return (
     <div className="flex flex-col">
@@ -157,7 +246,7 @@ export function WeeklyTimetable({ lessons = [] }: Props) {
               key={h}
               hour={h}
               weekDays={weekDays}
-              lessonByDayHour={lessonByDayHour}
+              lessonByCell={lessonByCell}
               onCellClick={onCellClick}
             />
           ))}
@@ -174,7 +263,7 @@ export function WeeklyTimetable({ lessons = [] }: Props) {
           <LegendItem color="bg-violet-100 border-violet-200" label="레슨 예정" />
           <LegendItem color="bg-orange-100 border-orange-200" label="변경 요청" />
           <LegendItem color="bg-blue-100 border-blue-200" label="완료" />
-          <LegendItem color="bg-soft border-line" label="블록" />
+          <LegendItem color="bg-soft border-line" label="취소" />
           <LegendItem color="bg-surface border-line" label="빈 시간" />
         </div>
       </div>
@@ -188,38 +277,41 @@ export function WeeklyTimetable({ lessons = [] }: Props) {
             const hh = String(sheet.hour).padStart(2, "0");
             return `${f.m}월 ${f.day}일 ${DOW_KOR[f.dow]}요일 · ${hh}:00`;
           })()}
+          onBookLesson={onBookLessonAction}
         />
       )}
+
+      {studentPicker && (
+        <StudentPickerSheet
+          open={studentPicker.open}
+          onClose={closeStudentPicker}
+          timeLabel={studentPicker.timeLabel}
+          students={students}
+          pendingStudentId={pendingStudentId}
+          onPick={onPickStudent}
+        />
+      )}
+
+      <AlertModal
+        open={alert.open}
+        onClose={() => setAlert((a) => ({ ...a, open: false }))}
+        variant={alert.variant}
+        title={alert.title}
+        description={alert.description}
+      />
     </div>
   );
-}
-
-function statusToClass(status: LessonSlot["status"]): string {
-  switch (status) {
-    case "CONFIRMED":
-      return "bg-emerald-100 hover:bg-emerald-200";
-    case "PENDING":
-      return "bg-amber-100 hover:bg-amber-200";
-    case "UPCOMING":
-      return "bg-violet-100 hover:bg-violet-200";
-    case "CHANGE_REQUEST":
-      return "bg-orange-100 hover:bg-orange-200";
-    case "COMPLETED":
-      return "bg-blue-100 hover:bg-blue-200";
-    case "BLOCKED":
-      return "bg-soft hover:bg-soft cursor-not-allowed";
-  }
 }
 
 function RowGroup({
   hour,
   weekDays,
-  lessonByDayHour,
+  lessonByCell,
   onCellClick,
 }: {
   hour: number;
   weekDays: { date: Date; isToday: boolean }[];
-  lessonByDayHour: Map<string, LessonSlot>;
+  lessonByCell: Map<string, LessonRow>;
   onCellClick: (dayOfWeek: number, hour: number, date: Date) => void;
 }) {
   const hourLabel = `${String(hour).padStart(2, "0")}:00`;
@@ -230,8 +322,9 @@ function RowGroup({
       </div>
       {weekDays.map((wd, i) => {
         const dow = wd.date.getUTCDay();
-        const key = `${dow}-${hour}`;
-        const lesson = lessonByDayHour.get(key);
+        const f = formatKstDate(wd.date);
+        const key = `${f.y}-${f.m}-${f.day}-${hour}`;
+        const lesson = lessonByCell.get(key);
         const hasLesson = !!lesson;
         return (
           <button

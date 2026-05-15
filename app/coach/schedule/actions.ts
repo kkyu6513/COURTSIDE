@@ -4,15 +4,17 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-type Result = { ok: true; action: "added" | "removed" } | { ok: false; error: string };
+type Result = { ok: true; lessonId: number } | { ok: false; error: string };
 
 /**
- * 한 시간 단위 가용 시간 슬롯 토글.
- * 그 시간(HH)에 슬롯이 하나라도 있으면 모두 삭제, 없으면 10분 단위 6개 INSERT.
- *
- * recurring(매주 반복) 슬롯만 다룸.
+ * 코치가 자신의 학생에게 레슨을 잡음.
+ * 보안: 본인 coach 세션 + 그 학생이 본인 confirmed claim의 학생이어야 함.
  */
-export async function toggleHourSlot(dayOfWeek: number, hour: number): Promise<Result> {
+export async function bookLesson(
+  studentId: string,
+  scheduledAt: string,
+  durationMinutes: number = 60,
+): Promise<Result> {
   const supabase = createClient();
   const {
     data: { user },
@@ -22,74 +24,61 @@ export async function toggleHourSlot(dayOfWeek: number, hour: number): Promise<R
   const meta = user.app_metadata as { role?: string } | undefined;
   if (meta?.role !== "COACH") return { ok: false, error: "코치만 가능해요" };
 
-  if (!Number.isInteger(dayOfWeek) || dayOfWeek < 0 || dayOfWeek > 6) {
-    return { ok: false, error: "요일 값이 올바르지 않습니다" };
-  }
-  if (!Number.isInteger(hour) || hour < 6 || hour > 22) {
-    return { ok: false, error: "시간 값이 올바르지 않습니다" };
-  }
+  if (!studentId) return { ok: false, error: "수강생을 선택해주세요" };
+  const date = new Date(scheduledAt);
+  if (Number.isNaN(date.getTime())) return { ok: false, error: "시간이 올바르지 않습니다" };
+
+  const dur = Number.isInteger(durationMinutes) ? durationMinutes : 60;
+  if (dur < 10 || dur > 240) return { ok: false, error: "레슨 시간이 올바르지 않습니다" };
 
   const admin = createAdminClient();
-  const hh = String(hour).padStart(2, "0");
 
-  const { data: existing, error: fetchError } = await admin
-    .from("schedules")
+  // 보안 — 이 학생이 본인 confirmed claim에 매칭되는지
+  const { data: matchedClaim } = await admin
+    .from("student_self_claims")
+    .select("id")
+    .eq("studentUserId", studentId)
+    .eq("matchedCoachUserId", user.id)
+    .eq("status", "CONFIRMED")
+    .maybeSingle();
+
+  if (!matchedClaim) {
+    return { ok: false, error: "수락하지 않은 수강생이에요" };
+  }
+
+  // 중복 체크 — 같은 코치가 같은 시각에 다른 레슨이 있으면 거부
+  const { data: existing } = await admin
+    .from("lessons")
     .select("id")
     .eq("coachId", user.id)
-    .eq("dayOfWeek", dayOfWeek)
-    .eq("isRecurring", true)
-    .like("slotTime", `${hh}:%`);
+    .eq("scheduledAt", date.toISOString())
+    .maybeSingle();
 
-  if (fetchError) {
-    console.error("[toggleHourSlot] fetch error:", fetchError);
-    return { ok: false, error: fetchError.message };
+  if (existing) {
+    return { ok: false, error: "이 시간에 이미 다른 레슨이 잡혀 있어요" };
   }
 
-  if (existing && existing.length > 0) {
-    const { error: delError } = await admin
-      .from("schedules")
-      .delete()
-      .in(
-        "id",
-        existing.map((s) => s.id),
-      );
-    if (delError) {
-      console.error("[toggleHourSlot] delete error:", delError);
-      return { ok: false, error: delError.message };
-    }
-    revalidatePath("/coach/schedule");
-    revalidatePath("/");
-    return { ok: true, action: "removed" };
-  }
-
-  const now = new Date().toISOString();
-  const rows: Array<{
-    coachId: string;
-    dayOfWeek: number;
-    slotTime: string;
-    isRecurring: boolean;
-    isBlocked: boolean;
-    updatedAt: string;
-  }> = [];
-  for (let m = 0; m < 60; m += 10) {
-    const mm = String(m).padStart(2, "0");
-    rows.push({
+  const { data: inserted, error: insertError } = await admin
+    .from("lessons")
+    .insert({
       coachId: user.id,
-      dayOfWeek,
-      slotTime: `${hh}:${mm}`,
-      isRecurring: true,
-      isBlocked: false,
-      updatedAt: now,
-    });
-  }
+      studentId,
+      scheduledAt: date.toISOString(),
+      durationMinutes: dur,
+      status: "CONFIRMED",
+      updatedAt: new Date().toISOString(),
+    })
+    .select("id")
+    .single();
 
-  const { error: insertError } = await admin.from("schedules").insert(rows);
   if (insertError) {
-    console.error("[toggleHourSlot] insert error:", insertError);
+    console.error("[bookLesson] insert error:", insertError);
     return { ok: false, error: insertError.message };
   }
 
+  // TODO(Sprint 3): 학생에게 레슨 확정 알림톡 발송
+
   revalidatePath("/coach/schedule");
   revalidatePath("/");
-  return { ok: true, action: "added" };
+  return { ok: true, lessonId: inserted!.id };
 }

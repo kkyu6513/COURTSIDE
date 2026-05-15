@@ -2,7 +2,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { WeeklyTimetable } from "@/components/coach/weekly-timetable";
+import { WeeklyTimetable, type LessonRow } from "@/components/coach/weekly-timetable";
+import type { StudentOption } from "@/components/coach/student-picker-sheet";
 
 export default async function CoachSchedulePage() {
   const supabase = createClient();
@@ -22,7 +23,37 @@ export default async function CoachSchedulePage() {
     .maybeSingle();
   if (!profile) redirect("/onboarding/coach");
 
-  // 추후 lessons 테이블 조회 후 props로 전달 (Sprint 2)
+  // 코치 본인의 lessons
+  const { data: lessonsRaw } = await admin
+    .from("lessons")
+    .select("id, studentId, scheduledAt, durationMinutes, status")
+    .eq("coachId", user.id);
+  const lessons = (lessonsRaw ?? []) as LessonRow[];
+
+  // 코치 본인의 수강생 = matchedCoachUserId 본인 + status=CONFIRMED인 claim의 학생
+  const { data: confirmedClaims } = await admin
+    .from("student_self_claims")
+    .select("studentUserId")
+    .eq("matchedCoachUserId", user.id)
+    .eq("status", "CONFIRMED");
+
+  const studentIds = Array.from(new Set((confirmedClaims ?? []).map((c) => c.studentUserId)));
+
+  let students: StudentOption[] = [];
+  if (studentIds.length > 0) {
+    const { data: usersRows } = await admin
+      .from("users")
+      .select("id, realName, name, phone")
+      .in("id", studentIds);
+    students = ((usersRows ?? []) as Array<{ id: string; realName: string | null; name: string | null; phone: string | null }>).map(
+      (u) => ({
+        id: u.id,
+        name: u.realName || u.name || "이름 미입력",
+        phone: u.phone,
+      }),
+    );
+  }
+
   return (
     <main className="min-h-screen bg-bg">
       <div className="max-w-md mx-auto">
@@ -40,7 +71,7 @@ export default async function CoachSchedulePage() {
           <div className="w-10 h-10" />
         </div>
 
-        <WeeklyTimetable />
+        <WeeklyTimetable lessons={lessons} students={students} />
       </div>
     </main>
   );
