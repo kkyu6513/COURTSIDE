@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { AlertModal } from "@/components/alert-modal";
 import { EmptySlotSheet } from "@/components/coach/empty-slot-sheet";
@@ -81,17 +81,38 @@ function statusToClass(status: LessonRow["status"]): string {
   }
 }
 
-export function WeeklyTimetable({ lessons = [], students = [] }: Props) {
+export function WeeklyTimetable({ lessons: initialLessons = [], students: initialStudents = [] }: Props) {
   const router = useRouter();
-  const didMountRefresh = useRef(false);
 
-  // 첫 mount 시 server component 강제 재실행 → 최신 lessons 가져옴
-  // (force-dynamic + noStore에도 RSC 캐시가 잡힌 채 진입하는 케이스 방어)
+  // 클라이언트 fetch — 항상 fresh. 서버 RSC 캐시 layer 무관.
+  const [lessons, setLessons] = useState<LessonRow[]>(initialLessons);
+  const [students, setStudents] = useState<StudentOption[]>(initialStudents);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  const reload = useCallback(async () => {
+    setIsLoading(true);
+    setLoadError(null);
+    try {
+      const res = await fetch("/api/coach/lessons", { cache: "no-store" });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setLoadError(body.error || `HTTP ${res.status}`);
+        return;
+      }
+      const data = (await res.json()) as { lessons: LessonRow[]; students: StudentOption[] };
+      setLessons(data.lessons ?? []);
+      setStudents(data.students ?? []);
+    } catch (e) {
+      setLoadError(e instanceof Error ? e.message : "네트워크 오류");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
-    if (didMountRefresh.current) return;
-    didMountRefresh.current = true;
-    router.refresh();
-  }, [router]);
+    reload();
+  }, [reload]);
 
   const [weekStart, setWeekStart] = useState<Date>(() => startOfWeekMon(new Date()));
   const [sheet, setSheet] = useState<{
@@ -257,7 +278,7 @@ export function WeeklyTimetable({ lessons = [], students = [] }: Props) {
         title: "레슨이 취소되었어요",
         description: "수강생에게 안내가 전달돼요. (알림톡은 곧 적용 예정)",
       });
-      router.refresh();
+      reload();
     });
   };
 
@@ -305,12 +326,40 @@ export function WeeklyTimetable({ lessons = [], students = [] }: Props) {
         title: "레슨이 등록되었어요",
         description: `${fullTimeLabel}에 레슨이 잡혔습니다.`,
       });
-      router.refresh();
+      reload();
     });
   };
 
   return (
     <div className="flex flex-col">
+      {/* 로딩 / 결과 상태 배너 */}
+      {isLoading ? (
+        <div className="px-4 py-3 border-b border-line bg-primary/5 flex items-center gap-2.5">
+          <svg className="animate-spin h-4 w-4 text-primary flex-none" viewBox="0 0 24 24" fill="none" aria-hidden>
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z" />
+          </svg>
+          <span className="text-xs font-semibold text-ink-2">수강 정보를 불러오고 있어요…</span>
+        </div>
+      ) : loadError ? (
+        <div className="px-4 py-3 border-b border-line bg-red-50 flex items-center justify-between gap-2">
+          <span className="text-xs text-red-600 font-medium truncate">{loadError}</span>
+          <button
+            type="button"
+            onClick={reload}
+            className="flex-none rounded-md border border-red-200 bg-white text-[11px] font-semibold text-red-600 px-2.5 py-1 hover:bg-red-50"
+          >
+            다시 시도
+          </button>
+        </div>
+      ) : (
+        <div className="px-4 py-2 border-b border-line bg-emerald-50/60">
+          <span className="text-[11px] font-bold text-emerald-700">
+            총 {lessons.length}건의 레슨이 등록되어 있어요
+          </span>
+        </div>
+      )}
+
       {/* 월/주 네비 */}
       <div className="border-b border-line">
         <div className="flex items-center justify-between px-4 py-3">
