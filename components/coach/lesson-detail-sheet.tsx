@@ -32,8 +32,13 @@ const STATUS_LABEL: Record<LessonDetail["status"], { text: string; bg: string; f
 
 const DOW_KOR = ["일", "월", "화", "수", "목", "금", "토"];
 
+function parseIsoUtc(s: string): Date {
+  const hasTz = /Z$|[+-]\d{2}:?\d{2}$/.test(s);
+  return new Date(hasTz ? s : s + "Z");
+}
+
 function formatKstTimeRange(iso: string, durationMinutes: number) {
-  const start = new Date(new Date(iso).getTime() + 9 * 60 * 60 * 1000);
+  const start = new Date(parseIsoUtc(iso).getTime() + 9 * 60 * 60 * 1000);
   const end = new Date(start.getTime() + durationMinutes * 60 * 1000);
   const m = start.getUTCMonth() + 1;
   const day = start.getUTCDate();

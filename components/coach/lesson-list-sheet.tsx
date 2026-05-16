@@ -13,8 +13,13 @@ const STATUS_LABEL: Record<LessonDetail["status"], { text: string; bg: string; f
   CANCELLED: { text: "취소", bg: "bg-soft", fg: "text-ink-3" },
 };
 
+function parseIsoUtc(s: string): Date {
+  const hasTz = /Z$|[+-]\d{2}:?\d{2}$/.test(s);
+  return new Date(hasTz ? s : s + "Z");
+}
+
 function formatKstHm(iso: string): string {
-  const kst = new Date(new Date(iso).getTime() + 9 * 60 * 60 * 1000);
+  const kst = new Date(parseIsoUtc(iso).getTime() + 9 * 60 * 60 * 1000);
   const hh = String(kst.getUTCHours()).padStart(2, "0");
   const mm = String(kst.getUTCMinutes()).padStart(2, "0");
   return `${hh}:${mm}`;
@@ -71,7 +76,7 @@ export function LessonListSheet({ open, onClose, hourLabel, lessons, onPickLesso
           <ul className="space-y-2">
             {lessons.map((l) => {
               const status = STATUS_LABEL[l.status];
-              const endIso = new Date(new Date(l.scheduledAt).getTime() + l.durationMinutes * 60 * 1000).toISOString();
+              const endIso = new Date(parseIsoUtc(l.scheduledAt).getTime() + l.durationMinutes * 60 * 1000).toISOString();
               return (
                 <li key={l.id}>
                   <button

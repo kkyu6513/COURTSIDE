@@ -50,9 +50,15 @@ function formatKstDate(d: Date) {
   };
 }
 
+/** Supabase가 timezone 없는 timestamp("...T23:00:00") 반환 가능 — UTC로 강제 해석 */
+function parseIsoUtc(s: string): Date {
+  const hasTz = /Z$|[+-]\d{2}:?\d{2}$/.test(s);
+  return new Date(hasTz ? s : s + "Z");
+}
+
 /** lesson.scheduledAt → KST 기준 (year, month, day, hour) 키 생성 */
 function lessonCellKey(iso: string): string {
-  const d = new Date(iso);
+  const d = parseIsoUtc(iso);
   const kst = new Date(d.getTime() + 9 * 60 * 60 * 1000);
   return `${kst.getUTCFullYear()}-${kst.getUTCMonth() + 1}-${kst.getUTCDate()}-${kst.getUTCHours()}`;
 }
@@ -180,7 +186,7 @@ export function WeeklyTimetable({ lessons: initialLessons = [], students: initia
     }
     // 시간 오름차순 정렬
     for (const arr of m.values()) {
-      arr.sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime());
+      arr.sort((a, b) => parseIsoUtc(a.scheduledAt).getTime() - parseIsoUtc(b.scheduledAt).getTime());
     }
     return m;
   }, [lessons]);
@@ -201,7 +207,7 @@ export function WeeklyTimetable({ lessons: initialLessons = [], students: initia
   const weekStartMs = weekStart.getTime() - 9 * 60 * 60 * 1000; // KST → UTC
   const weekEndMs = addDays(weekStart, 7).getTime() - 9 * 60 * 60 * 1000;
   const thisWeekCount = lessons.filter((l) => {
-    const ts = new Date(l.scheduledAt).getTime();
+    const ts = parseIsoUtc(l.scheduledAt).getTime();
     return ts >= weekStartMs && ts < weekEndMs;
   }).length;
 
@@ -209,11 +215,11 @@ export function WeeklyTimetable({ lessons: initialLessons = [], students: initia
   const jumpToNearestLesson = () => {
     if (lessons.length === 0) return;
     const sorted = [...lessons].sort((a, b) => {
-      const ad = Math.abs(new Date(a.scheduledAt).getTime() - weekStart.getTime());
-      const bd = Math.abs(new Date(b.scheduledAt).getTime() - weekStart.getTime());
+      const ad = Math.abs(parseIsoUtc(a.scheduledAt).getTime() - weekStart.getTime());
+      const bd = Math.abs(parseIsoUtc(b.scheduledAt).getTime() - weekStart.getTime());
       return ad - bd;
     });
-    setWeekStart(startOfWeekMon(new Date(sorted[0].scheduledAt)));
+    setWeekStart(startOfWeekMon(parseIsoUtc(sorted[0].scheduledAt)));
   };
 
   const goPrevWeek = () => setWeekStart((d) => addDays(d, -7));
