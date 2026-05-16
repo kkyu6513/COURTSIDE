@@ -352,6 +352,7 @@ function CoachHome({
           </form>
           <Link
             href="/coach/schedule"
+            prefetch={false}
             className="flex-none inline-flex items-center rounded-full bg-primary text-white text-xs font-semibold px-4 py-1.5 shadow-sm hover:opacity-90 transition active:scale-[0.98]"
           >
             전체 스케줄 관리
