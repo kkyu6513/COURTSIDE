@@ -197,6 +197,25 @@ export function WeeklyTimetable({ lessons: initialLessons = [], students: initia
   const yearMonthLabel = `${weekStart.getUTCFullYear()}년 ${weekStartLabel.m}월`;
   const weekRangeLabel = `${weekStartLabel.m}/${weekStartLabel.day} ~ ${weekEndLabel.m}/${weekEndLabel.day}`;
 
+  // 이번 주 lessons 카운트 (전체 카운트는 lessons.length)
+  const weekStartMs = weekStart.getTime() - 9 * 60 * 60 * 1000; // KST → UTC
+  const weekEndMs = addDays(weekStart, 7).getTime() - 9 * 60 * 60 * 1000;
+  const thisWeekCount = lessons.filter((l) => {
+    const ts = new Date(l.scheduledAt).getTime();
+    return ts >= weekStartMs && ts < weekEndMs;
+  }).length;
+
+  // 다른 주에 lessons가 있을 때 가장 가까운 주로 점프
+  const jumpToNearestLesson = () => {
+    if (lessons.length === 0) return;
+    const sorted = [...lessons].sort((a, b) => {
+      const ad = Math.abs(new Date(a.scheduledAt).getTime() - weekStart.getTime());
+      const bd = Math.abs(new Date(b.scheduledAt).getTime() - weekStart.getTime());
+      return ad - bd;
+    });
+    setWeekStart(startOfWeekMon(new Date(sorted[0].scheduledAt)));
+  };
+
   const goPrevWeek = () => setWeekStart((d) => addDays(d, -7));
   const goNextWeek = () => setWeekStart((d) => addDays(d, 7));
 
@@ -353,10 +372,19 @@ export function WeeklyTimetable({ lessons: initialLessons = [], students: initia
           </button>
         </div>
       ) : (
-        <div className="px-4 py-2 border-b border-line bg-emerald-50/60">
+        <div className="px-4 py-2 border-b border-line bg-emerald-50/60 flex items-center justify-between gap-2">
           <span className="text-[11px] font-bold text-emerald-700">
-            총 {lessons.length}건의 레슨이 등록되어 있어요
+            이번 주 {thisWeekCount}건 · 전체 {lessons.length}건 등록
           </span>
+          {thisWeekCount === 0 && lessons.length > 0 && (
+            <button
+              type="button"
+              onClick={jumpToNearestLesson}
+              className="flex-none rounded-md bg-emerald-600 text-white text-[10px] font-semibold px-2 py-1 hover:bg-emerald-700 transition"
+            >
+              가장 가까운 주로 이동
+            </button>
+          )}
         </div>
       )}
 
