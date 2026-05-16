@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { AlertModal } from "@/components/alert-modal";
 import { EmptySlotSheet } from "@/components/coach/empty-slot-sheet";
@@ -83,6 +83,16 @@ function statusToClass(status: LessonRow["status"]): string {
 
 export function WeeklyTimetable({ lessons = [], students = [] }: Props) {
   const router = useRouter();
+  const didMountRefresh = useRef(false);
+
+  // 첫 mount 시 server component 강제 재실행 → 최신 lessons 가져옴
+  // (force-dynamic + noStore에도 RSC 캐시가 잡힌 채 진입하는 케이스 방어)
+  useEffect(() => {
+    if (didMountRefresh.current) return;
+    didMountRefresh.current = true;
+    router.refresh();
+  }, [router]);
+
   const [weekStart, setWeekStart] = useState<Date>(() => startOfWeekMon(new Date()));
   const [sheet, setSheet] = useState<{
     open: boolean;
