@@ -42,7 +42,7 @@ function buildTimeSlots(mode: ViewMode): TimeSlot[] {
           hour: h,
           minute: m,
           label: `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`,
-          showLabel: m === 0,
+          showLabel: true,
         });
       }
     }
@@ -523,7 +523,7 @@ export function WeeklyTimetable({ lessons: initialLessons = [], students: initia
 
       {/* 주간 헤더 */}
       <div className="px-3 pt-2 pb-1 border-b border-line bg-surface">
-        <div className="grid grid-cols-[36px_repeat(7,1fr)] gap-0">
+        <div className="grid grid-cols-[44px_repeat(7,1fr)] gap-0">
           <div />
           {weekDays.map((wd, i) => (
             <div key={i} className="text-center py-1.5">
@@ -542,13 +542,14 @@ export function WeeklyTimetable({ lessons: initialLessons = [], students: initia
 
       {/* 타임테이블 */}
       <div className="px-3">
-        <div className="grid grid-cols-[36px_repeat(7,1fr)] gap-0">
+        <div className="grid grid-cols-[44px_repeat(7,1fr)] gap-0">
           {timeSlots.map((slot) => (
             <SlotRow
               key={`${slot.hour}-${slot.minute}`}
               slot={slot}
               weekDays={weekDays}
               lessonByCell={lessonByCell}
+              studentMap={studentMap}
               onCellClick={onCellClick}
               viewMode={viewMode}
               slotStepMin={slotStepMin}
@@ -633,25 +634,32 @@ function SlotRow({
   slot,
   weekDays,
   lessonByCell,
+  studentMap,
   onCellClick,
   viewMode,
-  slotStepMin,
 }: {
   slot: TimeSlot;
   weekDays: { date: Date; isToday: boolean; isPast: boolean }[];
   lessonByCell: Map<string, LessonRow[]>;
+  studentMap: Map<string, StudentOption>;
   onCellClick: (dayOfWeek: number, hour: number, date: Date, minute: number) => void;
   viewMode: ViewMode;
-  slotStepMin: number;
+  slotStepMin?: number;
 }) {
   const isHourMode = viewMode === "hour";
-  const rowHeight = isHourMode ? "h-9" : "h-3.5";
+  const rowHeight = isHourMode ? "h-9" : "h-5";
+  // 10분 모드에서 매 시각 단위 행만 강한 보더로 구분
+  const isHourBoundary = slot.minute === 0;
+  const topBorder = isHourMode
+    ? "border-t border-line"
+    : isHourBoundary
+      ? "border-t border-line"
+      : "border-t border-line/30";
+  const labelFontClass = isHourMode ? "text-[10px]" : isHourBoundary ? "text-[10px] font-semibold text-ink-2" : "text-[9px]";
   return (
     <>
-      <div
-        className={`text-[10px] text-ink-3 text-right pr-1.5 ${isHourMode ? "pt-1" : "pt-0"} border-t border-line ${isHourMode ? "" : slot.showLabel ? "" : "border-t-0"}`}
-      >
-        {slot.showLabel ? slot.label : ""}
+      <div className={`${labelFontClass} text-right pr-1.5 ${isHourMode ? "pt-1" : "pt-0 leading-tight"} ${topBorder} ${!isHourMode && !isHourBoundary ? "text-ink-3" : ""}`}>
+        {slot.label}
       </div>
       {weekDays.map((wd, i) => {
         const dow = wd.date.getUTCDay();
@@ -662,12 +670,20 @@ function SlotRow({
         const first = arr[0];
         const full = isHourMode && count >= 1 && isHourFull(arr, slot.hour);
         const pastEmpty = wd.isPast && count === 0;
+        // 10분 모드: 이 슬롯에서 시작하는 lesson만 학생 이름 표시
+        const startingLesson = !isHourMode
+          ? arr.find((l) => {
+              const startKst = new Date(parseIsoUtc(l.scheduledAt).getTime() + 9 * 60 * 60 * 1000);
+              return startKst.getUTCHours() === slot.hour && startKst.getUTCMinutes() === slot.minute;
+            })
+          : undefined;
+        const startingStudent = startingLesson ? studentMap.get(startingLesson.studentId) : undefined;
         return (
           <button
             type="button"
             key={i}
             onClick={() => onCellClick(dow, slot.hour, wd.date, slot.minute)}
-            className={`relative ${rowHeight} border-t border-line border-l border-line/60 transition active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-primary/40 focus:relative ${
+            className={`relative ${rowHeight} ${topBorder} border-l border-line/60 transition active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-primary/40 focus:relative overflow-hidden ${
               pastEmpty
                 ? "bg-soft/60 cursor-not-allowed"
                 : count > 0
@@ -680,6 +696,13 @@ function SlotRow({
               <span className="absolute inset-0 flex items-center justify-center">
                 <span className={`inline-flex items-center justify-center min-w-[18px] h-[18px] px-1.5 rounded-full text-white text-[9px] font-bold leading-none tracking-tight ${full ? "bg-red-500" : "bg-ink"}`}>
                   {full ? "FULL" : count}
+                </span>
+              </span>
+            )}
+            {!isHourMode && startingStudent && (
+              <span className="absolute inset-0 flex items-center justify-start pl-1 pointer-events-none">
+                <span className="text-[9px] font-bold text-ink truncate leading-none">
+                  {startingStudent.name}
                 </span>
               </span>
             )}
