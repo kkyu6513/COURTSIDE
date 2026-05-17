@@ -70,16 +70,22 @@ function cellToIso(date: Date, hour: number, minute: number = 0): string {
   return utc.toISOString();
 }
 
-/** hour 셀이 60분 안에 lessons로 가득 차 있는지 (분 점유 union 60 이상) */
-function isHourFull(lessons: LessonRow[]): boolean {
+/** hour 셀이 60분 안에 lessons로 가득 차 있는지 — 각 lesson의 그 hour 안 점유 분 union */
+function isHourFull(lessons: LessonRow[], hour: number): boolean {
   if (lessons.length === 0) return false;
+  const hourStartMin = hour * 60;
+  const hourEndMin = hour * 60 + 60;
   const intervals: Array<[number, number]> = [];
   for (const l of lessons) {
     if (l.status === "CANCELLED") continue;
-    const kst = new Date(parseIsoUtc(l.scheduledAt).getTime() + 9 * 60 * 60 * 1000);
-    const startMin = kst.getUTCMinutes();
-    const endMin = startMin + l.durationMinutes;
-    intervals.push([Math.max(0, startMin), Math.min(60, endMin)]);
+    const startKst = new Date(parseIsoUtc(l.scheduledAt).getTime() + 9 * 60 * 60 * 1000);
+    const lessonStart = startKst.getUTCHours() * 60 + startKst.getUTCMinutes();
+    const lessonEnd = lessonStart + l.durationMinutes;
+    const oStart = Math.max(lessonStart, hourStartMin);
+    const oEnd = Math.min(lessonEnd, hourEndMin);
+    if (oStart < oEnd) {
+      intervals.push([oStart - hourStartMin, oEnd - hourStartMin]);
+    }
   }
   if (intervals.length === 0) return false;
   intervals.sort((a, b) => a[0] - b[0]);
@@ -202,12 +208,22 @@ export function WeeklyTimetable({ lessons: initialLessons = [], students: initia
   const lessonByCell = useMemo(() => {
     const m = new Map<string, LessonRow[]>();
     for (const l of lessons) {
-      const key = lessonCellKey(l.scheduledAt);
-      const arr = m.get(key) ?? [];
-      arr.push(l);
-      m.set(key, arr);
+      // lesson이 점유하는 모든 hour 셀에 매핑 (시작 ~ 종료 hour, 경계 넘는 경우 포함)
+      const start = parseIsoUtc(l.scheduledAt);
+      const end = new Date(start.getTime() + l.durationMinutes * 60 * 1000);
+      const startKst = new Date(start.getTime() + 9 * 60 * 60 * 1000);
+      const endKst = new Date(end.getTime() + 9 * 60 * 60 * 1000);
+      const cursor = new Date(startKst);
+      cursor.setUTCMinutes(0, 0, 0);
+      while (cursor.getTime() < endKst.getTime()) {
+        const key = `${cursor.getUTCFullYear()}-${cursor.getUTCMonth() + 1}-${cursor.getUTCDate()}-${cursor.getUTCHours()}`;
+        const arr = m.get(key) ?? [];
+        arr.push(l);
+        m.set(key, arr);
+        cursor.setTime(cursor.getTime() + 60 * 60 * 1000);
+      }
     }
-    // 시간 오름차순 정렬
+    // 시작 시간 오름차순 정렬
     for (const arr of m.values()) {
       arr.sort((a, b) => parseIsoUtc(a.scheduledAt).getTime() - parseIsoUtc(b.scheduledAt).getTime());
     }
@@ -573,7 +589,7 @@ function RowGroup({
         const arr = lessonByCell.get(key) ?? [];
         const count = arr.length;
         const first = arr[0];
-        const full = count >= 1 && isHourFull(arr);
+        const full = count >= 1 && isHourFull(arr, hour);
         return (
           <button
             type="button"
