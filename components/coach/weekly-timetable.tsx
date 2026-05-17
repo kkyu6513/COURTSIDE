@@ -7,7 +7,7 @@ import { EmptySlotSheet } from "@/components/coach/empty-slot-sheet";
 import { StudentPickerSheet, type StudentOption } from "@/components/coach/student-picker-sheet";
 import { LessonDetailSheet, type LessonDetail } from "@/components/coach/lesson-detail-sheet";
 import { LessonListSheet } from "@/components/coach/lesson-list-sheet";
-import { bookLesson, cancelLesson } from "@/app/coach/schedule/actions";
+import { bookLesson, cancelLesson, updateLessonNotes } from "@/app/coach/schedule/actions";
 
 export type LessonRow = {
   id: number;
@@ -15,6 +15,7 @@ export type LessonRow = {
   scheduledAt: string; // ISO
   durationMinutes: number;
   status: "CONFIRMED" | "PENDING" | "UPCOMING" | "CHANGE_REQUEST" | "COMPLETED" | "CANCELLED";
+  notes?: string | null;
 };
 
 type Props = {
@@ -200,6 +201,7 @@ export function WeeklyTimetable({ lessons: initialLessons = [], students: initia
   } | null>(null);
   const [pendingStudentId, setPendingStudentId] = useState<string | null>(null);
   const [pendingCancel, setPendingCancel] = useState(false);
+  const [pendingNotes, setPendingNotes] = useState(false);
   const [, startTransition] = useTransition();
   const [alert, setAlert] = useState<{ open: boolean; variant: "error" | "success"; title: string; description?: string }>({
     open: false,
@@ -299,6 +301,7 @@ export function WeeklyTimetable({ lessons: initialLessons = [], students: initia
       scheduledAt: l.scheduledAt,
       durationMinutes: l.durationMinutes,
       status: l.status,
+      notes: l.notes ?? null,
     };
   };
 
@@ -359,6 +362,33 @@ export function WeeklyTimetable({ lessons: initialLessons = [], students: initia
   };
 
   const closeLessonDetail = () => setLessonDetail((s) => (s ? { ...s, open: false } : null));
+
+  const onSaveLessonNotes = (notes: string) => {
+    if (!lessonDetail) return;
+    const lessonId = lessonDetail.lesson.id;
+    setPendingNotes(true);
+    startTransition(async () => {
+      const res = await updateLessonNotes(lessonId, notes);
+      setPendingNotes(false);
+      if (!res.ok) {
+        setAlert({
+          open: true,
+          variant: "error",
+          title: "메모 저장 실패",
+          description: res.error,
+        });
+        return;
+      }
+      // 로컬 lessonDetail 즉시 갱신 (시트 안 textarea 동기화)
+      setLessonDetail((s) => (s ? { ...s, lesson: { ...s.lesson, notes: notes.trim() || null } } : s));
+      setAlert({
+        open: true,
+        variant: "success",
+        title: "메모가 저장되었어요",
+      });
+      reload();
+    });
+  };
 
   const onCancelLesson = () => {
     if (!lessonDetail) return;
@@ -604,7 +634,9 @@ export function WeeklyTimetable({ lessons: initialLessons = [], students: initia
           onClose={closeLessonDetail}
           lesson={lessonDetail.lesson}
           pendingCancel={pendingCancel}
+          pendingNotes={pendingNotes}
           onCancel={onCancelLesson}
+          onSaveNotes={onSaveLessonNotes}
         />
       )}
 

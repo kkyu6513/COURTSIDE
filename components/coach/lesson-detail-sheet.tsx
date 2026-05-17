@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { maskPhone } from "@/lib/masking";
 
@@ -11,6 +11,7 @@ export type LessonDetail = {
   scheduledAt: string; // ISO
   durationMinutes: number;
   status: "CONFIRMED" | "PENDING" | "UPCOMING" | "CHANGE_REQUEST" | "COMPLETED" | "CANCELLED";
+  notes?: string | null;
 };
 
 type Props = {
@@ -18,7 +19,9 @@ type Props = {
   onClose: () => void;
   lesson: LessonDetail | null;
   pendingCancel: boolean;
+  pendingNotes: boolean;
   onCancel: () => void;
+  onSaveNotes: (notes: string) => void;
 };
 
 const STATUS_LABEL: Record<LessonDetail["status"], { text: string; bg: string; fg: string }> = {
@@ -53,7 +56,13 @@ function formatKstTimeRange(iso: string, durationMinutes: number) {
   };
 }
 
-export function LessonDetailSheet({ open, onClose, lesson, pendingCancel, onCancel }: Props) {
+export function LessonDetailSheet({ open, onClose, lesson, pendingCancel, pendingNotes, onCancel, onSaveNotes }: Props) {
+  const [notesDraft, setNotesDraft] = useState("");
+
+  useEffect(() => {
+    if (lesson) setNotesDraft(lesson.notes ?? "");
+  }, [lesson]);
+
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -72,6 +81,11 @@ export function LessonDetailSheet({ open, onClose, lesson, pendingCancel, onCanc
   const { dateLabel, timeLabel } = formatKstTimeRange(lesson.scheduledAt, lesson.durationMinutes);
   const status = STATUS_LABEL[lesson.status];
   const isCancelled = lesson.status === "CANCELLED";
+
+  // 지난 레슨 (시작 시각이 현재보다 이전) — 취소 비표시
+  const isPast = parseIsoUtc(lesson.scheduledAt).getTime() < Date.now();
+  const canCancel = !isCancelled && !isPast;
+  const notesChanged = notesDraft.trim() !== (lesson.notes ?? "").trim();
 
   return createPortal(
     <div
@@ -115,8 +129,34 @@ export function LessonDetailSheet({ open, onClose, lesson, pendingCancel, onCanc
           </div>
         </div>
 
+        {/* 코치 코멘트 */}
+        <div className="mt-4">
+          <div className="text-xs font-semibold text-ink-2 mb-1.5">코치 메모</div>
+          <textarea
+            value={notesDraft}
+            onChange={(e) => setNotesDraft(e.target.value)}
+            placeholder={isPast ? "이 레슨에 대한 코멘트를 남겨보세요 (자세, 진도, 다음 회차 등)" : "레슨 전 메모, 코칭 포인트 등"}
+            rows={3}
+            maxLength={1000}
+            className="w-full rounded-xl border border-line bg-surface p-3 text-sm text-ink placeholder:text-ink-3 resize-none outline-none focus:ring-2 focus:ring-primary/40"
+          />
+          <div className="mt-1 flex items-center justify-between">
+            <span className="text-[11px] text-ink-3">{notesDraft.length} / 1000</span>
+            {notesChanged && (
+              <button
+                type="button"
+                onClick={() => onSaveNotes(notesDraft)}
+                disabled={pendingNotes}
+                className="text-[11px] font-semibold text-primary px-3 py-1 rounded-md hover:bg-primary/10 disabled:opacity-60"
+              >
+                {pendingNotes ? "저장 중…" : "메모 저장"}
+              </button>
+            )}
+          </div>
+        </div>
+
         <div className="mt-4 space-y-2">
-          {!isCancelled && (
+          {canCancel && (
             <button
               type="button"
               onClick={onCancel}

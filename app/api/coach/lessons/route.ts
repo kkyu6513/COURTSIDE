@@ -34,7 +34,7 @@ export async function GET() {
 
   const { data: lessonsRaw, error: lessonsError } = await admin
     .from("lessons")
-    .select("id, studentId, scheduledAt, durationMinutes, status")
+    .select("id, studentId, scheduledAt, durationMinutes, status, notes")
     .eq("coachId", user.id)
     .neq("status", "CANCELLED");
 

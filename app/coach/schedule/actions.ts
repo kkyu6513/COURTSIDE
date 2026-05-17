@@ -155,3 +155,46 @@ export async function cancelLesson(lessonId: number): Promise<SimpleResult> {
   revalidatePath("/");
   return { ok: true };
 }
+
+/**
+ * 코치 메모(notes) 수정 — 본인 코치의 lesson만.
+ */
+export async function updateLessonNotes(lessonId: number, notes: string): Promise<SimpleResult> {
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "로그인이 필요합니다" };
+
+  const meta = user.app_metadata as { role?: string } | undefined;
+  if (meta?.role !== "COACH") return { ok: false, error: "코치만 가능해요" };
+
+  const trimmed = notes.trim();
+  if (trimmed.length > 1000) {
+    return { ok: false, error: "코멘트는 1000자 이내로 작성해주세요" };
+  }
+
+  const admin = createAdminClient();
+
+  const { data: lesson } = await admin
+    .from("lessons")
+    .select("id, coachId")
+    .eq("id", lessonId)
+    .maybeSingle();
+
+  if (!lesson) return { ok: false, error: "레슨을 찾을 수 없어요" };
+  if (lesson.coachId !== user.id) return { ok: false, error: "수정 권한이 없어요" };
+
+  const { error: updateError } = await admin
+    .from("lessons")
+    .update({ notes: trimmed || null, updatedAt: new Date().toISOString() })
+    .eq("id", lessonId);
+
+  if (updateError) {
+    console.error("[updateLessonNotes] error:", updateError);
+    return { ok: false, error: updateError.message };
+  }
+
+  revalidatePath("/coach/schedule");
+  return { ok: true };
+}
