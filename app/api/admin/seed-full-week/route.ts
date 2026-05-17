@@ -16,7 +16,7 @@ export const maxDuration = 30;
 
 const ONE_TIME_TOKEN = "courtside-seed-full-week-2026-05-17-Mn4qPzW9rT";
 
-async function runSeed(coachUserId: string): Promise<NextResponse> {
+async function runSeed(coachUserId: string, weekOffset: number): Promise<NextResponse> {
   const admin = createAdminClient();
 
   // 1. 본인 CONFIRMED 학생
@@ -37,14 +37,13 @@ async function runSeed(coachUserId: string): Promise<NextResponse> {
     );
   }
 
-  // 2. 이번 주 월요일 KST 자정 시각 계산
+  // 2. 지정한 주의 월요일 KST 자정 (weekOffset: 0=이번 주, 1=다음 주, ...)
   const nowKst = new Date(Date.now() + 9 * 60 * 60 * 1000);
   const dow = nowKst.getUTCDay();
   const offsetToMon = (dow + 6) % 7;
   const monKstTrick = new Date(nowKst);
-  monKstTrick.setUTCDate(monKstTrick.getUTCDate() - offsetToMon);
+  monKstTrick.setUTCDate(monKstTrick.getUTCDate() - offsetToMon + weekOffset * 7);
   monKstTrick.setUTCHours(0, 0, 0, 0);
-  // monKstTrick: KST 월요일 자정을 의도, raw는 +9h shift된 값
 
   // 3. 이미 있는 lesson 시각 set
   const { data: existing } = await admin
@@ -137,17 +136,22 @@ async function authorize(req: NextRequest) {
     return { error: NextResponse.json({ error: "코치 계정만 호출 가능" }, { status: 403 }) };
   }
 
-  return { userId: user.id };
+  const weekParam = req.nextUrl.searchParams.get("week");
+  // default 1 (다음 주). week=0 → 이번 주, week=2 → 다다음 주
+  const weekOffset = weekParam !== null ? parseInt(weekParam, 10) : 1;
+  const safeOffset = Number.isFinite(weekOffset) ? Math.max(-4, Math.min(8, weekOffset)) : 1;
+
+  return { userId: user.id, weekOffset: safeOffset };
 }
 
 export async function GET(req: NextRequest) {
   const auth = await authorize(req);
   if (auth.error) return auth.error;
-  return runSeed(auth.userId!);
+  return runSeed(auth.userId!, auth.weekOffset!);
 }
 
 export async function POST(req: NextRequest) {
   const auth = await authorize(req);
   if (auth.error) return auth.error;
-  return runSeed(auth.userId!);
+  return runSeed(auth.userId!, auth.weekOffset!);
 }
