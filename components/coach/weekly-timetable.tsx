@@ -176,6 +176,31 @@ export function WeeklyTimetable({ lessons: initialLessons = [], students: initia
   }, [reload]);
 
   const [weekStart, setWeekStart] = useState<Date>(() => startOfWeekMon(new Date()));
+  const didAutoJumpRef = useRef(false);
+
+  // 최초 lessons load 후 이번 주에 lesson이 없으면 가장 가까운 lesson이 있는 주로 자동 이동
+  useEffect(() => {
+    if (didAutoJumpRef.current) return;
+    if (isLoading) return;
+    if (lessons.length === 0) return;
+    const wStartMs = weekStart.getTime() - 9 * 60 * 60 * 1000;
+    const wEndMs = wStartMs + 7 * 24 * 60 * 60 * 1000;
+    const inCurWeek = lessons.some((l) => {
+      const ts = parseIsoUtc(l.scheduledAt).getTime();
+      return ts >= wStartMs && ts < wEndMs;
+    });
+    didAutoJumpRef.current = true;
+    if (!inCurWeek) {
+      const sorted = [...lessons].sort((a, b) => {
+        return (
+          Math.abs(parseIsoUtc(a.scheduledAt).getTime() - weekStart.getTime()) -
+          Math.abs(parseIsoUtc(b.scheduledAt).getTime() - weekStart.getTime())
+        );
+      });
+      setWeekStart(startOfWeekMon(parseIsoUtc(sorted[0].scheduledAt)));
+    }
+  }, [isLoading, lessons, weekStart]);
+
   const [viewMode, setViewMode] = useState<ViewMode>("hour");
   const timeSlots = useMemo(() => buildTimeSlots(viewMode), [viewMode]);
   const slotStepMin = viewMode === "hour" ? 60 : 10;
