@@ -678,12 +678,15 @@ function SlotRow({
             })
           : undefined;
         const startingStudent = startingLesson ? studentMap.get(startingLesson.studentId) : undefined;
+        // 10분 모드 continuation: 이 셀이 lesson 시작이 아니고 점유중이면 위 보더 제거 → 시각적 병합
+        const isContinuation = !isHourMode && count > 0 && !startingLesson;
+        const cellTopBorder = isContinuation ? "" : topBorder;
         return (
           <button
             type="button"
             key={i}
             onClick={() => onCellClick(dow, slot.hour, wd.date, slot.minute)}
-            className={`relative ${rowHeight} ${topBorder} border-l border-line/60 transition active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-primary/40 focus:relative overflow-hidden ${
+            className={`relative ${rowHeight} ${cellTopBorder} border-l border-line/60 transition active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-primary/40 focus:relative overflow-hidden ${
               pastEmpty
                 ? "bg-soft/60 cursor-not-allowed"
                 : count > 0
