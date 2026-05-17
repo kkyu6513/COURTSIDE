@@ -28,6 +28,15 @@ export async function bookLesson(
   const date = new Date(scheduledAt);
   if (Number.isNaN(date.getTime())) return { ok: false, error: "시간이 올바르지 않습니다" };
 
+  // 과거 날짜 거부 (오늘 KST 00:00 이전이면 거부)
+  const nowKst = new Date(Date.now() + 9 * 60 * 60 * 1000);
+  const targetKst = new Date(date.getTime() + 9 * 60 * 60 * 1000);
+  const todayKey = nowKst.getUTCFullYear() * 10000 + nowKst.getUTCMonth() * 100 + nowKst.getUTCDate();
+  const targetKey = targetKst.getUTCFullYear() * 10000 + targetKst.getUTCMonth() * 100 + targetKst.getUTCDate();
+  if (targetKey < todayKey) {
+    return { ok: false, error: "오늘 이전 날짜에는 레슨을 잡을 수 없어요" };
+  }
+
   const dur = Number.isInteger(durationMinutes) ? durationMinutes : 60;
   if (dur < 10 || dur > 240) return { ok: false, error: "레슨 시간이 올바르지 않습니다" };
 

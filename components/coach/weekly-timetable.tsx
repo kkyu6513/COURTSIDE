@@ -180,7 +180,7 @@ export function WeeklyTimetable({ lessons: initialLessons = [], students: initia
   });
 
   const weekDays = useMemo(() => {
-    const days: { date: Date; m: number; day: number; dowKor: string; isToday: boolean }[] = [];
+    const days: { date: Date; m: number; day: number; dowKor: string; isToday: boolean; isPast: boolean }[] = [];
     for (let i = 0; i < 7; i++) {
       const d = addDays(weekStart, i);
       const f = formatKstDate(d);
@@ -190,17 +190,15 @@ export function WeeklyTimetable({ lessons: initialLessons = [], students: initia
         day: f.day,
         dowKor: DOW_KOR[(weekStart.getUTCDay() + i) % 7],
         isToday: false,
+        isPast: false,
       });
     }
     const nowKst = new Date(new Date().getTime() + 9 * 60 * 60 * 1000);
+    const todayKey = nowKst.getUTCFullYear() * 10000 + nowKst.getUTCMonth() * 100 + nowKst.getUTCDate();
     days.forEach((wd) => {
-      if (
-        wd.date.getUTCFullYear() === nowKst.getUTCFullYear() &&
-        wd.date.getUTCMonth() === nowKst.getUTCMonth() &&
-        wd.date.getUTCDate() === nowKst.getUTCDate()
-      ) {
-        wd.isToday = true;
-      }
+      const wdKey = wd.date.getUTCFullYear() * 10000 + wd.date.getUTCMonth() * 100 + wd.date.getUTCDate();
+      if (wdKey === todayKey) wd.isToday = true;
+      if (wdKey < todayKey) wd.isPast = true;
     });
     return days;
   }, [weekStart]);
@@ -280,7 +278,22 @@ export function WeeklyTimetable({ lessons: initialLessons = [], students: initia
     const f = formatKstDate(date);
     const arr = lessonByCell.get(`${f.y}-${f.m}-${f.day}-${hour}`) ?? [];
 
+    // 과거 날짜의 빈 셀은 등록 불가
+    const nowKst = new Date(Date.now() + 9 * 60 * 60 * 1000);
+    const todayKey = nowKst.getUTCFullYear() * 10000 + nowKst.getUTCMonth() * 100 + nowKst.getUTCDate();
+    const cellKey = date.getUTCFullYear() * 10000 + date.getUTCMonth() * 100 + date.getUTCDate();
+    const isPast = cellKey < todayKey;
+
     if (arr.length === 0) {
+      if (isPast) {
+        setAlert({
+          open: true,
+          variant: "error",
+          title: "과거 날짜에는 잡을 수 없어요",
+          description: "오늘 이전 날짜에는 새 레슨을 잡을 수 없습니다. 오늘 또는 이후 날짜를 선택해주세요.",
+        });
+        return;
+      }
       setSheet({ open: true, dayOfWeek, hour, date });
       return;
     }
@@ -572,7 +585,7 @@ function RowGroup({
   onCellClick,
 }: {
   hour: number;
-  weekDays: { date: Date; isToday: boolean }[];
+  weekDays: { date: Date; isToday: boolean; isPast: boolean }[];
   lessonByCell: Map<string, LessonRow[]>;
   onCellClick: (dayOfWeek: number, hour: number, date: Date) => void;
 }) {
@@ -590,15 +603,20 @@ function RowGroup({
         const count = arr.length;
         const first = arr[0];
         const full = count >= 1 && isHourFull(arr, hour);
+        const pastEmpty = wd.isPast && count === 0;
         return (
           <button
             type="button"
             key={i}
             onClick={() => onCellClick(dow, hour, wd.date)}
-            className={`relative h-9 border-t border-line border-l border-line/60 transition active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-primary/40 focus:relative cursor-pointer ${
-              count > 0 ? statusToClass(first.status) : "bg-surface hover:bg-soft"
+            className={`relative h-9 border-t border-line border-l border-line/60 transition active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-primary/40 focus:relative ${
+              pastEmpty
+                ? "bg-soft/60 cursor-not-allowed"
+                : count > 0
+                  ? `${statusToClass(first.status)} cursor-pointer ${wd.isPast ? "opacity-70" : ""}`
+                  : "bg-surface hover:bg-soft cursor-pointer"
             }`}
-            aria-label={`${hourLabel} ${count > 0 ? `레슨 ${count}개${full ? " (가득 참)" : ""}` : "빈 시간"} 옵션`}
+            aria-label={`${hourLabel} ${pastEmpty ? "지난 날짜 빈 시간" : count > 0 ? `레슨 ${count}개${full ? " (가득 참)" : ""}` : "빈 시간"} 옵션`}
           >
             {count >= 1 && (
               <span className="absolute inset-0 flex items-center justify-center">
