@@ -46,16 +46,36 @@ export async function bookLesson(
     return { ok: false, error: "수락하지 않은 수강생이에요" };
   }
 
-  // 중복 체크 — 같은 코치가 같은 시각에 다른 레슨이 있으면 거부
-  const { data: existing } = await admin
-    .from("lessons")
-    .select("id")
-    .eq("coachId", user.id)
-    .eq("scheduledAt", date.toISOString())
-    .maybeSingle();
+  // 시간 겹침 체크 — 새 lesson의 [start, end] 구간이 기존 active lesson과 겹치면 거부
+  const newStart = date.getTime();
+  const newEnd = newStart + dur * 60 * 1000;
+  const windowStart = new Date(newStart - 24 * 60 * 60 * 1000).toISOString();
+  const windowEnd = new Date(newEnd + 24 * 60 * 60 * 1000).toISOString();
 
-  if (existing) {
-    return { ok: false, error: "이 시간에 이미 다른 레슨이 잡혀 있어요" };
+  const { data: nearby } = await admin
+    .from("lessons")
+    .select("id, scheduledAt, durationMinutes, status")
+    .eq("coachId", user.id)
+    .neq("status", "CANCELLED")
+    .gte("scheduledAt", windowStart)
+    .lte("scheduledAt", windowEnd);
+
+  for (const ex of nearby ?? []) {
+    const exStart = new Date(ex.scheduledAt).getTime();
+    const exEnd = exStart + (ex.durationMinutes ?? 60) * 60 * 1000;
+    // overlap: newStart < exEnd && newEnd > exStart
+    if (newStart < exEnd && newEnd > exStart) {
+      const exKst = new Date(exStart + 9 * 60 * 60 * 1000);
+      const hh = String(exKst.getUTCHours()).padStart(2, "0");
+      const mm = String(exKst.getUTCMinutes()).padStart(2, "0");
+      const endKst = new Date(exEnd + 9 * 60 * 60 * 1000);
+      const eh = String(endKst.getUTCHours()).padStart(2, "0");
+      const em = String(endKst.getUTCMinutes()).padStart(2, "0");
+      return {
+        ok: false,
+        error: `${hh}:${mm} ~ ${eh}:${em} 시간대에 이미 잡힌 레슨이 있어요`,
+      };
+    }
   }
 
   const { data: inserted, error: insertError } = await admin
