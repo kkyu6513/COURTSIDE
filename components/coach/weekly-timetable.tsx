@@ -25,6 +25,31 @@ type Props = {
 const DOW_KOR = ["일", "월", "화", "수", "목", "금", "토"];
 const HOURS = Array.from({ length: 17 }, (_, i) => i + 6); // 06 ~ 22
 
+type ViewMode = "hour" | "minute";
+
+type TimeSlot = { hour: number; minute: number; label: string; showLabel: boolean };
+
+function buildTimeSlots(mode: ViewMode): TimeSlot[] {
+  const list: TimeSlot[] = [];
+  if (mode === "hour") {
+    for (const h of HOURS) {
+      list.push({ hour: h, minute: 0, label: `${String(h).padStart(2, "0")}:00`, showLabel: true });
+    }
+  } else {
+    for (const h of HOURS) {
+      for (let m = 0; m < 60; m += 10) {
+        list.push({
+          hour: h,
+          minute: m,
+          label: `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`,
+          showLabel: m === 0,
+        });
+      }
+    }
+  }
+  return list;
+}
+
 function startOfWeekMon(d: Date): Date {
   const kst = new Date(d.getTime() + 9 * 60 * 60 * 1000);
   const dow = kst.getUTCDay();
@@ -150,6 +175,9 @@ export function WeeklyTimetable({ lessons: initialLessons = [], students: initia
   }, [reload]);
 
   const [weekStart, setWeekStart] = useState<Date>(() => startOfWeekMon(new Date()));
+  const [viewMode, setViewMode] = useState<ViewMode>("hour");
+  const timeSlots = useMemo(() => buildTimeSlots(viewMode), [viewMode]);
+  const slotStepMin = viewMode === "hour" ? 60 : 10;
   const [sheet, setSheet] = useState<{
     open: boolean;
     dayOfWeek: number;
@@ -206,27 +234,27 @@ export function WeeklyTimetable({ lessons: initialLessons = [], students: initia
   const lessonByCell = useMemo(() => {
     const m = new Map<string, LessonRow[]>();
     for (const l of lessons) {
-      // lesson이 점유하는 모든 hour 셀에 매핑 (시작 ~ 종료 hour, 경계 넘는 경우 포함)
       const start = parseIsoUtc(l.scheduledAt);
       const end = new Date(start.getTime() + l.durationMinutes * 60 * 1000);
       const startKst = new Date(start.getTime() + 9 * 60 * 60 * 1000);
       const endKst = new Date(end.getTime() + 9 * 60 * 60 * 1000);
+      // 시작 슬롯(step 단위로 내림)부터 종료 시각 직전까지 매핑
       const cursor = new Date(startKst);
-      cursor.setUTCMinutes(0, 0, 0);
+      const curMin = cursor.getUTCMinutes();
+      cursor.setUTCMinutes(Math.floor(curMin / slotStepMin) * slotStepMin, 0, 0);
       while (cursor.getTime() < endKst.getTime()) {
-        const key = `${cursor.getUTCFullYear()}-${cursor.getUTCMonth() + 1}-${cursor.getUTCDate()}-${cursor.getUTCHours()}`;
+        const key = `${cursor.getUTCFullYear()}-${cursor.getUTCMonth() + 1}-${cursor.getUTCDate()}-${cursor.getUTCHours()}-${cursor.getUTCMinutes()}`;
         const arr = m.get(key) ?? [];
         arr.push(l);
         m.set(key, arr);
-        cursor.setTime(cursor.getTime() + 60 * 60 * 1000);
+        cursor.setTime(cursor.getTime() + slotStepMin * 60 * 1000);
       }
     }
-    // 시작 시간 오름차순 정렬
     for (const arr of m.values()) {
       arr.sort((a, b) => parseIsoUtc(a.scheduledAt).getTime() - parseIsoUtc(b.scheduledAt).getTime());
     }
     return m;
-  }, [lessons]);
+  }, [lessons, slotStepMin]);
 
   const studentMap = useMemo(() => {
     const m = new Map<string, StudentOption>();
@@ -274,9 +302,9 @@ export function WeeklyTimetable({ lessons: initialLessons = [], students: initia
     };
   };
 
-  const onCellClick = (dayOfWeek: number, hour: number, date: Date) => {
+  const onCellClick = (dayOfWeek: number, hour: number, date: Date, minute: number = 0) => {
     const f = formatKstDate(date);
-    const arr = lessonByCell.get(`${f.y}-${f.m}-${f.day}-${hour}`) ?? [];
+    const arr = lessonByCell.get(`${f.y}-${f.m}-${f.day}-${hour}-${minute}`) ?? [];
 
     // 과거 날짜의 빈 셀은 등록 불가
     const nowKst = new Date(Date.now() + 9 * 60 * 60 * 1000);
@@ -448,9 +476,30 @@ export function WeeklyTimetable({ lessons: initialLessons = [], students: initia
 
       {/* 월/주 네비 */}
       <div className="border-b border-line">
-        <div className="flex items-center justify-between px-4 py-3">
-          <div className="text-sm font-extrabold text-ink">{yearMonthLabel}</div>
-          <div className="flex items-center gap-1">
+        <div className="flex items-center justify-between px-4 py-3 gap-2">
+          <div className="text-sm font-extrabold text-ink truncate">{yearMonthLabel}</div>
+          <div className="flex items-center gap-1 flex-none">
+            {/* 보기 모드 토글 */}
+            <div className="flex rounded-lg bg-soft p-0.5 mr-1">
+              <button
+                type="button"
+                onClick={() => setViewMode("hour")}
+                className={`px-2 h-7 rounded-md text-[11px] font-semibold transition ${
+                  viewMode === "hour" ? "bg-surface text-ink shadow-sm" : "text-ink-3"
+                }`}
+              >
+                1시간
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("minute")}
+                className={`px-2 h-7 rounded-md text-[11px] font-semibold transition ${
+                  viewMode === "minute" ? "bg-surface text-ink shadow-sm" : "text-ink-3"
+                }`}
+              >
+                10분
+              </button>
+            </div>
             <button
               type="button"
               onClick={goPrevWeek}
@@ -459,7 +508,7 @@ export function WeeklyTimetable({ lessons: initialLessons = [], students: initia
             >
               ‹
             </button>
-            <span className="text-xs font-semibold text-ink-2 px-2">{weekRangeLabel}</span>
+            <span className="text-xs font-semibold text-ink-2 px-1">{weekRangeLabel}</span>
             <button
               type="button"
               onClick={goNextWeek}
@@ -494,13 +543,15 @@ export function WeeklyTimetable({ lessons: initialLessons = [], students: initia
       {/* 타임테이블 */}
       <div className="px-3">
         <div className="grid grid-cols-[36px_repeat(7,1fr)] gap-0">
-          {HOURS.map((h) => (
-            <RowGroup
-              key={h}
-              hour={h}
+          {timeSlots.map((slot) => (
+            <SlotRow
+              key={`${slot.hour}-${slot.minute}`}
+              slot={slot}
               weekDays={weekDays}
               lessonByCell={lessonByCell}
               onCellClick={onCellClick}
+              viewMode={viewMode}
+              slotStepMin={slotStepMin}
             />
           ))}
         </div>
@@ -578,47 +629,54 @@ export function WeeklyTimetable({ lessons: initialLessons = [], students: initia
   );
 }
 
-function RowGroup({
-  hour,
+function SlotRow({
+  slot,
   weekDays,
   lessonByCell,
   onCellClick,
+  viewMode,
+  slotStepMin,
 }: {
-  hour: number;
+  slot: TimeSlot;
   weekDays: { date: Date; isToday: boolean; isPast: boolean }[];
   lessonByCell: Map<string, LessonRow[]>;
-  onCellClick: (dayOfWeek: number, hour: number, date: Date) => void;
+  onCellClick: (dayOfWeek: number, hour: number, date: Date, minute: number) => void;
+  viewMode: ViewMode;
+  slotStepMin: number;
 }) {
-  const hourLabel = `${String(hour).padStart(2, "0")}:00`;
+  const isHourMode = viewMode === "hour";
+  const rowHeight = isHourMode ? "h-9" : "h-3.5";
   return (
     <>
-      <div className="text-[10px] text-ink-3 text-right pr-1.5 pt-1 border-t border-line">
-        {hourLabel}
+      <div
+        className={`text-[10px] text-ink-3 text-right pr-1.5 ${isHourMode ? "pt-1" : "pt-0"} border-t border-line ${isHourMode ? "" : slot.showLabel ? "" : "border-t-0"}`}
+      >
+        {slot.showLabel ? slot.label : ""}
       </div>
       {weekDays.map((wd, i) => {
         const dow = wd.date.getUTCDay();
         const f = formatKstDate(wd.date);
-        const key = `${f.y}-${f.m}-${f.day}-${hour}`;
+        const key = `${f.y}-${f.m}-${f.day}-${slot.hour}-${slot.minute}`;
         const arr = lessonByCell.get(key) ?? [];
         const count = arr.length;
         const first = arr[0];
-        const full = count >= 1 && isHourFull(arr, hour);
+        const full = isHourMode && count >= 1 && isHourFull(arr, slot.hour);
         const pastEmpty = wd.isPast && count === 0;
         return (
           <button
             type="button"
             key={i}
-            onClick={() => onCellClick(dow, hour, wd.date)}
-            className={`relative h-9 border-t border-line border-l border-line/60 transition active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-primary/40 focus:relative ${
+            onClick={() => onCellClick(dow, slot.hour, wd.date, slot.minute)}
+            className={`relative ${rowHeight} border-t border-line border-l border-line/60 transition active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-primary/40 focus:relative ${
               pastEmpty
                 ? "bg-soft/60 cursor-not-allowed"
                 : count > 0
                   ? `${statusToClass(first.status)} cursor-pointer ${wd.isPast ? "opacity-70" : ""}`
                   : "bg-surface hover:bg-soft cursor-pointer"
             }`}
-            aria-label={`${hourLabel} ${pastEmpty ? "지난 날짜 빈 시간" : count > 0 ? `레슨 ${count}개${full ? " (가득 참)" : ""}` : "빈 시간"} 옵션`}
+            aria-label={`${slot.label} ${pastEmpty ? "지난 날짜 빈 시간" : count > 0 ? `레슨 ${count}개${full ? " (가득 참)" : ""}` : "빈 시간"} 옵션`}
           >
-            {count >= 1 && (
+            {isHourMode && count >= 1 && (
               <span className="absolute inset-0 flex items-center justify-center">
                 <span className={`inline-flex items-center justify-center min-w-[18px] h-[18px] px-1.5 rounded-full text-white text-[9px] font-bold leading-none tracking-tight ${full ? "bg-red-500" : "bg-ink"}`}>
                   {full ? "FULL" : count}
