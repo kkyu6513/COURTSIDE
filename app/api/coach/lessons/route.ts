@@ -35,7 +35,8 @@ export async function GET() {
   const { data: lessonsRaw, error: lessonsError } = await admin
     .from("lessons")
     .select("id, studentId, scheduledAt, durationMinutes, status")
-    .eq("coachId", user.id);
+    .eq("coachId", user.id)
+    .neq("status", "CANCELLED");
 
   if (lessonsError) {
     console.error("[api/coach/lessons] lessons error:", lessonsError);
