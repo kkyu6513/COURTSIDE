@@ -70,6 +70,29 @@ function cellToIso(date: Date, hour: number, minute: number = 0): string {
   return utc.toISOString();
 }
 
+/** hour 셀이 60분 안에 lessons로 가득 차 있는지 (분 점유 union 60 이상) */
+function isHourFull(lessons: LessonRow[]): boolean {
+  if (lessons.length === 0) return false;
+  const intervals: Array<[number, number]> = [];
+  for (const l of lessons) {
+    if (l.status === "CANCELLED") continue;
+    const kst = new Date(parseIsoUtc(l.scheduledAt).getTime() + 9 * 60 * 60 * 1000);
+    const startMin = kst.getUTCMinutes();
+    const endMin = startMin + l.durationMinutes;
+    intervals.push([Math.max(0, startMin), Math.min(60, endMin)]);
+  }
+  if (intervals.length === 0) return false;
+  intervals.sort((a, b) => a[0] - b[0]);
+  let covered = 0;
+  let lastEnd = 0;
+  for (const [s, e] of intervals) {
+    if (e <= lastEnd) continue;
+    covered += e - Math.max(s, lastEnd);
+    lastEnd = e;
+  }
+  return covered >= 60;
+}
+
 function statusToClass(status: LessonRow["status"]): string {
   switch (status) {
     case "CONFIRMED":
@@ -550,6 +573,7 @@ function RowGroup({
         const arr = lessonByCell.get(key) ?? [];
         const count = arr.length;
         const first = arr[0];
+        const full = count >= 1 && isHourFull(arr);
         return (
           <button
             type="button"
@@ -558,12 +582,12 @@ function RowGroup({
             className={`relative h-9 border-t border-line border-l border-line/60 transition active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-primary/40 focus:relative cursor-pointer ${
               count > 0 ? statusToClass(first.status) : "bg-surface hover:bg-soft"
             }`}
-            aria-label={`${hourLabel} ${count > 0 ? `레슨 ${count}개` : "빈 시간"} 옵션`}
+            aria-label={`${hourLabel} ${count > 0 ? `레슨 ${count}개${full ? " (가득 참)" : ""}` : "빈 시간"} 옵션`}
           >
-            {count >= 2 && (
+            {count >= 1 && (
               <span className="absolute inset-0 flex items-center justify-center">
-                <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-ink text-white text-[10px] font-bold leading-none">
-                  {count}
+                <span className={`inline-flex items-center justify-center min-w-[18px] h-[18px] px-1.5 rounded-full text-white text-[9px] font-bold leading-none tracking-tight ${full ? "bg-red-500" : "bg-ink"}`}>
+                  {full ? "FULL" : count}
                 </span>
               </span>
             )}
