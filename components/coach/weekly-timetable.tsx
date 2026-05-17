@@ -178,25 +178,32 @@ export function WeeklyTimetable({ lessons: initialLessons = [], students: initia
   const [weekStart, setWeekStart] = useState<Date>(() => startOfWeekMon(new Date()));
   const didAutoJumpRef = useRef(false);
 
-  // 최초 lessons load 후 이번 주에 lesson이 없으면 가장 가까운 lesson이 있는 주로 자동 이동
+  // 최초 lessons load 후, 이번 주에 미래 lesson이 없고 다른 미래 주에 있으면 그 주로 자동 이동
   useEffect(() => {
     if (didAutoJumpRef.current) return;
     if (isLoading) return;
-    if (lessons.length === 0) return;
+    if (lessons.length === 0) {
+      didAutoJumpRef.current = true;
+      return;
+    }
+    const nowMs = Date.now();
+    const futureLessons = lessons.filter((l) => parseIsoUtc(l.scheduledAt).getTime() >= nowMs);
+    if (futureLessons.length === 0) {
+      didAutoJumpRef.current = true;
+      return; // 미래 lesson 없으면 이번 주 default 유지
+    }
     const wStartMs = weekStart.getTime() - 9 * 60 * 60 * 1000;
     const wEndMs = wStartMs + 7 * 24 * 60 * 60 * 1000;
-    const inCurWeek = lessons.some((l) => {
+    const inCurWeek = futureLessons.some((l) => {
       const ts = parseIsoUtc(l.scheduledAt).getTime();
       return ts >= wStartMs && ts < wEndMs;
     });
     didAutoJumpRef.current = true;
     if (!inCurWeek) {
-      const sorted = [...lessons].sort((a, b) => {
-        return (
-          Math.abs(parseIsoUtc(a.scheduledAt).getTime() - weekStart.getTime()) -
-          Math.abs(parseIsoUtc(b.scheduledAt).getTime() - weekStart.getTime())
-        );
-      });
+      // 가장 가까운 미래 lesson의 주로
+      const sorted = [...futureLessons].sort(
+        (a, b) => parseIsoUtc(a.scheduledAt).getTime() - parseIsoUtc(b.scheduledAt).getTime(),
+      );
       setWeekStart(startOfWeekMon(parseIsoUtc(sorted[0].scheduledAt)));
     }
   }, [isLoading, lessons, weekStart]);
@@ -306,7 +313,10 @@ export function WeeklyTimetable({ lessons: initialLessons = [], students: initia
   // 다른 주에 lessons가 있을 때 가장 가까운 주로 점프
   const jumpToNearestLesson = () => {
     if (lessons.length === 0) return;
-    const sorted = [...lessons].sort((a, b) => {
+    const nowMs = Date.now();
+    const future = lessons.filter((l) => parseIsoUtc(l.scheduledAt).getTime() >= nowMs);
+    const target = future.length > 0 ? future : lessons;
+    const sorted = [...target].sort((a, b) => {
       const ad = Math.abs(parseIsoUtc(a.scheduledAt).getTime() - weekStart.getTime());
       const bd = Math.abs(parseIsoUtc(b.scheduledAt).getTime() - weekStart.getTime());
       return ad - bd;
