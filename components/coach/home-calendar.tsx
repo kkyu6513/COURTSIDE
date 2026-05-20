@@ -1,7 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import { AlertModal } from "@/components/alert-modal";
+import { StudentPickerSheet, type StudentOption } from "@/components/coach/student-picker-sheet";
+import { bookLesson } from "@/app/coach/schedule/actions";
 
 type LessonRow = {
   id: number;
@@ -11,9 +13,14 @@ type LessonRow = {
   status: string;
 };
 
-type StudentOption = { id: string; name: string; phone: string | null };
-
 const DOW_KOR = ["일", "월", "화", "수", "목", "금", "토"];
+
+/** KST 날짜 + hour/minute → UTC ISO */
+function cellToIso(kstTrickDate: Date, hour: number, minute: number): string {
+  const utc = new Date(kstTrickDate);
+  utc.setUTCHours(hour - 9, minute, 0, 0);
+  return utc.toISOString();
+}
 
 function startOfWeekMon(d: Date): Date {
   const kst = new Date(d.getTime() + 9 * 60 * 60 * 1000);
@@ -69,12 +76,20 @@ function statusBadge(status: string): { text: string; cls: string } {
 }
 
 export function CoachHomeCalendar() {
-  const router = useRouter();
   const [weekStart, setWeekStart] = useState<Date>(() => startOfWeekMon(new Date()));
   const [selectedKey, setSelectedKey] = useState<string>(() => dayKeyOf(startOfWeekMon(new Date())));
   const [lessons, setLessons] = useState<LessonRow[]>([]);
   const [students, setStudents] = useState<StudentOption[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [pendingStudentId, setPendingStudentId] = useState<string | null>(null);
+  const [, startTransition] = useTransition();
+  const [alert, setAlert] = useState<{
+    open: boolean;
+    variant: "success" | "error";
+    title: string;
+    description?: string;
+  }>({ open: false, variant: "success", title: "" });
 
   // 오늘 키 (KST)
   const todayKey = useMemo(() => {
@@ -166,10 +181,31 @@ export function CoachHomeCalendar() {
 
   const weekRangeLabel = `${weekDays[0].date.getUTCMonth() + 1}/${weekDays[0].dayNum} ~ ${weekDays[6].date.getUTCMonth() + 1}/${weekDays[6].dayNum}`;
 
-  const goBook = () => {
+  const openPicker = () => {
     if (!selectedDate) return;
-    const iso = `${selectedDate.getUTCFullYear()}-${String(selectedDate.getUTCMonth() + 1).padStart(2, "0")}-${String(selectedDate.getUTCDate()).padStart(2, "0")}`;
-    router.push(`/coach/schedule?date=${iso}`);
+    setPickerOpen(true);
+  };
+
+  const onPickStudent = (studentId: string, hour: number, minute: number, durationMinutes: number) => {
+    if (!selectedDate) return;
+    const iso = cellToIso(selectedDate, hour, minute);
+    setPendingStudentId(studentId);
+    startTransition(async () => {
+      const res = await bookLesson(studentId, iso, durationMinutes);
+      setPendingStudentId(null);
+      if (!res.ok) {
+        setAlert({ open: true, variant: "error", title: "레슨 등록 실패", description: res.error });
+        return;
+      }
+      setPickerOpen(false);
+      setAlert({
+        open: true,
+        variant: "success",
+        title: "레슨이 등록되었어요",
+        description: `${selectedLabel} ${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}에 레슨이 잡혔습니다.`,
+      });
+      reload();
+    });
   };
 
   return (
@@ -248,7 +284,7 @@ export function CoachHomeCalendar() {
           </h2>
           <button
             type="button"
-            onClick={goBook}
+            onClick={openPicker}
             className="text-xs font-semibold text-primary px-2.5 py-1 rounded-md hover:bg-primary/10 transition"
           >
             + 레슨 잡기
@@ -264,7 +300,7 @@ export function CoachHomeCalendar() {
             <p className="text-sm text-ink-2">이 날짜에 예정된 레슨이 없어요</p>
             <button
               type="button"
-              onClick={goBook}
+              onClick={openPicker}
               className="mt-3 inline-flex items-center rounded-lg bg-primary text-white text-xs font-semibold px-3.5 py-2 hover:opacity-90 transition"
             >
               이 날짜에 레슨 잡기
@@ -283,7 +319,7 @@ export function CoachHomeCalendar() {
                 <li key={l.id}>
                   <button
                     type="button"
-                    onClick={goBook}
+                    onClick={openPicker}
                     className="w-full flex items-center gap-3 rounded-2xl border border-line bg-surface p-3.5 text-left hover:bg-soft transition active:scale-[0.99]"
                   >
                     <div className="w-14 flex-none text-center">
@@ -309,6 +345,27 @@ export function CoachHomeCalendar() {
           </ul>
         )}
       </div>
+
+      {pickerOpen && selectedDate && (
+        <StudentPickerSheet
+          open={pickerOpen}
+          onClose={() => setPickerOpen(false)}
+          baseTimeLabel={`${selectedLabel} — 시간을 선택하세요`}
+          hour={9}
+          hourSelectable
+          students={students}
+          pendingStudentId={pendingStudentId}
+          onPick={onPickStudent}
+        />
+      )}
+
+      <AlertModal
+        open={alert.open}
+        onClose={() => setAlert((a) => ({ ...a, open: false }))}
+        variant={alert.variant}
+        title={alert.title}
+        description={alert.description}
+      />
     </div>
   );
 }

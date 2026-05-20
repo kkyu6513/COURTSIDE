@@ -12,29 +12,37 @@ export type StudentOption = {
 
 const MINUTES = [0, 10, 20, 30, 40, 50];
 const DURATIONS = [20, 30, 40, 50, 60, 90];
+const HOURS = Array.from({ length: 17 }, (_, i) => i + 6); // 06 ~ 22
 
 type Props = {
   open: boolean;
   onClose: () => void;
   baseTimeLabel: string;
   hour: number;
+  hourSelectable?: boolean; // true면 시(hour) 칩 표시 — 코치 홈에서 날짜만 선택한 경우
   students: StudentOption[];
   pendingStudentId: string | null;
-  onPick: (studentId: string, minute: number, durationMinutes: number) => void;
+  onPick: (studentId: string, hour: number, minute: number, durationMinutes: number) => void;
 };
 
 export function StudentPickerSheet({
   open,
   onClose,
   baseTimeLabel,
-  hour,
+  hour: initialHour,
+  hourSelectable = false,
   students,
   pendingStudentId,
   onPick,
 }: Props) {
   const [search, setSearch] = useState("");
+  const [hour, setHour] = useState(initialHour);
   const [minute, setMinute] = useState(0);
   const [duration, setDuration] = useState(60);
+
+  useEffect(() => {
+    if (open) setHour(initialHour);
+  }, [open, initialHour]);
 
   useEffect(() => {
     if (!open) return;
@@ -95,6 +103,30 @@ export function StudentPickerSheet({
           <div className="text-base font-extrabold text-ink">레슨 시작 시간</div>
           <div className="mt-1 text-xs text-ink-3">{baseTimeLabel}</div>
         </div>
+
+        {hourSelectable && (
+          <div className="px-5 pt-3 pb-1 flex-none">
+            <div className="text-[11px] font-semibold text-ink-2 mb-1.5">시작 시</div>
+            <div className="grid grid-cols-6 gap-1.5">
+              {HOURS.map((h) => {
+                const active = h === hour;
+                return (
+                  <button
+                    key={h}
+                    type="button"
+                    onClick={() => setHour(h)}
+                    disabled={!!pendingStudentId}
+                    className={`h-9 rounded-lg text-xs font-bold transition active:scale-[0.97] disabled:opacity-60 ${
+                      active ? "bg-primary text-white shadow-sm" : "bg-soft text-ink-2 hover:bg-line"
+                    }`}
+                  >
+                    {String(h).padStart(2, "0")}시
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         <div className="px-5 pt-3 pb-1 flex-none">
           <div className="text-[11px] font-semibold text-ink-2 mb-1.5">시작 분</div>
@@ -182,7 +214,7 @@ export function StudentPickerSheet({
                   <li key={s.id}>
                     <button
                       type="button"
-                      onClick={() => onPick(s.id, minute, duration)}
+                      onClick={() => onPick(s.id, hour, minute, duration)}
                       disabled={isDisabled}
                       className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl hover:bg-soft transition active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed"
                     >

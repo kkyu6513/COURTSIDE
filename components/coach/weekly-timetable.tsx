@@ -478,12 +478,12 @@ export function WeeklyTimetable({
   const closeStudentPicker = () =>
     setStudentPicker((s) => (s ? { ...s, open: false } : null));
 
-  const onPickStudent = (studentId: string, minute: number, durationMinutes: number) => {
+  const onPickStudent = (studentId: string, hour: number, minute: number, durationMinutes: number) => {
     if (!studentPicker) return;
-    const iso = cellToIso(studentPicker.date, studentPicker.hour, minute);
-    const hh = String(studentPicker.hour).padStart(2, "0");
+    const iso = cellToIso(studentPicker.date, hour, minute);
+    const hh = String(hour).padStart(2, "0");
     const mm = String(minute).padStart(2, "0");
-    const totalEnd = studentPicker.hour * 60 + minute + durationMinutes;
+    const totalEnd = hour * 60 + minute + durationMinutes;
     const endHh = String(Math.floor(totalEnd / 60)).padStart(2, "0");
     const endMm = String(totalEnd % 60).padStart(2, "0");
     const baseDate = studentPicker.baseTimeLabel.replace(/ · .*$/, "");
