@@ -6,7 +6,7 @@ import { BottomNav } from "@/components/bottom-nav";
 import { BackButton } from "@/components/back-button";
 import { CoachRequestForm, CoachRequestPending } from "@/components/coach-request-form";
 import { StudentSplash } from "@/components/student-splash";
-import { CoachTodayLessons, type TodayLesson } from "@/components/coach-today-lessons";
+import { CoachHomeCalendar } from "@/components/coach/home-calendar";
 import { StudentTestCases } from "@/components/student-test-cases";
 import { signOutAction } from "@/app/actions/sign-out";
 import { randomQuote, timeGreeting, todayLabel } from "@/lib/quotes";
@@ -106,62 +106,7 @@ export default async function Home({
     .eq("matchedCoachUserId", user.id)
     .eq("status", "PENDING");
 
-  // 코치 오늘의 레슨 조회 (KST 기준 오늘 00:00 ~ 24:00)
-  const now = new Date();
-  const kstNow = new Date(now.getTime() + 9 * 60 * 60 * 1000);
-  const kstStart = new Date(Date.UTC(kstNow.getUTCFullYear(), kstNow.getUTCMonth(), kstNow.getUTCDate(), 0, 0, 0));
-  const kstEnd = new Date(Date.UTC(kstNow.getUTCFullYear(), kstNow.getUTCMonth(), kstNow.getUTCDate() + 1, 0, 0, 0));
-  const startIso = new Date(kstStart.getTime() - 9 * 60 * 60 * 1000).toISOString();
-  const endIso = new Date(kstEnd.getTime() - 9 * 60 * 60 * 1000).toISOString();
-
-  const { data: lessonRows } = await admin
-    .from("lessons")
-    .select(`
-      id, scheduledAt, durationMinutes, status, paymentStatus, lessonFormat,
-      roundNumber, totalRounds, originalScheduledAt, splitIndex, splitTotal,
-      notes, studentId
-    `)
-    .eq("coachId", user.id)
-    .gte("scheduledAt", startIso)
-    .lt("scheduledAt", endIso)
-    .order("scheduledAt", { ascending: true });
-
-  // 학생 이름 조인 (한 번에 묶어서)
-  const studentIds = Array.from(new Set((lessonRows ?? []).map((l) => l.studentId)));
-  const studentNameMap = new Map<string, string>();
-  if (studentIds.length > 0) {
-    const { data: students } = await admin
-      .from("users")
-      .select("id, name, realName")
-      .in("id", studentIds);
-    for (const s of students ?? []) {
-      studentNameMap.set(s.id, s.realName || s.name || "학생");
-    }
-  }
-
-  const todayLessons: TodayLesson[] = (lessonRows ?? []).map((l) => ({
-    id: l.id,
-    scheduledAt: l.scheduledAt,
-    durationMinutes: l.durationMinutes,
-    status: l.status,
-    paymentStatus: l.paymentStatus,
-    lessonFormat: l.lessonFormat,
-    roundNumber: l.roundNumber,
-    totalRounds: l.totalRounds,
-    originalScheduledAt: l.originalScheduledAt,
-    splitIndex: l.splitIndex,
-    splitTotal: l.splitTotal,
-    notes: l.notes,
-    studentName: studentNameMap.get(l.studentId) ?? "학생",
-  }));
-
-  return (
-    <CoachHome
-      nickname={nickname}
-      pendingClaimCount={pendingClaimCount ?? 0}
-      todayLessons={todayLessons}
-    />
-  );
+  return <CoachHome nickname={nickname} pendingClaimCount={pendingClaimCount ?? 0} />;
 }
 
 type LatestClaim = {
@@ -314,15 +259,10 @@ function thisWeekDates(now: Date = new Date()) {
 function CoachHome({
   nickname,
   pendingClaimCount,
-  todayLessons,
 }: {
   nickname: string;
   pendingClaimCount: number;
-  todayLessons: TodayLesson[];
 }) {
-  const today = getKstParts(new Date());
-  const week = thisWeekDates();
-  const todayLabel = `오늘 · ${today.month}월 ${today.day}일 (${DOW_KOR[today.dow]})`;
 
   return (
     <main className="min-h-screen bg-bg pb-24">
@@ -377,36 +317,8 @@ function CoachHome({
           </Link>
         )}
 
-        {/* 선택 날짜 */}
-        <div className="mt-5 flex items-center justify-between">
-          <div className="text-sm font-bold text-ink">{todayLabel}</div>
-        </div>
-
-        {/* 주간 미니 캘린더 */}
-        <div className="mt-2 flex gap-1.5">
-          {week.map((d) => (
-            <div
-              key={d.iso}
-              className={`flex-1 text-center py-2 rounded-xl transition ${
-                d.isToday ? "bg-primary text-white shadow-[0_4px_12px_rgba(45,212,191,0.35)]" : "bg-soft"
-              }`}
-            >
-              <div className={`text-[10px] ${d.isToday ? "text-white/85" : "text-ink-3"}`}>
-                {d.dowKor}
-              </div>
-              <div className={`text-sm font-semibold mt-0.5 ${d.isToday ? "text-white" : "text-ink"}`}>
-                {d.day}
-              </div>
-              <div className="flex gap-1 justify-center mt-1 h-1.5" aria-hidden />
-            </div>
-          ))}
-        </div>
-
-        {/* 오늘 레슨 — 실 DB 데이터 (lessons 테이블) */}
-        <div className="mt-6">
-          <h2 className="text-sm font-bold text-ink mb-2">오늘 레슨</h2>
-          <CoachTodayLessons lessons={todayLessons} />
-        </div>
+        {/* 주간 캘린더 + 선택 날짜 레슨 (인터랙티브) */}
+        <CoachHomeCalendar />
       </div>
 
       <BottomNav role="COACH" active="/" />
