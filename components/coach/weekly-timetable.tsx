@@ -21,6 +21,7 @@ export type LessonRow = {
 type Props = {
   lessons?: LessonRow[];
   students?: StudentOption[];
+  initialDate?: string; // "YYYY-MM-DD" — 진입 시 이 날짜가 속한 주 표시
 };
 
 const DOW_KOR = ["일", "월", "화", "수", "목", "금", "토"];
@@ -142,7 +143,11 @@ function statusToClass(status: LessonRow["status"]): string {
   }
 }
 
-export function WeeklyTimetable({ lessons: initialLessons = [], students: initialStudents = [] }: Props) {
+export function WeeklyTimetable({
+  lessons: initialLessons = [],
+  students: initialStudents = [],
+  initialDate,
+}: Props) {
   const router = useRouter();
 
   // 클라이언트 fetch — 항상 fresh. 서버 RSC 캐시 layer 무관.
@@ -175,8 +180,15 @@ export function WeeklyTimetable({ lessons: initialLessons = [], students: initia
     reload();
   }, [reload]);
 
-  const [weekStart, setWeekStart] = useState<Date>(() => startOfWeekMon(new Date()));
-  const didAutoJumpRef = useRef(false);
+  const [weekStart, setWeekStart] = useState<Date>(() => {
+    // initialDate("YYYY-MM-DD")가 있으면 그 날짜가 속한 주, 없으면 이번 주
+    if (initialDate && /^\d{4}-\d{2}-\d{2}$/.test(initialDate)) {
+      return startOfWeekMon(new Date(initialDate + "T00:00:00Z"));
+    }
+    return startOfWeekMon(new Date());
+  });
+  // initialDate가 지정되면 자동 점프 비활성 (사용자가 명시적으로 그 주를 원함)
+  const didAutoJumpRef = useRef(!!initialDate);
 
   // 최초 lessons load 후, 이번 주에 미래 lesson이 없고 다른 미래 주에 있으면 그 주로 자동 이동
   useEffect(() => {

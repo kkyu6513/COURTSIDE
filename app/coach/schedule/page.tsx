@@ -10,7 +10,11 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 export const fetchCache = "force-no-store";
 
-export default async function CoachSchedulePage() {
+export default async function CoachSchedulePage({
+  searchParams,
+}: {
+  searchParams?: { date?: string };
+}) {
   noStore();
   const supabase = createClient();
   const {
@@ -77,7 +81,7 @@ export default async function CoachSchedulePage() {
           <div className="w-10 h-10" />
         </div>
 
-        <WeeklyTimetable lessons={lessons} students={students} />
+        <WeeklyTimetable lessons={lessons} students={students} initialDate={searchParams?.date} />
       </div>
     </main>
   );
