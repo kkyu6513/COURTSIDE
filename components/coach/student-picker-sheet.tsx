@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { maskPhone } from "@/lib/masking";
 
@@ -19,7 +19,9 @@ type Props = {
   onClose: () => void;
   baseTimeLabel: string;
   hour: number;
-  hourSelectable?: boolean; // true면 시(hour) 칩 표시 — 코치 홈에서 날짜만 선택한 경우
+  hourSelectable?: boolean;
+  /** 이미 레슨이 잡힌 시간 — hour → 학생 이름. 해당 시 칩은 비활성 */
+  bookedHours?: Map<number, string>;
   students: StudentOption[];
   pendingStudentId: string | null;
   onPick: (studentId: string, hour: number, minute: number, durationMinutes: number) => void;
@@ -31,17 +33,25 @@ export function StudentPickerSheet({
   baseTimeLabel,
   hour: initialHour,
   hourSelectable = false,
+  bookedHours,
   students,
   pendingStudentId,
   onPick,
 }: Props) {
+  const [step, setStep] = useState<"time" | "student">("time");
   const [search, setSearch] = useState("");
   const [hour, setHour] = useState(initialHour);
   const [minute, setMinute] = useState(0);
   const [duration, setDuration] = useState(60);
 
   useEffect(() => {
-    if (open) setHour(initialHour);
+    if (open) {
+      setStep("time");
+      setSearch("");
+      setHour(initialHour);
+      setMinute(0);
+      setDuration(60);
+    }
   }, [open, initialHour]);
 
   useEffect(() => {
@@ -56,31 +66,28 @@ export function StudentPickerSheet({
     };
   }, [open, onClose]);
 
-  useEffect(() => {
-    if (!open) {
-      setSearch("");
-      setMinute(0);
-      setDuration(60);
-    }
-  }, [open]);
-
-  if (!open) return null;
-  if (typeof document === "undefined") return null;
-
-  const q = search.trim();
-  const filtered = q
-    ? students.filter(
-        (s) => s.name.includes(q) || (s.phone ?? "").includes(q.replace(/[^\d]/g, "")),
-      )
-    : students;
-
   const hh = String(hour).padStart(2, "0");
   const mm = String(minute).padStart(2, "0");
   const totalEndMin = hour * 60 + minute + duration;
-  const endHour = Math.floor(totalEndMin / 60);
-  const endMin = totalEndMin % 60;
-  const endHh = String(endHour).padStart(2, "0");
-  const endMm = String(endMin).padStart(2, "0");
+  const endHh = String(Math.floor(totalEndMin / 60)).padStart(2, "0");
+  const endMm = String(totalEndMin % 60).padStart(2, "0");
+
+  // 현재 선택한 시가 이미 막혔는지
+  const hourBookedBy = bookedHours?.get(hour);
+
+  const q = search.trim();
+  const filtered = useMemo(
+    () =>
+      q
+        ? students.filter(
+            (s) => s.name.includes(q) || (s.phone ?? "").includes(q.replace(/[^\d]/g, "")),
+          )
+        : students,
+    [q, students],
+  );
+
+  if (!open) return null;
+  if (typeof document === "undefined") return null;
 
   return createPortal(
     <div
@@ -94,162 +101,210 @@ export function StudentPickerSheet({
         onClick={onClose}
       />
       <div
-        className="absolute left-0 right-0 bottom-0 bg-surface rounded-t-3xl shadow-2xl flex flex-col max-h-[85vh]"
+        className="absolute left-0 right-0 bottom-0 bg-surface rounded-t-3xl shadow-2xl flex flex-col max-h-[88vh]"
         style={{ animation: "courtside-sheet-up 0.25s ease-out" }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="px-5 pt-3 pb-1 flex-none">
+        <div className="px-5 pt-3 pb-2 flex-none">
           <div className="w-10 h-1 rounded-full bg-line mx-auto mb-4" />
-          <div className="text-base font-extrabold text-ink">레슨 시작 시간</div>
+          <div className="flex items-center gap-2">
+            <div className="text-base font-extrabold text-ink">
+              {step === "time" ? "1. 레슨 시간" : "2. 수강생 선택"}
+            </div>
+            <span className="text-[11px] text-ink-3 font-medium">{step === "time" ? "1 / 2" : "2 / 2"}</span>
+          </div>
           <div className="mt-1 text-xs text-ink-3">{baseTimeLabel}</div>
         </div>
 
-        {hourSelectable && (
-          <div className="px-5 pt-3 pb-1 flex-none">
-            <div className="text-[11px] font-semibold text-ink-2 mb-1.5">시작 시</div>
-            <div className="grid grid-cols-6 gap-1.5">
-              {HOURS.map((h) => {
-                const active = h === hour;
-                return (
-                  <button
-                    key={h}
-                    type="button"
-                    onClick={() => setHour(h)}
-                    disabled={!!pendingStudentId}
-                    className={`h-9 rounded-lg text-xs font-bold transition active:scale-[0.97] disabled:opacity-60 ${
-                      active ? "bg-primary text-white shadow-sm" : "bg-soft text-ink-2 hover:bg-line"
-                    }`}
-                  >
-                    {String(h).padStart(2, "0")}시
-                  </button>
-                );
-              })}
+        {/* STEP 1: 시간 선택 */}
+        {step === "time" && (
+          <>
+            <div className="flex-1 overflow-y-auto px-5 pb-2">
+              {hourSelectable && (
+                <div className="pt-2">
+                  <div className="text-[11px] font-semibold text-ink-2 mb-1.5">시작 시</div>
+                  <div className="grid grid-cols-6 gap-1.5">
+                    {HOURS.map((h) => {
+                      const active = h === hour;
+                      const bookedBy = bookedHours?.get(h);
+                      const isBooked = !!bookedBy;
+                      return (
+                        <button
+                          key={h}
+                          type="button"
+                          onClick={() => !isBooked && setHour(h)}
+                          disabled={isBooked}
+                          className={`h-12 rounded-lg text-xs font-bold transition active:scale-[0.97] flex flex-col items-center justify-center leading-tight ${
+                            isBooked
+                              ? "bg-soft text-ink-3 cursor-not-allowed"
+                              : active
+                                ? "bg-primary text-white shadow-sm"
+                                : "bg-soft text-ink-2 hover:bg-line"
+                          }`}
+                        >
+                          <span>{String(h).padStart(2, "0")}시</span>
+                          {isBooked && (
+                            <span className="text-[8px] font-medium text-ink-3 mt-0.5 truncate max-w-full px-0.5">
+                              {bookedBy}
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {bookedHours && bookedHours.size > 0 && (
+                    <p className="mt-1.5 text-[10px] text-ink-3">
+                      회색 시간은 이미 레슨이 잡혀 선택할 수 없어요.
+                    </p>
+                  )}
+                </div>
+              )}
+
+              <div className="pt-3">
+                <div className="text-[11px] font-semibold text-ink-2 mb-1.5">시작 분</div>
+                <div className="grid grid-cols-6 gap-1.5">
+                  {MINUTES.map((m) => {
+                    const active = m === minute;
+                    return (
+                      <button
+                        key={m}
+                        type="button"
+                        onClick={() => setMinute(m)}
+                        className={`h-10 rounded-lg text-xs font-bold transition active:scale-[0.97] ${
+                          active ? "bg-primary text-white shadow-sm" : "bg-soft text-ink-2 hover:bg-line"
+                        }`}
+                      >
+                        :{String(m).padStart(2, "0")}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="pt-3">
+                <div className="text-[11px] font-semibold text-ink-2 mb-1.5">레슨 길이</div>
+                <div className="grid grid-cols-6 gap-1.5">
+                  {DURATIONS.map((d) => {
+                    const active = d === duration;
+                    return (
+                      <button
+                        key={d}
+                        type="button"
+                        onClick={() => setDuration(d)}
+                        className={`h-10 rounded-lg text-xs font-bold transition active:scale-[0.97] ${
+                          active ? "bg-primary text-white shadow-sm" : "bg-soft text-ink-2 hover:bg-line"
+                        }`}
+                      >
+                        {d}분
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="mt-2 text-[11px] text-ink-3">
+                  <span className="font-semibold text-ink">{hh}:{mm}</span>
+                  &nbsp;~&nbsp;
+                  <span className="font-semibold text-ink">{endHh}:{endMm}</span>
+                  &nbsp;({duration}분)
+                </p>
+                {hourBookedBy && (
+                  <p className="mt-1 text-[11px] text-red-500">
+                    {hh}시는 {hourBookedBy} 수강생 레슨이 있어요. 다른 시간을 선택해주세요.
+                  </p>
+                )}
+              </div>
             </div>
-          </div>
+
+            <div className="px-5 pb-6 pt-3 border-t border-line flex-none flex gap-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 h-12 rounded-xl border border-line bg-surface text-sm font-semibold text-ink-2 hover:bg-soft transition"
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={() => setStep("student")}
+                disabled={!!hourBookedBy}
+                className="flex-1 h-12 rounded-xl bg-primary text-white text-sm font-semibold hover:opacity-90 transition active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                다음
+              </button>
+            </div>
+          </>
         )}
 
-        <div className="px-5 pt-3 pb-1 flex-none">
-          <div className="text-[11px] font-semibold text-ink-2 mb-1.5">시작 분</div>
-          <div className="grid grid-cols-6 gap-1.5">
-            {MINUTES.map((m) => {
-              const active = m === minute;
-              return (
-                <button
-                  key={m}
-                  type="button"
-                  onClick={() => setMinute(m)}
-                  disabled={!!pendingStudentId}
-                  className={`h-10 rounded-lg text-xs font-bold transition active:scale-[0.97] disabled:opacity-60 ${
-                    active
-                      ? "bg-primary text-white shadow-sm"
-                      : "bg-soft text-ink-2 hover:bg-line"
-                  }`}
-                >
-                  :{String(m).padStart(2, "0")}
-                </button>
-              );
-            })}
-          </div>
-        </div>
+        {/* STEP 2: 학생 선택 */}
+        {step === "student" && (
+          <>
+            <div className="px-5 pt-1 pb-2 flex-none">
+              <div className="rounded-lg bg-soft px-3 py-2 text-xs text-ink-2">
+                <span className="font-semibold text-ink">{hh}:{mm} ~ {endHh}:{endMm}</span>
+                &nbsp;({duration}분) 레슨을 받을 수강생을 선택하세요
+              </div>
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="이름 또는 전화번호로 검색"
+                className="mt-2 w-full h-11 rounded-xl bg-soft px-3.5 text-sm text-ink placeholder:text-ink-3 outline-none focus:ring-2 focus:ring-primary/40"
+              />
+            </div>
 
-        <div className="px-5 pt-3 pb-1 flex-none">
-          <div className="text-[11px] font-semibold text-ink-2 mb-1.5">레슨 길이</div>
-          <div className="grid grid-cols-6 gap-1.5">
-            {DURATIONS.map((d) => {
-              const active = d === duration;
-              return (
-                <button
-                  key={d}
-                  type="button"
-                  onClick={() => setDuration(d)}
-                  disabled={!!pendingStudentId}
-                  className={`h-10 rounded-lg text-xs font-bold transition active:scale-[0.97] disabled:opacity-60 ${
-                    active
-                      ? "bg-primary text-white shadow-sm"
-                      : "bg-soft text-ink-2 hover:bg-line"
-                  }`}
-                >
-                  {d}분
-                </button>
-              );
-            })}
-          </div>
-          <p className="mt-2 text-[11px] text-ink-3">
-            <span className="font-semibold text-ink">{hh}:{mm}</span>
-            &nbsp;~&nbsp;
-            <span className="font-semibold text-ink">{endHh}:{endMm}</span>
-            &nbsp;({duration}분)
-          </p>
-        </div>
-
-        <div className="px-5 pt-4 pb-1 flex-none">
-          <div className="text-sm font-bold text-ink mb-2">수강생 선택</div>
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="이름 또는 전화번호로 검색"
-            className="w-full h-11 rounded-xl bg-soft px-3.5 text-sm text-ink placeholder:text-ink-3 outline-none focus:ring-2 focus:ring-primary/40"
-          />
-        </div>
-
-        <div className="flex-1 overflow-y-auto px-3 pb-4">
-          {filtered.length === 0 ? (
-            <div className="py-10 text-center">
-              <p className="text-sm text-ink-2">
-                {students.length === 0 ? "등록된 수강생이 없어요" : "검색 결과가 없어요"}
-              </p>
-              {students.length === 0 && (
-                <p className="mt-1 text-xs text-ink-3">
-                  알림에서 학생 등록 요청을 수락하면 여기에 표시됩니다.
-                </p>
+            <div className="flex-1 overflow-y-auto px-3 pb-4">
+              {filtered.length === 0 ? (
+                <div className="py-10 text-center">
+                  <p className="text-sm text-ink-2">
+                    {students.length === 0 ? "등록된 수강생이 없어요" : "검색 결과가 없어요"}
+                  </p>
+                </div>
+              ) : (
+                <ul className="space-y-1.5 mt-1">
+                  {filtered.map((s) => {
+                    const isPending = pendingStudentId === s.id;
+                    return (
+                      <li key={s.id}>
+                        <button
+                          type="button"
+                          onClick={() => onPick(s.id, hour, minute, duration)}
+                          disabled={!!pendingStudentId}
+                          className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl hover:bg-soft transition active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed"
+                        >
+                          <div className="w-10 h-10 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-sm flex-none">
+                            {s.name.slice(0, 1)}
+                          </div>
+                          <div className="flex-1 min-w-0 text-left">
+                            <div className="text-sm font-bold text-ink">{s.name}</div>
+                            <div className="mt-0.5 text-[11px] text-ink-3">
+                              {s.phone ? maskPhone(s.phone) : "전화번호 없음"}
+                            </div>
+                          </div>
+                          {isPending && (
+                            <svg className="animate-spin h-4 w-4 text-ink-3 flex-none" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z" />
+                            </svg>
+                          )}
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
               )}
             </div>
-          ) : (
-            <ul className="space-y-1.5 mt-2">
-              {filtered.map((s) => {
-                const isPending = pendingStudentId === s.id;
-                const isDisabled = !!pendingStudentId;
-                return (
-                  <li key={s.id}>
-                    <button
-                      type="button"
-                      onClick={() => onPick(s.id, hour, minute, duration)}
-                      disabled={isDisabled}
-                      className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl hover:bg-soft transition active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed"
-                    >
-                      <div className="w-10 h-10 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-sm flex-none">
-                        {s.name.slice(0, 1)}
-                      </div>
-                      <div className="flex-1 min-w-0 text-left">
-                        <div className="text-sm font-bold text-ink">{s.name}</div>
-                        <div className="mt-0.5 text-[11px] text-ink-3">
-                          {s.phone ? maskPhone(s.phone) : "전화번호 없음"}
-                        </div>
-                      </div>
-                      {isPending && (
-                        <svg className="animate-spin h-4 w-4 text-ink-3 flex-none" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z" />
-                        </svg>
-                      )}
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </div>
 
-        <div className="px-5 pb-6 pt-2 border-t border-line flex-none">
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-full h-12 rounded-xl border border-line bg-surface text-sm font-semibold text-ink-2 hover:bg-soft transition"
-          >
-            취소
-          </button>
-        </div>
+            <div className="px-5 pb-6 pt-3 border-t border-line flex-none">
+              <button
+                type="button"
+                onClick={() => setStep("time")}
+                disabled={!!pendingStudentId}
+                className="w-full h-12 rounded-xl border border-line bg-surface text-sm font-semibold text-ink-2 hover:bg-soft transition disabled:opacity-50"
+              >
+                ‹ 이전 (시간 다시 선택)
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>,
     document.body,
