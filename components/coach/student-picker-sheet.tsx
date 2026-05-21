@@ -10,9 +10,18 @@ export type StudentOption = {
   phone: string | null;
 };
 
-const MINUTES = [0, 10, 20, 30, 40, 50];
 const DURATIONS = [20, 30, 40, 50, 60, 90];
-const HOURS = Array.from({ length: 17 }, (_, i) => i + 6); // 06 ~ 22
+
+// 06:00 ~ 22:50, 10분 단위 시간 슬롯
+const ALL_SLOTS: Array<{ startMin: number; label: string }> = [];
+for (let h = 6; h < 23; h++) {
+  for (let m = 0; m < 60; m += 10) {
+    ALL_SLOTS.push({
+      startMin: h * 60 + m,
+      label: `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`,
+    });
+  }
+}
 
 export type BookedLesson = {
   startMin: number; // 자정 기준 분
@@ -39,12 +48,6 @@ function findConflict(
   return null;
 }
 
-/** [segStart, segStart+10)가 점유됐는지 */
-function isSegOccupied(segStartMin: number, booked: BookedLesson[]): boolean {
-  const segEnd = segStartMin + 10;
-  return booked.some((b) => segStartMin < b.endMin && segEnd > b.startMin);
-}
-
 type Props = {
   open: boolean;
   onClose: () => void;
@@ -63,7 +66,6 @@ export function StudentPickerSheet({
   onClose,
   baseTimeLabel,
   hour: initialHour,
-  hourSelectable = false,
   bookedLessons = [],
   students,
   pendingStudentId,
@@ -71,19 +73,15 @@ export function StudentPickerSheet({
 }: Props) {
   const [step, setStep] = useState<"time" | "student">("time");
   const [search, setSearch] = useState("");
-  const [hour, setHour] = useState(initialHour);
-  const [minute, setMinute] = useState(0);
   const [duration, setDuration] = useState(60);
-  const [conflictMsg, setConflictMsg] = useState<string | null>(null);
+  const [selectedStartMin, setSelectedStartMin] = useState<number | null>(null);
 
   useEffect(() => {
     if (open) {
       setStep("time");
       setSearch("");
-      setHour(initialHour);
-      setMinute(0);
       setDuration(60);
-      setConflictMsg(null);
+      setSelectedStartMin(null);
     }
   }, [open, initialHour]);
 
@@ -99,16 +97,6 @@ export function StudentPickerSheet({
     };
   }, [open, onClose]);
 
-  const hh = String(hour).padStart(2, "0");
-  const mm = String(minute).padStart(2, "0");
-  const startMin = hour * 60 + minute;
-  const totalEndMin = startMin + duration;
-  const endHh = String(Math.floor(totalEndMin / 60)).padStart(2, "0");
-  const endMm = String(totalEndMin % 60).padStart(2, "0");
-
-  // 현재 선택한 시작 시각 + 길이가 겹치는지
-  const selectedConflict = findConflict(startMin, duration, bookedLessons);
-
   const q = search.trim();
   const filtered = useMemo(
     () =>
@@ -123,6 +111,12 @@ export function StudentPickerSheet({
   if (!open) return null;
   if (typeof document === "undefined") return null;
 
+  const startMin = selectedStartMin;
+  const endMin = startMin !== null ? startMin + duration : null;
+  const selectedConflict =
+    startMin !== null ? findConflict(startMin, duration, bookedLessons) : null;
+  const canProceed = startMin !== null && !selectedConflict;
+
   return createPortal(
     <div
       role="dialog"
@@ -135,7 +129,7 @@ export function StudentPickerSheet({
         onClick={onClose}
       />
       <div
-        className="absolute left-0 right-0 bottom-0 bg-surface rounded-t-3xl shadow-2xl flex flex-col max-h-[88vh]"
+        className="absolute left-0 right-0 bottom-0 bg-surface rounded-t-3xl shadow-2xl flex flex-col h-[88vh]"
         style={{ animation: "courtside-sheet-up 0.25s ease-out" }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -145,7 +139,9 @@ export function StudentPickerSheet({
             <div className="text-base font-extrabold text-ink">
               {step === "time" ? "1. 레슨 시간" : "2. 수강생 선택"}
             </div>
-            <span className="text-[11px] text-ink-3 font-medium">{step === "time" ? "1 / 2" : "2 / 2"}</span>
+            <span className="text-[11px] text-ink-3 font-medium">
+              {step === "time" ? "1 / 2" : "2 / 2"}
+            </span>
           </div>
           <div className="mt-1 text-xs text-ink-3">{baseTimeLabel}</div>
         </div>
@@ -153,181 +149,133 @@ export function StudentPickerSheet({
         {/* STEP 1: 시간 선택 */}
         {step === "time" && (
           <>
-            <div className="flex-1 overflow-y-auto px-5 pb-2">
-              {/* 레슨 시작 시간 — 시 + 분 통합 */}
-              <div className="pt-2">
-                <div className="text-[11px] font-semibold text-ink-2 mb-1.5">레슨 시작 시간</div>
-                <div className="rounded-xl border border-line bg-soft/50 p-2.5 space-y-1.5">
-                  {hourSelectable && (
-                    <div className="grid grid-cols-6 gap-1.5">
-                      {HOURS.map((h) => {
-                        const active = h === hour;
-                        // 그 시(60분)의 10분 세그먼트 6칸 점유 여부
-                        const segs = [0, 1, 2, 3, 4, 5].map((i) =>
-                          isSegOccupied(h * 60 + i * 10, bookedLessons),
-                        );
-                        const fullyBooked = segs.every((s) => s);
-                        return (
-                          <button
-                            key={h}
-                            type="button"
-                            onClick={() => {
-                              setHour(h);
-                              setConflictMsg(null);
-                            }}
-                            className={`h-12 rounded-lg text-xs font-bold transition active:scale-[0.97] flex flex-col items-center justify-center gap-1 ${
-                              active
-                                ? "bg-primary text-white shadow-sm"
-                                : fullyBooked
-                                  ? "bg-line/60 text-ink-3 border border-line"
-                                  : "bg-surface text-ink-2 hover:bg-line border border-line"
-                            }`}
-                          >
-                            <span>{String(h).padStart(2, "0")}시</span>
-                            <span className="flex gap-px w-7">
-                              {segs.map((occ, i) => (
-                                <span
-                                  key={i}
-                                  className={`flex-1 h-1 rounded-sm ${
-                                    occ
-                                      ? active
-                                        ? "bg-white"
-                                        : "bg-red-400"
-                                      : active
-                                        ? "bg-white/30"
-                                        : "bg-line"
-                                  }`}
-                                />
-                              ))}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                  <div className="grid grid-cols-6 gap-1.5">
-                    {MINUTES.map((m) => {
-                      const active = m === minute;
-                      const occ = isSegOccupied(hour * 60 + m, bookedLessons);
-                      return (
-                        <button
-                          key={m}
-                          type="button"
-                          onClick={() => {
-                            setMinute(m);
-                            setConflictMsg(null);
-                          }}
-                          className={`relative h-9 rounded-lg text-xs font-bold transition active:scale-[0.97] ${
-                            active
-                              ? "bg-primary text-white shadow-sm"
-                              : occ
-                                ? "bg-line/60 text-ink-3 border border-line"
-                                : "bg-surface text-ink-2 hover:bg-line border border-line"
-                          }`}
-                        >
-                          :{String(m).padStart(2, "0")}
-                          {occ && !active && (
-                            <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-red-400" />
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-                {hourSelectable && bookedLessons.length > 0 && (
-                  <p className="mt-1.5 text-[10px] text-ink-3">
-                    각 시간의 빨간 막대·점은 이미 레슨이 잡힌 구간이에요.
-                  </p>
-                )}
-              </div>
-
-              {/* 레슨 길이 — 각 길이가 시작 시각 기준 가능한지 판정 */}
-              <div className="pt-3">
-                <div className="text-[11px] font-semibold text-ink-2 mb-1.5">
-                  레슨 길이 <span className="font-normal text-ink-3">({hh}:{mm} 시작 기준)</span>
-                </div>
-                <div className="grid grid-cols-3 gap-1.5">
-                  {DURATIONS.map((d) => {
-                    const conflict = findConflict(startMin, d, bookedLessons);
-                    const blocked = !!conflict;
-                    const active = d === duration && !blocked;
-                    return (
-                      <button
-                        key={d}
-                        type="button"
-                        onClick={() => {
-                          if (blocked && conflict) {
-                            setConflictMsg(
-                              `${conflict.studentName} 수강생이 ${hmLabel(conflict.startMin)}~${hmLabel(conflict.endMin)}에 레슨이 있어 ${d}분 수업은 잡을 수 없어요.`,
-                            );
-                          } else {
-                            setDuration(d);
-                            setConflictMsg(null);
-                          }
-                        }}
-                        className={`h-11 rounded-lg text-xs font-bold transition active:scale-[0.97] flex flex-col items-center justify-center leading-tight ${
-                          blocked
-                            ? "bg-line/60 text-ink-3"
-                            : active
-                              ? "bg-primary text-white shadow-sm"
-                              : "bg-soft text-ink-2 hover:bg-line"
-                        }`}
-                      >
-                        <span>{d}분 수업</span>
-                        <span className={`text-[9px] font-medium mt-0.5 ${blocked ? "text-red-400" : active ? "text-white/80" : "text-ink-3"}`}>
-                          {blocked ? "레슨 불가" : "가능"}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-                <p className="mt-2 text-[11px] text-ink-3">
-                  선택:&nbsp;
-                  <span className="font-semibold text-ink">{hh}:{mm}</span>
-                  &nbsp;~&nbsp;
-                  <span className="font-semibold text-ink">{endHh}:{endMm}</span>
-                  &nbsp;({duration}분)
-                </p>
-                {conflictMsg && (
-                  <div className="mt-2 rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-[11px] text-red-600 leading-relaxed">
-                    {conflictMsg}
-                  </div>
-                )}
-                {!conflictMsg && selectedConflict && (
-                  <div className="mt-2 rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-[11px] text-red-600 leading-relaxed">
-                    이 시간은 {selectedConflict.studentName} 수강생 레슨({hmLabel(selectedConflict.startMin)}~{hmLabel(selectedConflict.endMin)})과 겹쳐요. 다른 시간/길이를 선택해주세요.
-                  </div>
-                )}
+            {/* 레슨 길이 (상단 고정) */}
+            <div className="px-5 pt-1 pb-2 flex-none">
+              <div className="text-[11px] font-semibold text-ink-2 mb-1.5">레슨 길이</div>
+              <div className="grid grid-cols-6 gap-1.5">
+                {DURATIONS.map((d) => {
+                  const active = d === duration;
+                  return (
+                    <button
+                      key={d}
+                      type="button"
+                      onClick={() => setDuration(d)}
+                      className={`h-9 rounded-lg text-xs font-bold transition active:scale-[0.97] ${
+                        active ? "bg-primary text-white shadow-sm" : "bg-soft text-ink-2 hover:bg-line"
+                      }`}
+                    >
+                      {d}분
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
-            <div className="px-5 pb-6 pt-3 border-t border-line flex-none flex gap-2">
-              <button
-                type="button"
-                onClick={onClose}
-                className="flex-1 h-12 rounded-xl border border-line bg-surface text-sm font-semibold text-ink-2 hover:bg-soft transition"
-              >
-                취소
-              </button>
-              <button
-                type="button"
-                onClick={() => setStep("student")}
-                disabled={!!selectedConflict}
-                className="flex-1 h-12 rounded-xl bg-primary text-white text-sm font-semibold hover:opacity-90 transition active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                다음
-              </button>
+            {/* 시간 슬롯 리스트 (스크롤) */}
+            <div className="px-3 pb-1 flex-none">
+              <div className="text-[11px] font-semibold text-ink-2 px-2">
+                시작 시간 선택 — 비어있는 시간을 탭하세요
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto px-3 pb-2">
+              <ul className="space-y-1">
+                {ALL_SLOTS.map((slot) => {
+                  const conflict = findConflict(slot.startMin, duration, bookedLessons);
+                  const selected = slot.startMin === selectedStartMin;
+                  const slotEnd = slot.startMin + duration;
+                  return (
+                    <li key={slot.startMin}>
+                      <button
+                        type="button"
+                        onClick={() => !conflict && setSelectedStartMin(slot.startMin)}
+                        disabled={!!conflict}
+                        className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl border transition text-left ${
+                          conflict
+                            ? "bg-soft border-line cursor-not-allowed"
+                            : selected
+                              ? "bg-primary/10 border-primary"
+                              : "bg-surface border-line hover:bg-soft active:scale-[0.99]"
+                        }`}
+                      >
+                        <div
+                          className={`w-12 flex-none text-sm font-bold ${
+                            conflict ? "text-ink-3" : selected ? "text-primary" : "text-ink"
+                          }`}
+                        >
+                          {slot.label}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          {conflict ? (
+                            <div className="text-xs text-ink-3">
+                              <span className="font-semibold text-ink-2">{conflict.studentName}</span>{" "}
+                              레슨 ({hmLabel(conflict.startMin)}~{hmLabel(conflict.endMin)})
+                            </div>
+                          ) : (
+                            <div className="text-xs text-ink-2">
+                              ~{hmLabel(slotEnd)} 까지 · {duration}분 레슨 가능
+                            </div>
+                          )}
+                        </div>
+                        {conflict ? (
+                          <span className="flex-none text-[10px] font-semibold text-red-400">
+                            잡힘
+                          </span>
+                        ) : selected ? (
+                          <span className="flex-none w-5 h-5 rounded-full bg-primary text-white flex items-center justify-center">
+                            <svg viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
+                              <path fillRule="evenodd" d="M16.7 5.3a1 1 0 010 1.4l-7 7a1 1 0 01-1.4 0l-3-3a1 1 0 111.4-1.4l2.3 2.3 6.3-6.3a1 1 0 011.4 0z" clipRule="evenodd" />
+                            </svg>
+                          </span>
+                        ) : (
+                          <span className="flex-none text-[10px] font-semibold text-primary">선택</span>
+                        )}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+
+            <div className="px-5 pb-6 pt-3 border-t border-line flex-none">
+              {startMin !== null && endMin !== null && (
+                <p className="mb-2 text-xs text-ink-2 text-center">
+                  선택:{" "}
+                  <span className="font-bold text-ink">
+                    {hmLabel(startMin)} ~ {hmLabel(endMin)}
+                  </span>{" "}
+                  ({duration}분)
+                </p>
+              )}
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="flex-1 h-12 rounded-xl border border-line bg-surface text-sm font-semibold text-ink-2 hover:bg-soft transition"
+                >
+                  취소
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setStep("student")}
+                  disabled={!canProceed}
+                  className="flex-1 h-12 rounded-xl bg-primary text-white text-sm font-semibold hover:opacity-90 transition active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  다음
+                </button>
+              </div>
             </div>
           </>
         )}
 
         {/* STEP 2: 학생 선택 */}
-        {step === "student" && (
+        {step === "student" && startMin !== null && endMin !== null && (
           <>
             <div className="px-5 pt-1 pb-2 flex-none">
               <div className="rounded-lg bg-soft px-3 py-2 text-xs text-ink-2">
-                <span className="font-semibold text-ink">{hh}:{mm} ~ {endHh}:{endMm}</span>
-                &nbsp;({duration}분) 레슨을 받을 수강생을 선택하세요
+                <span className="font-semibold text-ink">
+                  {hmLabel(startMin)} ~ {hmLabel(endMin)}
+                </span>{" "}
+                ({duration}분) 레슨을 받을 수강생을 선택하세요
               </div>
               <input
                 type="text"
@@ -353,7 +301,14 @@ export function StudentPickerSheet({
                       <li key={s.id}>
                         <button
                           type="button"
-                          onClick={() => onPick(s.id, hour, minute, duration)}
+                          onClick={() =>
+                            onPick(
+                              s.id,
+                              Math.floor(startMin / 60),
+                              startMin % 60,
+                              duration,
+                            )
+                          }
                           disabled={!!pendingStudentId}
                           className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl hover:bg-soft transition active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed"
                         >
