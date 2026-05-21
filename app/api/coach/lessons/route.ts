@@ -65,8 +65,24 @@ export async function GET() {
     }));
   }
 
+  // lessons에 등장하는 모든 studentId의 이름 해석 (claim 여부와 무관 — 카드 표시용)
+  const lessonStudentIds = Array.from(
+    new Set((lessonsRaw ?? []).map((l) => l.studentId as string)),
+  );
+  const studentNames: Record<string, string> = {};
+  if (lessonStudentIds.length > 0) {
+    const { data: nameRows } = await admin
+      .from("users")
+      .select("id, realName, name")
+      .in("id", lessonStudentIds);
+    for (const u of (nameRows ?? []) as { id: string; realName: string | null; name: string | null }[]) {
+      studentNames[u.id] = u.realName || u.name || "이름 미입력";
+    }
+  }
+
   return NextResponse.json({
     lessons: lessonsRaw ?? [],
     students,
+    studentNames,
   });
 }

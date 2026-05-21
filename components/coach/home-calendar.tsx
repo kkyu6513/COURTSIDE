@@ -215,11 +215,27 @@ function dayKeyOf(d: Date): string {
   return `${d.getUTCFullYear()}-${d.getUTCMonth() + 1}-${d.getUTCDate()}`;
 }
 
+/**
+ * DB status + 현재 시각으로 표시용 상태 도출.
+ * CONFIRMED(레슨 예정) 레슨이 실제 진행 시간대(시작~종료)에 들어오면 IN_PROGRESS(진행중)로 표시.
+ * 그 외에는 DB status를 그대로 사용.
+ */
+function deriveDisplayStatus(lesson: LessonRow): string {
+  if (lesson.status === "CONFIRMED") {
+    const start = parseIsoUtc(lesson.scheduledAt).getTime();
+    const end = start + lesson.durationMinutes * 60 * 1000;
+    const now = Date.now();
+    if (now >= start && now < end) return "IN_PROGRESS";
+  }
+  return lesson.status;
+}
+
 export function CoachHomeCalendar() {
   const [weekStart, setWeekStart] = useState<Date>(() => startOfWeekMon(new Date()));
   const [selectedKey, setSelectedKey] = useState<string>(() => dayKeyOf(startOfWeekMon(new Date())));
   const [lessons, setLessons] = useState<LessonRow[]>([]);
   const [students, setStudents] = useState<StudentOption[]>([]);
+  const [studentNames, setStudentNames] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pendingStudentId, setPendingStudentId] = useState<string | null>(null);
@@ -247,9 +263,14 @@ export function CoachHomeCalendar() {
     try {
       const res = await fetch("/api/coach/lessons", { cache: "no-store" });
       if (res.ok) {
-        const data = (await res.json()) as { lessons: LessonRow[]; students: StudentOption[] };
+        const data = (await res.json()) as {
+          lessons: LessonRow[];
+          students: StudentOption[];
+          studentNames?: Record<string, string>;
+        };
         setLessons(data.lessons ?? []);
         setStudents(data.students ?? []);
+        setStudentNames(data.studentNames ?? {});
       }
     } catch {
       // 무시 — 빈 상태로 표시
@@ -298,8 +319,8 @@ export function CoachHomeCalendar() {
         return `${p.y}-${p.m}-${p.day}` === selectedKey;
       })
       .sort((a, b) => {
-        const sa = STATUS_SORT_ORDER[a.status] ?? 99;
-        const sb = STATUS_SORT_ORDER[b.status] ?? 99;
+        const sa = STATUS_SORT_ORDER[deriveDisplayStatus(a)] ?? 99;
+        const sb = STATUS_SORT_ORDER[deriveDisplayStatus(b)] ?? 99;
         if (sa !== sb) return sa - sb;
         return parseIsoUtc(a.scheduledAt).getTime() - parseIsoUtc(b.scheduledAt).getTime();
       });
@@ -495,7 +516,11 @@ export function CoachHomeCalendar() {
               <li key={l.id}>
                 <LessonCard
                   lesson={l}
-                  studentName={studentMap.get(l.studentId)?.name ?? "이름 미입력"}
+                  studentName={
+                    studentNames[l.studentId] ??
+                    studentMap.get(l.studentId)?.name ??
+                    "이름 미입력"
+                  }
                   onClick={openPicker}
                 />
               </li>
@@ -538,7 +563,8 @@ function LessonCard({
   studentName: string;
   onClick: () => void;
 }) {
-  const style = STATUS_STYLES[lesson.status] ?? FALLBACK_STYLE;
+  const displayStatus = deriveDisplayStatus(lesson);
+  const style = STATUS_STYLES[displayStatus] ?? FALLBACK_STYLE;
   const sp = kstParts(parseIsoUtc(lesson.scheduledAt));
   const timeText = lesson.status === "PENDING" ? `신청 ${sp.hh}:${sp.mm}` : `${sp.hh}:${sp.mm}`;
 
