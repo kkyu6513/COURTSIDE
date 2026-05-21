@@ -12,16 +12,8 @@ export type StudentOption = {
 
 const DURATIONS = [20, 30, 40, 50, 60, 90];
 
-// 06:00 ~ 22:50, 10분 단위 시간 슬롯
-const ALL_SLOTS: Array<{ startMin: number; label: string }> = [];
-for (let h = 6; h < 23; h++) {
-  for (let m = 0; m < 60; m += 10) {
-    ALL_SLOTS.push({
-      startMin: h * 60 + m,
-      label: `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`,
-    });
-  }
-}
+const DAY_START_MIN = 6 * 60; // 06:00
+const DAY_END_MIN = 23 * 60; // 23:00 (레슨 종료 한계)
 
 export type BookedLesson = {
   startMin: number; // 자정 기준 분
@@ -117,6 +109,20 @@ export function StudentPickerSheet({
     startMin !== null ? findConflict(startMin, duration, bookedLessons) : null;
   const canProceed = startMin !== null && !selectedConflict;
 
+  // 레슨 길이 단위로 머지된 시간 슬롯 (06:00부터 길이 간격)
+  const slots = useMemo(() => {
+    const list: Array<{ startMin: number; label: string }> = [];
+    for (let s = DAY_START_MIN; s + duration <= DAY_END_MIN; s += duration) {
+      list.push({ startMin: s, label: hmLabel(s) });
+    }
+    return list;
+  }, [duration]);
+
+  const onSelectDuration = (d: number) => {
+    setDuration(d);
+    setSelectedStartMin(null); // 길이 바뀌면 슬롯 그리드가 달라지므로 선택 초기화
+  };
+
   return createPortal(
     <div
       role="dialog"
@@ -159,7 +165,7 @@ export function StudentPickerSheet({
                     <button
                       key={d}
                       type="button"
-                      onClick={() => setDuration(d)}
+                      onClick={() => onSelectDuration(d)}
                       className={`h-9 rounded-lg text-xs font-bold transition active:scale-[0.97] ${
                         active ? "bg-primary text-white shadow-sm" : "bg-soft text-ink-2 hover:bg-line"
                       }`}
@@ -179,7 +185,7 @@ export function StudentPickerSheet({
             </div>
             <div className="flex-1 overflow-y-auto px-3 pb-2">
               <ul className="space-y-1">
-                {ALL_SLOTS.map((slot) => {
+                {slots.map((slot) => {
                   const conflict = findConflict(slot.startMin, duration, bookedLessons);
                   const selected = slot.startMin === selectedStartMin;
                   const slotEnd = slot.startMin + duration;
