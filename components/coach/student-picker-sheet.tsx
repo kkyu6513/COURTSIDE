@@ -120,65 +120,66 @@ export function StudentPickerSheet({
         {step === "time" && (
           <>
             <div className="flex-1 overflow-y-auto px-5 pb-2">
-              {hourSelectable && (
-                <div className="pt-2">
-                  <div className="text-[11px] font-semibold text-ink-2 mb-1.5">시작 시</div>
+              {/* 레슨 시작 시간 — 시 + 분 통합 */}
+              <div className="pt-2">
+                <div className="text-[11px] font-semibold text-ink-2 mb-1.5">레슨 시작 시간</div>
+                <div className="rounded-xl border border-line bg-soft/50 p-2.5 space-y-1.5">
+                  {hourSelectable && (
+                    <div className="grid grid-cols-6 gap-1.5">
+                      {HOURS.map((h) => {
+                        const active = h === hour;
+                        const bookedBy = bookedHours?.get(h);
+                        const isBooked = !!bookedBy;
+                        return (
+                          <button
+                            key={h}
+                            type="button"
+                            onClick={() => !isBooked && setHour(h)}
+                            disabled={isBooked}
+                            className={`h-11 rounded-lg text-xs font-bold transition active:scale-[0.97] flex flex-col items-center justify-center leading-tight ${
+                              isBooked
+                                ? "bg-line/70 text-ink-3 cursor-not-allowed"
+                                : active
+                                  ? "bg-primary text-white shadow-sm"
+                                  : "bg-surface text-ink-2 hover:bg-line border border-line"
+                            }`}
+                          >
+                            <span>{String(h).padStart(2, "0")}시</span>
+                            {isBooked && (
+                              <span className="text-[8px] font-medium text-ink-3 mt-0.5 truncate max-w-full px-0.5">
+                                {bookedBy}
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                   <div className="grid grid-cols-6 gap-1.5">
-                    {HOURS.map((h) => {
-                      const active = h === hour;
-                      const bookedBy = bookedHours?.get(h);
-                      const isBooked = !!bookedBy;
+                    {MINUTES.map((m) => {
+                      const active = m === minute;
                       return (
                         <button
-                          key={h}
+                          key={m}
                           type="button"
-                          onClick={() => !isBooked && setHour(h)}
-                          disabled={isBooked}
-                          className={`h-12 rounded-lg text-xs font-bold transition active:scale-[0.97] flex flex-col items-center justify-center leading-tight ${
-                            isBooked
-                              ? "bg-soft text-ink-3 cursor-not-allowed"
-                              : active
-                                ? "bg-primary text-white shadow-sm"
-                                : "bg-soft text-ink-2 hover:bg-line"
+                          onClick={() => setMinute(m)}
+                          className={`h-9 rounded-lg text-xs font-bold transition active:scale-[0.97] ${
+                            active
+                              ? "bg-primary text-white shadow-sm"
+                              : "bg-surface text-ink-2 hover:bg-line border border-line"
                           }`}
                         >
-                          <span>{String(h).padStart(2, "0")}시</span>
-                          {isBooked && (
-                            <span className="text-[8px] font-medium text-ink-3 mt-0.5 truncate max-w-full px-0.5">
-                              {bookedBy}
-                            </span>
-                          )}
+                          :{String(m).padStart(2, "0")}
                         </button>
                       );
                     })}
                   </div>
-                  {bookedHours && bookedHours.size > 0 && (
-                    <p className="mt-1.5 text-[10px] text-ink-3">
-                      회색 시간은 이미 레슨이 잡혀 선택할 수 없어요.
-                    </p>
-                  )}
                 </div>
-              )}
-
-              <div className="pt-3">
-                <div className="text-[11px] font-semibold text-ink-2 mb-1.5">시작 분</div>
-                <div className="grid grid-cols-6 gap-1.5">
-                  {MINUTES.map((m) => {
-                    const active = m === minute;
-                    return (
-                      <button
-                        key={m}
-                        type="button"
-                        onClick={() => setMinute(m)}
-                        className={`h-10 rounded-lg text-xs font-bold transition active:scale-[0.97] ${
-                          active ? "bg-primary text-white shadow-sm" : "bg-soft text-ink-2 hover:bg-line"
-                        }`}
-                      >
-                        :{String(m).padStart(2, "0")}
-                      </button>
-                    );
-                  })}
-                </div>
+                {hourSelectable && bookedHours && bookedHours.size > 0 && (
+                  <p className="mt-1.5 text-[10px] text-ink-3">
+                    회색 시간은 이미 레슨이 잡혀 선택할 수 없어요.
+                  </p>
+                )}
               </div>
 
               <div className="pt-3">
