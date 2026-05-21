@@ -165,24 +165,19 @@ export function CoachHomeCalendar() {
     return wd?.date ?? null;
   }, [weekDays, selectedKey]);
 
-  // 선택 날짜에 이미 잡힌 시간 — hour → 학생 이름 (시 칩 비활성용)
-  const bookedHours = useMemo(() => {
-    const m = new Map<number, string>();
-    for (const l of selectedLessons) {
-      if (l.status === "CANCELLED") continue;
-      const start = parseIsoUtc(l.scheduledAt);
-      const end = new Date(start.getTime() + l.durationMinutes * 60 * 1000);
-      const startKst = new Date(start.getTime() + 9 * 60 * 60 * 1000);
-      const endKst = new Date(end.getTime() + 9 * 60 * 60 * 1000);
-      const name = studentMap.get(l.studentId)?.name ?? "수강생";
-      const cursor = new Date(startKst);
-      cursor.setUTCMinutes(0, 0, 0);
-      while (cursor.getTime() < endKst.getTime()) {
-        m.set(cursor.getUTCHours(), name);
-        cursor.setTime(cursor.getTime() + 60 * 60 * 1000);
-      }
-    }
-    return m;
+  // 선택 날짜에 이미 잡힌 레슨 — 분 단위 구간 + 학생명 (길이 칩 판정용)
+  const bookedLessons = useMemo(() => {
+    return selectedLessons
+      .filter((l) => l.status !== "CANCELLED")
+      .map((l) => {
+        const startKst = new Date(parseIsoUtc(l.scheduledAt).getTime() + 9 * 60 * 60 * 1000);
+        const startMin = startKst.getUTCHours() * 60 + startKst.getUTCMinutes();
+        return {
+          startMin,
+          endMin: startMin + l.durationMinutes,
+          studentName: studentMap.get(l.studentId)?.name ?? "수강생",
+        };
+      });
   }, [selectedLessons, studentMap]);
 
   const selectedLabel = useMemo(() => {
@@ -373,7 +368,7 @@ export function CoachHomeCalendar() {
           baseTimeLabel={selectedLabel}
           hour={9}
           hourSelectable
-          bookedHours={bookedHours}
+          bookedLessons={bookedLessons}
           students={students}
           pendingStudentId={pendingStudentId}
           onPick={onPickStudent}

@@ -14,14 +14,39 @@ const MINUTES = [0, 10, 20, 30, 40, 50];
 const DURATIONS = [20, 30, 40, 50, 60, 90];
 const HOURS = Array.from({ length: 17 }, (_, i) => i + 6); // 06 ~ 22
 
+export type BookedLesson = {
+  startMin: number; // 자정 기준 분
+  endMin: number;
+  studentName: string;
+};
+
+function hmLabel(totalMin: number): string {
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+
+/** [start, start+dur)가 겹치는 첫 booked lesson 반환 (없으면 null) */
+function findConflict(
+  startMin: number,
+  durationMin: number,
+  booked: BookedLesson[],
+): BookedLesson | null {
+  const endMin = startMin + durationMin;
+  for (const b of booked) {
+    if (startMin < b.endMin && endMin > b.startMin) return b;
+  }
+  return null;
+}
+
 type Props = {
   open: boolean;
   onClose: () => void;
   baseTimeLabel: string;
   hour: number;
   hourSelectable?: boolean;
-  /** 이미 레슨이 잡힌 시간 — hour → 학생 이름. 해당 시 칩은 비활성 */
-  bookedHours?: Map<number, string>;
+  /** 그 날짜에 이미 잡힌 레슨 (분 단위 구간 + 학생명) */
+  bookedLessons?: BookedLesson[];
   students: StudentOption[];
   pendingStudentId: string | null;
   onPick: (studentId: string, hour: number, minute: number, durationMinutes: number) => void;
@@ -33,7 +58,7 @@ export function StudentPickerSheet({
   baseTimeLabel,
   hour: initialHour,
   hourSelectable = false,
-  bookedHours,
+  bookedLessons = [],
   students,
   pendingStudentId,
   onPick,
@@ -43,6 +68,7 @@ export function StudentPickerSheet({
   const [hour, setHour] = useState(initialHour);
   const [minute, setMinute] = useState(0);
   const [duration, setDuration] = useState(60);
+  const [conflictMsg, setConflictMsg] = useState<string | null>(null);
 
   useEffect(() => {
     if (open) {
@@ -51,6 +77,7 @@ export function StudentPickerSheet({
       setHour(initialHour);
       setMinute(0);
       setDuration(60);
+      setConflictMsg(null);
     }
   }, [open, initialHour]);
 
@@ -68,12 +95,13 @@ export function StudentPickerSheet({
 
   const hh = String(hour).padStart(2, "0");
   const mm = String(minute).padStart(2, "0");
-  const totalEndMin = hour * 60 + minute + duration;
+  const startMin = hour * 60 + minute;
+  const totalEndMin = startMin + duration;
   const endHh = String(Math.floor(totalEndMin / 60)).padStart(2, "0");
   const endMm = String(totalEndMin % 60).padStart(2, "0");
 
-  // 현재 선택한 시가 이미 막혔는지
-  const hourBookedBy = bookedHours?.get(hour);
+  // 현재 선택한 시작 시각 + 길이가 겹치는지
+  const selectedConflict = findConflict(startMin, duration, bookedLessons);
 
   const q = search.trim();
   const filtered = useMemo(
@@ -128,28 +156,21 @@ export function StudentPickerSheet({
                     <div className="grid grid-cols-6 gap-1.5">
                       {HOURS.map((h) => {
                         const active = h === hour;
-                        const bookedBy = bookedHours?.get(h);
-                        const isBooked = !!bookedBy;
                         return (
                           <button
                             key={h}
                             type="button"
-                            onClick={() => !isBooked && setHour(h)}
-                            disabled={isBooked}
-                            className={`h-11 rounded-lg text-xs font-bold transition active:scale-[0.97] flex flex-col items-center justify-center leading-tight ${
-                              isBooked
-                                ? "bg-line/70 text-ink-3 cursor-not-allowed"
-                                : active
-                                  ? "bg-primary text-white shadow-sm"
-                                  : "bg-surface text-ink-2 hover:bg-line border border-line"
+                            onClick={() => {
+                              setHour(h);
+                              setConflictMsg(null);
+                            }}
+                            className={`h-9 rounded-lg text-xs font-bold transition active:scale-[0.97] ${
+                              active
+                                ? "bg-primary text-white shadow-sm"
+                                : "bg-surface text-ink-2 hover:bg-line border border-line"
                             }`}
                           >
-                            <span>{String(h).padStart(2, "0")}시</span>
-                            {isBooked && (
-                              <span className="text-[8px] font-medium text-ink-3 mt-0.5 truncate max-w-full px-0.5">
-                                {bookedBy}
-                              </span>
-                            )}
+                            {String(h).padStart(2, "0")}시
                           </button>
                         );
                       })}
@@ -162,7 +183,10 @@ export function StudentPickerSheet({
                         <button
                           key={m}
                           type="button"
-                          onClick={() => setMinute(m)}
+                          onClick={() => {
+                            setMinute(m);
+                            setConflictMsg(null);
+                          }}
                           className={`h-9 rounded-lg text-xs font-bold transition active:scale-[0.97] ${
                             active
                               ? "bg-primary text-white shadow-sm"
@@ -175,42 +199,64 @@ export function StudentPickerSheet({
                     })}
                   </div>
                 </div>
-                {hourSelectable && bookedHours && bookedHours.size > 0 && (
-                  <p className="mt-1.5 text-[10px] text-ink-3">
-                    회색 시간은 이미 레슨이 잡혀 선택할 수 없어요.
-                  </p>
-                )}
               </div>
 
+              {/* 레슨 길이 — 각 길이가 시작 시각 기준 가능한지 판정 */}
               <div className="pt-3">
-                <div className="text-[11px] font-semibold text-ink-2 mb-1.5">레슨 길이</div>
-                <div className="grid grid-cols-6 gap-1.5">
+                <div className="text-[11px] font-semibold text-ink-2 mb-1.5">
+                  레슨 길이 <span className="font-normal text-ink-3">({hh}:{mm} 시작 기준)</span>
+                </div>
+                <div className="grid grid-cols-3 gap-1.5">
                   {DURATIONS.map((d) => {
-                    const active = d === duration;
+                    const conflict = findConflict(startMin, d, bookedLessons);
+                    const blocked = !!conflict;
+                    const active = d === duration && !blocked;
                     return (
                       <button
                         key={d}
                         type="button"
-                        onClick={() => setDuration(d)}
-                        className={`h-10 rounded-lg text-xs font-bold transition active:scale-[0.97] ${
-                          active ? "bg-primary text-white shadow-sm" : "bg-soft text-ink-2 hover:bg-line"
+                        onClick={() => {
+                          if (blocked && conflict) {
+                            setConflictMsg(
+                              `${conflict.studentName} 수강생이 ${hmLabel(conflict.startMin)}~${hmLabel(conflict.endMin)}에 레슨이 있어 ${d}분 수업은 잡을 수 없어요.`,
+                            );
+                          } else {
+                            setDuration(d);
+                            setConflictMsg(null);
+                          }
+                        }}
+                        className={`h-11 rounded-lg text-xs font-bold transition active:scale-[0.97] flex flex-col items-center justify-center leading-tight ${
+                          blocked
+                            ? "bg-line/60 text-ink-3"
+                            : active
+                              ? "bg-primary text-white shadow-sm"
+                              : "bg-soft text-ink-2 hover:bg-line"
                         }`}
                       >
-                        {d}분
+                        <span>{d}분 수업</span>
+                        <span className={`text-[9px] font-medium mt-0.5 ${blocked ? "text-red-400" : active ? "text-white/80" : "text-ink-3"}`}>
+                          {blocked ? "레슨 불가" : "가능"}
+                        </span>
                       </button>
                     );
                   })}
                 </div>
                 <p className="mt-2 text-[11px] text-ink-3">
+                  선택:&nbsp;
                   <span className="font-semibold text-ink">{hh}:{mm}</span>
                   &nbsp;~&nbsp;
                   <span className="font-semibold text-ink">{endHh}:{endMm}</span>
                   &nbsp;({duration}분)
                 </p>
-                {hourBookedBy && (
-                  <p className="mt-1 text-[11px] text-red-500">
-                    {hh}시는 {hourBookedBy} 수강생 레슨이 있어요. 다른 시간을 선택해주세요.
-                  </p>
+                {conflictMsg && (
+                  <div className="mt-2 rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-[11px] text-red-600 leading-relaxed">
+                    {conflictMsg}
+                  </div>
+                )}
+                {!conflictMsg && selectedConflict && (
+                  <div className="mt-2 rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-[11px] text-red-600 leading-relaxed">
+                    이 시간은 {selectedConflict.studentName} 수강생 레슨({hmLabel(selectedConflict.startMin)}~{hmLabel(selectedConflict.endMin)})과 겹쳐요. 다른 시간/길이를 선택해주세요.
+                  </div>
                 )}
               </div>
             </div>
@@ -226,7 +272,7 @@ export function StudentPickerSheet({
               <button
                 type="button"
                 onClick={() => setStep("student")}
-                disabled={!!hourBookedBy}
+                disabled={!!selectedConflict}
                 className="flex-1 h-12 rounded-xl bg-primary text-white text-sm font-semibold hover:opacity-90 transition active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 다음
