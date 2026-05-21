@@ -11,9 +11,164 @@ type LessonRow = {
   scheduledAt: string;
   durationMinutes: number;
   status: string;
+  paymentStatus: string;
+  lessonFormat: string;
+  roundNumber: number | null;
+  totalRounds: number | null;
+  originalScheduledAt: string | null;
+  splitIndex: number | null;
+  splitTotal: number | null;
+  notes: string | null;
 };
 
 const DOW_KOR = ["일", "월", "화", "수", "목", "금", "토"];
+
+// status → 카드 스타일 매핑 (프로토타입 7-0 기준 12종)
+type StatusStyle = {
+  badgeText: string;
+  badgeBg: string;
+  badgeColor: string;
+  cardBg: string;
+  cardBorder: string;
+  cardExtra?: string;
+  timeColor?: string;
+  noteColor?: string;
+  faded?: boolean;
+  strike?: boolean;
+};
+
+const STATUS_STYLES: Record<string, StatusStyle> = {
+  PENDING: {
+    badgeText: "⏳ 레슨 신청",
+    badgeBg: "bg-amber-100",
+    badgeColor: "text-amber-800",
+    cardBg: "bg-amber-50",
+    cardBorder: "border-amber-200",
+    cardExtra: "border-[1.5px]",
+    timeColor: "text-amber-800",
+    noteColor: "text-amber-800",
+  },
+  CONFIRMED: {
+    badgeText: "레슨 예정",
+    badgeBg: "bg-purple-100",
+    badgeColor: "text-purple-700",
+    cardBg: "bg-surface",
+    cardBorder: "border-line",
+  },
+  IN_PROGRESS: {
+    badgeText: "🎾 진행중",
+    badgeBg: "bg-red-100",
+    badgeColor: "text-red-500 animate-pulse",
+    cardBg: "bg-surface",
+    cardBorder: "border-line",
+    timeColor: "text-orange-500",
+  },
+  COMPLETED: {
+    badgeText: "레슨완료",
+    badgeBg: "bg-blue-100",
+    badgeColor: "text-blue-800",
+    cardBg: "bg-surface",
+    cardBorder: "border-line",
+    faded: true,
+  },
+  ABSENT: {
+    badgeText: "❌ 결강",
+    badgeBg: "bg-gray-100",
+    badgeColor: "text-gray-500",
+    cardBg: "bg-soft",
+    cardBorder: "border-line",
+    faded: true,
+    strike: true,
+  },
+  RESCHEDULE_REQUESTED: {
+    badgeText: "🔄 변경 요청",
+    badgeBg: "bg-orange-50",
+    badgeColor: "text-orange-600",
+    cardBg: "bg-surface",
+    cardBorder: "border-line",
+    timeColor: "text-orange-600",
+  },
+  RESCHEDULE_COMPLETED: {
+    badgeText: "✅ 변경완료",
+    badgeBg: "bg-blue-100",
+    badgeColor: "text-blue-800",
+    cardBg: "bg-blue-50",
+    cardBorder: "border-blue-200",
+    cardExtra: "border-[1.5px]",
+    timeColor: "text-blue-800",
+  },
+  MAKEUP_PENDING: {
+    badgeText: "🔄 보강 일정 선택중",
+    badgeBg: "bg-emerald-100",
+    badgeColor: "text-emerald-800",
+    cardBg: "bg-teal-50",
+    cardBorder: "border-emerald-500 border-dashed",
+    cardExtra: "border-[1.5px]",
+    timeColor: "text-emerald-600",
+  },
+  MAKEUP_CONFIRMED: {
+    badgeText: "✅ 보강확정",
+    badgeBg: "bg-emerald-100",
+    badgeColor: "text-emerald-800",
+    cardBg: "bg-teal-50",
+    cardBorder: "border-emerald-500",
+    cardExtra: "border-[1.5px]",
+    timeColor: "text-emerald-800",
+  },
+  MAKEUP_REQUESTED: {
+    badgeText: "🙋 보강 요청",
+    badgeBg: "bg-orange-50",
+    badgeColor: "text-orange-600",
+    cardBg: "bg-orange-50",
+    cardBorder: "border-orange-300",
+    cardExtra: "border-[1.5px]",
+    timeColor: "text-orange-600",
+  },
+  MERGE: {
+    badgeText: "🔗 통합 회차",
+    badgeBg: "bg-violet-100",
+    badgeColor: "text-violet-800",
+    cardBg: "bg-violet-50",
+    cardBorder: "border-violet-300",
+    cardExtra: "border-[1.5px]",
+    timeColor: "text-violet-800",
+    noteColor: "text-violet-800",
+  },
+  SPLIT: {
+    badgeText: "✂ 분할 회차",
+    badgeBg: "bg-violet-100",
+    badgeColor: "text-violet-800",
+    cardBg: "bg-violet-50",
+    cardBorder: "border-violet-300",
+    cardExtra: "border-[1.5px]",
+    timeColor: "text-violet-800",
+    noteColor: "text-violet-800",
+  },
+};
+
+const FALLBACK_STYLE: StatusStyle = {
+  badgeText: "레슨",
+  badgeBg: "bg-gray-100",
+  badgeColor: "text-gray-600",
+  cardBg: "bg-surface",
+  cardBorder: "border-line",
+};
+
+// 정렬 우선순위: 신청 > 진행중 > 보강요청 > 변경요청 > 보강일정 > 보강확정 > 변경완료 > 예정 > 완료 > 결강
+const STATUS_SORT_ORDER: Record<string, number> = {
+  PENDING: 0,
+  IN_PROGRESS: 1,
+  MAKEUP_REQUESTED: 2,
+  RESCHEDULE_REQUESTED: 3,
+  MAKEUP_PENDING: 4,
+  MAKEUP_CONFIRMED: 5,
+  RESCHEDULE_COMPLETED: 6,
+  CONFIRMED: 7,
+  MERGE: 7,
+  SPLIT: 7,
+  COMPLETED: 8,
+  ABSENT: 9,
+};
 
 /** KST 날짜 + hour/minute → UTC ISO */
 function cellToIso(kstTrickDate: Date, hour: number, minute: number): string {
@@ -58,21 +213,6 @@ function kstParts(d: Date) {
 /** Date 객체(KST 자정 trick)의 일자 키 */
 function dayKeyOf(d: Date): string {
   return `${d.getUTCFullYear()}-${d.getUTCMonth() + 1}-${d.getUTCDate()}`;
-}
-
-function statusBadge(status: string): { text: string; cls: string } {
-  switch (status) {
-    case "CONFIRMED":
-      return { text: "확정", cls: "bg-emerald-50 text-emerald-600" };
-    case "PENDING":
-      return { text: "대기", cls: "bg-amber-50 text-amber-600" };
-    case "COMPLETED":
-      return { text: "완료", cls: "bg-blue-50 text-blue-600" };
-    case "CANCELLED":
-      return { text: "취소", cls: "bg-soft text-ink-3" };
-    default:
-      return { text: status, cls: "bg-soft text-ink-3" };
-  }
 }
 
 export function CoachHomeCalendar() {
@@ -150,15 +290,26 @@ export function CoachHomeCalendar() {
     return m;
   }, [lessons]);
 
-  // 선택 날짜의 lesson 목록 (시간순)
+  // 선택 날짜의 lesson 목록 (상태 우선순위 → 시간순)
   const selectedLessons = useMemo(() => {
     return lessons
       .filter((l) => {
         const p = kstParts(parseIsoUtc(l.scheduledAt));
         return `${p.y}-${p.m}-${p.day}` === selectedKey;
       })
-      .sort((a, b) => parseIsoUtc(a.scheduledAt).getTime() - parseIsoUtc(b.scheduledAt).getTime());
+      .sort((a, b) => {
+        const sa = STATUS_SORT_ORDER[a.status] ?? 99;
+        const sb = STATUS_SORT_ORDER[b.status] ?? 99;
+        if (sa !== sb) return sa - sb;
+        return parseIsoUtc(a.scheduledAt).getTime() - parseIsoUtc(b.scheduledAt).getTime();
+      });
   }, [lessons, selectedKey]);
+
+  // 전체 로드된 레슨 중 신청(PENDING) 건수 — 요약 배너용
+  const pendingCount = useMemo(
+    () => lessons.filter((l) => l.status === "PENDING").length,
+    [lessons],
+  );
 
   const selectedDate = useMemo(() => {
     const wd = weekDays.find((d) => d.key === selectedKey);
@@ -288,6 +439,23 @@ export function CoachHomeCalendar() {
         })}
       </div>
 
+      {/* 신청(PENDING) 요약 배너 */}
+      {!isLoading && pendingCount > 0 && (
+        <div className="mt-5 rounded-2xl border-[1.5px] border-amber-200 bg-amber-50 p-3.5 flex items-center gap-3">
+          <div className="w-9 h-9 rounded-full bg-amber-100 flex items-center justify-center flex-none">
+            <span className="text-base">⏳</span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-[13px] font-bold text-amber-900">
+              새로운 레슨 신청이 <span className="text-amber-600">{pendingCount}</span>건 있어요
+            </div>
+            <p className="mt-0.5 text-[11px] text-amber-800/80">
+              신청을 검토하고 수락 또는 거절해주세요.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* 선택 날짜 레슨 목록 */}
       <div className="mt-6">
         <div className="flex items-center justify-between mb-2">
@@ -323,40 +491,15 @@ export function CoachHomeCalendar() {
           </div>
         ) : (
           <ul className="space-y-2">
-            {selectedLessons.map((l) => {
-              const sp = kstParts(parseIsoUtc(l.scheduledAt));
-              const endKst = kstParts(
-                new Date(parseIsoUtc(l.scheduledAt).getTime() + l.durationMinutes * 60 * 1000),
-              );
-              const student = studentMap.get(l.studentId);
-              const badge = statusBadge(l.status);
-              return (
-                <li key={l.id}>
-                  <button
-                    type="button"
-                    onClick={openPicker}
-                    className="w-full flex items-center gap-3 rounded-2xl border border-line bg-surface p-3.5 text-left hover:bg-soft transition active:scale-[0.99]"
-                  >
-                    <div className="w-14 flex-none text-center">
-                      <div className="text-sm font-bold text-ink">{sp.hh}:{sp.mm}</div>
-                      <div className="text-[10px] text-ink-3">
-                        ~{endKst.hh}:{endKst.mm}
-                      </div>
-                    </div>
-                    <div className="w-px h-9 bg-line flex-none" />
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-bold text-ink truncate">
-                        {student?.name ?? "이름 미입력"}
-                      </div>
-                      <div className="mt-0.5 text-[11px] text-ink-3">{l.durationMinutes}분</div>
-                    </div>
-                    <span className={`flex-none rounded-full px-2.5 py-1 text-[11px] font-semibold ${badge.cls}`}>
-                      {badge.text}
-                    </span>
-                  </button>
-                </li>
-              );
-            })}
+            {selectedLessons.map((l) => (
+              <li key={l.id}>
+                <LessonCard
+                  lesson={l}
+                  studentName={studentMap.get(l.studentId)?.name ?? "이름 미입력"}
+                  onClick={openPicker}
+                />
+              </li>
+            ))}
           </ul>
         )}
       </div>
@@ -383,5 +526,103 @@ export function CoachHomeCalendar() {
         description={alert.description}
       />
     </div>
+  );
+}
+
+function LessonCard({
+  lesson,
+  studentName,
+  onClick,
+}: {
+  lesson: LessonRow;
+  studentName: string;
+  onClick: () => void;
+}) {
+  const style = STATUS_STYLES[lesson.status] ?? FALLBACK_STYLE;
+  const sp = kstParts(parseIsoUtc(lesson.scheduledAt));
+  const timeText = lesson.status === "PENDING" ? `신청 ${sp.hh}:${sp.mm}` : `${sp.hh}:${sp.mm}`;
+
+  const oldTime = lesson.originalScheduledAt
+    ? (() => {
+        const o = kstParts(parseIsoUtc(lesson.originalScheduledAt!));
+        return `${o.hh}:${o.mm}`;
+      })()
+    : null;
+
+  const formatLabel = lesson.lessonFormat === "GROUP" ? "그룹" : "1:1";
+
+  // 회차 노트 — notes 우선, 없으면 N/M회
+  let roundNote = "";
+  if (lesson.notes) {
+    roundNote = lesson.notes;
+  } else if (lesson.roundNumber != null && lesson.totalRounds != null) {
+    roundNote = `${lesson.roundNumber}/${lesson.totalRounds}회`;
+  }
+
+  // 통합/분할 태그
+  let durationTag: string | null = null;
+  if (lesson.status === "MERGE") {
+    durationTag = `${lesson.durationMinutes}분`;
+  } else if (lesson.status === "SPLIT" && lesson.splitIndex && lesson.splitTotal) {
+    durationTag = `${lesson.durationMinutes}분 · ${lesson.splitIndex}/${lesson.splitTotal}`;
+  }
+
+  // 결제 노트
+  let paymentNote: "미결제" | "외부결제" | null = null;
+  if (lesson.paymentStatus === "UNPAID") paymentNote = "미결제";
+  else if (lesson.paymentStatus === "EXTERNAL") paymentNote = "외부결제";
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`w-full rounded-xl border ${style.cardBg} ${style.cardBorder} ${style.cardExtra ?? ""} px-4 py-3 flex items-center justify-between gap-3 text-left transition active:scale-[0.99] ${style.faded ? "opacity-70" : ""}`}
+    >
+      <div className="min-w-0 flex-1">
+        <div
+          className={`text-sm font-bold ${style.timeColor ?? "text-ink"} ${style.strike ? "line-through" : ""}`}
+        >
+          {timeText}
+          {oldTime && (
+            <span className="ml-1 text-[11px] font-normal text-ink-3 line-through">
+              {oldTime}
+            </span>
+          )}
+          {durationTag && (
+            <span className="ml-1 inline-block text-[10px] font-bold text-violet-700 bg-violet-100 px-1.5 py-0.5 rounded-md">
+              {durationTag}
+            </span>
+          )}
+        </div>
+        <div
+          className={`mt-0.5 text-xs text-ink-2 ${style.strike ? "line-through text-ink-3" : ""}`}
+        >
+          {studentName} · {formatLabel}
+          {roundNote && (
+            <>
+              {" · "}
+              <span className={`font-semibold ${style.noteColor ?? "text-blue-600"}`}>
+                {roundNote}
+              </span>
+            </>
+          )}
+          {paymentNote && (
+            <>
+              {" · "}
+              <span
+                className={`font-semibold ${paymentNote === "미결제" ? "text-red-500" : "text-blue-500"}`}
+              >
+                {paymentNote}
+              </span>
+            </>
+          )}
+        </div>
+      </div>
+      <span
+        className={`flex-none rounded-lg px-2 py-1 text-[11px] font-semibold ${style.badgeBg} ${style.badgeColor}`}
+      >
+        {style.badgeText}
+      </span>
+    </button>
   );
 }
