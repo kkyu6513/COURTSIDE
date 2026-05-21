@@ -39,6 +39,12 @@ function findConflict(
   return null;
 }
 
+/** [segStart, segStart+10)가 점유됐는지 */
+function isSegOccupied(segStartMin: number, booked: BookedLesson[]): boolean {
+  const segEnd = segStartMin + 10;
+  return booked.some((b) => segStartMin < b.endMin && segEnd > b.startMin);
+}
+
 type Props = {
   open: boolean;
   onClose: () => void;
@@ -156,6 +162,11 @@ export function StudentPickerSheet({
                     <div className="grid grid-cols-6 gap-1.5">
                       {HOURS.map((h) => {
                         const active = h === hour;
+                        // 그 시(60분)의 10분 세그먼트 6칸 점유 여부
+                        const segs = [0, 1, 2, 3, 4, 5].map((i) =>
+                          isSegOccupied(h * 60 + i * 10, bookedLessons),
+                        );
+                        const fullyBooked = segs.every((s) => s);
                         return (
                           <button
                             key={h}
@@ -164,13 +175,31 @@ export function StudentPickerSheet({
                               setHour(h);
                               setConflictMsg(null);
                             }}
-                            className={`h-9 rounded-lg text-xs font-bold transition active:scale-[0.97] ${
+                            className={`h-12 rounded-lg text-xs font-bold transition active:scale-[0.97] flex flex-col items-center justify-center gap-1 ${
                               active
                                 ? "bg-primary text-white shadow-sm"
-                                : "bg-surface text-ink-2 hover:bg-line border border-line"
+                                : fullyBooked
+                                  ? "bg-line/60 text-ink-3 border border-line"
+                                  : "bg-surface text-ink-2 hover:bg-line border border-line"
                             }`}
                           >
-                            {String(h).padStart(2, "0")}시
+                            <span>{String(h).padStart(2, "0")}시</span>
+                            <span className="flex gap-px w-7">
+                              {segs.map((occ, i) => (
+                                <span
+                                  key={i}
+                                  className={`flex-1 h-1 rounded-sm ${
+                                    occ
+                                      ? active
+                                        ? "bg-white"
+                                        : "bg-red-400"
+                                      : active
+                                        ? "bg-white/30"
+                                        : "bg-line"
+                                  }`}
+                                />
+                              ))}
+                            </span>
                           </button>
                         );
                       })}
@@ -179,6 +208,7 @@ export function StudentPickerSheet({
                   <div className="grid grid-cols-6 gap-1.5">
                     {MINUTES.map((m) => {
                       const active = m === minute;
+                      const occ = isSegOccupied(hour * 60 + m, bookedLessons);
                       return (
                         <button
                           key={m}
@@ -187,18 +217,28 @@ export function StudentPickerSheet({
                             setMinute(m);
                             setConflictMsg(null);
                           }}
-                          className={`h-9 rounded-lg text-xs font-bold transition active:scale-[0.97] ${
+                          className={`relative h-9 rounded-lg text-xs font-bold transition active:scale-[0.97] ${
                             active
                               ? "bg-primary text-white shadow-sm"
-                              : "bg-surface text-ink-2 hover:bg-line border border-line"
+                              : occ
+                                ? "bg-line/60 text-ink-3 border border-line"
+                                : "bg-surface text-ink-2 hover:bg-line border border-line"
                           }`}
                         >
                           :{String(m).padStart(2, "0")}
+                          {occ && !active && (
+                            <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-red-400" />
+                          )}
                         </button>
                       );
                     })}
                   </div>
                 </div>
+                {hourSelectable && bookedLessons.length > 0 && (
+                  <p className="mt-1.5 text-[10px] text-ink-3">
+                    각 시간의 빨간 막대·점은 이미 레슨이 잡힌 구간이에요.
+                  </p>
+                )}
               </div>
 
               {/* 레슨 길이 — 각 길이가 시작 시각 기준 가능한지 판정 */}
