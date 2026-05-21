@@ -230,9 +230,69 @@ function deriveDisplayStatus(lesson: LessonRow): string {
   return lesson.status;
 }
 
-export function CoachHomeCalendar() {
-  const [weekStart, setWeekStart] = useState<Date>(() => startOfWeekMon(new Date()));
-  const [selectedKey, setSelectedKey] = useState<string>(() => dayKeyOf(startOfWeekMon(new Date())));
+/** 테스트 모드 기준 날짜 — 어제 */
+function focusDate(testMode: boolean): Date {
+  return testMode ? new Date(Date.now() - 24 * 60 * 60 * 1000) : new Date();
+}
+
+/** 어제(KST) 날짜의 hour:minute → UTC ISO */
+function yesterdayIsoAt(hour: number, minute: number): string {
+  const kst = new Date(Date.now() - 24 * 60 * 60 * 1000 + 9 * 60 * 60 * 1000);
+  kst.setUTCHours(hour, minute, 0, 0);
+  return new Date(kst.getTime() - 9 * 60 * 60 * 1000).toISOString();
+}
+
+/** 테스트 모드 — 어제 날짜에 12종 상태 레슨 하드코딩 (DB 미사용) */
+function buildTestData(): { lessons: LessonRow[]; studentNames: Record<string, string> } {
+  const names = [
+    "박민호", "김영희", "이민호", "최영수", "강민서", "박지수",
+    "한지원", "정다은", "김태호", "이수진", "한지우", "최준혁",
+  ];
+  const studentNames: Record<string, string> = {};
+  names.forEach((n, i) => {
+    studentNames[`t${i + 1}`] = n;
+  });
+
+  const mk = (
+    over: Partial<LessonRow> & {
+      id: number;
+      studentId: string;
+      scheduledAt: string;
+      status: string;
+    },
+  ): LessonRow => ({
+    durationMinutes: 60,
+    paymentStatus: "PAID",
+    lessonFormat: "PRIVATE",
+    roundNumber: null,
+    totalRounds: null,
+    originalScheduledAt: null,
+    splitIndex: null,
+    splitTotal: null,
+    notes: null,
+    ...over,
+  });
+
+  const lessons: LessonRow[] = [
+    mk({ id: 1, studentId: "t1", scheduledAt: yesterdayIsoAt(9, 0), status: "PENDING", paymentStatus: "NONE", notes: "정규 1:1 · 화·목 09:00 희망" }),
+    mk({ id: 2, studentId: "t2", scheduledAt: yesterdayIsoAt(10, 0), status: "CONFIRMED", paymentStatus: "UNPAID", roundNumber: 4, totalRounds: 8 }),
+    mk({ id: 3, studentId: "t3", scheduledAt: yesterdayIsoAt(11, 0), status: "IN_PROGRESS", roundNumber: 6, totalRounds: 8 }),
+    mk({ id: 4, studentId: "t4", scheduledAt: yesterdayIsoAt(12, 0), status: "COMPLETED", paymentStatus: "EXTERNAL", roundNumber: 5, totalRounds: 8 }),
+    mk({ id: 5, studentId: "t5", scheduledAt: yesterdayIsoAt(13, 0), status: "ABSENT", lessonFormat: "GROUP", roundNumber: 3, totalRounds: 8 }),
+    mk({ id: 6, studentId: "t6", scheduledAt: yesterdayIsoAt(14, 0), status: "RESCHEDULE_REQUESTED", roundNumber: 3, totalRounds: 8 }),
+    mk({ id: 7, studentId: "t7", scheduledAt: yesterdayIsoAt(15, 0), status: "RESCHEDULE_COMPLETED", roundNumber: 5, totalRounds: 8, originalScheduledAt: yesterdayIsoAt(10, 0) }),
+    mk({ id: 8, studentId: "t8", scheduledAt: yesterdayIsoAt(16, 0), status: "MAKEUP_PENDING", paymentStatus: "NONE", lessonFormat: "GROUP", notes: "보강" }),
+    mk({ id: 9, studentId: "t9", scheduledAt: yesterdayIsoAt(16, 30), status: "MAKEUP_CONFIRMED", paymentStatus: "NONE", notes: "보강" }),
+    mk({ id: 10, studentId: "t10", scheduledAt: yesterdayIsoAt(17, 0), status: "MAKEUP_REQUESTED", paymentStatus: "NONE", notes: "보강 요청" }),
+    mk({ id: 11, studentId: "t11", scheduledAt: yesterdayIsoAt(18, 0), durationMinutes: 40, status: "MERGE", notes: "통합 (원 회차 2건)" }),
+    mk({ id: 12, studentId: "t12", scheduledAt: yesterdayIsoAt(19, 0), durationMinutes: 20, status: "SPLIT", splitIndex: 1, splitTotal: 2, notes: "분할 (그룹 2건 중 1)" }),
+  ];
+  return { lessons, studentNames };
+}
+
+export function CoachHomeCalendar({ testMode = false }: { testMode?: boolean }) {
+  const [weekStart, setWeekStart] = useState<Date>(() => startOfWeekMon(focusDate(testMode)));
+  const [selectedKey, setSelectedKey] = useState<string>(() => dayKeyOf(startOfWeekMon(focusDate(testMode))));
   const [lessons, setLessons] = useState<LessonRow[]>([]);
   const [students, setStudents] = useState<StudentOption[]>([]);
   const [studentNames, setStudentNames] = useState<Record<string, string>>({});
@@ -247,18 +307,32 @@ export function CoachHomeCalendar() {
     description?: string;
   }>({ open: false, variant: "success", title: "" });
 
-  // 오늘 키 (KST)
+  // 오늘 키 (KST) — 캘린더 isToday 강조용
   const todayKey = useMemo(() => {
     const nowKst = new Date(Date.now() + 9 * 60 * 60 * 1000);
     return `${nowKst.getUTCFullYear()}-${nowKst.getUTCMonth() + 1}-${nowKst.getUTCDate()}`;
   }, []);
 
-  // 첫 진입: 오늘 선택
+  // 첫 진입 시 선택할 날짜 — 일반: 오늘 / 테스트: 어제
+  const focusKey = useMemo(() => {
+    const kst = new Date(focusDate(testMode).getTime() + 9 * 60 * 60 * 1000);
+    return `${kst.getUTCFullYear()}-${kst.getUTCMonth() + 1}-${kst.getUTCDate()}`;
+  }, [testMode]);
+
   useEffect(() => {
-    setSelectedKey(todayKey);
-  }, [todayKey]);
+    setSelectedKey(focusKey);
+  }, [focusKey]);
 
   const reload = useCallback(async () => {
+    // 테스트 모드 — DB 미사용, 어제 날짜 12종 하드코딩
+    if (testMode) {
+      const { lessons: testLessons, studentNames: testNames } = buildTestData();
+      setLessons(testLessons);
+      setStudentNames(testNames);
+      setStudents([]);
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     try {
       const res = await fetch("/api/coach/lessons", { cache: "no-store" });
@@ -277,7 +351,7 @@ export function CoachHomeCalendar() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [testMode]);
 
   useEffect(() => {
     reload();

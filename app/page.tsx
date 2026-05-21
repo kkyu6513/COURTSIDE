@@ -106,7 +106,13 @@ export default async function Home({
     .eq("matchedCoachUserId", user.id)
     .eq("status", "PENDING");
 
-  return <CoachHome nickname={nickname} pendingClaimCount={pendingClaimCount ?? 0} />;
+  return (
+    <CoachHome
+      nickname={nickname}
+      pendingClaimCount={pendingClaimCount ?? 0}
+      testMode={testMode === "lessons"}
+    />
+  );
 }
 
 type LatestClaim = {
@@ -259,9 +265,11 @@ function thisWeekDates(now: Date = new Date()) {
 function CoachHome({
   nickname,
   pendingClaimCount,
+  testMode = false,
 }: {
   nickname: string;
   pendingClaimCount: number;
+  testMode?: boolean;
 }) {
 
   return (
@@ -271,7 +279,14 @@ function CoachHome({
         <div className="flex items-start gap-3">
           <BackButton />
           <div className="min-w-0 flex-1">
-            <div className="text-xl font-extrabold text-ink leading-tight">나의 스케줄</div>
+            <div className="text-xl font-extrabold text-ink leading-tight flex items-center gap-1.5">
+              나의 스케줄
+              {testMode && (
+                <span className="text-[10px] font-semibold text-ink-3 bg-soft px-2 py-0.5 rounded-full">
+                  테스트 데이터
+                </span>
+              )}
+            </div>
             <div className="mt-1.5 text-xs text-ink-3">안녕하세요, {nickname} 코치님</div>
           </div>
           <Link
@@ -318,7 +333,7 @@ function CoachHome({
         )}
 
         {/* 주간 캘린더 + 선택 날짜 레슨 (인터랙티브) */}
-        <CoachHomeCalendar />
+        <CoachHomeCalendar testMode={testMode} />
       </div>
 
       <BottomNav role="COACH" active="/" />
