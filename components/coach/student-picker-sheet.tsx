@@ -213,7 +213,7 @@ export function StudentPickerSheet({
                             ? "bg-soft border-line cursor-not-allowed"
                             : selected
                               ? "bg-primary/10 border-primary"
-                              : "bg-surface border-line hover:bg-soft active:scale-[0.99]"
+                              : "bg-surface border-line active:scale-[0.99]"
                         }`}
                       >
                         <div
