@@ -294,12 +294,6 @@ export function CoachHomeCalendar({ testMode = false }: { testMode?: boolean }) 
       });
   }, [lessons, selectedKey]);
 
-  // 전체 로드된 레슨 중 신청(PENDING) 건수 — 요약 배너용
-  const pendingCount = useMemo(
-    () => lessons.filter((l) => l.status === "PENDING").length,
-    [lessons],
-  );
-
   const selectedDate = useMemo(() => {
     const wd = weekDays.find((d) => d.key === selectedKey);
     return wd?.date ?? null;
@@ -427,18 +421,6 @@ export function CoachHomeCalendar({ testMode = false }: { testMode?: boolean }) 
           );
         })}
       </div>
-
-      {/* 신청(PENDING) 요약 배너 */}
-      {!isLoading && pendingCount > 0 && (
-        <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
-          <div className="text-xs font-semibold text-amber-700">
-            새로운 레슨 신청 {pendingCount}건
-          </div>
-          <p className="mt-0.5 text-[11px] text-amber-600">
-            신청을 검토하고 수락 또는 거절해주세요.
-          </p>
-        </div>
-      )}
 
       {/* 선택 날짜 레슨 목록 */}
       <div className="mt-6">
