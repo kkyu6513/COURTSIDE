@@ -1,11 +1,11 @@
 /**
- * 코치 홈 12종 상태 카드 테스트 데이터 시드 (홍길동 코치 기준)
+ * 코치 홈 12종 상태 카드 테스트 데이터 시드 (실 DB insert)
  *
- * - test coach: 00000000-0000-4000-8000-000000000001 (홍길동)
- * - 12명의 더미 학생을 users 테이블에 추가
- * - lessons 테이블에 14건의 다양한 상태 케이스 삽입
+ * - users 테이블의 모든 COACH 계정에 대해
+ * - 어제(KST) 날짜에 12종 상태 레슨을 insert
+ * - 더미 학생 12명 upsert (이름 표시는 /api/coach/lessons 의 studentNames 로 해석)
  *
- * 재실행 안전 (ON CONFLICT, 기존 동일 (coachId, scheduledAt, studentId) 묶음은 삭제 후 재삽입)
+ * 재실행 안전: 각 코치의 더미 학생 레슨만 삭제 후 재삽입 (실 레슨은 보존)
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -13,37 +13,31 @@ import { PrismaClient } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 const ONE_TIME_TOKEN = "courtside-seed-test-lessons-2026-05-15-Lq7vBnRyKx";
 
-const COACH_ID = "00000000-0000-4000-8000-000000000001"; // 홍길동
-
-// 12명의 더미 학생
+// 더미 학생 12명 (고정 UUID)
 const STUDENTS: Array<{ id: string; name: string }> = [
   { id: "20000000-0000-4000-8000-000000000001", name: "박민호" },
-  { id: "20000000-0000-4000-8000-000000000002", name: "최영수" },
-  { id: "20000000-0000-4000-8000-000000000003", name: "강민서" },
-  { id: "20000000-0000-4000-8000-000000000004", name: "이민호" },
-  { id: "20000000-0000-4000-8000-000000000005", name: "박수진" },
-  { id: "20000000-0000-4000-8000-000000000006", name: "김영희" },
-  { id: "20000000-0000-4000-8000-000000000007", name: "정다은" },
-  { id: "20000000-0000-4000-8000-000000000008", name: "박지수" },
-  { id: "20000000-0000-4000-8000-000000000009", name: "한지원" },
-  { id: "20000000-0000-4000-8000-00000000000A", name: "김태호" },
-  { id: "20000000-0000-4000-8000-00000000000B", name: "이수진" },
-  { id: "20000000-0000-4000-8000-00000000000C", name: "한지우" },
-  { id: "20000000-0000-4000-8000-00000000000D", name: "최준혁" },
+  { id: "20000000-0000-4000-8000-000000000002", name: "김영희" },
+  { id: "20000000-0000-4000-8000-000000000003", name: "이민호" },
+  { id: "20000000-0000-4000-8000-000000000004", name: "최영수" },
+  { id: "20000000-0000-4000-8000-000000000005", name: "강민서" },
+  { id: "20000000-0000-4000-8000-000000000006", name: "박지수" },
+  { id: "20000000-0000-4000-8000-000000000007", name: "한지원" },
+  { id: "20000000-0000-4000-8000-000000000008", name: "정다은" },
+  { id: "20000000-0000-4000-8000-000000000009", name: "김태호" },
+  { id: "20000000-0000-4000-8000-00000000000A", name: "이수진" },
+  { id: "20000000-0000-4000-8000-00000000000B", name: "한지우" },
+  { id: "20000000-0000-4000-8000-00000000000C", name: "최준혁" },
 ];
 
-// 오늘 날짜의 시각 (KST 기준)을 ISO 문자열로 — 시드 시점 NOW 기준 동일 일자 사용
-function todayAt(hour: number, minute: number): string {
-  const now = new Date();
-  const kst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+// 어제(KST) 날짜의 hour:minute → UTC ISO
+function yesterdayAt(hour: number, minute: number): string {
+  const kst = new Date(Date.now() - 24 * 60 * 60 * 1000 + 9 * 60 * 60 * 1000);
   kst.setUTCHours(hour, minute, 0, 0);
-  // 다시 UTC로 변환
-  const utc = new Date(kst.getTime() - 9 * 60 * 60 * 1000);
-  return utc.toISOString();
+  return new Date(kst.getTime() - 9 * 60 * 60 * 1000).toISOString();
 }
 
 type LessonSeed = {
@@ -53,189 +47,42 @@ type LessonSeed = {
   status: string;
   paymentStatus: string;
   lessonFormat: "PRIVATE" | "GROUP";
-  roundNumber?: number;
-  totalRounds?: number;
-  originalScheduledAt?: string;
-  splitIndex?: number;
-  splitTotal?: number;
-  notes?: string;
+  roundNumber: number | null;
+  totalRounds: number | null;
+  originalScheduledAt: string | null;
+  splitIndex: number | null;
+  splitTotal: number | null;
+  notes: string | null;
 };
 
-const LESSONS: LessonSeed[] = [
-  // 1. PENDING — 박민호 09:15 신청
-  {
-    studentIdx: 0,
-    scheduledAt: todayAt(10, 0),
+// 12종 상태 — 어제 날짜
+function buildLessons(): LessonSeed[] {
+  const base = {
     durationMinutes: 60,
-    status: "PENDING",
-    paymentStatus: "NONE",
-    lessonFormat: "PRIVATE",
-    notes: "정규 1:1 · 화·목 10:00 희망",
-  },
-  // 2. COMPLETED — 최영수 09:00
-  {
-    studentIdx: 1,
-    scheduledAt: todayAt(9, 0),
-    durationMinutes: 60,
-    status: "COMPLETED",
     paymentStatus: "PAID",
-    lessonFormat: "PRIVATE",
-    roundNumber: 5,
-    totalRounds: 8,
-  },
-  // 3. ABSENT — 강민서 09:30
-  {
-    studentIdx: 2,
-    scheduledAt: todayAt(9, 30),
-    durationMinutes: 60,
-    status: "ABSENT",
-    paymentStatus: "PAID",
-    lessonFormat: "GROUP",
-    roundNumber: 3,
-    totalRounds: 8,
-  },
-  // 4. IN_PROGRESS — 이민호 10:00
-  {
-    studentIdx: 3,
-    scheduledAt: todayAt(10, 0),
-    durationMinutes: 60,
-    status: "IN_PROGRESS",
-    paymentStatus: "PAID",
-    lessonFormat: "PRIVATE",
-    roundNumber: 6,
-    totalRounds: 8,
-  },
-  // 5. UPCOMING — 박수진 13:00 그룹
-  {
-    studentIdx: 4,
-    scheduledAt: todayAt(13, 0),
-    durationMinutes: 60,
-    status: "CONFIRMED",
-    paymentStatus: "PAID",
-    lessonFormat: "GROUP",
-    roundNumber: 2,
-    totalRounds: 4,
-  },
-  // 6. UPCOMING — 김영희 14:00 1:1
-  {
-    studentIdx: 5,
-    scheduledAt: todayAt(14, 0),
-    durationMinutes: 60,
-    status: "CONFIRMED",
-    paymentStatus: "PAID",
-    lessonFormat: "PRIVATE",
-    roundNumber: 4,
-    totalRounds: 8,
-  },
-  // 7. UPCOMING — 정다은 15:00 1:1
-  {
-    studentIdx: 6,
-    scheduledAt: todayAt(15, 0),
-    durationMinutes: 60,
-    status: "CONFIRMED",
-    paymentStatus: "PAID",
-    lessonFormat: "PRIVATE",
-    roundNumber: 7,
-    totalRounds: 8,
-  },
-  // 8. RESCHEDULE_REQUESTED — 박지수 16:00 1:1
-  {
-    studentIdx: 7,
-    scheduledAt: todayAt(16, 0),
-    durationMinutes: 60,
-    status: "RESCHEDULE_REQUESTED",
-    paymentStatus: "PAID",
-    lessonFormat: "PRIVATE",
-    roundNumber: 3,
-    totalRounds: 8,
-  },
-  // 9. RESCHEDULE_COMPLETED — 한지원 16:00 ← 10:00 1:1
-  {
-    studentIdx: 8,
-    scheduledAt: todayAt(16, 0),
-    durationMinutes: 60,
-    status: "RESCHEDULE_COMPLETED",
-    paymentStatus: "PAID",
-    lessonFormat: "PRIVATE",
-    roundNumber: 5,
-    totalRounds: 8,
-    originalScheduledAt: todayAt(10, 0),
-  },
-  // 10. MAKEUP_PENDING — 강민서 16:30 그룹 보강 (일정 선택중)
-  {
-    studentIdx: 2,
-    scheduledAt: todayAt(16, 30),
-    durationMinutes: 60,
-    status: "MAKEUP_PENDING",
-    paymentStatus: "NONE",
-    lessonFormat: "GROUP",
-    notes: "보강",
-  },
-  // 11. MAKEUP_CONFIRMED — 김태호 17:00 1:1 보강확정
-  {
-    studentIdx: 9,
-    scheduledAt: todayAt(17, 0),
-    durationMinutes: 60,
-    status: "MAKEUP_CONFIRMED",
-    paymentStatus: "NONE",
-    lessonFormat: "PRIVATE",
-    notes: "보강",
-  },
-  // 12. MAKEUP_REQUESTED — 이수진 17:30 1:1 보강요청
-  {
-    studentIdx: 10,
-    scheduledAt: todayAt(17, 30),
-    durationMinutes: 60,
-    status: "MAKEUP_REQUESTED",
-    paymentStatus: "NONE",
-    lessonFormat: "PRIVATE",
-    notes: "보강 요청",
-  },
-  // 13. MERGE — 이수진 10:00 1:1 통합 (40분)
-  {
-    studentIdx: 10,
-    scheduledAt: todayAt(11, 30),
-    durationMinutes: 40,
-    status: "MERGE",
-    paymentStatus: "PAID",
-    lessonFormat: "PRIVATE",
-    notes: "통합 (원 회차 2건)",
-  },
-  // 14. SPLIT — 박지수 14:00 1:1 분할 (20분, 1/2)
-  {
-    studentIdx: 7,
-    scheduledAt: todayAt(14, 30),
-    durationMinutes: 20,
-    status: "SPLIT",
-    paymentStatus: "PAID",
-    lessonFormat: "PRIVATE",
-    splitIndex: 1,
-    splitTotal: 2,
-    notes: "분할 (그룹 2건 중 1)",
-  },
-  // 15. UPCOMING + UNPAID — 한지우 18:00 그룹 미결제
-  {
-    studentIdx: 11,
-    scheduledAt: todayAt(18, 0),
-    durationMinutes: 60,
-    status: "CONFIRMED",
-    paymentStatus: "UNPAID",
-    lessonFormat: "GROUP",
-    roundNumber: 1,
-    totalRounds: 4,
-  },
-  // 16. UPCOMING + EXTERNAL — 최준혁 19:00 1:1 외부결제
-  {
-    studentIdx: 12,
-    scheduledAt: todayAt(19, 0),
-    durationMinutes: 60,
-    status: "CONFIRMED",
-    paymentStatus: "EXTERNAL",
-    lessonFormat: "PRIVATE",
-    roundNumber: 2,
-    totalRounds: 10,
-  },
-];
+    lessonFormat: "PRIVATE" as const,
+    roundNumber: null as number | null,
+    totalRounds: null as number | null,
+    originalScheduledAt: null as string | null,
+    splitIndex: null as number | null,
+    splitTotal: null as number | null,
+    notes: null as string | null,
+  };
+  return [
+    { ...base, studentIdx: 0, scheduledAt: yesterdayAt(9, 0), status: "PENDING", paymentStatus: "NONE", notes: "정규 1:1 · 화·목 09:00 희망" },
+    { ...base, studentIdx: 1, scheduledAt: yesterdayAt(10, 0), status: "CONFIRMED", paymentStatus: "UNPAID", roundNumber: 4, totalRounds: 8 },
+    { ...base, studentIdx: 2, scheduledAt: yesterdayAt(11, 0), status: "IN_PROGRESS", roundNumber: 6, totalRounds: 8 },
+    { ...base, studentIdx: 3, scheduledAt: yesterdayAt(12, 0), status: "COMPLETED", paymentStatus: "EXTERNAL", roundNumber: 5, totalRounds: 8 },
+    { ...base, studentIdx: 4, scheduledAt: yesterdayAt(13, 0), status: "ABSENT", lessonFormat: "GROUP", roundNumber: 3, totalRounds: 8 },
+    { ...base, studentIdx: 5, scheduledAt: yesterdayAt(14, 0), status: "RESCHEDULE_REQUESTED", roundNumber: 3, totalRounds: 8 },
+    { ...base, studentIdx: 6, scheduledAt: yesterdayAt(15, 0), status: "RESCHEDULE_COMPLETED", roundNumber: 5, totalRounds: 8, originalScheduledAt: yesterdayAt(10, 0) },
+    { ...base, studentIdx: 7, scheduledAt: yesterdayAt(16, 0), status: "MAKEUP_PENDING", paymentStatus: "NONE", lessonFormat: "GROUP", notes: "보강" },
+    { ...base, studentIdx: 8, scheduledAt: yesterdayAt(16, 30), status: "MAKEUP_CONFIRMED", paymentStatus: "NONE", notes: "보강" },
+    { ...base, studentIdx: 9, scheduledAt: yesterdayAt(17, 0), status: "MAKEUP_REQUESTED", paymentStatus: "NONE", notes: "보강 요청" },
+    { ...base, studentIdx: 10, scheduledAt: yesterdayAt(18, 0), durationMinutes: 40, status: "MERGE", notes: "통합 (원 회차 2건)" },
+    { ...base, studentIdx: 11, scheduledAt: yesterdayAt(19, 0), durationMinutes: 20, status: "SPLIT", splitIndex: 1, splitTotal: 2, notes: "분할 (그룹 2건 중 1)" },
+  ];
+}
 
 async function runSeed(): Promise<NextResponse> {
   const url = process.env.DIRECT_URL || process.env.DATABASE_URL;
@@ -268,63 +115,67 @@ async function runSeed(): Promise<NextResponse> {
       `;
     }
 
-    // 2. 기존 test lessons 정리 (test coach 의 오늘 데이터)
-    const todayStart = todayAt(0, 0);
-    const todayEnd = todayAt(23, 59);
-    await prisma.$executeRaw`
-      DELETE FROM lessons
-      WHERE "coachId" = ${COACH_ID}::uuid
-        AND "scheduledAt" >= ${todayStart}::timestamp
-        AND "scheduledAt" <= ${todayEnd}::timestamp
+    // 2. 모든 코치 계정 조회
+    const coaches = await prisma.$queryRaw<Array<{ id: string }>>`
+      SELECT id FROM users WHERE role = 'COACH'
     `;
-
-    // 3. lessons 일괄 insert
-    let inserted = 0;
-    for (const l of LESSONS) {
-      const student = STUDENTS[l.studentIdx];
-      await prisma.$executeRaw`
-        INSERT INTO lessons (
-          "coachId", "studentId", "scheduledAt", "durationMinutes",
-          "status", "paymentStatus", "lessonFormat",
-          "roundNumber", "totalRounds",
-          "originalScheduledAt", "splitIndex", "splitTotal",
-          "notes", "createdAt", "updatedAt"
-        ) VALUES (
-          ${COACH_ID}::uuid,
-          ${student.id}::uuid,
-          ${l.scheduledAt}::timestamp,
-          ${l.durationMinutes},
-          ${l.status},
-          ${l.paymentStatus},
-          ${l.lessonFormat},
-          ${l.roundNumber ?? null},
-          ${l.totalRounds ?? null},
-          ${l.originalScheduledAt ?? null}::timestamp,
-          ${l.splitIndex ?? null},
-          ${l.splitTotal ?? null},
-          ${l.notes ?? null},
-          NOW(),
-          NOW()
-        )
-      `;
-      inserted += 1;
+    if (coaches.length === 0) {
+      return NextResponse.json(
+        { ok: false, error: "role=COACH 인 사용자가 없습니다. 먼저 코치 계정으로 가입하세요." },
+        { status: 404 },
+      );
     }
 
-    // 4. 검증
-    const count = await prisma.$queryRaw<Array<{ count: bigint }>>`
-      SELECT COUNT(*)::bigint AS count
-      FROM lessons
-      WHERE "coachId" = ${COACH_ID}::uuid
-        AND "scheduledAt" >= ${todayStart}::timestamp
-        AND "scheduledAt" <= ${todayEnd}::timestamp
-    `;
+    const dummyIdList = STUDENTS.map((s) => `'${s.id}'::uuid`).join(",");
+    const lessons = buildLessons();
+    let totalInserted = 0;
+
+    for (const coach of coaches) {
+      // 2-1. 기존 더미 레슨 삭제 (실 레슨은 보존 — 더미 학생 레슨만 제거)
+      await prisma.$executeRawUnsafe(
+        `DELETE FROM lessons WHERE "coachId" = $1::uuid AND "studentId" IN (${dummyIdList})`,
+        coach.id,
+      );
+
+      // 2-2. 12종 레슨 insert
+      for (const l of lessons) {
+        await prisma.$executeRaw`
+          INSERT INTO lessons (
+            "coachId", "studentId", "scheduledAt", "durationMinutes",
+            "status", "paymentStatus", "lessonFormat",
+            "roundNumber", "totalRounds",
+            "originalScheduledAt", "splitIndex", "splitTotal",
+            "notes", "createdAt", "updatedAt"
+          ) VALUES (
+            ${coach.id}::uuid,
+            ${STUDENTS[l.studentIdx].id}::uuid,
+            ${l.scheduledAt}::timestamptz,
+            ${l.durationMinutes},
+            ${l.status},
+            ${l.paymentStatus},
+            ${l.lessonFormat},
+            ${l.roundNumber},
+            ${l.totalRounds},
+            ${l.originalScheduledAt}::timestamptz,
+            ${l.splitIndex},
+            ${l.splitTotal},
+            ${l.notes},
+            NOW(),
+            NOW()
+          )
+        `;
+        totalInserted += 1;
+      }
+    }
 
     return NextResponse.json({
       ok: true,
-      message: "test lessons 시드 완료",
-      studentsUpserted: STUDENTS.length,
-      lessonsInserted: inserted,
-      lessonsTodayInDb: Number(count[0]?.count ?? 0),
+      message: "어제 날짜에 12종 상태 테스트 레슨을 모든 코치 계정에 시드했습니다.",
+      date: yesterdayAt(0, 0).slice(0, 10),
+      coachesSeeded: coaches.length,
+      lessonsPerCoach: lessons.length,
+      totalLessonsInserted: totalInserted,
+      statuses: lessons.map((l) => l.status),
     });
   } catch (e) {
     console.error("[seed-test-lessons] error:", e);

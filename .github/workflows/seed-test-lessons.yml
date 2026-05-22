@@ -16,8 +16,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Wait for Vercel build (2 minutes)
-        run: sleep 120
+      - name: Wait for Vercel build (3.5 minutes)
+        run: sleep 210
 
       - name: Apply migration + seed
         id: run
@@ -55,7 +55,7 @@ jobs:
             await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title: `[Migration+Seed] lesson fields + 14 test lessons`,
+              title: `[Migration+Seed] lesson fields + 어제 12종 상태 테스트 레슨 (전 코치)`,
               body,
               labels: ['migration-result', 'seed-result']
             });
