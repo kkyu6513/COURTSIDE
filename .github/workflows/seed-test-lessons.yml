@@ -1,4 +1,5 @@
 name: Migrate Lesson Fields + Seed Test Lessons
+# rev2: scheduledAt 캐스팅 timestamp 수정 후 재실행
 
 on:
   workflow_dispatch:
