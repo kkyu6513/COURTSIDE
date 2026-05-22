@@ -611,6 +611,7 @@ export function CoachHomeCalendar({ testMode = false }: { testMode?: boolean }) 
           hour={9}
           hourSelectable
           bookedLessons={bookedLessons}
+          dayStartUtcMs={selectedDate.getTime() - 9 * 60 * 60 * 1000}
           students={students}
           pendingStudentId={pendingStudentId}
           onPick={onPickStudent}

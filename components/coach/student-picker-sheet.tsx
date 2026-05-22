@@ -48,6 +48,8 @@ type Props = {
   hourSelectable?: boolean;
   /** 그 날짜에 이미 잡힌 레슨 (분 단위 구간 + 학생명) */
   bookedLessons?: BookedLesson[];
+  /** 선택된 날짜의 KST 00:00에 해당하는 UTC ms — 슬롯 과거 여부 판정용 */
+  dayStartUtcMs?: number;
   students: StudentOption[];
   pendingStudentId: string | null;
   onPick: (studentId: string, hour: number, minute: number, durationMinutes: number) => void;
@@ -59,6 +61,7 @@ export function StudentPickerSheet({
   baseTimeLabel,
   hour: initialHour,
   bookedLessons = [],
+  dayStartUtcMs,
   students,
   pendingStudentId,
   onPick,
@@ -107,7 +110,11 @@ export function StudentPickerSheet({
   const endMin = startMin !== null ? startMin + duration : null;
   const selectedConflict =
     startMin !== null ? findConflict(startMin, duration, bookedLessons) : null;
-  const canProceed = startMin !== null && !selectedConflict;
+  const selectedIsPast =
+    startMin !== null &&
+    dayStartUtcMs != null &&
+    dayStartUtcMs + startMin * 60000 < Date.now();
+  const canProceed = startMin !== null && !selectedConflict && !selectedIsPast;
 
   // 레슨 길이 단위로 머지된 시간 슬롯 (06:00부터 길이 간격)
   const slots = useMemo(() => {
@@ -186,17 +193,23 @@ export function StudentPickerSheet({
             <div className="flex-1 overflow-y-auto px-3 pb-2">
               <ul className="space-y-1">
                 {slots.map((slot) => {
-                  const conflict = findConflict(slot.startMin, duration, bookedLessons);
+                  const isPast =
+                    dayStartUtcMs != null &&
+                    dayStartUtcMs + slot.startMin * 60000 < Date.now();
+                  const conflict = isPast
+                    ? null
+                    : findConflict(slot.startMin, duration, bookedLessons);
+                  const blocked = isPast || !!conflict;
                   const selected = slot.startMin === selectedStartMin;
                   const slotEnd = slot.startMin + duration;
                   return (
                     <li key={slot.startMin}>
                       <button
                         type="button"
-                        onClick={() => !conflict && setSelectedStartMin(slot.startMin)}
-                        disabled={!!conflict}
+                        onClick={() => !blocked && setSelectedStartMin(slot.startMin)}
+                        disabled={blocked}
                         className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl border transition text-left ${
-                          conflict
+                          blocked
                             ? "bg-soft border-line cursor-not-allowed"
                             : selected
                               ? "bg-primary/10 border-primary"
@@ -205,16 +218,22 @@ export function StudentPickerSheet({
                       >
                         <div
                           className={`w-12 flex-none text-sm font-bold ${
-                            conflict ? "text-ink-3" : selected ? "text-primary" : "text-ink"
+                            blocked ? "text-ink-3" : selected ? "text-primary" : "text-ink"
                           }`}
                         >
                           {slot.label}
                         </div>
                         <div className="flex-1 min-w-0">
-                          {conflict ? (
+                          {isPast ? (
                             <div className="text-xs text-ink-3">
-                              <span className="font-semibold text-ink-2">{conflict.studentName}</span>{" "}
-                              레슨 ({hmLabel(conflict.startMin)}~{hmLabel(conflict.endMin)})
+                              <span className="font-semibold text-red-400">레슨 불가</span>
+                              {" — "}이미 지난 시간이에요
+                            </div>
+                          ) : conflict ? (
+                            <div className="text-xs text-ink-3">
+                              <span className="font-semibold text-red-400">레슨 불가</span>
+                              {" — "}
+                              <span className="font-semibold text-ink-2">{conflict.studentName}</span> 레슨 ({hmLabel(conflict.startMin)}~{hmLabel(conflict.endMin)})
                             </div>
                           ) : (
                             <div className="text-xs text-ink-2">
@@ -222,9 +241,9 @@ export function StudentPickerSheet({
                             </div>
                           )}
                         </div>
-                        {conflict ? (
+                        {blocked ? (
                           <span className="flex-none text-[10px] font-semibold text-red-400">
-                            잡힘
+                            {isPast ? "지난 시간" : "잡힘"}
                           </span>
                         ) : selected ? (
                           <span className="flex-none w-5 h-5 rounded-full bg-primary text-white flex items-center justify-center">
