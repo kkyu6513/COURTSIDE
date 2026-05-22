@@ -23,136 +23,30 @@ type LessonRow = {
 
 const DOW_KOR = ["일", "월", "화", "수", "목", "금", "토"];
 
-// status → 카드 스타일 매핑 (프로토타입 7-0 기준 12종)
+// status → 표시 스타일 (디자인 가이드 — 중립 카드 / 상태는 텍스트 라벨로만 구분)
 type StatusStyle = {
-  badgeText: string;
-  badgeBg: string;
-  badgeColor: string;
-  cardBg: string;
-  cardBorder: string;
-  cardExtra?: string;
-  timeColor?: string;
-  noteColor?: string;
+  label: string;
+  color: string;
   faded?: boolean;
   strike?: boolean;
 };
 
 const STATUS_STYLES: Record<string, StatusStyle> = {
-  PENDING: {
-    badgeText: "⏳ 레슨 신청",
-    badgeBg: "bg-amber-100",
-    badgeColor: "text-amber-800",
-    cardBg: "bg-amber-50",
-    cardBorder: "border-amber-200",
-    cardExtra: "border-[1.5px]",
-    timeColor: "text-amber-800",
-    noteColor: "text-amber-800",
-  },
-  CONFIRMED: {
-    badgeText: "레슨 예정",
-    badgeBg: "bg-purple-100",
-    badgeColor: "text-purple-700",
-    cardBg: "bg-surface",
-    cardBorder: "border-line",
-  },
-  IN_PROGRESS: {
-    badgeText: "🎾 진행중",
-    badgeBg: "bg-red-100",
-    badgeColor: "text-red-500 animate-pulse",
-    cardBg: "bg-surface",
-    cardBorder: "border-line",
-    timeColor: "text-orange-500",
-  },
-  COMPLETED: {
-    badgeText: "레슨완료",
-    badgeBg: "bg-blue-100",
-    badgeColor: "text-blue-800",
-    cardBg: "bg-surface",
-    cardBorder: "border-line",
-    faded: true,
-  },
-  ABSENT: {
-    badgeText: "❌ 결강",
-    badgeBg: "bg-gray-100",
-    badgeColor: "text-gray-500",
-    cardBg: "bg-soft",
-    cardBorder: "border-line",
-    faded: true,
-    strike: true,
-  },
-  RESCHEDULE_REQUESTED: {
-    badgeText: "🔄 변경 요청",
-    badgeBg: "bg-orange-50",
-    badgeColor: "text-orange-600",
-    cardBg: "bg-surface",
-    cardBorder: "border-line",
-    timeColor: "text-orange-600",
-  },
-  RESCHEDULE_COMPLETED: {
-    badgeText: "✅ 변경완료",
-    badgeBg: "bg-blue-100",
-    badgeColor: "text-blue-800",
-    cardBg: "bg-blue-50",
-    cardBorder: "border-blue-200",
-    cardExtra: "border-[1.5px]",
-    timeColor: "text-blue-800",
-  },
-  MAKEUP_PENDING: {
-    badgeText: "🔄 보강 일정 선택중",
-    badgeBg: "bg-emerald-100",
-    badgeColor: "text-emerald-800",
-    cardBg: "bg-teal-50",
-    cardBorder: "border-emerald-500 border-dashed",
-    cardExtra: "border-[1.5px]",
-    timeColor: "text-emerald-600",
-  },
-  MAKEUP_CONFIRMED: {
-    badgeText: "✅ 보강확정",
-    badgeBg: "bg-emerald-100",
-    badgeColor: "text-emerald-800",
-    cardBg: "bg-teal-50",
-    cardBorder: "border-emerald-500",
-    cardExtra: "border-[1.5px]",
-    timeColor: "text-emerald-800",
-  },
-  MAKEUP_REQUESTED: {
-    badgeText: "🙋 보강 요청",
-    badgeBg: "bg-orange-50",
-    badgeColor: "text-orange-600",
-    cardBg: "bg-orange-50",
-    cardBorder: "border-orange-300",
-    cardExtra: "border-[1.5px]",
-    timeColor: "text-orange-600",
-  },
-  MERGE: {
-    badgeText: "🔗 통합 회차",
-    badgeBg: "bg-violet-100",
-    badgeColor: "text-violet-800",
-    cardBg: "bg-violet-50",
-    cardBorder: "border-violet-300",
-    cardExtra: "border-[1.5px]",
-    timeColor: "text-violet-800",
-    noteColor: "text-violet-800",
-  },
-  SPLIT: {
-    badgeText: "✂ 분할 회차",
-    badgeBg: "bg-violet-100",
-    badgeColor: "text-violet-800",
-    cardBg: "bg-violet-50",
-    cardBorder: "border-violet-300",
-    cardExtra: "border-[1.5px]",
-    timeColor: "text-violet-800",
-    noteColor: "text-violet-800",
-  },
+  PENDING: { label: "레슨 신청", color: "text-amber-600" },
+  CONFIRMED: { label: "레슨 예정", color: "text-ink-2" },
+  IN_PROGRESS: { label: "진행 중", color: "text-primary-600" },
+  COMPLETED: { label: "레슨 완료", color: "text-ink-3", faded: true },
+  ABSENT: { label: "결강", color: "text-ink-3", faded: true, strike: true },
+  RESCHEDULE_REQUESTED: { label: "변경 요청", color: "text-amber-600" },
+  RESCHEDULE_COMPLETED: { label: "변경 완료", color: "text-ink-3" },
+  MAKEUP_PENDING: { label: "보강 일정 선택중", color: "text-amber-600" },
+  MAKEUP_CONFIRMED: { label: "보강 확정", color: "text-ink-2" },
+  MAKEUP_REQUESTED: { label: "보강 요청", color: "text-amber-600" },
+  MERGE: { label: "통합 회차", color: "text-ink-2" },
+  SPLIT: { label: "분할 회차", color: "text-ink-2" },
 };
 
-const FALLBACK_STYLE: StatusStyle = {
-  badgeText: "레슨",
-  badgeBg: "bg-gray-100",
-  badgeColor: "text-gray-600",
-  cardBg: "bg-surface",
-  cardBorder: "border-line",
-};
+const FALLBACK_STYLE: StatusStyle = { label: "레슨", color: "text-ink-3" };
 
 // 정렬 우선순위: 신청 > 진행중 > 보강요청 > 변경요청 > 보강일정 > 보강확정 > 변경완료 > 예정 > 완료 > 결강
 const STATUS_SORT_ORDER: Record<string, number> = {
@@ -536,18 +430,13 @@ export function CoachHomeCalendar({ testMode = false }: { testMode?: boolean }) 
 
       {/* 신청(PENDING) 요약 배너 */}
       {!isLoading && pendingCount > 0 && (
-        <div className="mt-5 rounded-2xl border-[1.5px] border-amber-200 bg-amber-50 p-3.5 flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-amber-100 flex items-center justify-center flex-none">
-            <span className="text-base">⏳</span>
+        <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+          <div className="text-xs font-semibold text-amber-700">
+            새로운 레슨 신청 {pendingCount}건
           </div>
-          <div className="flex-1 min-w-0">
-            <div className="text-[13px] font-bold text-amber-900">
-              새로운 레슨 신청이 <span className="text-amber-600">{pendingCount}</span>건 있어요
-            </div>
-            <p className="mt-0.5 text-[11px] text-amber-800/80">
-              신청을 검토하고 수락 또는 거절해주세요.
-            </p>
-          </div>
+          <p className="mt-0.5 text-[11px] text-amber-600">
+            신청을 검토하고 수락 또는 거절해주세요.
+          </p>
         </div>
       )}
 
@@ -641,7 +530,7 @@ function LessonCard({
   const displayStatus = deriveDisplayStatus(lesson);
   const style = STATUS_STYLES[displayStatus] ?? FALLBACK_STYLE;
   const sp = kstParts(parseIsoUtc(lesson.scheduledAt));
-  const timeText = lesson.status === "PENDING" ? `신청 ${sp.hh}:${sp.mm}` : `${sp.hh}:${sp.mm}`;
+  const timeText = `${sp.hh}:${sp.mm}`;
 
   const oldTime = lesson.originalScheduledAt
     ? (() => {
@@ -677,53 +566,43 @@ function LessonCard({
     <button
       type="button"
       onClick={onClick}
-      className={`w-full rounded-xl border ${style.cardBg} ${style.cardBorder} ${style.cardExtra ?? ""} px-4 py-3 flex items-center justify-between gap-3 text-left transition active:scale-[0.99] ${style.faded ? "opacity-70" : ""}`}
+      className={`w-full rounded-xl border border-line bg-surface px-4 py-3 text-left transition active:scale-[0.99] ${style.faded ? "opacity-60" : ""}`}
     >
-      <div className="min-w-0 flex-1">
-        <div
-          className={`text-sm font-bold ${style.timeColor ?? "text-ink"} ${style.strike ? "line-through" : ""}`}
+      {/* 상태 — 좌측 정렬 */}
+      <div className={`text-xs font-semibold ${style.color}`}>{style.label}</div>
+
+      {/* 시간 + 수강생 정보 */}
+      <div className="mt-1 flex items-baseline gap-2">
+        <span
+          className={`flex-none text-sm font-bold text-ink ${style.strike ? "line-through" : ""}`}
         >
           {timeText}
-          {oldTime && (
-            <span className="ml-1 text-[11px] font-normal text-ink-3 line-through">
-              {oldTime}
-            </span>
-          )}
-          {durationTag && (
-            <span className="ml-1 inline-block text-[10px] font-bold text-violet-700 bg-violet-100 px-1.5 py-0.5 rounded-md">
-              {durationTag}
-            </span>
-          )}
-        </div>
-        <div
-          className={`mt-0.5 text-xs text-ink-2 ${style.strike ? "line-through text-ink-3" : ""}`}
+        </span>
+        {oldTime && (
+          <span className="flex-none text-[11px] text-ink-3 line-through">{oldTime}</span>
+        )}
+        {durationTag && (
+          <span className="flex-none text-[10px] font-semibold text-ink-2 bg-soft px-1.5 py-0.5 rounded">
+            {durationTag}
+          </span>
+        )}
+        <span
+          className={`min-w-0 truncate text-xs text-ink-2 ${style.strike ? "line-through text-ink-3" : ""}`}
         >
           {studentName} · {formatLabel}
-          {roundNote && (
-            <>
-              {" · "}
-              <span className={`font-semibold ${style.noteColor ?? "text-blue-600"}`}>
-                {roundNote}
-              </span>
-            </>
-          )}
+          {roundNote && <> · {roundNote}</>}
           {paymentNote && (
             <>
               {" · "}
               <span
-                className={`font-semibold ${paymentNote === "미결제" ? "text-red-500" : "text-blue-500"}`}
+                className={paymentNote === "미결제" ? "font-semibold text-red-500" : "text-ink-3"}
               >
                 {paymentNote}
               </span>
             </>
           )}
-        </div>
+        </span>
       </div>
-      <span
-        className={`flex-none rounded-lg px-2 py-1 text-[11px] font-semibold ${style.badgeBg} ${style.badgeColor}`}
-      >
-        {style.badgeText}
-      </span>
     </button>
   );
 }
