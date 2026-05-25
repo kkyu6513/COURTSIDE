@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { maskPhone } from "@/lib/masking";
+import { deriveDisplayStatus, getStatusLabel } from "@/lib/lesson-status";
 
 export type LessonDetail = {
   id: number;
@@ -10,7 +11,8 @@ export type LessonDetail = {
   studentPhone: string | null;
   scheduledAt: string; // ISO
   durationMinutes: number;
-  status: "CONFIRMED" | "PENDING" | "UPCOMING" | "CHANGE_REQUEST" | "COMPLETED" | "CANCELLED";
+  // DB lessons.status (12종) — 라벨/색은 @/lib/lesson-status 단일 소스
+  status: string;
   notes?: string | null;
 };
 
@@ -22,15 +24,6 @@ type Props = {
   pendingNotes: boolean;
   onCancel: () => void;
   onSaveNotes: (notes: string) => void;
-};
-
-const STATUS_LABEL: Record<LessonDetail["status"], { text: string; bg: string; fg: string }> = {
-  CONFIRMED: { text: "레슨 확정", bg: "bg-emerald-50", fg: "text-emerald-600" },
-  PENDING: { text: "대기 중", bg: "bg-amber-50", fg: "text-amber-600" },
-  UPCOMING: { text: "레슨 예정", bg: "bg-violet-50", fg: "text-violet-600" },
-  CHANGE_REQUEST: { text: "변경 요청", bg: "bg-orange-50", fg: "text-orange-600" },
-  COMPLETED: { text: "완료", bg: "bg-blue-50", fg: "text-blue-600" },
-  CANCELLED: { text: "취소됨", bg: "bg-soft", fg: "text-ink-3" },
 };
 
 const DOW_KOR = ["일", "월", "화", "수", "목", "금", "토"];
@@ -79,7 +72,9 @@ export function LessonDetailSheet({ open, onClose, lesson, pendingCancel, pendin
   if (typeof document === "undefined") return null;
 
   const { dateLabel, timeLabel } = formatKstTimeRange(lesson.scheduledAt, lesson.durationMinutes);
-  const status = STATUS_LABEL[lesson.status];
+  // 진행 시간대면 CONFIRMED → IN_PROGRESS 자동 변환 (코치 홈과 동일 규칙)
+  const displayStatus = deriveDisplayStatus(lesson.status, lesson.scheduledAt, lesson.durationMinutes);
+  const status = getStatusLabel(displayStatus);
   const isCancelled = lesson.status === "CANCELLED";
 
   // 지난 레슨 (시작 시각이 현재보다 이전) — 취소 비표시

@@ -8,13 +8,16 @@ import { StudentPickerSheet, type StudentOption } from "@/components/coach/stude
 import { LessonDetailSheet, type LessonDetail } from "@/components/coach/lesson-detail-sheet";
 import { LessonListSheet } from "@/components/coach/lesson-list-sheet";
 import { bookLesson, cancelLesson, updateLessonNotes } from "@/app/coach/schedule/actions";
+import { deriveDisplayStatus, getStatusCellClass } from "@/lib/lesson-status";
 
 export type LessonRow = {
   id: number;
   studentId: string;
   scheduledAt: string; // ISO
   durationMinutes: number;
-  status: "CONFIRMED" | "PENDING" | "UPCOMING" | "CHANGE_REQUEST" | "COMPLETED" | "CANCELLED";
+  // DB lessons.status — 12종 + 미래 확장에 대비해 string 으로 받음.
+  // 라벨/색 매핑은 @/lib/lesson-status 에서 단일 소스로 관리.
+  status: string;
   notes?: string | null;
 };
 
@@ -25,7 +28,7 @@ type Props = {
 };
 
 const DOW_KOR = ["일", "월", "화", "수", "목", "금", "토"];
-const HOURS = Array.from({ length: 17 }, (_, i) => i + 6); // 06 ~ 22
+const HOURS = Array.from({ length: 18 }, (_, i) => i + 6); // 06 ~ 23 (23시 슬롯에서 60분 잡으면 24:00 종료)
 
 type ViewMode = "hour" | "minute";
 
@@ -126,22 +129,8 @@ function isHourFull(lessons: LessonRow[], hour: number): boolean {
   return covered >= 60;
 }
 
-function statusToClass(status: LessonRow["status"]): string {
-  switch (status) {
-    case "CONFIRMED":
-      return "bg-emerald-100 hover:bg-emerald-200";
-    case "PENDING":
-      return "bg-amber-100 hover:bg-amber-200";
-    case "UPCOMING":
-      return "bg-violet-100 hover:bg-violet-200";
-    case "CHANGE_REQUEST":
-      return "bg-orange-100 hover:bg-orange-200";
-    case "COMPLETED":
-      return "bg-blue-100 hover:bg-blue-200";
-    case "CANCELLED":
-      return "bg-soft hover:bg-soft cursor-not-allowed line-through";
-  }
-}
+// statusToClass 는 @/lib/lesson-status 의 getStatusCellClass + deriveDisplayStatus 로 대체.
+// CONFIRMED 가 진행 시간대면 IN_PROGRESS 색(빨강 pulse)으로 표시 — 코치 홈과 동일 규칙.
 
 export function WeeklyTimetable({
   lessons: initialLessons = [],
@@ -280,6 +269,8 @@ export function WeeklyTimetable({
   const lessonByCell = useMemo(() => {
     const m = new Map<string, LessonRow[]>();
     for (const l of lessons) {
+      // 취소된 레슨은 셀 점유를 해제 — 동일 시간 새 레슨 등록 가능해야 함
+      if (l.status === "CANCELLED") continue;
       const start = parseIsoUtc(l.scheduledAt);
       const end = new Date(start.getTime() + l.durationMinutes * 60 * 1000);
       const startKst = new Date(start.getTime() + 9 * 60 * 60 * 1000);
@@ -769,7 +760,7 @@ function SlotRow({
               pastEmpty
                 ? "bg-soft/60 cursor-not-allowed"
                 : count > 0
-                  ? `${statusToClass(first.status)} cursor-pointer ${wd.isPast ? "opacity-70" : ""}`
+                  ? `${getStatusCellClass(deriveDisplayStatus(first.status, first.scheduledAt, first.durationMinutes))} cursor-pointer ${wd.isPast ? "opacity-70" : ""}`
                   : "bg-surface hover:bg-soft cursor-pointer"
             }`}
             aria-label={`${slot.label} ${pastEmpty ? "지난 날짜 빈 시간" : count > 0 ? `레슨 ${count}개${full ? " (가득 참)" : ""}` : "빈 시간"} 옵션`}

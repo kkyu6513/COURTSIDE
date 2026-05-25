@@ -3,15 +3,7 @@
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import type { LessonDetail } from "@/components/coach/lesson-detail-sheet";
-
-const STATUS_LABEL: Record<LessonDetail["status"], { text: string; bg: string; fg: string }> = {
-  CONFIRMED: { text: "확정", bg: "bg-emerald-50", fg: "text-emerald-600" },
-  PENDING: { text: "대기", bg: "bg-amber-50", fg: "text-amber-600" },
-  UPCOMING: { text: "예정", bg: "bg-violet-50", fg: "text-violet-600" },
-  CHANGE_REQUEST: { text: "변경 요청", bg: "bg-orange-50", fg: "text-orange-600" },
-  COMPLETED: { text: "완료", bg: "bg-blue-50", fg: "text-blue-600" },
-  CANCELLED: { text: "취소", bg: "bg-soft", fg: "text-ink-3" },
-};
+import { deriveDisplayStatus, getStatusLabel } from "@/lib/lesson-status";
 
 function parseIsoUtc(s: string): Date {
   const hasTz = /Z$|[+-]\d{2}:?\d{2}$/.test(s);
@@ -75,7 +67,9 @@ export function LessonListSheet({ open, onClose, hourLabel, lessons, onPickLesso
         <div className="flex-1 overflow-y-auto px-3 pb-2">
           <ul className="space-y-2">
             {lessons.map((l) => {
-              const status = STATUS_LABEL[l.status];
+              const status = getStatusLabel(
+                deriveDisplayStatus(l.status, l.scheduledAt, l.durationMinutes),
+              );
               const endIso = new Date(parseIsoUtc(l.scheduledAt).getTime() + l.durationMinutes * 60 * 1000).toISOString();
               return (
                 <li key={l.id}>

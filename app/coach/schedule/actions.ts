@@ -61,11 +61,13 @@ export async function bookLesson(
   const windowStart = new Date(newStart - 24 * 60 * 60 * 1000).toISOString();
   const windowEnd = new Date(newEnd + 24 * 60 * 60 * 1000).toISOString();
 
+  // 충돌 검증 — 슬롯 점유 해제 상태(CANCELLED/COMPLETED/ABSENT)는 제외.
+  // 같은 시간에 보강·재등록이 가능해야 하므로 끝난 회차는 점유로 보지 않음.
   const { data: nearby } = await admin
     .from("lessons")
     .select("id, scheduledAt, durationMinutes, status")
     .eq("coachId", user.id)
-    .neq("status", "CANCELLED")
+    .not("status", "in", "(CANCELLED,COMPLETED,ABSENT)")
     .gte("scheduledAt", windowStart)
     .lte("scheduledAt", windowEnd);
 

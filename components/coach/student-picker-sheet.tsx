@@ -13,7 +13,7 @@ export type StudentOption = {
 const DURATIONS = [20, 30, 40, 50, 60, 90];
 
 const DAY_START_MIN = 6 * 60; // 06:00
-const DAY_END_MIN = 23 * 60; // 23:00 (레슨 종료 한계)
+const DAY_END_MIN = 24 * 60; // 24:00 (당일 자정까지 레슨 종료 허용 — 23:00 시작 60분 레슨 가능)
 
 export type BookedLesson = {
   startMin: number; // 자정 기준 분
