@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { maskPhone } from "@/lib/masking";
 
@@ -127,8 +127,38 @@ export function StudentPickerSheet({
 
   const onSelectDuration = (d: number) => {
     setDuration(d);
-    setSelectedStartMin(null); // 길이 바뀌면 슬롯 그리드가 달라지므로 선택 초기화
+    // 새 그리드에 selectedStartMin이 정확히 있으면 유지, 없으면 null
+    if (selectedStartMin !== null) {
+      const offset = (selectedStartMin - DAY_START_MIN) % d;
+      const fitsInDay = selectedStartMin + d <= DAY_END_MIN;
+      if (offset !== 0 || !fitsInDay) {
+        setSelectedStartMin(null);
+      }
+    }
   };
+
+  // 슬롯 리스트 ref — 시트 열릴 때 오늘이면 현재 시각 근처로 자동 스크롤
+  const listRef = useRef<HTMLUListElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    if (dayStartUtcMs == null) return;
+    const list = listRef.current;
+    if (!list) return;
+    const nowMs = Date.now();
+    const isTodayPicker = nowMs >= dayStartUtcMs && nowMs < dayStartUtcMs + 24 * 60 * 60 * 1000;
+    if (!isTodayPicker) return;
+    const nowMin = Math.floor((nowMs - dayStartUtcMs) / 60000);
+    // 현재 시각 이후 첫 슬롯
+    const targetIdx = slots.findIndex((s) => s.startMin >= nowMin);
+    if (targetIdx < 0) return;
+    const el = list.children[targetIdx] as HTMLElement | undefined;
+    if (el) {
+      // 약간 지연 — DOM render 후
+      requestAnimationFrame(() => {
+        el.scrollIntoView({ block: "center", behavior: "auto" });
+      });
+    }
+  }, [open, dayStartUtcMs, slots]);
 
   return createPortal(
     <div
@@ -191,7 +221,7 @@ export function StudentPickerSheet({
               </div>
             </div>
             <div className="flex-1 overflow-y-auto px-3 pb-2">
-              <ul className="space-y-1">
+              <ul ref={listRef} className="space-y-1">
                 {slots.map((slot) => {
                   const isPast =
                     dayStartUtcMs != null &&
@@ -242,7 +272,11 @@ export function StudentPickerSheet({
                           )}
                         </div>
                         {blocked ? (
-                          <span className="flex-none text-[10px] font-semibold text-red-400">
+                          <span
+                            className={`flex-none text-[10px] font-semibold ${
+                              isPast ? "text-ink-3" : "text-red-400"
+                            }`}
+                          >
                             {isPast ? "지난 시간" : "잡힘"}
                           </span>
                         ) : selected ? (
@@ -262,15 +296,38 @@ export function StudentPickerSheet({
             </div>
 
             <div className="px-5 pb-6 pt-3 border-t border-line flex-none">
-              {startMin !== null && endMin !== null && (
-                <p className="mb-2 text-xs text-ink-2 text-center">
-                  선택:{" "}
-                  <span className="font-bold text-ink">
-                    {hmLabel(startMin)} ~ {hmLabel(endMin)}
-                  </span>{" "}
-                  ({duration}분)
-                </p>
-              )}
+              {(() => {
+                if (startMin === null || endMin === null) {
+                  return (
+                    <p className="mb-2 text-xs text-ink-3 text-center">
+                      비어있는 시간을 선택해주세요
+                    </p>
+                  );
+                }
+                if (selectedIsPast) {
+                  return (
+                    <p className="mb-2 text-xs text-red-500 text-center">
+                      지난 시간은 선택할 수 없어요. 다른 시간을 골라주세요.
+                    </p>
+                  );
+                }
+                if (selectedConflict) {
+                  return (
+                    <p className="mb-2 text-xs text-red-500 text-center">
+                      {selectedConflict.studentName} 레슨과 겹쳐요. 다른 시간을 골라주세요.
+                    </p>
+                  );
+                }
+                return (
+                  <p className="mb-2 text-xs text-ink-2 text-center">
+                    선택:{" "}
+                    <span className="font-bold text-ink">
+                      {hmLabel(startMin)} ~ {hmLabel(endMin)}
+                    </span>{" "}
+                    ({duration}분)
+                  </p>
+                );
+              })()}
               <div className="flex gap-2">
                 <button
                   type="button"
