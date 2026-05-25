@@ -13,6 +13,7 @@ export type LessonDetail = {
   durationMinutes: number;
   // DB lessons.status (12종) — 라벨/색은 @/lib/lesson-status 단일 소스
   status: string;
+  paymentStatus?: string | null; // PAID | UNPAID | EXTERNAL | NONE
   notes?: string | null;
 };
 
@@ -25,11 +26,13 @@ type Props = {
   pendingRestore?: boolean;
   pendingComplete?: boolean;
   pendingAbsent?: boolean;
+  pendingPaid?: boolean;
   onCancel: () => void;
   onSaveNotes: (notes: string) => void;
   onRestore?: () => void; // CANCELLED 레슨 복구
   onComplete?: () => void; // CONFIRMED/IN_PROGRESS → COMPLETED
   onAbsent?: () => void; // CONFIRMED/IN_PROGRESS → ABSENT
+  onMarkPaid?: () => void; // paymentStatus UNPAID → PAID
 };
 
 const DOW_KOR = ["일", "월", "화", "수", "목", "금", "토"];
@@ -64,11 +67,13 @@ export function LessonDetailSheet({
   pendingRestore,
   pendingComplete,
   pendingAbsent,
+  pendingPaid,
   onCancel,
   onSaveNotes,
   onRestore,
   onComplete,
   onAbsent,
+  onMarkPaid,
 }: Props) {
   const [notesDraft, setNotesDraft] = useState("");
 
@@ -122,8 +127,17 @@ export function LessonDetailSheet({
   const isInProgress = lesson.status === "CONFIRMED" || lesson.status === "IN_PROGRESS";
   const canComplete = isInProgress && !!onComplete;
   const canAbsent = isInProgress && !!onAbsent;
-  const anyPending = pendingCancel || !!pendingRestore || !!pendingComplete || !!pendingAbsent;
+  const anyPending = pendingCancel || !!pendingRestore || !!pendingComplete || !!pendingAbsent || !!pendingPaid;
   const notesChanged = notesDraft.trim() !== (lesson.notes ?? "").trim();
+  const canMarkPaid = lesson.paymentStatus === "UNPAID" && !!onMarkPaid;
+  const paymentLabel = (() => {
+    switch (lesson.paymentStatus) {
+      case "PAID": return { text: "결제 완료", bg: "bg-blue-50", fg: "text-blue-600" };
+      case "UNPAID": return { text: "미결제", bg: "bg-red-50", fg: "text-red-500" };
+      case "EXTERNAL": return { text: "외부결제", bg: "bg-sky-50", fg: "text-sky-600" };
+      default: return null;
+    }
+  })();
 
   // 메모 변경 미저장 상태에서 시트 닫기 시 확인 (#39)
   const requestClose = () => {
@@ -186,6 +200,11 @@ export function LessonDetailSheet({
                 {lesson.studentPhone ? maskPhone(lesson.studentPhone) : "전화번호 없음"}
               </div>
             </div>
+            {paymentLabel && (
+              <span className={`flex-none rounded-full px-2 py-1 text-[10px] font-bold ${paymentLabel.bg} ${paymentLabel.fg}`}>
+                {paymentLabel.text}
+              </span>
+            )}
           </div>
         </div>
 
@@ -216,6 +235,24 @@ export function LessonDetailSheet({
         </div>
 
         <div className="mt-4 space-y-2">
+          {/* 결제확인 — paymentStatus UNPAID 일 때 */}
+          {canMarkPaid && (
+            <button
+              type="button"
+              onClick={onMarkPaid}
+              disabled={anyPending}
+              className="w-full h-12 rounded-xl bg-sky-50 text-sky-700 text-sm font-semibold hover:bg-sky-100 transition active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
+            >
+              {pendingPaid && (
+                <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z" />
+                </svg>
+              )}
+              {pendingPaid ? "처리 중…" : "결제 확인"}
+            </button>
+          )}
+
           {/* 상태 전이 — 완료/결강 (CONFIRMED/IN_PROGRESS 한정) */}
           {(canComplete || canAbsent) && (
             <div className="grid grid-cols-2 gap-2">

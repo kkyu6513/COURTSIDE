@@ -40,7 +40,7 @@ export default async function CoachSchedulePage({
   const windowEnd = new Date(Date.now() + 12 * 7 * 24 * 60 * 60 * 1000).toISOString();
   const { data: lessonsRaw } = await admin
     .from("lessons")
-    .select("id, studentId, scheduledAt, durationMinutes, status")
+    .select("id, studentId, scheduledAt, durationMinutes, status, paymentStatus, notes")
     .eq("coachId", user.id)
     .gte("scheduledAt", windowStart)
     .lte("scheduledAt", windowEnd);

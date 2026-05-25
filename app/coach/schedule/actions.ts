@@ -219,6 +219,49 @@ export async function markLessonAbsent(lessonId: number): Promise<SimpleResult> 
 }
 
 /**
+ * 결제확인 처리 — paymentStatus UNPAID → PAID.
+ * EXTERNAL/PAID/NONE 상태에서는 호출 불가.
+ */
+export async function markLessonPaid(lessonId: number): Promise<SimpleResult> {
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "로그인이 필요합니다" };
+
+  const meta = user.app_metadata as { role?: string } | undefined;
+  if (meta?.role !== "COACH") return { ok: false, error: "코치만 가능해요" };
+
+  const admin = createAdminClient();
+
+  const { data: lesson } = await admin
+    .from("lessons")
+    .select("id, coachId, paymentStatus")
+    .eq("id", lessonId)
+    .maybeSingle();
+
+  if (!lesson) return { ok: false, error: "레슨을 찾을 수 없어요" };
+  if (lesson.coachId !== user.id) return { ok: false, error: "결제 처리 권한이 없어요" };
+  if (lesson.paymentStatus !== "UNPAID") {
+    return { ok: false, error: "미결제 상태의 레슨만 결제 확인할 수 있어요" };
+  }
+
+  const { error: updateError } = await admin
+    .from("lessons")
+    .update({ paymentStatus: "PAID", updatedAt: new Date().toISOString() })
+    .eq("id", lessonId);
+
+  if (updateError) {
+    console.error("[markLessonPaid] update error:", updateError);
+    return { ok: false, error: "결제 처리 중 문제가 발생했어요. 잠시 후 다시 시도해 주세요." };
+  }
+
+  revalidatePath("/coach/schedule");
+  revalidatePath("/");
+  return { ok: true };
+}
+
+/**
  * 취소된 레슨 복구 — CANCELLED → CONFIRMED.
  * 동일 시간에 새 active 레슨이 이미 있으면 실패(충돌).
  */

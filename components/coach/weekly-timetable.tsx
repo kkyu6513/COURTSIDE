@@ -13,6 +13,7 @@ import {
   cancelLesson,
   markLessonAbsent,
   markLessonCompleted,
+  markLessonPaid,
   restoreLesson,
   updateLessonNotes,
 } from "@/app/coach/schedule/actions";
@@ -26,6 +27,7 @@ export type LessonRow = {
   // DB lessons.status — 12종 + 미래 확장에 대비해 string 으로 받음.
   // 라벨/색 매핑은 @/lib/lesson-status 에서 단일 소스로 관리.
   status: string;
+  paymentStatus?: string | null; // PAID | UNPAID | EXTERNAL | NONE
   notes?: string | null;
 };
 
@@ -246,6 +248,7 @@ export function WeeklyTimetable({
   const [pendingRestore, setPendingRestore] = useState(false);
   const [pendingComplete, setPendingComplete] = useState(false);
   const [pendingAbsent, setPendingAbsent] = useState(false);
+  const [pendingPaid, setPendingPaid] = useState(false);
   const [, startTransition] = useTransition();
   // 에러/경고 — 사용자 확인이 필요한 풀모달
   const [alert, setAlert] = useState<{ open: boolean; variant: "error"; title: string; description?: string }>({
@@ -371,6 +374,7 @@ export function WeeklyTimetable({
       scheduledAt: l.scheduledAt,
       durationMinutes: l.durationMinutes,
       status: l.status,
+      paymentStatus: l.paymentStatus ?? null,
       notes: l.notes ?? null,
     };
   };
@@ -500,6 +504,23 @@ export function WeeklyTimetable({
       }
       setLessonDetail(null);
       showSuccess("결강으로 처리했어요");
+      reload();
+    });
+  };
+
+  const onMarkPaid = () => {
+    if (!lessonDetail) return;
+    const lessonId = lessonDetail.lesson.id;
+    setPendingPaid(true);
+    startTransition(async () => {
+      const res = await markLessonPaid(lessonId);
+      setPendingPaid(false);
+      if (!res.ok) {
+        showError("결제 확인 실패", res.error);
+        return;
+      }
+      setLessonDetail((s) => (s ? { ...s, lesson: { ...s.lesson, paymentStatus: "PAID" } } : s));
+      showSuccess("결제 완료로 처리했어요");
       reload();
     });
   };
@@ -782,11 +803,13 @@ export function WeeklyTimetable({
           pendingRestore={pendingRestore}
           pendingComplete={pendingComplete}
           pendingAbsent={pendingAbsent}
+          pendingPaid={pendingPaid}
           onCancel={onCancelLesson}
           onSaveNotes={onSaveLessonNotes}
           onRestore={onRestoreLesson}
           onComplete={onCompleteLesson}
           onAbsent={onAbsentLesson}
+          onMarkPaid={onMarkPaid}
         />
       )}
 
