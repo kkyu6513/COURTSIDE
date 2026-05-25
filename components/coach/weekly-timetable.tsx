@@ -6,6 +6,7 @@ import { AlertModal } from "@/components/alert-modal";
 import { Toast } from "@/components/toast";
 import { StudentPickerSheet, type StudentOption } from "@/components/coach/student-picker-sheet";
 import { LessonDetailSheet, type LessonDetail } from "@/components/coach/lesson-detail-sheet";
+import { LessonListSheet } from "@/components/coach/lesson-list-sheet";
 import {
   bookLesson,
   bookRecurringLessons,
@@ -31,6 +32,12 @@ export type LessonRow = {
   // DB lessons.status — 12종 + 미래 확장 대비 string. 라벨/색은 @/lib/lesson-status 단일 소스.
   status: string;
   paymentStatus?: string | null; // PAID | UNPAID | EXTERNAL | NONE
+  lessonFormat?: string | null;  // PRIVATE | GROUP
+  roundNumber?: number | null;
+  totalRounds?: number | null;
+  originalScheduledAt?: string | null;
+  splitIndex?: number | null;
+  splitTotal?: number | null;
   notes?: string | null;
 };
 
@@ -119,42 +126,97 @@ function hmRange(startMin: number, endMin: number): string {
 
 // ---------- 블록 레이아웃 ----------
 
+// 한 그룹 안에서 동시에 보일 수 있는 최대 lane 수.
+// 초과 시 visible lanes - 1 + "+N more" 배지로 압축 (#9).
+const MAX_VISIBLE_LANES = 3;
+
 type LessonBlock = {
+  kind: "lesson";
   lesson: LessonRow;
-  startMin: number;   // KST 자정 기준 분
-  endMin: number;     // 가시 범위로 클립된 값
-  laneIdx: number;    // 0-indexed (충돌 그룹 내 컬럼 인덱스)
-  laneCount: number;  // 충돌 그룹 내 전체 컬럼 수
+  startMin: number;        // 클립 후 dayDate 기준 분 (렌더 위치)
+  endMin: number;          // 클립 후
+  startTimeLabel: string;  // 실제 KST "HH:MM"  (전날 23:30 등 절대 시각)
+  endTimeLabel: string;    // 실제 KST "HH:MM"
+  clipTop: boolean;        // dayDate 06:00 이전 시작 — 위쪽 잘림 (#1)
+  clipBottom: boolean;     // dayDate 24:00 이후 종료 — 아래쪽 잘림 (#2)
+  laneIdx: number;
+  laneCount: number;
 };
+
+type OverflowBlock = {
+  kind: "overflow";
+  startMin: number;
+  endMin: number;
+  lessons: LessonRow[];  // 숨겨진 lessons
+  laneIdx: number;       // 마지막 lane 위치
+  laneCount: number;
+};
+
+type AnyBlock = LessonBlock | OverflowBlock;
 
 /**
  * 하루치 레슨을 시간-블록으로 레이아웃.
- * - CANCELLED 제외
- * - 가시 범위 [06:00, 24:00] 밖이면 클립
- * - 시간이 겹치는 그룹을 만들고 그룹 내에서 greedy 레인 할당
- *   (구글 캘린더 day-view 와 동일 알고리즘)
+ * - 가시 범위 [06:00, 24:00] 밖이면 클립 + clipTop/clipBottom 플래그
+ * - 시간 겹침 그룹 → greedy 레인 할당 (구글 캘린더 day-view 패턴)
+ * - lane 수가 MAX_VISIBLE_LANES 초과 시 첫 N-1 lane 표시 + "+N more" 배지 (#9)
+ * - 정렬: 시작 시각 → 종료 시각 → 학생명(가나다) (#10)
  */
-function layoutDayBlocks(lessons: LessonRow[]): LessonBlock[] {
+function layoutDayBlocks(
+  lessons: LessonRow[],
+  dayDate: Date,
+  studentNameOf: (id: string) => string,
+): AnyBlock[] {
   if (lessons.length === 0) return [];
 
   const dayStartMin = DAY_START_HOUR * 60;
   const dayEndMin = DAY_END_HOUR * 60;
+  // dayDate는 KST trick — getTime() = KST midnight + 9h.
+  // 실제 UTC ms of KST midnight = dayDate.getTime() - KST_OFFSET_MS
+  const dayUtcMidnightMs = dayDate.getTime() - KST_OFFSET_MS;
 
-  const items: { lesson: LessonRow; startMin: number; endMin: number }[] = [];
+  const items: {
+    lesson: LessonRow;
+    startMin: number;
+    endMin: number;
+    startTimeLabel: string;
+    endTimeLabel: string;
+    clipTop: boolean;
+    clipBottom: boolean;
+  }[] = [];
   for (const l of lessons) {
-    if (l.status === "CANCELLED") continue;
-    const startKst = new Date(parseIsoUtc(l.scheduledAt).getTime() + KST_OFFSET_MS);
-    const sRaw = startKst.getUTCHours() * 60 + startKst.getUTCMinutes();
-    const eRaw = sRaw + l.durationMinutes;
-    // 가시 범위 클립
-    const s = Math.max(sRaw, dayStartMin);
-    const e = Math.min(eRaw, dayEndMin);
-    if (e <= s) continue; // 가시 범위 밖
-    items.push({ lesson: l, startMin: s, endMin: e });
+    const lessonStartMs = parseIsoUtc(l.scheduledAt).getTime();
+    const lessonEndMs = lessonStartMs + l.durationMinutes * 60 * 1000;
+    // dayDate 자정 기준 상대 분 — 전날 시작이면 음수, 다음날 종료면 1440 초과
+    const sRel = (lessonStartMs - dayUtcMidnightMs) / 60000;
+    const eRel = (lessonEndMs - dayUtcMidnightMs) / 60000;
+    const s = Math.max(sRel, dayStartMin);
+    const e = Math.min(eRel, dayEndMin);
+    if (e <= s) continue;
+    // 절대 KST 시각 라벨 — 잘린 위/아래에서도 실제 시작/종료 시각 표시 (#1, #2)
+    const startKst = new Date(lessonStartMs + KST_OFFSET_MS);
+    const endKst = new Date(lessonEndMs + KST_OFFSET_MS);
+    const startTimeLabel = `${String(startKst.getUTCHours()).padStart(2, "0")}:${String(startKst.getUTCMinutes()).padStart(2, "0")}`;
+    const endTimeLabel = `${String(endKst.getUTCHours()).padStart(2, "0")}:${String(endKst.getUTCMinutes()).padStart(2, "0")}`;
+    items.push({
+      lesson: l,
+      startMin: s,
+      endMin: e,
+      startTimeLabel,
+      endTimeLabel,
+      clipTop: sRel < dayStartMin,
+      clipBottom: eRel > dayEndMin,
+    });
   }
-  items.sort((a, b) => (a.startMin === b.startMin ? a.endMin - b.endMin : a.startMin - b.startMin));
+  items.sort((a, b) => {
+    if (a.startMin !== b.startMin) return a.startMin - b.startMin;
+    if (a.endMin !== b.endMin) return a.endMin - b.endMin;
+    return studentNameOf(a.lesson.studentId).localeCompare(
+      studentNameOf(b.lesson.studentId),
+      "ko",
+    );
+  });
 
-  // 연결된 충돌 그룹 추출
+  // 충돌 그룹 추출
   const groups: typeof items[] = [];
   let cur: typeof items = [];
   let curEnd = -Infinity;
@@ -169,11 +231,11 @@ function layoutDayBlocks(lessons: LessonRow[]): LessonBlock[] {
   }
   if (cur.length > 0) groups.push(cur);
 
-  // 그룹 내 greedy 레인 할당
-  const blocks: LessonBlock[] = [];
+  // 그룹 내 greedy lane 할당 + 오버플로우 압축
+  const out: AnyBlock[] = [];
   for (const group of groups) {
     const laneEnds: number[] = [];
-    const tmp: { lesson: LessonRow; startMin: number; endMin: number; laneIdx: number }[] = [];
+    const assigned: { it: typeof group[0]; laneIdx: number }[] = [];
     for (const it of group) {
       let lane = laneEnds.findIndex((e) => e <= it.startMin);
       if (lane === -1) {
@@ -182,20 +244,58 @@ function layoutDayBlocks(lessons: LessonRow[]): LessonBlock[] {
       } else {
         laneEnds[lane] = it.endMin;
       }
-      tmp.push({ ...it, laneIdx: lane });
+      assigned.push({ it, laneIdx: lane });
     }
-    const laneCount = laneEnds.length;
-    for (const t of tmp) {
-      blocks.push({
-        lesson: t.lesson,
-        startMin: t.startMin,
-        endMin: t.endMin,
-        laneIdx: t.laneIdx,
-        laneCount,
-      });
+    const totalLanes = laneEnds.length;
+
+    if (totalLanes <= MAX_VISIBLE_LANES) {
+      for (const a of assigned) {
+        out.push({
+          kind: "lesson",
+          lesson: a.it.lesson,
+          startMin: a.it.startMin,
+          endMin: a.it.endMin,
+          startTimeLabel: a.it.startTimeLabel,
+          endTimeLabel: a.it.endTimeLabel,
+          clipTop: a.it.clipTop,
+          clipBottom: a.it.clipBottom,
+          laneIdx: a.laneIdx,
+          laneCount: totalLanes,
+        });
+      }
+    } else {
+      const visibleLanes = MAX_VISIBLE_LANES - 1; // 2
+      const visible = assigned.filter((a) => a.laneIdx < visibleLanes);
+      const overflow = assigned.filter((a) => a.laneIdx >= visibleLanes);
+      for (const a of visible) {
+        out.push({
+          kind: "lesson",
+          lesson: a.it.lesson,
+          startMin: a.it.startMin,
+          endMin: a.it.endMin,
+          startTimeLabel: a.it.startTimeLabel,
+          endTimeLabel: a.it.endTimeLabel,
+          clipTop: a.it.clipTop,
+          clipBottom: a.it.clipBottom,
+          laneIdx: a.laneIdx,
+          laneCount: MAX_VISIBLE_LANES,
+        });
+      }
+      if (overflow.length > 0) {
+        const startMin = Math.min(...overflow.map((o) => o.it.startMin));
+        const endMin = Math.max(...overflow.map((o) => o.it.endMin));
+        out.push({
+          kind: "overflow",
+          startMin,
+          endMin,
+          lessons: overflow.map((o) => o.it.lesson),
+          laneIdx: visibleLanes, // 마지막 슬롯
+          laneCount: MAX_VISIBLE_LANES,
+        });
+      }
     }
   }
-  return blocks;
+  return out;
 }
 
 // ---------- 컴포넌트 ----------
@@ -315,6 +415,11 @@ export function WeeklyTimetable({
     baseTimeLabel: string;
   } | null>(null);
   const [lessonDetail, setLessonDetail] = useState<{ open: boolean; lesson: LessonDetail } | null>(null);
+  const [lessonList, setLessonList] = useState<{
+    open: boolean;
+    hourLabel: string;
+    lessons: LessonDetail[];
+  } | null>(null);
   const [pendingStudentId, setPendingStudentId] = useState<string | null>(null);
   const [pendingCancel, setPendingCancel] = useState(false);
   const [pendingNotes, setPendingNotes] = useState(false);
@@ -352,39 +457,49 @@ export function WeeklyTimetable({
     });
   }, [weekStart]);
 
-  // 일별 lesson 인덱스 → 그룹화 + 레인 할당
-  const blocksByDay = useMemo(() => {
-    const m = new Map<string, LessonBlock[]>();
-    const visibleStartMs = weekStart.getTime() - KST_OFFSET_MS;
-    const visibleEndMs = visibleStartMs + 7 * 24 * 60 * 60 * 1000;
-
-    // weekday 별로 lessons 분류
-    const byDay = new Map<string, LessonRow[]>();
-    for (const l of lessons) {
-      if (l.status === "CANCELLED") continue;
-      const startMs = parseIsoUtc(l.scheduledAt).getTime();
-      const endMs = startMs + l.durationMinutes * 60 * 1000;
-      // 주 범위 밖 스킵 (자정 가로지름 케이스도 포함하기 위해 start<end_window && end>start_window)
-      if (endMs <= visibleStartMs || startMs >= visibleEndMs) continue;
-      const startKst = new Date(startMs + KST_OFFSET_MS);
-      const dayKey = `${startKst.getUTCFullYear()}-${startKst.getUTCMonth() + 1}-${startKst.getUTCDate()}`;
-      const arr = byDay.get(dayKey) ?? [];
-      arr.push(l);
-      byDay.set(dayKey, arr);
-    }
-
-    for (const wd of weekDays) {
-      const key = `${wd.date.getUTCFullYear()}-${wd.date.getUTCMonth() + 1}-${wd.date.getUTCDate()}`;
-      m.set(key, layoutDayBlocks(byDay.get(key) ?? []));
-    }
-    return m;
-  }, [lessons, weekStart, weekDays]);
-
   const studentMap = useMemo(() => {
     const map = new Map<string, StudentOption>();
     for (const s of students) map.set(s.id, s);
     return map;
   }, [students]);
+
+  // 일별 lesson 인덱스 → 그룹화 + 레인 할당.
+  // 자정 가로지름 레슨은 시작일에 클립된 부분, 다음 날에 잔여 부분 동시 렌더 (#2).
+  const blocksByDay = useMemo(() => {
+    const m = new Map<string, AnyBlock[]>();
+    const visibleStartMs = weekStart.getTime() - KST_OFFSET_MS;
+    const visibleEndMs = visibleStartMs + 7 * 24 * 60 * 60 * 1000;
+
+    // 자정 가로지름 — 같은 lesson이 두 날짜에 등장하도록 분할 매핑
+    const byDay = new Map<string, LessonRow[]>();
+    const addToDay = (key: string, l: LessonRow) => {
+      const arr = byDay.get(key) ?? [];
+      arr.push(l);
+      byDay.set(key, arr);
+    };
+    for (const l of lessons) {
+      if (l.status === "CANCELLED") continue;
+      const startMs = parseIsoUtc(l.scheduledAt).getTime();
+      const endMs = startMs + l.durationMinutes * 60 * 1000;
+      if (endMs <= visibleStartMs || startMs >= visibleEndMs) continue;
+      const startKst = new Date(startMs + KST_OFFSET_MS);
+      const startDayKey = `${startKst.getUTCFullYear()}-${startKst.getUTCMonth() + 1}-${startKst.getUTCDate()}`;
+      addToDay(startDayKey, l);
+      // 자정 가로지름 — 종료가 다음 날이면 다음 날에도 추가 (#2)
+      const endKst = new Date(endMs + KST_OFFSET_MS);
+      const endDayKey = `${endKst.getUTCFullYear()}-${endKst.getUTCMonth() + 1}-${endKst.getUTCDate()}`;
+      if (startDayKey !== endDayKey) {
+        addToDay(endDayKey, l);
+      }
+    }
+
+    const studentNameOf = (id: string) => studentMap.get(id)?.name ?? "";
+    for (const wd of weekDays) {
+      const key = `${wd.date.getUTCFullYear()}-${wd.date.getUTCMonth() + 1}-${wd.date.getUTCDate()}`;
+      m.set(key, layoutDayBlocks(byDay.get(key) ?? [], wd.date, studentNameOf));
+    }
+    return m;
+  }, [lessons, weekStart, weekDays, studentMap]);
 
   // ----- 헤더 라벨 -----
   const weekStartLabel = formatKstDate(weekStart);
@@ -468,6 +583,21 @@ export function WeeklyTimetable({
   // ----- 블록 클릭 → 디테일 시트 -----
   const onBlockClick = (lesson: LessonRow) => {
     setLessonDetail({ open: true, lesson: toLessonDetail(lesson) });
+  };
+
+  // ----- 오버플로우 배지 클릭 → 리스트 시트 -----
+  const onOverflowClick = (date: Date, overflowLessons: LessonRow[]) => {
+    const f = formatKstDate(date);
+    setLessonList({
+      open: true,
+      hourLabel: `${f.m}월 ${f.day}일 ${DOW_KOR[f.dow]}요일 · 겹친 레슨`,
+      lessons: overflowLessons.map(toLessonDetail),
+    });
+  };
+  const closeLessonList = () => setLessonList((s) => (s ? { ...s, open: false } : null));
+  const onPickLessonFromList = (lesson: LessonDetail) => {
+    setLessonList(null);
+    setLessonDetail({ open: true, lesson });
   };
 
   // ----- 빈 영역 클릭 → 학생 피커 직행 -----
@@ -846,6 +976,7 @@ export function WeeklyTimetable({
                 studentMap={studentMap}
                 onEmptyClick={onEmptyClick}
                 onBlockClick={onBlockClick}
+                onOverflowClick={onOverflowClick}
                 isLastColumn={i === visibleColumns.length - 1}
               />
             );
@@ -877,6 +1008,17 @@ export function WeeklyTimetable({
           students={students}
           pendingStudentId={pendingStudentId}
           onPick={onPickStudent}
+        />
+      )}
+
+      {lessonList && (
+        <LessonListSheet
+          open={lessonList.open}
+          onClose={closeLessonList}
+          hourLabel={lessonList.hourLabel}
+          lessons={lessonList.lessons}
+          onPickLesson={onPickLessonFromList}
+          onBookNew={() => { /* 오버플로우 시트에서는 + 잡기 미사용 — picker 직행이 빈 영역 클릭으로 가능 */ closeLessonList(); }}
         />
       )}
 
@@ -949,15 +1091,17 @@ function DayColumn({
   studentMap,
   onEmptyClick,
   onBlockClick,
+  onOverflowClick,
   isLastColumn,
 }: {
   date: Date;
   isToday: boolean;
   isPast: boolean;
-  blocks: LessonBlock[];
+  blocks: AnyBlock[];
   studentMap: Map<string, StudentOption>;
   onEmptyClick: (date: Date, hour: number, minute: number) => void;
   onBlockClick: (lesson: LessonRow) => void;
+  onOverflowClick: (date: Date, lessons: LessonRow[]) => void;
   isLastColumn: boolean;
 }) {
   const totalHeight = TOTAL_HOURS * HOUR_HEIGHT_PX;
@@ -1015,15 +1159,23 @@ function DayColumn({
         className="absolute inset-0 cursor-cell hover:bg-primary/[0.04] focus:outline-none focus-visible:bg-primary/[0.06]"
       />
 
-      {/* 레슨 블록 */}
-      {blocks.map((b) => (
-        <LessonBlockView
-          key={b.lesson.id}
-          block={b}
-          studentMap={studentMap}
-          onClick={() => onBlockClick(b.lesson)}
-        />
-      ))}
+      {/* 레슨 블록 + 오버플로우 배지 */}
+      {blocks.map((b, i) =>
+        b.kind === "lesson" ? (
+          <LessonBlockView
+            key={`l-${b.lesson.id}-${i}`}
+            block={b}
+            studentMap={studentMap}
+            onClick={() => onBlockClick(b.lesson)}
+          />
+        ) : (
+          <OverflowBadge
+            key={`o-${i}-${b.startMin}`}
+            block={b}
+            onClick={() => onOverflowClick(date, b.lessons)}
+          />
+        ),
+      )}
 
       {/* 현재 시각 라인 */}
       {nowLineTop != null && (
@@ -1050,7 +1202,10 @@ function LessonBlockView({
   studentMap: Map<string, StudentOption>;
   onClick: () => void;
 }) {
-  const { lesson, startMin, endMin, laneIdx, laneCount } = block;
+  const {
+    lesson, startMin, endMin, startTimeLabel, endTimeLabel,
+    clipTop, clipBottom, laneIdx, laneCount,
+  } = block;
   const dayStartMin = DAY_START_HOUR * 60;
   const topPx = ((startMin - dayStartMin) / 60) * HOUR_HEIGHT_PX;
   const heightPx = Math.max(((endMin - startMin) / 60) * HOUR_HEIGHT_PX - 2, 20);
@@ -1063,9 +1218,50 @@ function LessonBlockView({
   const accent = getStatusBlockAccent(displayStatus);
   const statusLabel = getStatusLabel(displayStatus);
 
-  // 짧은 블록(30분 미만)은 한 줄만 표시
+  // ABSENT는 학생명에 line-through (#7)
+  const isAbsent = lesson.status === "ABSENT";
+  // 형식 표시 (#5)
+  const isGroup = lesson.lessonFormat === "GROUP";
+  const formatLabel = isGroup ? "그룹" : null; // 1:1은 생략 (기본값)
+  // 회차 (#3)
+  const roundLabel =
+    lesson.roundNumber != null && lesson.totalRounds != null
+      ? `${lesson.roundNumber}/${lesson.totalRounds}회`
+      : null;
+  // 메모 (#4)
+  const notesLabel = lesson.notes && lesson.notes.trim() ? lesson.notes.trim() : null;
+
+  // 사이즈 토큰
   const isVeryShort = heightPx < 30;
   const isShort = heightPx < 48;
+  const isMedium = heightPx < 80;
+  const isTall = heightPx >= 80;
+
+  // 결제 인디케이터 — UNPAID는 항상 표시 (가장 시급한 정보, #8)
+  const paymentDot = (() => {
+    if (lesson.paymentStatus === "UNPAID") {
+      return <span className="flex-none inline-block w-1.5 h-1.5 rounded-full bg-red-500" aria-label="미결제" title="미결제" />;
+    }
+    if (lesson.paymentStatus === "PAID") {
+      return <span className="flex-none inline-block w-1.5 h-1.5 rounded-full bg-emerald-500" aria-label="결제완료" title="결제완료" />;
+    }
+    if (lesson.paymentStatus === "EXTERNAL") {
+      return <span className="flex-none inline-block w-1.5 h-1.5 rounded-full bg-sky-500" aria-label="외부결제" title="외부결제" />;
+    }
+    return null;
+  })();
+
+  // 접근성 라벨
+  const ariaParts = [
+    studentName,
+    `${startTimeLabel} ~ ${endTimeLabel}`,
+    statusLabel.text,
+    formatLabel ?? "1:1",
+    roundLabel,
+    lesson.paymentStatus === "UNPAID" ? "미결제" : lesson.paymentStatus === "PAID" ? "결제완료" : null,
+    clipTop ? "지난날부터 진행" : null,
+    clipBottom ? "다음날까지 진행" : null,
+  ].filter(Boolean).join(" · ");
 
   return (
     <button
@@ -1081,34 +1277,97 @@ function LessonBlockView({
         left: `calc(${leftPct}% + 1px)`,
         width: `calc(${widthPct}% - 2px)`,
       }}
-      className={`absolute rounded-md border-l-4 px-1.5 py-0.5 text-left overflow-hidden transition active:scale-[0.99] hover:shadow-md hover:z-10 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 z-[5] ${accent.bg} ${accent.border}`}
-      title={`${studentName} · ${hmRange(startMin, endMin)} · ${statusLabel.text}`}
-      aria-label={`${studentName} ${hmRange(startMin, endMin)} ${statusLabel.text}`}
+      className={`absolute rounded-md border-l-4 px-1.5 py-0.5 text-left overflow-hidden transition active:scale-[0.99] hover:shadow-md hover:z-10 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 z-[5] cursor-pointer ${accent.bg} ${accent.border}`}
+      title={ariaParts}
+      aria-label={ariaParts}
     >
-      <div
-        className={`font-bold truncate ${accent.text} ${
-          isVeryShort ? "text-[10px] leading-none" : "text-[11px] leading-tight"
-        }`}
-      >
-        {studentName}
+      {/* 위쪽 clip 인디케이터 — 전날부터 이어진 레슨 */}
+      {clipTop && (
+        <div className="absolute top-0 left-0 right-0 px-1 text-[8px] font-bold text-ink-3 bg-soft/80 leading-none py-0.5 truncate" aria-hidden>
+          ↑ {startTimeLabel} 시작
+        </div>
+      )}
+
+      {/* 1행 — 학생명 + 결제 점 */}
+      <div className={`flex items-center gap-1 ${clipTop ? "mt-3" : ""}`}>
+        <div
+          className={`font-bold truncate flex-1 min-w-0 ${accent.text} ${
+            isAbsent ? "line-through" : ""
+          } ${isVeryShort ? "text-[10px] leading-none" : "text-[11px] leading-tight"}`}
+        >
+          {studentName}
+        </div>
+        {paymentDot}
       </div>
+
+      {/* 2행 — 시각 + 형식 + 회차 (very short는 생략) */}
       {!isVeryShort && (
-        <div className="mt-0.5 flex items-center gap-1 text-[9px] text-ink-2 leading-tight">
-          <span className="tabular-nums truncate">{hmRange(startMin, endMin)}</span>
-          {!isShort && lesson.paymentStatus === "UNPAID" && (
-            <span className="text-red-500 font-semibold flex-none">· 미결제</span>
+        <div className="mt-0.5 flex items-center gap-1 text-[9px] text-ink-2 leading-tight truncate">
+          <span className="tabular-nums flex-none">{startTimeLabel}~{endTimeLabel}</span>
+          {formatLabel && (
+            <span className="flex-none text-violet-700 font-semibold">· {formatLabel}</span>
           )}
-          {!isShort && lesson.paymentStatus === "PAID" && (
-            <span className="text-emerald-600 flex-none">· 결제</span>
+          {!isShort && roundLabel && (
+            <span className="flex-none text-ink-3">· {roundLabel}</span>
           )}
         </div>
       )}
-      {/* 60분 이상 + lane이 1개면 상태 라벨도 한 줄 더 표시 */}
-      {heightPx >= 60 && laneCount === 1 && (
+
+      {/* 3행 — 메모 미리보기 (medium+ + lane 1개) */}
+      {!isShort && notesLabel && laneCount === 1 && (
+        <div className={`mt-0.5 text-[9px] text-ink-3 leading-tight truncate ${isAbsent ? "line-through" : ""}`}>
+          {notesLabel}
+        </div>
+      )}
+
+      {/* 4행 — 상태 라벨 (tall + lane 1개) */}
+      {isTall && laneCount === 1 && (
         <div className={`mt-0.5 text-[9px] font-semibold ${accent.text} opacity-80 truncate`}>
           {statusLabel.text}
         </div>
       )}
+
+      {/* 아래쪽 clip 인디케이터 — 다음날까지 이어짐 */}
+      {clipBottom && (
+        <div className="absolute bottom-0 left-0 right-0 px-1 text-[8px] font-bold text-ink-3 bg-soft/80 leading-none py-0.5 truncate" aria-hidden>
+          ↓ {endTimeLabel} 종료
+        </div>
+      )}
+    </button>
+  );
+}
+
+// ---------- 오버플로우 배지 (lane 4+ 시 일부 lessons를 압축) ----------
+function OverflowBadge({
+  block,
+  onClick,
+}: {
+  block: OverflowBlock;
+  onClick: () => void;
+}) {
+  const { startMin, endMin, lessons, laneIdx, laneCount } = block;
+  const dayStartMin = DAY_START_HOUR * 60;
+  const topPx = ((startMin - dayStartMin) / 60) * HOUR_HEIGHT_PX;
+  const heightPx = Math.max(((endMin - startMin) / 60) * HOUR_HEIGHT_PX - 2, 20);
+  const leftPct = (laneIdx / laneCount) * 100;
+  const widthPct = (1 / laneCount) * 100;
+  return (
+    <button
+      type="button"
+      onClick={(e) => { e.stopPropagation(); onClick(); }}
+      style={{
+        position: "absolute",
+        top: `${topPx}px`,
+        height: `${heightPx}px`,
+        left: `calc(${leftPct}% + 1px)`,
+        width: `calc(${widthPct}% - 2px)`,
+      }}
+      className="absolute rounded-md border border-dashed border-ink-3/40 bg-ink/5 hover:bg-ink/10 px-1 py-0.5 flex flex-col items-center justify-center transition active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 z-[5] cursor-pointer"
+      title={`+${lessons.length}개 레슨 더 보기`}
+      aria-label={`+${lessons.length}개 레슨 — 탭하면 목록 열림`}
+    >
+      <span className="text-[10px] font-extrabold text-ink leading-none">+{lessons.length}</span>
+      <span className="text-[8px] text-ink-3 leading-none mt-0.5">더 보기</span>
     </button>
   );
 }
