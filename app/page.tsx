@@ -275,52 +275,63 @@ function CoachHome({
   testMode?: boolean;
   showDevButtons?: boolean;
 }) {
+  // 이메일이 fallback 닉네임으로 넘어왔을 때 헤더에 노출되지 않도록 마스킹
+  const displayName = nickname.includes("@") ? "코치" : nickname;
 
   return (
     <main className="min-h-screen bg-bg pb-24">
       <div className="max-w-md mx-auto px-5 pt-6">
-        {/* 헤더 */}
+        {/* 헤더 — 타이틀 좌측 + 전체 스케줄 관리 우측 */}
         <div className="flex items-start gap-3">
-          <BackButton />
           <div className="min-w-0 flex-1">
-            <div className="text-xl font-extrabold text-ink leading-tight flex items-center gap-1.5">
-              나의 스케줄
+            <div className="flex items-center gap-1.5">
+              <h1 className="text-xl font-extrabold text-ink leading-tight truncate">
+                나의 스케줄
+              </h1>
               {testMode && (
-                <span className="text-[10px] font-semibold text-ink-3 bg-soft px-2 py-0.5 rounded-full">
+                <span className="flex-none text-[10px] font-semibold text-ink-3 bg-soft px-2 py-0.5 rounded-full">
                   테스트 데이터
                 </span>
               )}
             </div>
-            <div className="mt-1.5 text-xs text-ink-3">안녕하세요, {nickname} 코치님</div>
+            <div className="mt-1.5 text-xs text-ink-3 truncate">
+              안녕하세요, {displayName} 코치님
+            </div>
           </div>
-          {showDevButtons && (
-            <>
-              <Link
-                href="/?as=student"
-                className="flex-none inline-flex items-center rounded-full border border-line bg-surface text-ink-2 text-[11px] font-semibold px-3 py-1.5 hover:bg-soft transition active:scale-[0.98]"
-                title="임시 학생 홈 미리보기 (테스트용)"
-              >
-                학생 홈
-              </Link>
-              <form action={signOutAction} className="flex-none">
-                <button
-                  type="submit"
-                  className="inline-flex items-center rounded-full border border-line bg-surface text-ink-2 text-[11px] font-semibold px-3 py-1.5 hover:bg-soft transition active:scale-[0.98]"
-                  title="임시 로그아웃 (테스트용)"
-                >
-                  로그아웃
-                </button>
-              </form>
-            </>
-          )}
           <Link
             href="/coach/schedule"
             prefetch={false}
-            className="flex-none inline-flex items-center rounded-full bg-primary text-white text-xs font-semibold px-4 py-1.5 shadow-sm hover:opacity-90 transition active:scale-[0.98]"
+            className="flex-none inline-flex items-center rounded-full bg-primary text-white text-xs font-semibold px-4 py-2 shadow-sm hover:opacity-90 transition active:scale-[0.98]"
           >
-            전체 스케줄 관리
+            전체 스케줄
           </Link>
         </div>
+
+        {/* 디버그 영역 — ?debug=1 쿼리에서만 노출 */}
+        {showDevButtons && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Link
+              href="/?as=student"
+              className="inline-flex items-center rounded-full border border-line bg-surface text-ink-2 text-[11px] font-semibold px-3 py-1.5 hover:bg-soft transition"
+            >
+              [DEV] 학생 홈 미리보기
+            </Link>
+            <Link
+              href="/onboarding/role?force=1"
+              className="inline-flex items-center rounded-full border border-line bg-surface text-ink-2 text-[11px] font-semibold px-3 py-1.5 hover:bg-soft transition"
+            >
+              [DEV] 역할 선택
+            </Link>
+            <form action={signOutAction}>
+              <button
+                type="submit"
+                className="inline-flex items-center rounded-full border border-line bg-surface text-ink-2 text-[11px] font-semibold px-3 py-1.5 hover:bg-soft transition"
+              >
+                [DEV] 로그아웃
+              </button>
+            </form>
+          </div>
+        )}
 
         {/* PENDING 배너 */}
         {pendingClaimCount > 0 && (
