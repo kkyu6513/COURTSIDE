@@ -76,8 +76,7 @@ export function CoachRequestForm() {
   return (
     <>
       <div className="rounded-2xl border border-line bg-surface p-4">
-        <div className="text-sm font-bold text-ink">코치 등록 요청</div>
-        <p className="mt-1 text-xs text-ink-2 leading-relaxed">
+        <p className="text-xs text-ink-2 leading-relaxed">
           레슨받으시는 코치님 정보를 입력하시면 알림이 발송돼요. 코치님이 회원님을 등록하면 자동 연결돼요.
         </p>
 

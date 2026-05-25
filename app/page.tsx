@@ -198,6 +198,7 @@ function StudentHome({
     (latestClaim.status === "PENDING" && !latestClaim.matchedCoachUserId) ||
     latestClaim.status === "REJECTED" ||
     latestClaim.status === "CANCELLED";
+  const isConnected = latestClaim?.status === "CONFIRMED";
   const coachSectionTitle = showPendingMatched
     ? "코치 등록 진행 중"
     : showRequestForm
@@ -225,6 +226,27 @@ function StudentHome({
             />
           ) : showRequestForm ? (
             <CoachRequestForm />
+          ) : isConnected && latestClaim ? (
+            <div className="rounded-2xl border border-line bg-surface p-4 flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-primary/10 text-primary-600 flex items-center justify-center flex-none text-lg font-bold">
+                {latestClaim.claimedCoachName.slice(0, 1)}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-bold text-ink truncate">
+                  {latestClaim.claimedCoachName} 코치
+                </div>
+                <div className="mt-0.5 text-[11px] text-ink-3">연결됨</div>
+              </div>
+              <button
+                type="button"
+                disabled
+                aria-disabled="true"
+                title="준비 중"
+                className="flex-none inline-flex items-center rounded-full border border-line bg-surface text-ink-3 text-xs font-semibold px-3 py-1.5 opacity-60 cursor-not-allowed"
+              >
+                메시지
+              </button>
+            </div>
           ) : (
             <div className="rounded-2xl border border-line bg-surface p-4 text-sm text-ink-2">
               코치 연결 상태 확인 중
@@ -237,7 +259,9 @@ function StudentHome({
           <div className="rounded-2xl border border-line bg-surface p-8 text-center">
             <p className="text-sm text-ink-2">아직 예정된 레슨이 없어요</p>
             <p className="mt-1 text-xs text-ink-3">
-              코치님이 회원님을 등록하면 여기에 표시돼요
+              {isConnected
+                ? "코치님이 레슨을 등록하면 여기에 표시돼요"
+                : "코치님이 회원님을 등록하면 여기에 표시돼요"}
             </p>
           </div>
         </div>
