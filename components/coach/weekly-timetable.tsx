@@ -341,6 +341,9 @@ export function WeeklyTimetable({
     const ts = parseIsoUtc(l.scheduledAt).getTime();
     return ts >= weekStartMs && ts < weekEndMs;
   }).length;
+  // "가장 가까운 주로 이동" 버튼은 이번 주 비고 + 미래에 lesson이 있을 때만 노출 (#26)
+  const nowMs = Date.now();
+  const hasFutureLesson = lessons.some((l) => parseIsoUtc(l.scheduledAt).getTime() >= nowMs);
 
   // 다른 주에 lessons가 있을 때 가장 가까운 주로 점프
   const jumpToNearestLesson = () => {
@@ -591,15 +594,29 @@ export function WeeklyTimetable({
           <span className="text-[11px] font-bold text-emerald-700">
             이번 주 {thisWeekCount}건 · 전체 {lessons.length}건 등록
           </span>
-          {thisWeekCount === 0 && lessons.length > 0 && (
+          <div className="flex-none flex items-center gap-1.5">
+            {thisWeekCount === 0 && hasFutureLesson && (
+              <button
+                type="button"
+                onClick={jumpToNearestLesson}
+                className="rounded-md bg-emerald-600 text-white text-[10px] font-semibold px-2 py-1 hover:bg-emerald-700 transition"
+              >
+                가장 가까운 주로 이동
+              </button>
+            )}
             <button
               type="button"
-              onClick={jumpToNearestLesson}
-              className="flex-none rounded-md bg-emerald-600 text-white text-[10px] font-semibold px-2 py-1 hover:bg-emerald-700 transition"
+              onClick={reload}
+              aria-label="새로고침"
+              className="w-7 h-7 inline-flex items-center justify-center rounded-md border border-emerald-200 bg-white text-emerald-700 hover:bg-emerald-50 transition"
             >
-              가장 가까운 주로 이동
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <polyline points="23 4 23 10 17 10" />
+                <polyline points="1 20 1 14 7 14" />
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+              </svg>
             </button>
-          )}
+          </div>
         </div>
       )}
 
@@ -816,7 +833,8 @@ function SlotRow({
   slotStepMin?: number;
 }) {
   const isHourMode = viewMode === "hour";
-  const rowHeight = isHourMode ? "h-9" : "h-5";
+  // 셀 높이 — 1시간 36 → 44 (탭 영역 강화), 10분 20 → 24
+  const rowHeight = isHourMode ? "h-11" : "h-6";
   // 10분 모드에서 매 시각 단위 행만 강한 보더로 구분
   const isHourBoundary = slot.minute === 0;
   const topBorder = isHourMode
@@ -870,16 +888,27 @@ function SlotRow({
             aria-label={`${slot.label} ${pastEmpty ? "지난 날짜 빈 시간" : count > 0 ? `레슨 ${count}개${full ? " (가득 참)" : ""}` : "빈 시간"} 옵션`}
           >
             {isHourMode && count >= 1 && (
-              <span className="absolute inset-0 flex items-center justify-center gap-0.5">
-                {/* 단일 레슨일 때는 status 약어 표시 — 색 의존도 보완 (색맹 대비) */}
-                {count === 1 && !full && (
-                  <span className="text-[9px] font-extrabold text-ink leading-none">
-                    {getStatusAbbr(deriveDisplayStatus(first.status, first.scheduledAt, first.durationMinutes))}
+              <span className="absolute inset-0 flex flex-col items-center justify-center gap-0.5">
+                {/* 단일 레슨일 때 — 학생 첫 글자 + status 약어 (색맹 대비 + 컨텍스트) */}
+                {count === 1 && !full && (() => {
+                  const student = studentMap.get(first.studentId);
+                  const nameInitial = student?.name?.slice(0, 1) ?? "";
+                  return (
+                    <span className="flex items-baseline gap-0.5 leading-none">
+                      {nameInitial && (
+                        <span className="text-[10px] font-extrabold text-ink">{nameInitial}</span>
+                      )}
+                      <span className="text-[9px] font-bold text-ink-2">
+                        {getStatusAbbr(deriveDisplayStatus(first.status, first.scheduledAt, first.durationMinutes))}
+                      </span>
+                    </span>
+                  );
+                })()}
+                {(count > 1 || full) && (
+                  <span className={`inline-flex items-center justify-center min-w-[18px] h-[18px] px-1.5 rounded-full text-white text-[9px] font-bold leading-none tracking-tight ${full ? "bg-red-500" : "bg-ink"}`}>
+                    {full ? "FULL" : count}
                   </span>
                 )}
-                <span className={`inline-flex items-center justify-center min-w-[18px] h-[18px] px-1.5 rounded-full text-white text-[9px] font-bold leading-none tracking-tight ${full ? "bg-red-500" : "bg-ink"}`}>
-                  {full ? "FULL" : count}
-                </span>
               </span>
             )}
             {!isHourMode && startingStudent && (

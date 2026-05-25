@@ -104,7 +104,7 @@ export async function bookLesson(
 
   if (insertError) {
     console.error("[bookLesson] insert error:", insertError);
-    return { ok: false, error: insertError.message };
+    return { ok: false, error: "레슨 등록 중 문제가 발생했어요. 잠시 후 다시 시도해 주세요." };
   }
 
   // TODO(Sprint 3): 학생에게 레슨 확정 알림톡 발송
@@ -148,7 +148,7 @@ export async function cancelLesson(lessonId: number): Promise<SimpleResult> {
 
   if (updateError) {
     console.error("[cancelLesson] update error:", updateError);
-    return { ok: false, error: updateError.message };
+    return { ok: false, error: "레슨 취소 중 문제가 발생했어요. 잠시 후 다시 시도해 주세요." };
   }
 
   // TODO(Sprint 3): 학생에게 레슨 취소 알림톡
@@ -199,7 +199,7 @@ async function transitionLessonStatus(
 
   if (updateError) {
     console.error("[transitionLessonStatus] update error:", updateError);
-    return { ok: false, error: updateError.message };
+    return { ok: false, error: "상태 변경 중 문제가 발생했어요. 잠시 후 다시 시도해 주세요." };
   }
 
   revalidatePath("/coach/schedule");
@@ -271,7 +271,7 @@ export async function restoreLesson(lessonId: number): Promise<SimpleResult> {
 
   if (updateError) {
     console.error("[restoreLesson] update error:", updateError);
-    return { ok: false, error: updateError.message };
+    return { ok: false, error: "레슨 복구 중 문제가 발생했어요. 잠시 후 다시 시도해 주세요." };
   }
 
   revalidatePath("/coach/schedule");
@@ -315,7 +315,7 @@ export async function updateLessonNotes(lessonId: number, notes: string): Promis
 
   if (updateError) {
     console.error("[updateLessonNotes] error:", updateError);
-    return { ok: false, error: updateError.message };
+    return { ok: false, error: "메모 저장 중 문제가 발생했어요. 잠시 후 다시 시도해 주세요." };
   }
 
   revalidatePath("/coach/schedule");
