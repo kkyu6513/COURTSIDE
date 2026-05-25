@@ -840,6 +840,189 @@ Response: { "images": [
 
 ---
 
+## 16a. 학생 리텐션 콘텐츠 (FR-16)
+
+### 🆕 DailyContent (오늘의 코트사이드 콘텐츠)
+
+> FR-16a. 매일 자동 생성 + 어드민 검수. 학생 진입 시 캐시 조회.
+
+| 컬럼 | 타입 | 제약 | 설명 | FR |
+|------|------|------|------|-----|
+| id | UUID | PK | | |
+| contentDate | Date | Not Null, Index | 콘텐츠 기준일 (YYYY-MM-DD) | FR-16a |
+| type | DailyContentType | Not Null | WEATHER / KR_MATCH / HIGHLIGHT / LOCAL_TOURNAMENT | FR-16a |
+| region | String | Nullable | 지역 코드 (WEATHER/LOCAL_TOURNAMENT 한정 — "강남구" 등) | FR-16a |
+| title | String | Not Null | 카드 제목 | FR-16a |
+| summary | String | Nullable | 1줄 요약 | FR-16a |
+| body | Text | Nullable | 본문 (AI 자동 생성) | FR-16a |
+| externalUrl | String | Nullable | 외부 링크 (영상/기사) | FR-16a |
+| meta | Jsonb | Nullable | 부가 데이터 (기온/풍속/PM10/선수명/스코어 등) | FR-16a |
+| isPublished | Boolean | Default: true | 어드민 검수 후 노출 여부 | FR-16a |
+| createdAt | DateTime | Default: now() | | |
+
+**복합 인덱스**: `(contentDate, type, region)` — 빠른 조회용
+
+### 🆕 Racket (라켓 마스터)
+
+> FR-16b. 어드민 관리. 브랜드별 모델 마스터 데이터.
+
+| 컬럼 | 타입 | 제약 | 설명 | FR |
+|------|------|------|------|-----|
+| id | UUID | PK | | |
+| brand | RacketBrand | Not Null | WILSON / BABOLAT / HEAD / YONEX / PRINCE / DUNLOP / TECNIFIBRE / PROKENNEX | FR-16b |
+| model | String | Not Null | 모델명 (예: "Blade 98 v8") | FR-16b |
+| headSize | Int | Nullable | 헤드 사이즈 (sq in) | FR-16b |
+| weight | Int | Nullable | 무게 (g) | FR-16b |
+| imageUrl | String | Nullable | 라켓 이미지 | FR-16b |
+| releaseYear | Int | Nullable | 출시년 | FR-16b |
+| isActive | Boolean | Default: true | | FR-16b |
+| createdAt | DateTime | Default: now() | | |
+
+**유니크**: `(brand, model)`
+
+### 🆕 UserRacket (학생-라켓 매핑)
+
+> FR-16b. 학생당 활성 라켓 1개 + 이력 보관.
+
+| 컬럼 | 타입 | 제약 | 설명 | FR |
+|------|------|------|------|-----|
+| id | UUID | PK | | |
+| userId | UUID | FK → User, Not Null, Index | 학생 ID | FR-16b |
+| racketId | UUID | FK → Racket, Not Null | 라켓 모델 ID | FR-16b |
+| stringType | String | Nullable | 스트링 종류 (예: "Luxilon 4G 125") | FR-16b |
+| stringTension | Int | Nullable | 텐션 (lbs, 30~70) | FR-16b |
+| lastStringChangeDate | Date | Nullable | 마지막 스트링 교체일 | FR-16b |
+| isActive | Boolean | Default: true | 현재 사용 중 (라켓 변경 시 false) | FR-16b |
+| createdAt | DateTime | Default: now() | 등록일 | |
+| updatedAt | DateTime | @updatedAt | | |
+
+**유니크**: `(userId, isActive=true)` — 활성 라켓 1개만
+
+### 🆕 StringChangeLog (스트링 교체 이력)
+
+> FR-16b. 학생이 교체 기록 누적 → 평균 주기 산출용.
+
+| 컬럼 | 타입 | 제약 | 설명 |
+|------|------|------|------|
+| id | UUID | PK | |
+| userRacketId | UUID | FK → UserRacket, Index | |
+| changeDate | Date | Not Null | 교체일 |
+| tension | Int | Nullable | |
+| stringType | String | Nullable | |
+| memo | String | Nullable | 메모 (느낌 등) |
+| createdAt | DateTime | Default: now() | |
+
+### 🆕 ProPlayer (프로 선수 마스터)
+
+> FR-16b/c. 어드민 관리. ATP/WTA 선수 + 사용 라켓.
+
+| 컬럼 | 타입 | 제약 | 설명 | FR |
+|------|------|------|------|-----|
+| id | UUID | PK | | |
+| name | String | Not Null | 선수명 (예: "Jannik Sinner") | FR-16b |
+| nameKo | String | Nullable | 한글명 (예: "야닉 시너") | FR-16b |
+| country | String | Not Null | 국적 ISO 2자리 (IT, KR, US 등) | FR-16b |
+| tour | Enum | Not Null | ATP / WTA | FR-16c |
+| racketId | UUID | FK → Racket, Nullable | 사용 라켓 | FR-16b |
+| atpRank | Int | Nullable | 현재 랭킹 | FR-16c |
+| imageUrl | String | Nullable | 선수 사진 | FR-16c |
+| isActive | Boolean | Default: true | | |
+| createdAt | DateTime | Default: now() | | |
+
+### 🆕 FavoritePlayer (즐겨찾기 선수)
+
+> FR-16c. 학생이 좋아하는 선수 — 경기 1시간 전 알림.
+
+| 컬럼 | 타입 | 제약 | 설명 |
+|------|------|------|------|
+| id | UUID | PK | |
+| userId | UUID | FK → User, Index | |
+| proPlayerId | UUID | FK → ProPlayer | |
+| createdAt | DateTime | Default: now() | |
+
+**유니크**: `(userId, proPlayerId)`
+
+### 🆕 Tournament (대회 마스터)
+
+> FR-16a/c. 그랜드슬램 + ATP/WTA + 동호인 대회 통합.
+
+| 컬럼 | 타입 | 제약 | 설명 | FR |
+|------|------|------|------|-----|
+| id | UUID | PK | | |
+| name | String | Not Null | 대회명 ("Australian Open 2026") | FR-16c |
+| nameKo | String | Nullable | 한글명 ("호주오픈 2026") | FR-16c |
+| type | TournamentType | Not Null | GRAND_SLAM / ATP / WTA / LOCAL | FR-16a/c |
+| city | String | Not Null | 도시 ("Melbourne") | FR-16c |
+| utcOffset | Int | Not Null | UTC 오프셋 (분 단위. 호주=+660) | FR-16c |
+| startDate | Date | Not Null | 시작일 | FR-16c |
+| endDate | Date | Not Null | 종료일 | FR-16c |
+| region | String | Nullable | 한국 지역 (LOCAL 한정 — "강남구") | FR-16a |
+| minNtrp | Decimal | Nullable | 참가 가능 NTRP 하한 (LOCAL) | FR-16a |
+| maxNtrp | Decimal | Nullable | 상한 (LOCAL) | FR-16a |
+| broadcastChannels | String[] | Nullable | 중계 채널 (그랜드슬램) | FR-16c |
+| externalUrl | String | Nullable | 신청 링크 (LOCAL) / 공식 사이트 | FR-16a/c |
+| registrationDeadline | Date | Nullable | 신청 마감 (LOCAL) | FR-16a |
+| isActive | Boolean | Default: true | | |
+| createdAt | DateTime | Default: now() | | |
+
+### 🆕 ProMatch (프로 경기)
+
+> FR-16a/c. ATP/WTA 경기 일정·결과. ATP/WTA API 동기화 + 어드민 검수.
+
+| 컬럼 | 타입 | 제약 | 설명 |
+|------|------|------|------|
+| id | UUID | PK | |
+| tournamentId | UUID | FK → Tournament | |
+| round | String | Not Null | "R32", "QF", "SF", "F" 등 |
+| player1Id | UUID | FK → ProPlayer | |
+| player2Id | UUID | FK → ProPlayer | |
+| scheduledAt | DateTime | Not Null | 경기 시각 (UTC) |
+| status | MatchStatus | Not Null | SCHEDULED / LIVE / COMPLETED / CANCELLED |
+| winnerId | UUID | Nullable | 승자 ProPlayer ID |
+| score | String | Nullable | "6-4 6-3" |
+| highlightUrl | String | Nullable | 하이라이트 영상 (외부) |
+| aiSummary | Text | Nullable | Claude API 자동 요약 |
+| createdAt | DateTime | Default: now() | |
+
+**인덱스**: `(scheduledAt, status)`, `(tournamentId, round)`
+
+### 🆕 RacketNews (라켓 뉴스/할인)
+
+> FR-16b. 어드민 입력. 신모델·할인·스트링 추천.
+
+| 컬럼 | 타입 | 제약 | 설명 |
+|------|------|------|------|
+| id | UUID | PK | |
+| type | RacketNewsType | Not Null | NEW_MODEL / SALE / STRING_TIP / REVIEW |
+| targetBrand | RacketBrand | Nullable | 대상 브랜드 (전체 시 null) |
+| targetRacketId | UUID | FK → Racket, Nullable | 특정 모델 대상 |
+| title | String | Not Null | |
+| body | Text | Nullable | |
+| imageUrl | String | Nullable | |
+| externalUrl | String | Nullable | 상세 링크 |
+| publishedAt | DateTime | Default: now() | |
+| isActive | Boolean | Default: true | |
+
+### Enum 추가
+
+```ts
+enum DailyContentType    { WEATHER, KR_MATCH, HIGHLIGHT, LOCAL_TOURNAMENT }
+enum RacketBrand         { WILSON, BABOLAT, HEAD, YONEX, PRINCE, DUNLOP, TECNIFIBRE, PROKENNEX }
+enum TournamentType      { GRAND_SLAM, ATP, WTA, LOCAL }
+enum MatchStatus         { SCHEDULED, LIVE, COMPLETED, CANCELLED }
+enum RacketNewsType      { NEW_MODEL, SALE, STRING_TIP, REVIEW }
+enum ProTour             { ATP, WTA }
+```
+
+### User 테이블 컬럼 추가
+
+| 컬럼 | 타입 | 제약 | 설명 | FR |
+|------|------|------|------|-----|
+| dailyPushTime | String | Nullable, Default: "08:00" | 오늘의 코트사이드 푸시 시각 ("HH:mm", null=OFF) | FR-16a |
+| favoritePlayerIds | UUID[] | Default: [] | (FavoritePlayer 대체용 캐시 — 옵션) | FR-16c |
+
+---
+
 ## 17. ERD 관계도
 
 ```
@@ -945,7 +1128,8 @@ ScheduleSetting (어드민 정책 설정, 독립)
 | 신고 | Report, ReportReasonCode | 2 |
 | 외부수강생 | ExternalStudent | 1 |
 | 어드민 | RescheduleActionLog, ScheduleSetting | 2 |
-| **합계** | | **38** |
+| 🆕 학생 리텐션 | DailyContent, Racket, UserRacket, StringChangeLog, ProPlayer, FavoritePlayer, Tournament, ProMatch, RacketNews | 9 |
+| **합계** | | **47** |
 
 ---
 
@@ -960,3 +1144,4 @@ ScheduleSetting (어드민 정책 설정, 독립)
 | 1.4 | 2026-04-17 | ExternalStudent 테이블 추가 + Booking에 isExternal/externalStudentId/bookingType/supplementaryReason 컬럼 추가 — 38개 테이블 |
 | 1.5 | 2026-04-28 | LessonDuration enum + Booking.lessonDuration 추가 (20/30/40분 회차 시간) |
 | 1.6 | 2026-04-28 | Booking에 sessionAdjustmentType / sessionWeight / mergeGroupId / mergedIntoBookingId 추가 (FR-14m 회차 통합·분할). ScheduleSetting에 회차 조정 정책 4종 추가 |
+| 1.7 | 2026-05-25 | 16a장 학생 리텐션 콘텐츠 테이블 9종 추가 (FR-16a/b/c — DailyContent, Racket, UserRacket, StringChangeLog, ProPlayer, FavoritePlayer, Tournament, ProMatch, RacketNews). Enum 6종 추가. User에 dailyPushTime 컬럼 추가. 합계 47개 테이블 |

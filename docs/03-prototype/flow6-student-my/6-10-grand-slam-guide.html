@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=375, initial-scale=1.0">
+  <title>6-10 그랜드슬램 시청 가이드 — COURTSIDE</title>
+  <link rel="stylesheet" href="../common.css">
+  <link rel="stylesheet" href="../common-v6.css">
+  <style>
+    .v6 .top-nav { display: flex; align-items: center; height: 52px; padding: 0 12px; background: #fff; border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 10; }
+    .v6 .top-nav .back { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; color: var(--ink); text-decoration: none; font-size: 18px; }
+    .v6 .top-nav .title { flex: 1; text-align: center; font-size: 15px; font-weight: 700; color: var(--ink); letter-spacing: -0.2px; }
+    .v6 .top-nav .placeholder { width: 36px; }
+
+    /* 히어로 (활성) */
+    .v6 .gs-hero { display: block; padding: 22px 18px 20px; position: relative; overflow: hidden; }
+    .v6 .gs-hero.active { background: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%); color: #fff; }
+    .v6 .gs-hero.upcoming { background: linear-gradient(135deg, #1E3A8A 0%, #3730A3 100%); color: #fff; }
+    .v6 .gs-hero .top { display: flex; align-items: center; justify-content: space-between; }
+    .v6 .gs-hero .live-pill { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; background: rgba(255,255,255,0.15); border-radius: 100px; font-size: 10px; font-weight: 800; letter-spacing: 0.4px; text-transform: uppercase; }
+    .v6 .gs-hero .live-pill .dot { width: 6px; height: 6px; border-radius: 50%; background: #fff; animation: pulse 1.2s infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+    .v6 .gs-hero .tour-name { margin-top: 14px; font-size: 26px; font-weight: 800; letter-spacing: -0.6px; line-height: 1.1; }
+    .v6 .gs-hero .tour-loc { margin-top: 6px; font-size: 12px; color: rgba(255,255,255,0.8); font-weight: 600; letter-spacing: -0.1px; }
+    .v6 .gs-hero .tour-date { margin-top: 14px; display: flex; align-items: center; gap: 10px; font-size: 11px; color: rgba(255,255,255,0.85); font-weight: 600; }
+    .v6 .gs-hero .tour-date .sep { opacity: 0.4; }
+    .v6 .gs-hero .progress { margin-top: 12px; height: 4px; background: rgba(255,255,255,0.18); border-radius: 2px; overflow: hidden; }
+    .v6 .gs-hero .progress .bar { height: 100%; background: #fff; }
+    .v6 .gs-hero .progress-meta { margin-top: 6px; display: flex; justify-content: space-between; font-size: 9px; color: rgba(255,255,255,0.7); font-weight: 600; letter-spacing: 0.3px; text-transform: uppercase; }
+    .v6 .gs-hero .countdown { margin-top: 14px; font-size: 32px; font-weight: 900; letter-spacing: -1px; line-height: 1; }
+    .v6 .gs-hero .countdown-sub { margin-top: 6px; font-size: 11px; color: rgba(255,255,255,0.75); font-weight: 600; }
+
+    /* 섹션 */
+    .v6 .sect { padding: 18px 16px 0; }
+    .v6 .sect-ttl { display: flex; align-items: baseline; gap: 8px; margin-bottom: 10px; padding: 0 2px; }
+    .v6 .sect-ttl .t { font-size: 13px; font-weight: 700; color: var(--ink); letter-spacing: -0.2px; }
+    .v6 .sect-ttl .sub { font-size: 11px; color: var(--ink-3); font-weight: 500; }
+    .v6 .sect-ttl .right { margin-left: auto; font-size: 11px; color: var(--ink-2); font-weight: 600; cursor: pointer; }
+
+    /* 한국 선수 카드 */
+    .v6 .kr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .v6 .kr-card { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
+    .v6 .kr-card .ava { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #FEF3C7, #FED7AA); display: flex; align-items: center; justify-content: center; font-size: 18px; }
+    .v6 .kr-card .nm { margin-top: 8px; font-size: 13px; font-weight: 700; color: var(--ink); letter-spacing: -0.2px; }
+    .v6 .kr-card .rank { font-size: 10px; color: var(--ink-3); font-weight: 600; margin-top: 2px; }
+    .v6 .kr-card .stat-row { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
+    .v6 .kr-card .round-badge { display: inline-block; font-size: 9px; font-weight: 800; padding: 3px 7px; border-radius: 4px; letter-spacing: 0.3px; }
+    .v6 .kr-card .round-badge.alive { background: #ECFDF5; color: #059669; }
+    .v6 .kr-card .round-badge.out   { background: #FEE2E2; color: #DC2626; }
+    .v6 .kr-card .next-match { margin-top: 6px; font-size: 10px; color: var(--ink-2); font-weight: 600; line-height: 1.4; }
+
+    /* 오늘의 경기 */
+    .v6 .match-row { display: flex; align-items: center; gap: 12px; padding: 12px; background: #fff; border: 1px solid var(--line); border-radius: 12px; }
+    .v6 .match-row + .match-row { margin-top: 8px; }
+    .v6 .match-row .time-col { width: 56px; flex-shrink: 0; text-align: center; padding-right: 10px; border-right: 1px solid var(--line); }
+    .v6 .match-row .time-col .t { font-size: 14px; font-weight: 800; color: var(--ink); letter-spacing: -0.2px; }
+    .v6 .match-row .time-col .d { font-size: 9px; color: var(--ink-3); font-weight: 600; margin-top: 2px; letter-spacing: 0.3px; }
+    .v6 .match-row .info { flex: 1; min-width: 0; }
+    .v6 .match-row .round { font-size: 9px; font-weight: 800; color: var(--ink-3); letter-spacing: 0.4px; text-transform: uppercase; }
+    .v6 .match-row .players { margin-top: 4px; font-size: 12px; font-weight: 700; color: var(--ink); letter-spacing: -0.2px; line-height: 1.4; }
+    .v6 .match-row .players .vs { color: var(--ink-3); font-weight: 600; margin: 0 4px; }
+    .v6 .match-row .ch { margin-top: 4px; font-size: 10px; color: var(--ink-2); font-weight: 600; }
+    .v6 .match-row .fav { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 16px; flex-shrink: 0; }
+    .v6 .match-row .fav.on { color: #F59E0B; }
+    .v6 .match-row .fav.off { color: var(--ink-3); }
+
+    /* 중계 채널 */
+    .v6 .ch-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .v6 .ch-card { padding: 10px 12px; background: #fff; border: 1px solid var(--line); border-radius: 10px; display: flex; align-items: center; gap: 8px; }
+    .v6 .ch-card .logo { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; color: #fff; flex-shrink: 0; }
+    .v6 .ch-card .nm { font-size: 12px; font-weight: 700; color: var(--ink); letter-spacing: -0.1px; }
+    .v6 .ch-card .meta { font-size: 9px; color: var(--ink-3); font-weight: 600; margin-top: 1px; }
+
+    /* AI 하이라이트 */
+    .v6 .hl-card { background: linear-gradient(135deg, #FFF7ED 0%, #FED7AA 100%); border-radius: 12px; padding: 14px; cursor: pointer; }
+    .v6 .hl-card .meta-top { display: flex; align-items: center; justify-content: space-between; }
+    .v6 .hl-card .round-tag { display: inline-block; font-size: 9px; font-weight: 800; padding: 3px 7px; background: rgba(124, 45, 18, 0.1); color: #7C2D12; border-radius: 4px; letter-spacing: 0.3px; }
+    .v6 .hl-card .duration { font-size: 10px; color: #7C2D12; font-weight: 700; }
+    .v6 .hl-card .title { margin-top: 10px; font-size: 14px; font-weight: 800; color: #7C2D12; letter-spacing: -0.3px; line-height: 1.35; }
+    .v6 .hl-card .body { margin-top: 8px; font-size: 11px; color: #92400E; line-height: 1.55; font-weight: 500; }
+    .v6 .hl-card .cta { margin-top: 10px; display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 700; color: #7C2D12; }
+    .v6 .hl-card + .hl-card { margin-top: 8px; }
+
+    /* 4대 메이저 캘린더 */
+    .v6 .cal-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+    .v6 .cal-row:last-child { border-bottom: none; }
+    .v6 .cal-row .badge { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+    .v6 .cal-row .badge.ao { background: #FEF3C7; }
+    .v6 .cal-row .badge.rg { background: #FEE2E2; }
+    .v6 .cal-row .badge.wb { background: #DCFCE7; }
+    .v6 .cal-row .badge.us { background: #DBEAFE; }
+    .v6 .cal-row .info { flex: 1; min-width: 0; }
+    .v6 .cal-row .nm { font-size: 12px; font-weight: 700; color: var(--ink); letter-spacing: -0.2px; }
+    .v6 .cal-row .meta { font-size: 10px; color: var(--ink-3); font-weight: 500; margin-top: 2px; }
+    .v6 .cal-row .dday-pill { font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 100px; }
+    .v6 .cal-row .dday-pill.now    { background: #DC2626; color: #fff; }
+    .v6 .cal-row .dday-pill.next   { background: #EFF6FF; color: #1D4ED8; }
+    .v6 .cal-row .dday-pill.future { background: var(--soft); color: var(--ink-2); }
+    .v6 .cal-row .dday-pill.past   { background: var(--soft); color: var(--ink-3); }
+
+    .v6 .tz-hint { margin-top: 6px; padding: 8px 10px; background: var(--soft); border-radius: 8px; font-size: 10px; color: var(--ink-2); font-weight: 500; line-height: 1.5; letter-spacing: -0.1px; }
+    .v6 .tz-hint strong { color: var(--ink); font-weight: 700; }
+  </style>
+</head>
+<body>
+
+<!-- DEV: 모드 케이스 전환 -->
+<div style="position:fixed;top:50%;right:16px;transform:translateY(-50%);display:flex;flex-direction:column;gap:6px;z-index:200;">
+  <div style="font-size:9px;color:#fff;background:rgba(15,23,42,0.85);padding:4px 8px;border-radius:6px;font-weight:700;letter-spacing:0.3px;text-align:center;">CASE</div>
+  <a href="6-10-grand-slam-guide.html" style="display:block;padding:8px 12px;border-radius:8px;background:#0F172A;color:#fff;font-size:11px;font-weight:700;text-decoration:none;text-align:center;letter-spacing:-0.1px;box-shadow:0 2px 8px rgba(0,0,0,0.15);">진행 중</a>
+  <a href="6-10-grand-slam-guide.html?mode=upcoming" style="display:block;padding:8px 12px;border-radius:8px;background:#fff;color:#475569;font-size:11px;font-weight:600;text-decoration:none;text-align:center;letter-spacing:-0.1px;border:1px solid #CBD5E1;box-shadow:0 2px 8px rgba(0,0,0,0.06);">다가오는 중</a>
+</div>
+
+<div class="device-wrap">
+  <div class="device-label"><span class="device-num">6-10</span>그랜드슬램 시청 가이드</div>
+  <div class="device v6" style="position:relative;overflow:hidden;background:var(--bg);">
+    <div class="status-bar"><span class="time">9:41</span><div class="status-icons"><span>●</span><span>●</span></div></div>
+
+    <div class="top-nav">
+      <a class="back" href="6-2-mypage.html">←</a>
+      <span class="title">그랜드슬램 가이드</span>
+      <span class="placeholder"></span>
+    </div>
+
+    <div class="screen" style="padding-bottom:24px;overflow-y:auto;">
+
+      <!-- 히어로 (진행 중 모드 — 기본) -->
+      <div id="hero-active" class="gs-hero active">
+        <div class="top">
+          <span class="live-pill"><span class="dot"></span>Live · Day 9</span>
+        </div>
+        <div class="tour-name">롤랑가로스 2026</div>
+        <div class="tour-loc">📍 파리, 프랑스 · 클레이 코트</div>
+        <div class="tour-date">
+          <span>5/24 (일) 시작</span><span class="sep">·</span><span>6/8 (일) 결승</span>
+        </div>
+        <div class="progress"><div class="bar" style="width:60%;"></div></div>
+        <div class="progress-meta">
+          <span>D-9 / D-15</span>
+          <span>16강 진행 중</span>
+        </div>
+      </div>
+
+      <!-- 히어로 (다가오는 모드 — 기본 숨김) -->
+      <div id="hero-upcoming" class="gs-hero upcoming" style="display:none;">
+        <div class="top">
+          <span class="live-pill">Coming Soon</span>
+        </div>
+        <div class="tour-name">윔블던 2026</div>
+        <div class="tour-loc">📍 런던, 영국 · 잔디 코트</div>
+        <div class="countdown">D-32</div>
+        <div class="countdown-sub">6월 28일 (월) 개막</div>
+        <div class="tour-date" style="margin-top:14px;">
+          <span>6/28 (월) 시작</span><span class="sep">·</span><span>7/12 (일) 결승</span>
+        </div>
+      </div>
+
+      <!-- 한국 선수 출전 (진행 중일 때만) -->
+      <div class="sect" id="kr-players-sect">
+        <div class="sect-ttl">
+          <div class="t">한국 선수 출전</div>
+          <div class="sub">롤랑가로스 2026</div>
+        </div>
+        <div class="kr-grid">
+          <div class="kr-card">
+            <div class="ava">🎾</div>
+            <div class="nm">권순우</div>
+            <div class="rank">ATP 65위</div>
+            <div class="stat-row">
+              <span class="round-badge alive">16강 진출</span>
+              <div class="next-match">오늘 19:00 vs 디미트로프</div>
+            </div>
+          </div>
+          <div class="kr-card">
+            <div class="ava">🎾</div>
+            <div class="nm">박소현</div>
+            <div class="rank">WTA 89위</div>
+            <div class="stat-row">
+              <span class="round-badge alive">32강 진출</span>
+              <div class="next-match">내일 23:00 vs 가우프</div>
+            </div>
+          </div>
+          <div class="kr-card">
+            <div class="ava">🎾</div>
+            <div class="nm">권혁준</div>
+            <div class="rank">ATP 142위</div>
+            <div class="stat-row">
+              <span class="round-badge out">64강 탈락</span>
+              <div class="next-match">vs 시너 · 2-6 4-6</div>
+            </div>
+          </div>
+          <div class="kr-card">
+            <div class="ava">🎾</div>
+            <div class="nm">정현 (복식)</div>
+            <div class="rank">ATP 복식 38위</div>
+            <div class="stat-row">
+              <span class="round-badge alive">16강 진출</span>
+              <div class="next-match">내일 17:00 vs 마하치/제발로스</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 오늘의 주요 경기 -->
+      <div class="sect" id="today-matches-sect">
+        <div class="sect-ttl">
+          <div class="t">오늘의 주요 경기</div>
+          <div class="sub">한국시간 기준 · ⭐ 알림</div>
+        </div>
+        <div class="match-row">
+          <div class="time-col">
+            <div class="t">19:00</div>
+            <div class="d">5/25 화</div>
+          </div>
+          <div class="info">
+            <div class="round">16강 · 코트 필리프 샤트리에</div>
+            <div class="players">🇰🇷 권순우 <span class="vs">vs</span> 🇧🇬 디미트로프 (15위)</div>
+            <div class="ch">📺 SBS 스포츠</div>
+          </div>
+          <div class="fav on" onclick="toggleFav(this)" title="알림 ON">⭐</div>
+        </div>
+        <div class="match-row">
+          <div class="time-col">
+            <div class="t">22:00</div>
+            <div class="d">5/25 화</div>
+          </div>
+          <div class="info">
+            <div class="round">16강 · 코트 수잔 렝글렌</div>
+            <div class="players">🇮🇹 시너 (1위) <span class="vs">vs</span> 🇫🇷 푸이</div>
+            <div class="ch">📺 쿠팡플레이</div>
+          </div>
+          <div class="fav off" onclick="toggleFav(this)" title="알림 OFF">☆</div>
+        </div>
+        <div class="match-row">
+          <div class="time-col">
+            <div class="t">02:30</div>
+            <div class="d">5/26 수</div>
+          </div>
+          <div class="info">
+            <div class="round">16강 · 필리프 샤트리에</div>
+            <div class="players">🇪🇸 알카라스 (2위) <span class="vs">vs</span> 🇩🇪 즈베레프</div>
+            <div class="ch">📺 JTBC골프&스포츠</div>
+          </div>
+          <div class="fav off" onclick="toggleFav(this)" title="알림 OFF">☆</div>
+        </div>
+
+        <div class="tz-hint">
+          🌍 <strong>한국시간 자동 변환</strong> — 롤랑가로스(파리)는 한국보다 7시간 늦어요. 파리 12:00 = 한국 19:00.
+        </div>
+      </div>
+
+      <!-- 중계 채널 -->
+      <div class="sect">
+        <div class="sect-ttl">
+          <div class="t">중계 채널</div>
+          <div class="sub">한국 송출</div>
+        </div>
+        <div class="ch-grid">
+          <div class="ch-card">
+            <div class="logo" style="background:#F59E0B;">S</div>
+            <div>
+              <div class="nm">SBS 스포츠</div>
+              <div class="meta">매일 19:00~24:00</div>
+            </div>
+          </div>
+          <div class="ch-card">
+            <div class="logo" style="background:#7C3AED;">J</div>
+            <div>
+              <div class="nm">JTBC골프&amp;스포츠</div>
+              <div class="meta">8강~결승 라이브</div>
+            </div>
+          </div>
+          <div class="ch-card">
+            <div class="logo" style="background:#EF4444;">쿠</div>
+            <div>
+              <div class="nm">쿠팡플레이</div>
+              <div class="meta">전 경기 라이브·다시보기</div>
+            </div>
+          </div>
+          <div class="ch-card">
+            <div class="logo" style="background:#0EA5E9;">▶</div>
+            <div>
+              <div class="nm">유튜브 TENNIS</div>
+              <div class="meta">하이라이트 (무료)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI 하이라이트 (어제 경기) -->
+      <div class="sect">
+        <div class="sect-ttl">
+          <div class="t">어제의 AI 하이라이트</div>
+          <div class="sub">5분 요약</div>
+          <div class="right">전체 보기 ›</div>
+        </div>
+        <div class="hl-card" onclick="alert('영상 페이지로 이동 (외부)')">
+          <div class="meta-top">
+            <span class="round-tag">8강</span>
+            <span class="duration">⏱ 5분 영상</span>
+          </div>
+          <div class="title">🇮🇹 시너, 🇪🇸 알카라스 꺾고 4강 진출 — 풀세트 명승부</div>
+          <div class="body">2시간 47분의 접전. 시너는 백핸드 다운더라인 위너 12개로 4세트를 가져왔고, 5세트 타이브레이크에서 7-3으로 승리했어요.</div>
+          <div class="cta">▶ 영상 보기</div>
+        </div>
+        <div class="hl-card" onclick="alert('영상 페이지로 이동 (외부)')">
+          <div class="meta-top">
+            <span class="round-tag">16강</span>
+            <span class="duration">⏱ 3분 영상</span>
+          </div>
+          <div class="title">🇵🇱 시비옹테크, 첫 세트 빵 허용 후 역전 — WTA 1위의 저력</div>
+          <div class="body">상대 페구라에게 1-6으로 첫 세트를 내준 시비옹테크. 2세트부터 톱스핀 포핸드로 베이스라인을 압박해 6-3, 6-2로 역전.</div>
+          <div class="cta">▶ 영상 보기</div>
+        </div>
+      </div>
+
+      <!-- 2026 그랜드슬램 캘린더 -->
+      <div class="sect">
+        <div class="sect-ttl">
+          <div class="t">2026 그랜드슬램 캘린더</div>
+          <div class="sub">한 해 4대 메이저</div>
+        </div>
+        <div style="background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;">
+          <div class="cal-row">
+            <div class="badge ao">🇦🇺</div>
+            <div class="info">
+              <div class="nm">호주오픈</div>
+              <div class="meta">1/13 ~ 1/26 · 멜버른 (하드)</div>
+            </div>
+            <span class="dday-pill past">종료</span>
+          </div>
+          <div class="cal-row">
+            <div class="badge rg">🇫🇷</div>
+            <div class="info">
+              <div class="nm">롤랑가로스</div>
+              <div class="meta">5/24 ~ 6/8 · 파리 (클레이)</div>
+            </div>
+            <span class="dday-pill now">진행 중</span>
+          </div>
+          <div class="cal-row">
+            <div class="badge wb">🏴󠁧󠁢󠁥󠁮󠁧󠁿</div>
+            <div class="info">
+              <div class="nm">윔블던</div>
+              <div class="meta">6/28 ~ 7/12 · 런던 (잔디)</div>
+            </div>
+            <span class="dday-pill next">D-34</span>
+          </div>
+          <div class="cal-row">
+            <div class="badge us">🇺🇸</div>
+            <div class="info">
+              <div class="nm">US오픈</div>
+              <div class="meta">8/30 ~ 9/13 · 뉴욕 (하드)</div>
+            </div>
+            <span class="dday-pill future">D-97</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+<script>
+  // 모드 분기
+  const params = new URLSearchParams(location.search);
+  if (params.get('mode') === 'upcoming') {
+    document.getElementById('hero-active').style.display = 'none';
+    document.getElementById('hero-upcoming').style.display = 'block';
+    // 다가오는 모드일 땐 오늘 경기/한국 선수 명단 숨김
+    document.getElementById('today-matches-sect').style.display = 'none';
+    document.getElementById('kr-players-sect').style.display = 'none';
+  }
+
+  function toggleFav(el){
+    if (el.classList.contains('on')) {
+      el.classList.remove('on'); el.classList.add('off');
+      el.textContent = '☆'; el.title = '알림 OFF';
+    } else {
+      el.classList.remove('off'); el.classList.add('on');
+      el.textContent = '⭐'; el.title = '알림 ON';
+      // 토스트로 알림 활성화 안내
+      const t = document.createElement('div');
+      t.textContent = '경기 1시간 전 알림톡으로 알려드릴게요';
+      t.style.cssText = 'position:absolute;bottom:24px;left:50%;transform:translateX(-50%);padding:10px 16px;background:rgba(15,23,42,0.9);color:#fff;font-size:11px;font-weight:600;border-radius:100px;z-index:200;animation:fadeIn 0.2s';
+      document.querySelector('.device').appendChild(t);
+      setTimeout(() => t.remove(), 2000);
+    }
+  }
+</script>
+</body>
+</html>

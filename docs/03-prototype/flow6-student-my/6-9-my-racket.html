@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=375, initial-scale=1.0">
+  <title>6-9 내 라켓 — COURTSIDE</title>
+  <link rel="stylesheet" href="../common.css">
+  <link rel="stylesheet" href="../common-v6.css">
+  <style>
+    .v6 .top-nav { display: flex; align-items: center; height: 52px; padding: 0 12px; background: #fff; border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 10; }
+    .v6 .top-nav .back { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; color: var(--ink); text-decoration: none; font-size: 18px; }
+    .v6 .top-nav .title { flex: 1; text-align: center; font-size: 15px; font-weight: 700; color: var(--ink); letter-spacing: -0.2px; }
+    .v6 .top-nav .action { width: 60px; text-align: right; padding-right: 6px; color: var(--ink-2); font-size: 12px; font-weight: 600; cursor: pointer; }
+
+    .v6 .racket-hero { padding: 20px 16px; background: linear-gradient(135deg, #1E3A5F 0%, #475569 100%); color: #fff; }
+    .v6 .racket-hero .top { display: flex; align-items: center; gap: 12px; }
+    .v6 .racket-hero .img-wrap { width: 72px; height: 72px; border-radius: 16px; background: rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center; font-size: 36px; flex-shrink: 0; }
+    .v6 .racket-hero .brand-name { font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.65); letter-spacing: 0.4px; text-transform: uppercase; }
+    .v6 .racket-hero .model { margin-top: 3px; font-size: 18px; font-weight: 800; letter-spacing: -0.3px; line-height: 1.2; }
+    .v6 .racket-hero .meta { margin-top: 6px; font-size: 11px; color: rgba(255,255,255,0.75); font-weight: 500; }
+    .v6 .racket-hero .specs { margin-top: 14px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.15); }
+    .v6 .racket-hero .specs .item { text-align: center; }
+    .v6 .racket-hero .specs .lbl { font-size: 9px; font-weight: 600; color: rgba(255,255,255,0.6); letter-spacing: 0.3px; text-transform: uppercase; }
+    .v6 .racket-hero .specs .val { margin-top: 3px; font-size: 12px; font-weight: 700; color: #fff; }
+    .v6 .racket-hero .change-btn { margin-top: 14px; display: flex; align-items: center; justify-content: center; gap: 4px; padding: 8px 12px; background: rgba(255,255,255,0.1); border-radius: 8px; font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.85); cursor: pointer; }
+
+    /* 스트링 교체 D-day */
+    .v6 .string-card { margin: 16px 16px 0; padding: 16px; background: #fff; border: 1.5px solid var(--line); border-radius: 14px; }
+    .v6 .string-card .head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .v6 .string-card .head .ic { width: 32px; height: 32px; border-radius: 10px; background: var(--soft); display: flex; align-items: center; justify-content: center; font-size: 15px; }
+    .v6 .string-card .head .ttl { font-size: 13px; font-weight: 700; color: var(--ink); letter-spacing: -0.2px; }
+    .v6 .string-card .head .badge { margin-left: auto; font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 100px; }
+    .v6 .string-card .head .badge.warn { background: #FEF3C7; color: #B45309; }
+    .v6 .string-card .head .badge.ok   { background: #ECFDF5; color: #059669; }
+    .v6 .string-card .head .badge.over { background: #FEE2E2; color: #DC2626; }
+    .v6 .string-card .body { font-size: 13px; color: var(--ink-2); font-weight: 500; line-height: 1.55; letter-spacing: -0.1px; }
+    .v6 .string-card .body strong { color: var(--ink); font-weight: 700; }
+    .v6 .string-card .progress { margin-top: 12px; height: 6px; background: var(--soft); border-radius: 3px; overflow: hidden; }
+    .v6 .string-card .progress .bar { height: 100%; background: linear-gradient(90deg, #FBBF24, #F59E0B); border-radius: 3px; }
+    .v6 .string-card .progress-meta { margin-top: 6px; display: flex; justify-content: space-between; font-size: 10px; color: var(--ink-3); font-weight: 500; }
+    .v6 .string-card .log-btn { margin-top: 12px; width: 100%; height: 38px; border-radius: 8px; border: 1px solid var(--line-strong); background: #fff; color: var(--ink); font-size: 12px; font-weight: 700; cursor: pointer; font-family: inherit; }
+
+    /* 섹션 */
+    .v6 .sect { margin-top: 20px; padding: 0 16px; }
+    .v6 .sect-ttl { display: flex; align-items: baseline; gap: 8px; margin-bottom: 10px; padding: 0 2px; }
+    .v6 .sect-ttl .t { font-size: 13px; font-weight: 700; color: var(--ink); letter-spacing: -0.2px; }
+    .v6 .sect-ttl .sub { font-size: 11px; color: var(--ink-3); font-weight: 500; }
+
+    /* 프로 선수 카드 */
+    .v6 .pro-row { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: flex; align-items: center; gap: 12px; }
+    .v6 .pro-row + .pro-row { margin-top: 8px; }
+    .v6 .pro-row .avatar { width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #FEF3C7, #FED7AA); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+    .v6 .pro-row .info { flex: 1; min-width: 0; }
+    .v6 .pro-row .nm { font-size: 13px; font-weight: 700; color: var(--ink); letter-spacing: -0.2px; }
+    .v6 .pro-row .res { margin-top: 3px; font-size: 11px; color: var(--ink-2); font-weight: 500; }
+    .v6 .pro-row .res.win  { color: #059669; font-weight: 700; }
+    .v6 .pro-row .res.lose { color: #DC2626; }
+    .v6 .pro-row .meta { font-size: 9px; color: var(--ink-3); margin-top: 2px; font-weight: 500; }
+    .v6 .pro-row .arrow { color: var(--ink-3); font-size: 14px; }
+
+    /* 뉴스 카드 */
+    .v6 .news-row { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 12px; cursor: pointer; }
+    .v6 .news-row + .news-row { margin-top: 8px; }
+    .v6 .news-row .tag { display: inline-block; font-size: 9px; font-weight: 700; padding: 3px 7px; border-radius: 4px; }
+    .v6 .news-row .tag.new   { background: #DBEAFE; color: #1D4ED8; }
+    .v6 .news-row .tag.sale  { background: #FEE2E2; color: #DC2626; }
+    .v6 .news-row .tag.tip   { background: #ECFDF5; color: #059669; }
+    .v6 .news-row .ttl { margin-top: 8px; font-size: 13px; font-weight: 700; color: var(--ink); letter-spacing: -0.2px; line-height: 1.4; }
+    .v6 .news-row .desc { margin-top: 4px; font-size: 11px; color: var(--ink-2); font-weight: 500; line-height: 1.5; }
+    .v6 .news-row .date { margin-top: 8px; font-size: 10px; color: var(--ink-3); font-weight: 500; }
+
+    /* 빈 상태 */
+    .v6 .empty { padding: 60px 24px; text-align: center; }
+    .v6 .empty .ic { font-size: 48px; opacity: 0.5; }
+    .v6 .empty .title { margin-top: 16px; font-size: 16px; font-weight: 700; color: var(--ink); letter-spacing: -0.3px; }
+    .v6 .empty .sub { margin-top: 8px; font-size: 12px; color: var(--ink-3); font-weight: 500; line-height: 1.6; }
+    .v6 .empty .cta { margin-top: 20px; display: inline-flex; align-items: center; gap: 6px; padding: 12px 24px; background: var(--ink); color: #fff; border-radius: 100px; font-size: 13px; font-weight: 700; border: none; cursor: pointer; font-family: inherit; }
+
+    /* 등록 바텀시트 */
+    .v6 .reg-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; display: none; }
+    .v6 .reg-overlay.show { display: block; }
+    .v6 .reg-sheet { position: absolute; bottom: 0; left: 0; right: 0; background: #fff; border-radius: 20px 20px 0 0; padding: 20px 18px 24px; max-height: 90%; overflow-y: auto; }
+    .v6 .reg-sheet .handle { width: 40px; height: 4px; border-radius: 2px; background: var(--line); margin: 0 auto 14px; }
+    .v6 .reg-sheet h3 { margin: 0 0 14px; font-size: 16px; font-weight: 700; color: var(--ink); letter-spacing: -0.3px; }
+    .v6 .reg-sheet .field { margin-bottom: 14px; }
+    .v6 .reg-sheet .field label { display: block; font-size: 12px; font-weight: 700; color: var(--ink-2); margin-bottom: 6px; letter-spacing: -0.1px; }
+    .v6 .reg-sheet .brand-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+    .v6 .reg-sheet .brand-btn { padding: 12px 6px; border: 1.5px solid var(--line); border-radius: 8px; background: #fff; font-size: 11px; font-weight: 600; color: var(--ink); cursor: pointer; text-align: center; font-family: inherit; }
+    .v6 .reg-sheet .brand-btn.active { border-color: var(--ink); background: var(--soft); }
+    .v6 .reg-sheet select, .v6 .reg-sheet input { width: 100%; padding: 12px; border: 1.5px solid var(--line); border-radius: 8px; font-size: 14px; font-weight: 500; color: var(--ink); background: #fff; font-family: inherit; }
+    .v6 .reg-sheet .save { margin-top: 12px; width: 100%; height: 48px; border-radius: 10px; border: none; background: var(--ink); color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; }
+  </style>
+</head>
+<body>
+
+<!-- DEV: 상태 케이스 전환 -->
+<div style="position:fixed;top:50%;right:16px;transform:translateY(-50%);display:flex;flex-direction:column;gap:6px;z-index:200;">
+  <div style="font-size:9px;color:#fff;background:rgba(15,23,42,0.85);padding:4px 8px;border-radius:6px;font-weight:700;letter-spacing:0.3px;text-align:center;">CASE</div>
+  <a href="6-9-my-racket.html" style="display:block;padding:8px 12px;border-radius:8px;background:#0F172A;color:#fff;font-size:11px;font-weight:700;text-decoration:none;text-align:center;letter-spacing:-0.1px;box-shadow:0 2px 8px rgba(0,0,0,0.15);">등록 완료</a>
+  <a href="6-9-my-racket.html?empty=1" style="display:block;padding:8px 12px;border-radius:8px;background:#fff;color:#475569;font-size:11px;font-weight:600;text-decoration:none;text-align:center;letter-spacing:-0.1px;border:1px solid #CBD5E1;box-shadow:0 2px 8px rgba(0,0,0,0.06);">미등록</a>
+</div>
+
+<div class="device-wrap">
+  <div class="device-label"><span class="device-num">6-9</span>내 라켓 (My Racket)</div>
+  <div class="device v6" style="position:relative;overflow:hidden;background:var(--bg);">
+    <div class="status-bar"><span class="time">9:41</span><div class="status-icons"><span>●</span><span>●</span></div></div>
+
+    <div class="top-nav">
+      <a class="back" href="6-2-mypage.html">←</a>
+      <span class="title">내 라켓</span>
+      <span class="action" onclick="openRegSheet()" id="action-btn">변경</span>
+    </div>
+
+    <div class="screen" style="padding-bottom:24px;overflow-y:auto;" id="main-area">
+
+      <!-- 등록 완료 화면 -->
+      <div id="filled-view">
+
+        <!-- 라켓 히어로 -->
+        <div class="racket-hero">
+          <div class="top">
+            <div class="img-wrap">🎾</div>
+            <div>
+              <div class="brand-name">WILSON</div>
+              <div class="model">Blade 98 v8</div>
+              <div class="meta">2026 등록 · 검정/실버</div>
+            </div>
+          </div>
+          <div class="specs">
+            <div class="item"><div class="lbl">헤드</div><div class="val">98 sq in</div></div>
+            <div class="item"><div class="lbl">무게</div><div class="val">305 g</div></div>
+            <div class="item"><div class="lbl">텐션</div><div class="val">54 lbs</div></div>
+          </div>
+        </div>
+
+        <!-- 스트링 교체 D-day -->
+        <div class="string-card">
+          <div class="head">
+            <div class="ic">🪡</div>
+            <div class="ttl">스트링 교체</div>
+            <span class="badge warn">D-3 임박</span>
+          </div>
+          <div class="body">
+            마지막 교체 <strong>4월 13일</strong> · 6주 전<br>
+            NTRP 3.0 기준 권장 주기는 <strong>6주</strong>예요
+          </div>
+          <div class="progress"><div class="bar" style="width:88%;"></div></div>
+          <div class="progress-meta">
+            <span>0주</span>
+            <span>5.3 / 6.0주</span>
+          </div>
+          <button class="log-btn" onclick="alert('스트링 교체 기록 바텀시트 (교체일/텐션/스트링 종류 입력)')">+ 스트링 교체 기록</button>
+        </div>
+
+        <!-- 같은 라켓 프로 선수 경기 결과 -->
+        <div class="sect">
+          <div class="sect-ttl">
+            <div class="t">같은 라켓 프로 선수</div>
+            <div class="sub">어제 경기 결과</div>
+          </div>
+          <div class="pro-row">
+            <div class="avatar">🇮🇹</div>
+            <div class="info">
+              <div class="nm">야닉 시너 (ATP 1위)</div>
+              <div class="res win">✅ 알카라스 꺾고 결승 진출</div>
+              <div class="meta">로마 마스터스 4강 · 풀세트</div>
+            </div>
+            <div class="arrow">›</div>
+          </div>
+          <div class="pro-row">
+            <div class="avatar">🇷🇺</div>
+            <div class="info">
+              <div class="nm">다닐 메드베데프 (ATP 4위)</div>
+              <div class="res lose">❌ 8강 탈락</div>
+              <div class="meta">로마 마스터스 8강 · 6-7 6-4 3-6</div>
+            </div>
+            <div class="arrow">›</div>
+          </div>
+        </div>
+
+        <!-- 라켓 뉴스 피드 -->
+        <div class="sect">
+          <div class="sect-ttl">
+            <div class="t">라켓 뉴스</div>
+            <div class="sub">윌슨 · 신제품·할인</div>
+          </div>
+          <div class="news-row" onclick="alert('외부 상세 링크')">
+            <span class="tag new">신모델</span>
+            <div class="ttl">윌슨 Blade 98 v9 출시 — 99sq in, 더 부드러운 타구감</div>
+            <div class="desc">시너·메드베데프가 사용 중인 Blade 시리즈의 차세대 모델. 카본 매핑 기술로 진동 감소.</div>
+            <div class="date">5월 22일 · 윌슨 코리아</div>
+          </div>
+          <div class="news-row" onclick="alert('외부 상세 링크')">
+            <span class="tag sale">할인</span>
+            <div class="ttl">Blade 98 v8 — 테니스365에서 38% 할인 (~5/31)</div>
+            <div class="desc">정가 380,000원 → 235,000원. 스트링·그립 별도 구매.</div>
+            <div class="date">5월 24일 · 테니스365</div>
+          </div>
+          <div class="news-row" onclick="alert('외부 상세 링크')">
+            <span class="tag tip">스트링</span>
+            <div class="ttl">Blade 98 사용자에게 추천하는 스트링 5종</div>
+            <div class="desc">Luxilon 4G, Babolat RPM Blast 등 프로가 쓰는 폴리 스트링 비교.</div>
+            <div class="date">5월 20일 · 코트사이드 큐레이션</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 미등록 빈 상태 -->
+      <div id="empty-view" style="display:none;">
+        <div class="empty">
+          <div class="ic">🎾</div>
+          <div class="title">내 라켓을 등록해보세요</div>
+          <div class="sub">매일 새 소식을 받아볼 수 있어요<br>같은 라켓 프로 선수 경기 결과 · 신모델 · 할인 · 스트링 교체 알림</div>
+          <button class="cta" onclick="openRegSheet()">+ 라켓 등록하기</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 라켓 등록 바텀시트 -->
+    <div class="reg-overlay" id="reg-sheet" onclick="closeRegSheet(event)">
+      <div class="reg-sheet" onclick="event.stopPropagation()">
+        <div class="handle"></div>
+        <h3>라켓 등록</h3>
+
+        <div class="field">
+          <label>브랜드</label>
+          <div class="brand-grid">
+            <button class="brand-btn active">윌슨</button>
+            <button class="brand-btn">바볼랏</button>
+            <button class="brand-btn">헤드</button>
+            <button class="brand-btn">요넥스</button>
+            <button class="brand-btn">프린스</button>
+            <button class="brand-btn">던롭</button>
+            <button class="brand-btn">테크니파이버</button>
+            <button class="brand-btn">프로케넥스</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>모델</label>
+          <select>
+            <option>Blade 98 v8 (305g · 98sq in)</option>
+            <option>Pro Staff RF97 v14</option>
+            <option>Clash 100 Pro</option>
+            <option>Ultra 100 v4</option>
+            <option>Burn 100 v5</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>스트링 텐션 (lbs · 선택)</label>
+          <input type="number" placeholder="예: 54" min="30" max="70" value="54">
+        </div>
+
+        <div class="field">
+          <label>마지막 스트링 교체일 (선택)</label>
+          <input type="date" value="2026-04-13">
+        </div>
+
+        <button class="save" onclick="saveRacket()">등록 완료</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+<script>
+  // 케이스 분기
+  const params = new URLSearchParams(location.search);
+  if (params.get('empty') === '1') {
+    document.getElementById('filled-view').style.display = 'none';
+    document.getElementById('empty-view').style.display = 'block';
+    document.getElementById('action-btn').style.display = 'none';
+  }
+
+  function openRegSheet(){ document.getElementById('reg-sheet').classList.add('show'); }
+  function closeRegSheet(e){ if(e && e.target!==e.currentTarget) return; document.getElementById('reg-sheet').classList.remove('show'); }
+  function saveRacket(){
+    closeRegSheet();
+    alert('라켓이 등록되었어요!\n매일 새 소식을 받아볼 수 있어요 🎾');
+  }
+  // 브랜드 선택
+  document.querySelectorAll('.brand-btn').forEach(b => {
+    b.addEventListener('click', e => {
+      e.preventDefault();
+      document.querySelectorAll('.brand-btn').forEach(o => o.classList.remove('active'));
+      b.classList.add('active');
+    });
+  });
+</script>
+</body>
+</html>

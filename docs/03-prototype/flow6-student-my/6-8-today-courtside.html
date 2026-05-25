@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=375, initial-scale=1.0">
+  <title>6-8 오늘의 코트사이드 — COURTSIDE</title>
+  <link rel="stylesheet" href="../common.css">
+  <link rel="stylesheet" href="../common-v6.css">
+  <style>
+    .v6 .courtside-hdr { padding: 20px 20px 16px; background: linear-gradient(135deg, #0F172A 0%, #1E3A5F 100%); color: #fff; }
+    .v6 .courtside-hdr .top-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .v6 .courtside-hdr .back-btn { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.9); text-decoration: none; font-size: 18px; }
+    .v6 .courtside-hdr .share-btn { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.9); cursor: pointer; font-size: 14px; }
+    .v6 .courtside-hdr .brand { font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.65); letter-spacing: 0.6px; text-transform: uppercase; }
+    .v6 .courtside-hdr .date-big { margin-top: 4px; font-size: 24px; font-weight: 800; letter-spacing: -0.6px; line-height: 1.15; }
+    .v6 .courtside-hdr .greet-sub { margin-top: 6px; font-size: 12px; color: rgba(255,255,255,0.75); font-weight: 500; letter-spacing: -0.1px; }
+    .v6 .courtside-hdr .push-info { margin-top: 12px; display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; background: rgba(255,255,255,0.1); border-radius: 100px; font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.8); cursor: pointer; }
+
+    .v6 .cs-cards { padding: 16px 16px 28px; display: flex; flex-direction: column; gap: 12px; }
+    .v6 .cs-card { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 16px; cursor: pointer; transition: transform 0.1s; }
+    .v6 .cs-card:active { transform: scale(0.99); }
+    .v6 .cs-card .head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+    .v6 .cs-card .head .ic { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+    .v6 .cs-card .head .ttl { font-size: 13px; font-weight: 700; color: var(--ink); letter-spacing: -0.2px; }
+    .v6 .cs-card .head .sub { margin-left: auto; font-size: 10px; font-weight: 600; color: var(--ink-3); letter-spacing: -0.1px; }
+
+    /* 코트 컨디션 */
+    .v6 .weather-body { display: flex; align-items: center; gap: 14px; }
+    .v6 .weather-status { width: 64px; height: 64px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 32px; flex-shrink: 0; }
+    .v6 .weather-status.good { background: #ECFDF5; color: #059669; }
+    .v6 .weather-status.warn { background: #FEF3C7; color: #D97706; }
+    .v6 .weather-status.bad  { background: #FEE2E2; color: #DC2626; }
+    .v6 .weather-info .verdict { font-size: 16px; font-weight: 800; color: var(--ink); letter-spacing: -0.3px; }
+    .v6 .weather-info .verdict.good { color: #059669; }
+    .v6 .weather-info .verdict.warn { color: #D97706; }
+    .v6 .weather-info .verdict.bad  { color: #DC2626; }
+    .v6 .weather-info .meta { margin-top: 4px; font-size: 11px; color: var(--ink-2); font-weight: 500; line-height: 1.5; }
+    .v6 .weather-info .region { font-size: 10px; color: var(--ink-3); font-weight: 500; margin-top: 4px; }
+    .v6 .weather-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); }
+    .v6 .weather-stats .item { text-align: center; }
+    .v6 .weather-stats .item .lbl { font-size: 9px; color: var(--ink-3); font-weight: 600; letter-spacing: -0.1px; }
+    .v6 .weather-stats .item .val { margin-top: 2px; font-size: 12px; font-weight: 700; color: var(--ink); }
+
+    /* 한국 선수 경기 */
+    .v6 .kr-match { display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+    .v6 .kr-match + .kr-match { margin-top: 6px; }
+    .v6 .kr-match .flag { width: 28px; height: 28px; border-radius: 50%; background: #FEF3C7; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+    .v6 .kr-match .info { flex: 1; min-width: 0; }
+    .v6 .kr-match .player { font-size: 13px; font-weight: 700; color: var(--ink); letter-spacing: -0.2px; }
+    .v6 .kr-match .vs { font-size: 11px; color: var(--ink-2); margin-top: 2px; font-weight: 500; }
+    .v6 .kr-match .time { font-size: 11px; color: var(--ink); font-weight: 700; text-align: right; flex-shrink: 0; }
+    .v6 .kr-match .channel { font-size: 9px; color: var(--ink-3); font-weight: 600; margin-top: 2px; }
+    .v6 .kr-match .live-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #DC2626; margin-right: 4px; animation: pulse 1.5s ease infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+    /* 어제 하이라이트 */
+    .v6 .highlight-card { background: linear-gradient(135deg, #FEF3C7 0%, #FED7AA 100%); border-radius: 12px; padding: 14px; }
+    .v6 .highlight-card .h-headline { font-size: 14px; font-weight: 800; color: #7C2D12; letter-spacing: -0.3px; line-height: 1.35; }
+    .v6 .highlight-card .h-body { margin-top: 8px; font-size: 12px; color: #92400E; line-height: 1.55; font-weight: 500; }
+    .v6 .highlight-card .h-cta { margin-top: 12px; display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 700; color: #7C2D12; }
+
+    /* 동호인 대회 */
+    .v6 .tour-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+    .v6 .tour-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .v6 .tour-row:first-child { padding-top: 0; }
+    .v6 .tour-row .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
+    .v6 .tour-row .body { flex: 1; min-width: 0; }
+    .v6 .tour-row .nm { font-size: 12px; font-weight: 700; color: var(--ink); letter-spacing: -0.2px; }
+    .v6 .tour-row .meta { font-size: 10px; color: var(--ink-3); font-weight: 500; margin-top: 2px; }
+    .v6 .tour-row .badge-ntrp { font-size: 10px; font-weight: 700; padding: 3px 8px; background: #ECFDF5; color: #059669; border-radius: 100px; flex-shrink: 0; }
+    .v6 .tour-row .dday { font-size: 10px; font-weight: 700; padding: 3px 8px; background: #FEE2E2; color: #DC2626; border-radius: 100px; flex-shrink: 0; }
+
+    /* 다음 레슨 */
+    .v6 .next-lesson { background: linear-gradient(135deg, #0F172A 0%, #334155 100%); color: #fff; border-radius: 12px; padding: 16px; }
+    .v6 .next-lesson .label { font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.6); letter-spacing: 0.4px; text-transform: uppercase; }
+    .v6 .next-lesson .countdown { margin-top: 6px; font-size: 22px; font-weight: 800; letter-spacing: -0.6px; }
+    .v6 .next-lesson .lesson-info { margin-top: 4px; font-size: 12px; color: rgba(255,255,255,0.85); font-weight: 500; }
+    .v6 .next-lesson .mission { margin-top: 12px; padding: 10px 12px; background: rgba(255,255,255,0.08); border-radius: 8px; border-left: 3px solid #2DD4BF; }
+    .v6 .next-lesson .mission .m-lbl { font-size: 10px; font-weight: 700; color: #2DD4BF; letter-spacing: 0.3px; }
+    .v6 .next-lesson .mission .m-txt { margin-top: 4px; font-size: 12px; color: #fff; font-weight: 500; line-height: 1.5; }
+
+    /* 푸시 설정 바텀시트 */
+    .v6 .ps-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; display: none; }
+    .v6 .ps-overlay.show { display: block; }
+    .v6 .ps-sheet { position: absolute; bottom: 0; left: 0; right: 0; background: #fff; border-radius: 20px 20px 0 0; padding: 20px 18px 24px; }
+    .v6 .ps-sheet .handle { width: 40px; height: 4px; border-radius: 2px; background: var(--line); margin: 0 auto 14px; }
+    .v6 .ps-sheet h3 { margin: 0 0 6px; font-size: 16px; font-weight: 700; color: var(--ink); letter-spacing: -0.3px; }
+    .v6 .ps-sheet .lead { font-size: 12px; color: var(--ink-3); margin-bottom: 14px; line-height: 1.5; }
+    .v6 .ps-sheet .opts { display: flex; flex-direction: column; gap: 6px; }
+    .v6 .ps-sheet .opt { display: flex; align-items: center; padding: 12px 14px; border: 1.5px solid var(--line); border-radius: 10px; cursor: pointer; gap: 10px; }
+    .v6 .ps-sheet .opt input { width: 18px; height: 18px; accent-color: var(--ink); }
+    .v6 .ps-sheet .opt .txt { font-size: 14px; font-weight: 600; color: var(--ink); }
+    .v6 .ps-sheet .opt.selected { border-color: var(--ink); background: var(--soft); }
+    .v6 .ps-sheet .save { margin-top: 14px; width: 100%; height: 48px; border-radius: 10px; border: none; background: var(--ink); color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; }
+
+    .v6 .empty-mini { padding: 12px; text-align: center; font-size: 11px; color: var(--ink-3); font-weight: 500; }
+  </style>
+</head>
+<body>
+<div class="device-wrap">
+  <div class="device-label"><span class="device-num">6-8</span>오늘의 코트사이드 (Daily Card)</div>
+  <div class="device v6" style="position:relative;overflow:hidden;background:var(--bg);">
+    <div class="status-bar"><span class="time">9:41</span><div class="status-icons"><span>●</span><span>●</span></div></div>
+    <div class="screen" style="padding-bottom:24px;overflow-y:auto;">
+
+      <!-- 헤더 -->
+      <div class="courtside-hdr">
+        <div class="top-row">
+          <a class="back-btn" href="6-0-schedule-home.html" aria-label="뒤로">←</a>
+          <span class="brand">Today's Courtside</span>
+          <span class="share-btn" onclick="alert('카드 캡처 → 공유')" aria-label="공유">⤴</span>
+        </div>
+        <div class="date-big" id="date-big">5월 25일 화요일</div>
+        <div class="greet-sub" id="greet-sub">홍*동님, 오늘도 코트로!</div>
+        <span class="push-info" onclick="openPushSheet()">🔔 매일 08:00에 받아보기 · 변경</span>
+      </div>
+
+      <!-- 카드 영역 -->
+      <div class="cs-cards">
+
+        <!-- 1. 코트 컨디션 -->
+        <div class="cs-card" onclick="alert('상세 날씨 — 시간대별 그래프')">
+          <div class="head">
+            <div class="ic" style="background:#ECFDF5;color:#059669;">🌤</div>
+            <div class="ttl">오늘 코트 컨디션</div>
+            <div class="sub">강남구</div>
+          </div>
+          <div class="weather-body">
+            <div class="weather-status good">🟢</div>
+            <div class="weather-info">
+              <div class="verdict good">야외 테니스 가능</div>
+              <div class="meta">맑음 · 풍속 2.1m/s · 운동하기 좋은 날씨예요</div>
+              <div class="region">서울 강남구 · 09:00 기준</div>
+            </div>
+          </div>
+          <div class="weather-stats">
+            <div class="item"><div class="lbl">기온</div><div class="val">21°C</div></div>
+            <div class="item"><div class="lbl">풍속</div><div class="val">2.1 m/s</div></div>
+            <div class="item"><div class="lbl">미세먼지</div><div class="val">좋음 32</div></div>
+          </div>
+        </div>
+
+        <!-- 2. 오늘 한국 선수 경기 -->
+        <div class="cs-card" onclick="alert('한국 선수 경기 상세')">
+          <div class="head">
+            <div class="ic" style="background:#FEF3C7;color:#D97706;">🇰🇷</div>
+            <div class="ttl">오늘 한국 선수 경기</div>
+            <div class="sub">2경기</div>
+          </div>
+          <div>
+            <div class="kr-match">
+              <div class="flag">🎾</div>
+              <div class="info">
+                <div class="player">권순우</div>
+                <div class="vs">vs 디미트로프 · 16강</div>
+              </div>
+              <div>
+                <div class="time"><span class="live-dot"></span>LIVE</div>
+                <div class="channel">SBS 스포츠</div>
+              </div>
+            </div>
+            <div class="kr-match">
+              <div class="flag">🎾</div>
+              <div class="info">
+                <div class="player">박소현</div>
+                <div class="vs">vs 가우프 · 32강</div>
+              </div>
+              <div>
+                <div class="time">23:00</div>
+                <div class="channel">쿠팡플레이</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. 어제 하이라이트 -->
+        <div class="cs-card" onclick="alert('하이라이트 영상으로 이동 (외부)')">
+          <div class="head">
+            <div class="ic" style="background:#FEF3C7;color:#D97706;">🏆</div>
+            <div class="ttl">어제의 하이라이트</div>
+            <div class="sub">AI 1분 요약</div>
+          </div>
+          <div class="highlight-card">
+            <div class="h-headline">시너, 알카라스 꺾고 결승 진출 — 풀세트 접전</div>
+            <div class="h-body">2시간 47분의 명승부. 시너는 4세트에서 백핸드 다운더라인 위너 12개로 흐름을 가져왔어요. 결정적이었던 5세트 타이브레이크에서 7-3으로 승리.</div>
+            <div class="h-cta">▶ 영상 보기 (5분)</div>
+          </div>
+        </div>
+
+        <!-- 4. 우리 지역 동호인 대회 -->
+        <div class="cs-card" onclick="alert('대회 상세 (외부 신청 링크)')">
+          <div class="head">
+            <div class="ic" style="background:#EFF6FF;color:#2563EB;">📅</div>
+            <div class="ttl">이번 주 우리 지역 대회</div>
+            <div class="sub">강남구 · NTRP 2.5</div>
+          </div>
+          <div>
+            <div class="tour-row">
+              <div class="dot"></div>
+              <div class="body">
+                <div class="nm">제3회 강남구민 친선 테니스 대회</div>
+                <div class="meta">5/30(토) · 양재 시민의숲 · 단식</div>
+              </div>
+              <span class="badge-ntrp">NTRP 2.0~3.0</span>
+              <span class="dday">D-5</span>
+            </div>
+            <div class="tour-row">
+              <div class="dot"></div>
+              <div class="body">
+                <div class="nm">서초 오픈 복식 토너먼트</div>
+                <div class="meta">5/31(일) · 서초 테니스장 · 복식</div>
+              </div>
+              <span class="badge-ntrp">NTRP 2.5~3.5</span>
+              <span class="dday">D-6</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. 다음 레슨 카운트다운 -->
+        <div class="cs-card" onclick="location.href='6-0-schedule-home.html'" style="padding:0;border:none;background:transparent;">
+          <div class="next-lesson">
+            <div class="label">다음 레슨까지</div>
+            <div class="countdown">D-2 · 5월 27일 (목) 19:00</div>
+            <div class="lesson-info">김민수 코치 · 양재 테니스장</div>
+            <div class="mission">
+              <div class="m-lbl">🎯 코치 미션</div>
+              <div class="m-txt">"포핸드 폴로스루 끝까지. 라켓 어깨에 올려놓는 느낌으로!"</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- 푸시 설정 바텀시트 -->
+    <div class="ps-overlay" id="push-sheet" onclick="closePushSheet(event)">
+      <div class="ps-sheet" onclick="event.stopPropagation()">
+        <div class="handle"></div>
+        <h3>오늘의 코트사이드 푸시 시간</h3>
+        <div class="lead">매일 설정한 시간에 알림톡으로 받아볼 수 있어요</div>
+        <div class="opts" id="push-opts">
+          <label class="opt"><input type="radio" name="t" value="06:00"><span class="txt">매일 오전 6:00</span></label>
+          <label class="opt"><input type="radio" name="t" value="07:00"><span class="txt">매일 오전 7:00</span></label>
+          <label class="opt selected"><input type="radio" name="t" value="08:00" checked><span class="txt">매일 오전 8:00 (추천)</span></label>
+          <label class="opt"><input type="radio" name="t" value="09:00"><span class="txt">매일 오전 9:00</span></label>
+          <label class="opt"><input type="radio" name="t" value="OFF"><span class="txt">받지 않기</span></label>
+        </div>
+        <button class="save" onclick="savePushTime()">저장</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+<script>
+  // 날짜 헤더 동적 렌더
+  (function(){
+    const d = new Date();
+    const wk = ['일','월','화','수','목','금','토'];
+    document.getElementById('date-big').textContent =
+      `${d.getMonth()+1}월 ${d.getDate()}일 ${wk[d.getDay()]}요일`;
+  })();
+
+  function openPushSheet(){ document.getElementById('push-sheet').classList.add('show'); }
+  function closePushSheet(e){ if(e && e.target!==e.currentTarget) return; document.getElementById('push-sheet').classList.remove('show'); }
+  document.querySelectorAll('#push-opts .opt').forEach(opt => {
+    opt.addEventListener('click', () => {
+      document.querySelectorAll('#push-opts .opt').forEach(o => o.classList.remove('selected'));
+      opt.classList.add('selected');
+      opt.querySelector('input').checked = true;
+    });
+  });
+  function savePushTime(){
+    const v = document.querySelector('#push-opts input:checked').value;
+    closePushSheet();
+    alert(v === 'OFF' ? '오늘의 코트사이드 푸시를 끕니다' : `매일 ${v}에 알림을 받아요`);
+  }
+</script>
+</body>
+</html>

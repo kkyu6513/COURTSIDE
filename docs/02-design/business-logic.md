@@ -1949,6 +1949,115 @@ GET /api/admin/proposals/stats?period= [인증: 어드민]
 
 ---
 
+## 17. 학생 리텐션 콘텐츠 정책 (FR-16)
+
+### 17.1 오늘의 코트사이드 (Daily Card) — FR-16a
+
+**목적**: 학생이 레슨 없는 날에도 매일 앱을 여는 데일리 훅. 평균 진입률 < 1회/주 → 5회/주 목표.
+
+**카드 구성 (5모듈, 모두 옵셔널 — 데이터 없으면 카드 숨김)**:
+
+| 모듈 | 데이터 소스 | 갱신 주기 | 캐시 | 노출 조건 |
+|------|------------|----------|------|----------|
+| 🌤 코트 컨디션 | OpenWeatherMap + 에어코리아 API | 30분 | 학생 지역별 | 학생 지역 등록 시 |
+| 🇰🇷 한국 선수 경기 | ATP/WTA API + 자체 크롤링 | 1시간 | 전역 | 오늘 한국 선수 경기 있을 시 |
+| 🏆 어제 하이라이트 | Claude API 요약 + 어드민 검수 | 일 1회 (07:00) | 전역 | 어제 메이저 경기 있을 시 |
+| 📅 동호인 대회 | KTA 일정 크롤링 | 일 1회 (04:00) | 지역+레벨별 | 학생 지역·NTRP 매칭 대회 있을 시 |
+| 🎯 다음 레슨 카운트다운 | DB 실시간 | 진입 시 | 학생별 | Booking.nextLesson 있을 시 |
+
+**코트 컨디션 자동 판정 룰**:
+```typescript
+function evaluateCourtCondition(weather): 'GOOD' | 'CAUTION' | 'BAD' {
+  if (weather.precipitation > 0) return 'BAD'              // 강수
+  if (weather.windSpeed >= 7)    return 'BAD'              // 강풍 (7m/s 이상)
+  if (weather.pm10 >= 81 || weather.pm25 >= 36) return 'BAD'  // 미세먼지 나쁨
+  if (weather.windSpeed >= 4)    return 'CAUTION'          // 보통풍
+  if (weather.pm10 >= 51 || weather.pm25 >= 16) return 'CAUTION'
+  if (weather.temperature < 5 || weather.temperature > 33) return 'CAUTION'
+  return 'GOOD'
+}
+```
+
+**알림톡 발송 (FR-09 연동)**:
+- 매일 학생 지정 시각 (기본 08:00) Solapi 알림톡 발송
+- 템플릿 ID: `DAILY_COURTSIDE`
+- 본문: "오늘의 코트사이드를 확인하세요 🎾 [지역] 야외 가능 · 한국 선수 N경기 · 다음 레슨 D-N"
+- 학생이 설정에서 끌 수 있음 (`User.dailyPushTime = null` 시 비발송)
+- 발송 시각 옵션: 06:00 / 07:00 / 08:00(기본) / 09:00 / OFF
+
+**개인화 우선순위**:
+- 즐겨찾기 프로 선수가 어제 경기 → 🏆 카드 최상단
+- 학생 NTRP ± 0.5 매칭되는 대회 → 📅 카드 우선 표시
+- 학생 지역 야외 가능 🟢 → 🌤 카드 최상단 (운동 유도)
+
+### 17.2 내 라켓 알람 (My Racket) — FR-16b
+
+**스트링 교체 권장 주기 자동 계산**:
+
+```typescript
+function stringChangeInterval(ntrp: number): number {
+  if (ntrp <= 2.5) return 90   // 초급: 90일
+  if (ntrp <= 3.5) return 42   // 중급: 6주
+  return 21                     // 상급: 3주
+}
+
+function stringChangeStatus(lastChangeDate, ntrp): 'OK' | 'WARN' | 'OVERDUE' {
+  const interval = stringChangeInterval(ntrp)
+  const daysSince = differenceInDays(now, lastChangeDate)
+  const daysLeft = interval - daysSince
+  if (daysLeft < 0)  return 'OVERDUE'   // 🔴 교체 권장 초과
+  if (daysLeft <= 7) return 'WARN'      // 🟡 교체 임박 (7일 이내)
+  return 'OK'                            // 🟢 여유
+}
+```
+
+**알림 발송 트리거**:
+| 이벤트 | 조건 | 알림 |
+|-------|------|------|
+| 스트링 교체 임박 | `stringChangeStatus = WARN` 진입 시 1회 | 카카오 알림톡 `RACKET_STRING_DUE` |
+| 같은 라켓 프로 선수 경기 결과 | `ProMatch.completedAt` 발생 + `ProPlayer.racketModelId = userRacket.modelId` | 푸시 (배치 — 일 1회 07:00 묶음) |
+| 신모델 출시 | 어드민이 `RacketNews.type = NEW_MODEL` 등록 + 같은 브랜드 사용자 | 카카오 알림톡 `RACKET_NEW_MODEL` |
+| 할인 정보 | 어드민이 `RacketNews.type = SALE` 등록 + 같은 모델 사용자 | 카카오 알림톡 `RACKET_SALE` |
+
+### 17.3 그랜드슬램 시청 가이드 — FR-16c
+
+**대회 활성 판정**:
+```typescript
+function getActiveGrandSlam(today: Date): Tournament | null {
+  return tournaments.find(t =>
+    t.type === 'GRAND_SLAM' &&
+    isWithinInterval(today, { start: t.startDate, end: t.endDate })
+  )
+}
+
+function getUpcomingGrandSlam(today: Date): { tournament, daysUntil } {
+  const next = tournaments
+    .filter(t => t.type === 'GRAND_SLAM' && t.startDate > today)
+    .sort((a, b) => a.startDate - b.startDate)[0]
+  return { tournament: next, daysUntil: differenceInDays(next.startDate, today) }
+}
+```
+
+**한국시간 변환** (모든 경기 시각은 UTC로 저장 후 노출 시 KST 변환):
+| 대회 | 도시 | UTC 오프셋 | KST 변환 |
+|------|------|----------|---------|
+| 호주오픈 | 멜버른 | +11 | -2시간 |
+| 롤랑가로스 | 파리 | +2 (DST) | +7시간 |
+| 윔블던 | 런던 | +1 (DST) | +8시간 |
+| US오픈 | 뉴욕 | -4 (DST) | +13시간 |
+
+**그랜드슬램 기간 학생 홈 배너 자동 노출**:
+- 6-0 학생 홈 최상단에 `getActiveGrandSlam()` 결과 있으면 배너 표시
+- 배너 클릭 → 6-10 시청 가이드 이동
+- 기간 종료 + 24시간 후 자동 숨김
+
+**즐겨찾기 선수 알림 발송**:
+- 학생이 즐겨찾기한 선수가 경기 시작 1시간 전 알림톡 발송
+- 템플릿: `GRAND_SLAM_FAVORITE_MATCH`
+- 본문: "[선수명] 경기가 1시간 후 시작돼요 — [상대] vs [선수명] · [중계채널]"
+
+---
+
 ## Version History
 
 | Version | Date | Changes |
@@ -1958,3 +2067,4 @@ GET /api/admin/proposals/stats?period= [인증: 어드민]
 | 1.2 | 2026-04-23 | 16장 어드민 제안 관리 정책 추가 (변경요청+보강 통합 모델, 강제 조치 6종, 종결/이력 이동 24h, 통계 집계) |
 | 1.3 | 2026-04-23 | 5.1a 공통 슬롯 노출 원칙 추가 (Single Source of Truth — 4단계 필터링, 적용 화면 6개, API 표준, 캐시 정책) + 5.1d 결강/보강 정책 + 5.2a 당일 변경/월 횟수/당월 제한 정책 |
 | 1.4 | 2026-04-23 | 5.1d 결강 정책 노쇼 기반으로 재정의 (5종 결강 유형 매트릭스 — 회차차감/보강가능/환불가능, 어드민 9-9 정책 설정에서 조정 가능). 사전 통보 기준일 D-2 기본 + D-2 이전은 보강 가능. |
+| 1.5 | 2026-05-25 | 17장 학생 리텐션 콘텐츠 정책 추가 (FR-16a/b/c — 오늘의 코트사이드 / 내 라켓 / 그랜드슬램 가이드. 데이터 소스·갱신 주기·캐시·알림 트리거 정의) |
