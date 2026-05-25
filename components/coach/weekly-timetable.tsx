@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { AlertModal } from "@/components/alert-modal";
 import { Toast } from "@/components/toast";
 import { StudentPickerSheet, type StudentOption } from "@/components/coach/student-picker-sheet";
@@ -305,8 +304,6 @@ export function WeeklyTimetable({
   students: initialStudents = [],
   initialDate,
 }: Props) {
-  const router = useRouter();
-
   // SSR initialLessons 있으면 즉시 표시, mount 후 silent refresh로 갱신
   const hasSSRData = initialLessons.length > 0 || initialStudents.length > 0;
   const [lessons, setLessons] = useState<LessonRow[]>(initialLessons);
@@ -371,8 +368,12 @@ export function WeeklyTimetable({
     }
   }, []);
 
-  // day 모드에서 선택된 요일 (0=월 ~ 6=일). 초기값: 오늘이 속한 인덱스.
+  // day 모드 선택된 요일 (0=월 ~ 6=일). initialDate 우선, 없으면 오늘 요일 (#43)
   const [selectedDayIdx, setSelectedDayIdx] = useState<number>(() => {
+    if (initialDate && /^\d{4}-\d{2}-\d{2}$/.test(initialDate)) {
+      const d = new Date(initialDate + "T00:00:00Z");
+      return (d.getUTCDay() + 6) % 7;
+    }
     const nowKst = new Date(Date.now() + KST_OFFSET_MS);
     return (nowKst.getUTCDay() + 6) % 7;
   });
@@ -793,10 +794,6 @@ export function WeeklyTimetable({
     ? selectedDayMeta ? [selectedDayMeta] : []
     : weekDays;
 
-  // 본문 클릭 가능 여부 — pendingStudentId 있으면 차단 (시트가 떠 있으니)
-  const router_ = router; // 사용 가능성 보존 (재 export)
-  void router_;
-
   return (
     <div className="flex flex-col">
       {/* 로딩 / 결과 상태 배너 */}
@@ -863,10 +860,10 @@ export function WeeklyTimetable({
       {/* 월/주 네비 */}
       <div className="border-b border-line">
         <div className="flex items-center justify-between px-4 py-3 gap-2">
-          <div className="text-sm font-extrabold text-ink truncate">
-            {yearMonthLabel}
+          <div className="min-w-0 flex-1">
+            <div className="text-sm font-extrabold text-ink truncate">{yearMonthLabel}</div>
             {layoutMode === "day" && selectedDayMeta && (
-              <span className="ml-2 text-xs font-semibold text-ink-2">· {dayLabel}</span>
+              <div className="text-[11px] font-semibold text-ink-2 truncate">{dayLabel}</div>
             )}
           </div>
           <div className="flex items-center gap-1 flex-none">
