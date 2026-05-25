@@ -62,6 +62,8 @@ type Props = {
   onClose: () => void;
   baseTimeLabel: string;
   hour: number;
+  /** 분 단위 — 캘린더에서 클릭한 정확한 시각으로 사전 선택 (#11, #12) */
+  initialMinute?: number;
   hourSelectable?: boolean;
   /** 그 날짜에 이미 잡힌 레슨 (분 단위 구간 + 학생명) */
   bookedLessons?: BookedLesson[];
@@ -77,6 +79,7 @@ export function StudentPickerSheet({
   onClose,
   baseTimeLabel,
   hour: initialHour,
+  initialMinute = 0,
   bookedLessons = [],
   dayStartUtcMs,
   students,
@@ -96,11 +99,15 @@ export function StudentPickerSheet({
       setStep("time");
       setSearch("");
       setDuration(60);
-      setSelectedStartMin(null);
+      // 시트 열림 — 클릭한 시각으로 사전 선택 (60분 그리드의 정확한 슬롯이면)
+      const initStartMin = initialHour * 60 + initialMinute;
+      const fitsGrid =
+        (initStartMin - DAY_START_MIN) % 60 === 0 && initStartMin + 60 <= DAY_END_MIN;
+      setSelectedStartMin(fitsGrid ? initStartMin : null);
       setWeekCount(1);
       setDurationResetHint(false);
     }
-  }, [open, initialHour]);
+  }, [open, initialHour, initialMinute]);
 
   useEffect(() => {
     if (!open) return;

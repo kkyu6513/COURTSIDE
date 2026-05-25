@@ -3,10 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-
-// 과거 시각 유예 — 클라이언트/서버 시계 편차 + 네트워크 지연 흡수.
-// 클라이언트(weekly-timetable.tsx onCellClick)와 동일 값 사용.
-const PAST_GRACE_MS = 5 * 60 * 1000;
+import { PAST_GRACE_MS } from "@/lib/kst";
 
 // 충돌 검색 범위 — 최대 레슨 길이(4h) × 2 + 자정 경계 마진.
 // gte/lte로 scheduledAt 범위만 좁히기 위함이지, 실제 충돌 판정은 항상 [start,end] 교차로 한다.

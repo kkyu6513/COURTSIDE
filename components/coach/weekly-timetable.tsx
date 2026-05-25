@@ -22,7 +22,7 @@ import {
   getStatusBlockAccent,
   getStatusLabel,
 } from "@/lib/lesson-status";
-import { KST_OFFSET_MS, parseIsoUtc } from "@/lib/kst";
+import { KST_OFFSET_MS, PAST_GRACE_MS, parseIsoUtc } from "@/lib/kst";
 
 export type LessonRow = {
   id: number;
@@ -402,7 +402,16 @@ export function WeeklyTimetable({
       const sorted = [...futureLessons].sort(
         (a, b) => parseIsoUtc(a.scheduledAt).getTime() - parseIsoUtc(b.scheduledAt).getTime(),
       );
-      setWeekStart(startOfWeekMon(parseIsoUtc(sorted[0].scheduledAt)));
+      const nextWeekStart = startOfWeekMon(parseIsoUtc(sorted[0].scheduledAt));
+      setWeekStart(nextWeekStart);
+      // 자동 점프 알림 (#22) — 사용자에게 "왜 이번 주가 안 보이는지" 설명
+      const nws = formatKstDate(nextWeekStart);
+      const nwe = formatKstDate(addDays(nextWeekStart, 6));
+      setToast({
+        open: true,
+        title: "가장 가까운 미래 레슨이 있는 주로 이동했어요",
+        description: `${nws.m}/${nws.day} ~ ${nwe.m}/${nwe.day}`,
+      });
     }
   }, [isLoading, lessons, weekStart]);
 
@@ -428,6 +437,9 @@ export function WeeklyTimetable({
   const [pendingAbsent, setPendingAbsent] = useState(false);
   const [pendingPaid, setPendingPaid] = useState(false);
   const [, startTransition] = useTransition();
+  // 본문 컨테이너 + 현재 시각 라인 ref — "오늘" 클릭 시 scrollIntoView
+  const bodyRef = useRef<HTMLDivElement | null>(null);
+  const nowLineRef = useRef<HTMLDivElement | null>(null);
   const [alert, setAlert] = useState<{ open: boolean; variant: "error"; title: string; description?: string }>({
     open: false, variant: "error", title: "",
   });
@@ -563,6 +575,10 @@ export function WeeklyTimetable({
     setWeekStart(startOfWeekMon(new Date()));
     const nowKst = new Date(Date.now() + KST_OFFSET_MS);
     setSelectedDayIdx((nowKst.getUTCDay() + 6) % 7);
+    // 시각 피드백 — now-line으로 부드럽게 스크롤 (이미 그 주에 있어도 동작) (#20)
+    setTimeout(() => {
+      nowLineRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 80);
   };
 
   // ----- 변환 -----
@@ -610,7 +626,7 @@ export function WeeklyTimetable({
       hour - 9,
       minute,
     );
-    if (cellUtcMs < Date.now() - 5 * 60 * 1000) {
+    if (cellUtcMs < Date.now() - PAST_GRACE_MS) {
       const nowKst = new Date(Date.now() + KST_OFFSET_MS);
       const nowHh = String(nowKst.getUTCHours()).padStart(2, "0");
       const nowMm = String(nowKst.getUTCMinutes()).padStart(2, "0");
@@ -955,8 +971,11 @@ export function WeeklyTimetable({
         )}
       </div>
 
-      {/* 시간-블록 캘린더 본문 */}
-      <div className="px-3 pt-2">
+      {/* 시간-블록 캘린더 본문 — day 모드는 데스크탑에서 max-w로 중앙 정렬 (#18) */}
+      <div
+        ref={bodyRef}
+        className={`px-3 pt-2 ${layoutMode === "day" ? "mx-auto w-full max-w-[480px]" : ""}`}
+      >
         <div
           className={`grid gap-0 ${layoutMode === "day" ? "grid-cols-[44px_1fr]" : "grid-cols-[44px_repeat(7,1fr)]"}`}
           role="grid"
@@ -978,6 +997,7 @@ export function WeeklyTimetable({
                 onBlockClick={onBlockClick}
                 onOverflowClick={onOverflowClick}
                 isLastColumn={i === visibleColumns.length - 1}
+                nowLineRef={wd.isToday ? nowLineRef : undefined}
               />
             );
           })}
@@ -1005,6 +1025,7 @@ export function WeeklyTimetable({
           onClose={closeStudentPicker}
           baseTimeLabel={studentPicker.baseTimeLabel}
           hour={studentPicker.hour}
+          initialMinute={studentPicker.minute}
           students={students}
           pendingStudentId={pendingStudentId}
           onPick={onPickStudent}
@@ -1093,6 +1114,7 @@ function DayColumn({
   onBlockClick,
   onOverflowClick,
   isLastColumn,
+  nowLineRef,
 }: {
   date: Date;
   isToday: boolean;
@@ -1103,18 +1125,23 @@ function DayColumn({
   onBlockClick: (lesson: LessonRow) => void;
   onOverflowClick: (date: Date, lessons: LessonRow[]) => void;
   isLastColumn: boolean;
+  nowLineRef?: React.RefObject<HTMLDivElement>;
 }) {
   const totalHeight = TOTAL_HOURS * HOUR_HEIGHT_PX;
   const dayStartMin = DAY_START_HOUR * 60;
 
   const onAreaClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const y = Math.max(0, Math.min(rect.height, e.clientY - rect.top));
-    const totalMinFromStart = (y / HOUR_HEIGHT_PX) * 60;
-    // 10분 단위 스냅
-    const snapped = Math.floor(totalMinFromStart / SNAP_MIN) * SNAP_MIN;
-    const hour = DAY_START_HOUR + Math.floor(snapped / 60);
-    const minute = snapped % 60;
+    let hour = 9;   // 키보드 활성화 시 기본값 — 9:00
+    let minute = 0;
+    // clientY === 0 은 키보드(Enter/Space) 활성화 신호. 그 외엔 클릭 좌표 사용 (#13)
+    if (e.clientY > 0) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const y = Math.max(0, Math.min(rect.height, e.clientY - rect.top));
+      const totalMinFromStart = (y / HOUR_HEIGHT_PX) * 60;
+      const snapped = Math.floor(totalMinFromStart / SNAP_MIN) * SNAP_MIN;
+      hour = DAY_START_HOUR + Math.floor(snapped / 60);
+      minute = snapped % 60;
+    }
     onEmptyClick(date, hour, minute);
   };
 
@@ -1180,6 +1207,7 @@ function DayColumn({
       {/* 현재 시각 라인 */}
       {nowLineTop != null && (
         <div
+          ref={nowLineRef}
           className="absolute left-0 right-0 z-20 pointer-events-none"
           style={{ top: nowLineTop }}
           aria-hidden
@@ -1274,8 +1302,8 @@ function LessonBlockView({
         position: "absolute",
         top: `${topPx}px`,
         height: `${heightPx}px`,
-        left: `calc(${leftPct}% + 1px)`,
-        width: `calc(${widthPct}% - 2px)`,
+        left: `calc(${leftPct}% + 2px)`,
+        width: `calc(${widthPct}% - 4px)`,
       }}
       className={`absolute rounded-md border-l-4 px-1.5 py-0.5 text-left overflow-hidden transition active:scale-[0.99] hover:shadow-md hover:z-10 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 z-[5] cursor-pointer ${accent.bg} ${accent.border}`}
       title={ariaParts}
@@ -1359,8 +1387,8 @@ function OverflowBadge({
         position: "absolute",
         top: `${topPx}px`,
         height: `${heightPx}px`,
-        left: `calc(${leftPct}% + 1px)`,
-        width: `calc(${widthPct}% - 2px)`,
+        left: `calc(${leftPct}% + 2px)`,
+        width: `calc(${widthPct}% - 4px)`,
       }}
       className="absolute rounded-md border border-dashed border-ink-3/40 bg-ink/5 hover:bg-ink/10 px-1 py-0.5 flex flex-col items-center justify-center transition active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 z-[5] cursor-pointer"
       title={`+${lessons.length}개 레슨 더 보기`}
