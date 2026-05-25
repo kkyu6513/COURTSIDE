@@ -332,6 +332,17 @@ export function CoachHomeCalendar({ testMode = false }: { testMode?: boolean }) 
 
   const goPrevWeek = () => setWeekStart((d) => addDays(d, -7));
   const goNextWeek = () => setWeekStart((d) => addDays(d, 7));
+  const goToday = () => {
+    const today = startOfWeekMon(focusDate(testMode));
+    setWeekStart(today);
+    setSelectedKey(todayKey);
+  };
+
+  // 이번 주에 오늘이 포함되어 있는지 (오늘로 이동 버튼 노출 여부)
+  const isOnTodayWeek = useMemo(
+    () => weekDays.some((d) => d.key === todayKey),
+    [weekDays, todayKey],
+  );
 
   const weekRangeLabel = `${weekDays[0].date.getUTCMonth() + 1}/${weekDays[0].dayNum} ~ ${weekDays[6].date.getUTCMonth() + 1}/${weekDays[6].dayNum}`;
 
@@ -421,23 +432,31 @@ export function CoachHomeCalendar({ testMode = false }: { testMode?: boolean }) 
 
   return (
     <div>
-      {/* 주간 네비 */}
-      <div className="mt-5 flex items-center justify-between">
-        <div className="text-sm font-bold text-ink">{selectedLabel || "날짜 선택"}</div>
-        <div className="flex items-center gap-1">
+      {/* 주간 네비 — 주 범위 + 이전/다음 + "오늘" */}
+      <div className="mt-5 flex items-center justify-between gap-2">
+        <div className="text-sm font-bold text-ink truncate">{weekRangeLabel}</div>
+        <div className="flex items-center gap-1 flex-none">
+          {!isOnTodayWeek && (
+            <button
+              type="button"
+              onClick={goToday}
+              className="h-9 px-3 rounded-lg border border-line bg-surface text-[11px] font-semibold text-ink-2 active:scale-[0.97] transition"
+            >
+              오늘
+            </button>
+          )}
           <button
             type="button"
             onClick={goPrevWeek}
-            className="w-7 h-7 rounded-lg border border-line bg-surface text-sm text-ink-2 hover:bg-soft transition"
+            className="w-9 h-9 rounded-lg border border-line bg-surface text-base text-ink-2 active:scale-[0.97] transition"
             aria-label="이전주"
           >
             ‹
           </button>
-          <span className="text-[11px] font-semibold text-ink-3 px-1">{weekRangeLabel}</span>
           <button
             type="button"
             onClick={goNextWeek}
-            className="w-7 h-7 rounded-lg border border-line bg-surface text-sm text-ink-2 hover:bg-soft transition"
+            className="w-9 h-9 rounded-lg border border-line bg-surface text-base text-ink-2 active:scale-[0.97] transition"
             aria-label="다음주"
           >
             ›
@@ -456,13 +475,20 @@ export function CoachHomeCalendar({ testMode = false }: { testMode?: boolean }) 
               type="button"
               key={d.key}
               onClick={() => setSelectedKey(d.key)}
-              className={`flex-1 text-center py-2 rounded-xl transition active:scale-[0.97] ${
+              className={`relative flex-1 text-center py-2 rounded-xl transition active:scale-[0.97] ${
                 isSelected
                   ? "bg-primary text-white shadow-[0_4px_12px_rgba(45,212,191,0.35)]"
-                  : "bg-soft hover:bg-line"
+                  : isToday
+                    ? "bg-primary/10 border border-primary/40"
+                    : "bg-soft"
               }`}
+              aria-label={`${d.dayNum}일 ${d.dowKor}요일${isToday ? " 오늘" : ""}${cnt > 0 ? ` 레슨 ${cnt}건` : ""}`}
             >
-              <div className={`text-[10px] ${isSelected ? "text-white/85" : "text-ink-3"}`}>
+              <div
+                className={`text-[10px] ${
+                  isSelected ? "text-white/85" : isToday ? "text-primary font-semibold" : "text-ink-3"
+                }`}
+              >
                 {d.dowKor}
               </div>
               <div
@@ -472,11 +498,15 @@ export function CoachHomeCalendar({ testMode = false }: { testMode?: boolean }) 
               >
                 {d.dayNum}
               </div>
-              <div className="flex justify-center mt-1 h-1.5">
+              <div className="flex justify-center mt-1 h-3 items-center">
                 {cnt > 0 && (
                   <span
-                    className={`w-1.5 h-1.5 rounded-full ${isSelected ? "bg-white" : "bg-primary"}`}
-                  />
+                    className={`inline-flex items-center justify-center min-w-[16px] h-[14px] px-1 rounded-full text-[9px] font-bold leading-none ${
+                      isSelected ? "bg-white text-primary" : "bg-primary text-white"
+                    }`}
+                  >
+                    {cnt}
+                  </span>
                 )}
               </div>
             </button>
