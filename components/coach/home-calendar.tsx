@@ -574,7 +574,10 @@ export function CoachHomeCalendar({ testMode = false }: { testMode?: boolean }) 
           </div>
         ) : selectedLessons.length === 0 ? (
           <div className="rounded-2xl border border-line bg-surface p-8 text-center">
-            <p className="text-sm text-ink-2">이 날짜에 예정된 레슨이 없어요</p>
+            <p className="text-sm font-semibold text-ink">이 날짜에 예정된 레슨이 없어요</p>
+            <p className="mt-1 text-[11px] text-ink-3">
+              위 버튼으로 빈 시간대에 새 레슨을 잡거나, 다른 날짜를 선택해 보세요.
+            </p>
             <button
               type="button"
               onClick={openPicker}
@@ -689,60 +692,80 @@ function LessonCard({
   // faded 카드는 텍스트만 살짝 흐리게 — 카드 자체는 클릭 가능 상태로 유지 (보기 차단 X)
   const fadedTextClass = style.faded ? "text-ink-3" : "";
 
+  // 이니셜 (학생명 첫 글자) — 동일 이름 학생 변별 + 시각 앵커
+  const initial = studentName ? studentName.slice(0, 1) : "·";
+
   return (
     <button
       type="button"
       onClick={onClick}
       className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-left transition active:scale-[0.99] hover:bg-soft/40"
     >
-      {/* 1행 — 시간 + 수강생 (시간 상위 / 상태 하위로 재정렬) */}
-      <div className="flex items-baseline gap-2">
-        <span
-          className={`flex-none text-sm font-bold ${style.strike ? "line-through text-ink-3" : "text-ink"} ${fadedTextClass}`}
-        >
-          {timeRangeText}
-        </span>
-        {oldTime && (
-          <span className="flex-none text-[11px] text-ink-3 line-through">{oldTime}</span>
-        )}
-        {durationTag && (
-          <span className="flex-none text-[10px] font-semibold text-ink-2 bg-soft px-1.5 py-0.5 rounded">
-            {durationTag}
-          </span>
-        )}
-        <span
-          className={`min-w-0 truncate text-xs ${style.strike ? "line-through text-ink-3" : "text-ink-2"} ${fadedTextClass}`}
-        >
-          {studentName} · {formatLabel}
-        </span>
-      </div>
-
-      {/* 2행 — 상태 + 회차 + 결제 (서브 라인) */}
-      <div className="mt-1 flex items-center gap-2 flex-wrap">
-        <span className={`text-[11px] font-semibold ${style.color}`}>{style.label}</span>
-        {roundLabel && <span className="text-[11px] text-ink-3">· {roundLabel}</span>}
-        {paymentNote && (
-          <span
-            className={`text-[11px] ${
-              paymentNote.tone === "danger"
-                ? "font-semibold text-red-500"
-                : paymentNote.tone === "ok"
-                  ? "text-emerald-600"
-                  : "text-ink-3"
-            }`}
-          >
-            · {paymentNote.text}
-          </span>
-        )}
-      </div>
-
-      {notesLabel && (
+      <div className="flex items-start gap-3">
+        {/* 학생 이니셜 아바타 — faded면 함께 흐려짐 */}
         <div
-          className={`mt-1 truncate text-[11px] text-ink-3 ${style.strike ? "line-through" : ""}`}
+          className={`flex-none w-8 h-8 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-xs ${
+            style.faded ? "opacity-60" : ""
+          }`}
+          aria-hidden
         >
-          {notesLabel}
+          {initial}
         </div>
-      )}
+
+        <div className="min-w-0 flex-1">
+          {/* 1행 — 시간 + 수강생 (시간 상위 / 상태 하위로 재정렬) */}
+          <div className="flex items-baseline gap-2">
+            <span
+              className={`flex-none text-sm font-bold ${style.strike ? "line-through text-ink-3" : "text-ink"} ${fadedTextClass}`}
+            >
+              {timeRangeText}
+            </span>
+            {oldTime && (
+              <span className="flex-none text-[11px] text-ink-3" aria-label={`이전 시각 ${oldTime}`}>
+                <span className="line-through">{oldTime}</span>
+                <span className="mx-0.5">→</span>
+              </span>
+            )}
+            {durationTag && (
+              <span className="flex-none text-[10px] font-semibold text-ink-2 bg-soft px-1.5 py-0.5 rounded">
+                {durationTag}
+              </span>
+            )}
+            <span
+              className={`min-w-0 truncate text-xs ${style.strike ? "line-through text-ink-3" : "text-ink-2"} ${fadedTextClass}`}
+            >
+              {studentName} · {formatLabel}
+            </span>
+          </div>
+
+          {/* 2행 — 상태 + 회차 + 결제 (서브 라인) */}
+          <div className="mt-1 flex items-center gap-2 flex-wrap">
+            <span className={`text-[11px] font-semibold ${style.color}`}>{style.label}</span>
+            {roundLabel && <span className="text-[11px] text-ink-3">· {roundLabel}</span>}
+            {paymentNote && (
+              <span
+                className={`text-[11px] ${
+                  paymentNote.tone === "danger"
+                    ? "font-semibold text-red-500"
+                    : paymentNote.tone === "ok"
+                      ? "text-emerald-600"
+                      : "text-ink-3"
+                }`}
+              >
+                · {paymentNote.text}
+              </span>
+            )}
+          </div>
+
+          {notesLabel && (
+            <div
+              className={`mt-1 truncate text-[11px] text-ink-3 ${style.strike ? "line-through" : ""}`}
+            >
+              {notesLabel}
+            </div>
+          )}
+        </div>
+      </div>
     </button>
   );
 }
