@@ -440,6 +440,21 @@ export function WeeklyTimetable({
   // 본문 컨테이너 + 현재 시각 라인 ref — "오늘" 클릭 시 scrollIntoView
   const bodyRef = useRef<HTMLDivElement | null>(null);
   const nowLineRef = useRef<HTMLDivElement | null>(null);
+
+  // 현재 시각 (KST 분) — 1분마다 갱신 (#29)
+  const [nowMin, setNowMin] = useState<number | null>(() => {
+    const k = new Date(Date.now() + KST_OFFSET_MS);
+    return k.getUTCHours() * 60 + k.getUTCMinutes();
+  });
+  useEffect(() => {
+    const tick = () => {
+      const k = new Date(Date.now() + KST_OFFSET_MS);
+      setNowMin(k.getUTCHours() * 60 + k.getUTCMinutes());
+    };
+    tick();
+    const id = window.setInterval(tick, 60_000);
+    return () => window.clearInterval(id);
+  }, []);
   const [alert, setAlert] = useState<{ open: boolean; variant: "error"; title: string; description?: string }>({
     open: false, variant: "error", title: "",
   });
@@ -981,7 +996,7 @@ export function WeeklyTimetable({
           role="grid"
           aria-label={layoutMode === "day" ? `${dayLabel} 일정` : `주간 일정 — ${weekRangeLabel}`}
         >
-          <TimeAxis />
+          <TimeAxis nowMin={nowMin} />
           {visibleColumns.map((wd, i) => {
             const key = `${wd.date.getUTCFullYear()}-${wd.date.getUTCMonth() + 1}-${wd.date.getUTCDate()}`;
             const blocks = blocksByDay.get(key) ?? [];
@@ -998,6 +1013,7 @@ export function WeeklyTimetable({
                 onOverflowClick={onOverflowClick}
                 isLastColumn={i === visibleColumns.length - 1}
                 nowLineRef={wd.isToday ? nowLineRef : undefined}
+                nowMin={nowMin}
               />
             );
           })}
@@ -1008,15 +1024,35 @@ export function WeeklyTimetable({
           빈 영역을 탭하면 그 시간에 레슨을 잡을 수 있어요. 레슨 블록을 탭하면 상세보기가 열립니다.
         </p>
 
-        <div className="mt-3 mb-6 flex flex-wrap gap-x-3 gap-y-1.5 p-3 bg-soft rounded-xl">
-          <LegendDot color="border-l-amber-500 bg-amber-50" label="레슨 신청" />
-          <LegendDot color="border-l-violet-500 bg-violet-50" label="레슨 예정" />
-          <LegendDot color="border-l-red-500 bg-red-50" label="진행중" />
-          <LegendDot color="border-l-blue-500 bg-blue-50" label="완료 / 변경완료" />
-          <LegendDot color="border-l-gray-400 bg-gray-100" label="결강" />
-          <LegendDot color="border-l-orange-500 bg-orange-50" label="변경 / 보강 요청" />
-          <LegendDot color="border-l-emerald-500 bg-emerald-50" label="보강" />
-        </div>
+        {/* 범례 — 접기 가능 (#35) */}
+        <details className="mt-3 mb-6 group">
+          <summary className="cursor-pointer text-[11px] font-semibold text-ink-2 px-1 py-1 inline-flex items-center gap-1 hover:text-ink list-none">
+            <svg
+              width="10"
+              height="10"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="transition-transform group-open:rotate-90"
+              aria-hidden
+            >
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+            상태별 색상 안내
+          </summary>
+          <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1.5 p-3 bg-soft rounded-xl">
+            <LegendDot color="border-l-amber-500 bg-amber-50" label="레슨 신청" />
+            <LegendDot color="border-l-violet-500 bg-violet-50" label="레슨 예정" />
+            <LegendDot color="border-l-red-500 bg-red-50" label="진행중" />
+            <LegendDot color="border-l-blue-500 bg-blue-50" label="완료 / 변경완료" />
+            <LegendDot color="border-l-gray-400 bg-gray-100" label="결강" />
+            <LegendDot color="border-l-orange-500 bg-orange-50" label="변경 / 보강 요청" />
+            <LegendDot color="border-l-emerald-500 bg-emerald-50" label="보강" />
+          </div>
+        </details>
       </div>
 
       {studentPicker && (
@@ -1082,23 +1118,50 @@ export function WeeklyTimetable({
 }
 
 // ---------- 좌측 시간 축 ----------
-function TimeAxis() {
+function TimeAxis({ nowMin }: { nowMin: number | null }) {
   const totalHeight = TOTAL_HOURS * HOUR_HEIGHT_PX;
+  const dayStartMin = DAY_START_HOUR * 60;
+  const nowTop =
+    nowMin != null && nowMin >= dayStartMin && nowMin <= DAY_END_HOUR * 60
+      ? ((nowMin - dayStartMin) / 60) * HOUR_HEIGHT_PX
+      : null;
   return (
     <div className="relative" style={{ height: totalHeight }} aria-hidden>
       {Array.from({ length: TOTAL_HOURS + 1 }, (_, i) => {
         const hour = DAY_START_HOUR + i;
         const top = i * HOUR_HEIGHT_PX;
         return (
-          <div
-            key={i}
-            className="absolute right-1 text-[10px] text-ink-3 tabular-nums"
-            style={{ top: top - 6 }}
-          >
-            {String(hour).padStart(2, "0")}:00
+          <div key={`h-${i}`}>
+            <div
+              className="absolute right-1 text-[10px] text-ink-3 tabular-nums leading-none"
+              style={{ top: top - 5 }}
+            >
+              {String(hour).padStart(2, "0")}:00
+            </div>
+            {/* 30분 마이너 라벨 — 정각 사이 (#26) */}
+            {i < TOTAL_HOURS && (
+              <div
+                className="absolute right-1 text-[8px] text-ink-3/60 tabular-nums leading-none"
+                style={{ top: top + HOUR_HEIGHT_PX / 2 - 4 }}
+              >
+                :30
+              </div>
+            )}
           </div>
         );
       })}
+      {/* 현재 시각 표식 — 시간축 우측 끝 (#28) */}
+      {nowTop != null && (
+        <div
+          className="absolute -right-0.5 z-30 pointer-events-none"
+          style={{ top: nowTop - 5 }}
+          aria-hidden
+        >
+          <div
+            className="w-0 h-0 border-y-[5px] border-y-transparent border-l-[6px] border-l-red-500"
+          />
+        </div>
+      )}
     </div>
   );
 }
@@ -1115,6 +1178,7 @@ function DayColumn({
   onOverflowClick,
   isLastColumn,
   nowLineRef,
+  nowMin,
 }: {
   date: Date;
   isToday: boolean;
@@ -1126,6 +1190,7 @@ function DayColumn({
   onOverflowClick: (date: Date, lessons: LessonRow[]) => void;
   isLastColumn: boolean;
   nowLineRef?: React.RefObject<HTMLDivElement>;
+  nowMin: number | null;
 }) {
   const totalHeight = TOTAL_HOURS * HOUR_HEIGHT_PX;
   const dayStartMin = DAY_START_HOUR * 60;
@@ -1145,14 +1210,10 @@ function DayColumn({
     onEmptyClick(date, hour, minute);
   };
 
-  // 현재 시각 라인 (오늘 컬럼만)
+  // 현재 시각 라인 (오늘 컬럼만) — nowMin 1분 단위 갱신으로 정확 (#29)
   let nowLineTop: number | null = null;
-  if (isToday) {
-    const nowKst = new Date(Date.now() + KST_OFFSET_MS);
-    const nowMin = nowKst.getUTCHours() * 60 + nowKst.getUTCMinutes();
-    if (nowMin >= dayStartMin && nowMin <= DAY_END_HOUR * 60) {
-      nowLineTop = ((nowMin - dayStartMin) / 60) * HOUR_HEIGHT_PX;
-    }
+  if (isToday && nowMin != null && nowMin >= dayStartMin && nowMin <= DAY_END_HOUR * 60) {
+    nowLineTop = ((nowMin - dayStartMin) / 60) * HOUR_HEIGHT_PX;
   }
 
   return (
@@ -1173,7 +1234,7 @@ function DayColumn({
       {Array.from({ length: TOTAL_HOURS }, (_, i) => (
         <div
           key={`half-${i}`}
-          className="absolute left-0 right-0 border-t border-line/15 pointer-events-none"
+          className="absolute left-0 right-0 border-t border-dashed border-line/40 pointer-events-none"
           style={{ top: i * HOUR_HEIGHT_PX + HOUR_HEIGHT_PX / 2 }}
         />
       ))}
@@ -1183,7 +1244,7 @@ function DayColumn({
         type="button"
         onClick={onAreaClick}
         aria-label={`${date.getUTCMonth() + 1}월 ${date.getUTCDate()}일 — 빈 시간 탭해서 레슨 잡기`}
-        className="absolute inset-0 cursor-cell hover:bg-primary/[0.04] focus:outline-none focus-visible:bg-primary/[0.06]"
+        className="absolute inset-0 cursor-cell hover:bg-primary/10 active:bg-primary/15 focus:outline-none focus-visible:bg-primary/15"
       />
 
       {/* 레슨 블록 + 오버플로우 배지 */}
@@ -1316,8 +1377,19 @@ function LessonBlockView({
         </div>
       )}
 
-      {/* 1행 — 학생명 + 결제 점 */}
+      {/* 1행 — 아바타 + 학생명 + 결제 점 */}
       <div className={`flex items-center gap-1 ${clipTop ? "mt-3" : ""}`}>
+        {/* 학생 이니셜 아바타 — medium+ + lane 1개일 때만 (좁은 lane에서는 공간 부족) (#30) */}
+        {!isVeryShort && !isShort && laneCount === 1 && (
+          <span
+            className={`flex-none w-4 h-4 rounded-full inline-flex items-center justify-center text-[9px] font-extrabold ${
+              isGroup ? "bg-violet-200/70 text-violet-800" : "bg-primary/20 text-primary"
+            }`}
+            aria-hidden
+          >
+            {studentName.slice(0, 1)}
+          </span>
+        )}
         <div
           className={`font-bold truncate flex-1 min-w-0 ${accent.text} ${
             isAbsent ? "line-through" : ""
@@ -1348,8 +1420,8 @@ function LessonBlockView({
         </div>
       )}
 
-      {/* 4행 — 상태 라벨 (tall + lane 1개) */}
-      {isTall && laneCount === 1 && (
+      {/* 4행 — 상태 라벨 (tall 이상이면 lane 수 무관하게 표시) (#32) */}
+      {isTall && (
         <div className={`mt-0.5 text-[9px] font-semibold ${accent.text} opacity-80 truncate`}>
           {statusLabel.text}
         </div>
