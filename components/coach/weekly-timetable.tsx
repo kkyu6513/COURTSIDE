@@ -629,14 +629,15 @@ export function WeeklyTimetable({
           빈 시간을 탭하면 그 시간에 레슨을 잡거나 일정을 차단할 수 있어요.
         </p>
 
-        {/* 범례 */}
+        {/* 범례 — lib/lesson-status STATUS_CELL_CLASS 와 동일 컬러로 정렬 */}
         <div className="mt-3 mb-6 flex flex-wrap gap-x-3 gap-y-1.5 p-3 bg-soft rounded-xl">
-          <LegendItem color="bg-emerald-100 border-emerald-200" label="레슨 확정" />
-          <LegendItem color="bg-amber-100 border-amber-200" label="대기 신청" />
+          <LegendItem color="bg-amber-100 border-amber-200" label="레슨 신청" />
           <LegendItem color="bg-violet-100 border-violet-200" label="레슨 예정" />
-          <LegendItem color="bg-orange-100 border-orange-200" label="변경 요청" />
-          <LegendItem color="bg-blue-100 border-blue-200" label="완료" />
-          <LegendItem color="bg-soft border-line" label="취소" />
+          <LegendItem color="bg-red-100 border-red-200" label="진행중" />
+          <LegendItem color="bg-blue-100 border-blue-200" label="완료 / 변경완료" />
+          <LegendItem color="bg-gray-100 border-line" label="결강" />
+          <LegendItem color="bg-orange-100 border-orange-200" label="변경 / 보강 요청" />
+          <LegendItem color="bg-emerald-100 border-emerald-200" label="보강" />
           <LegendItem color="bg-surface border-line" label="빈 시간" />
         </div>
       </div>

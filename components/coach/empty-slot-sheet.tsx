@@ -43,7 +43,20 @@ export function EmptySlotSheet({ open, onClose, timeLabel, onBookLesson, onBlock
         style={{ animation: "courtside-sheet-up 0.25s ease-out" }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="w-10 h-1 rounded-full bg-line mx-auto mb-4" />
+        <div className="relative">
+          <div className="w-10 h-1 rounded-full bg-line mx-auto mb-4" />
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="닫기"
+            className="absolute -top-1 right-0 w-8 h-8 rounded-full text-ink-3 hover:bg-soft transition flex items-center justify-center"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
         <div className="text-base font-extrabold text-ink">{timeLabel}</div>
         <div className="mt-1 text-xs text-ink-3">이 시간에 할 작업을 선택하세요</div>
 
@@ -72,20 +85,23 @@ export function EmptySlotSheet({ open, onClose, timeLabel, onBookLesson, onBlock
             tone="primary"
           />
 
-          <SheetButton
-            onClick={onBlock}
-            disabled={!onBlock}
-            iconBg="bg-soft"
-            icon={
-              <svg className="w-5 h-5 text-ink-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                <circle cx="12" cy="12" r="10" />
-                <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
-              </svg>
-            }
-            title="이 시간 블록하기"
-            desc="개인 일정으로 이 시간의 예약을 차단합니다 (곧 제공)"
-            tone="muted"
-          />
+          {/* "이 시간 블록하기" — 미구현. 사용자 혼란을 막기 위해 onBlock 핸들러가 넘어올 때만 노출. */}
+          {onBlock && (
+            <SheetButton
+              onClick={onBlock}
+              disabled={false}
+              iconBg="bg-soft"
+              icon={
+                <svg className="w-5 h-5 text-ink-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+                </svg>
+              }
+              title="이 시간 블록하기"
+              desc="개인 일정으로 이 시간의 예약을 차단합니다"
+              tone="muted"
+            />
+          )}
         </div>
 
         <button

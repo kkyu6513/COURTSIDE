@@ -137,28 +137,36 @@ export function StudentPickerSheet({
     }
   };
 
-  // 슬롯 리스트 ref — 시트 열릴 때 오늘이면 현재 시각 근처로 자동 스크롤
+  // 슬롯 리스트 ref — 시트 열릴 때 클릭한 시간(initialHour)으로 자동 스크롤.
+  // 오늘 날짜이고 클릭 시간이 이미 지난 시각이면 현재 시각 이후 첫 슬롯으로 fallback.
   const listRef = useRef<HTMLUListElement>(null);
   useEffect(() => {
     if (!open) return;
-    if (dayStartUtcMs == null) return;
     const list = listRef.current;
     if (!list) return;
-    const nowMs = Date.now();
-    const isTodayPicker = nowMs >= dayStartUtcMs && nowMs < dayStartUtcMs + 24 * 60 * 60 * 1000;
-    if (!isTodayPicker) return;
-    const nowMin = Math.floor((nowMs - dayStartUtcMs) / 60000);
-    // 현재 시각 이후 첫 슬롯
-    const targetIdx = slots.findIndex((s) => s.startMin >= nowMin);
+
+    const initialMin = initialHour * 60;
+    let targetMin = initialMin;
+
+    // 오늘이면 과거 시각으로 스크롤하지 않음
+    if (dayStartUtcMs != null) {
+      const nowMs = Date.now();
+      const isTodayPicker = nowMs >= dayStartUtcMs && nowMs < dayStartUtcMs + 24 * 60 * 60 * 1000;
+      if (isTodayPicker) {
+        const nowMin = Math.floor((nowMs - dayStartUtcMs) / 60000);
+        if (targetMin < nowMin) targetMin = nowMin;
+      }
+    }
+
+    const targetIdx = slots.findIndex((s) => s.startMin >= targetMin);
     if (targetIdx < 0) return;
     const el = list.children[targetIdx] as HTMLElement | undefined;
     if (el) {
-      // 약간 지연 — DOM render 후
       requestAnimationFrame(() => {
         el.scrollIntoView({ block: "center", behavior: "auto" });
       });
     }
-  }, [open, dayStartUtcMs, slots]);
+  }, [open, dayStartUtcMs, slots, initialHour]);
 
   return createPortal(
     <div

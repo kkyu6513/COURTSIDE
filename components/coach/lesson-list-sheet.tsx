@@ -59,7 +59,20 @@ export function LessonListSheet({ open, onClose, hourLabel, lessons, onPickLesso
         onClick={(e) => e.stopPropagation()}
       >
         <div className="px-5 pt-3 pb-3 flex-none">
-          <div className="w-10 h-1 rounded-full bg-line mx-auto mb-4" />
+          <div className="relative">
+            <div className="w-10 h-1 rounded-full bg-line mx-auto mb-4" />
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="닫기"
+              className="absolute -top-1 right-0 w-8 h-8 rounded-full text-ink-3 hover:bg-soft transition flex items-center justify-center"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
           <div className="text-base font-extrabold text-ink">{hourLabel}</div>
           <div className="mt-1 text-xs text-ink-3">{lessons.length}개의 레슨이 잡혀있어요</div>
         </div>

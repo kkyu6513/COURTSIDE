@@ -98,7 +98,20 @@ export function LessonDetailSheet({ open, onClose, lesson, pendingCancel, pendin
         style={{ animation: "courtside-sheet-up 0.25s ease-out" }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="w-10 h-1 rounded-full bg-line mx-auto mb-4" />
+        <div className="relative">
+          <div className="w-10 h-1 rounded-full bg-line mx-auto mb-4" />
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="닫기"
+            className="absolute -top-1 right-0 w-8 h-8 rounded-full text-ink-3 hover:bg-soft transition flex items-center justify-center"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
 
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
