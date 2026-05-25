@@ -1,0 +1,54 @@
+name: Seed Test Student Lessons
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/seed-test-student-lessons.yml'
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Wait for Vercel build (3.5 minutes)
+        run: sleep 210
+
+      - name: Call seed-test-student-lessons
+        id: seed
+        run: |
+          URL="https://courtside-two-silk.vercel.app/api/admin/seed-test-student-lessons?token=courtside-seed-test-student-lessons-2026-05-15-Yp4xKbWzQn"
+          echo "--- Calling seed-test-student-lessons ---"
+          CODE=$(curl -sS -X POST -o /tmp/body.json -w "%{http_code}" "$URL" || echo "failed")
+          echo "HTTP $CODE"
+          BODY=$(cat /tmp/body.json)
+          echo "$BODY"
+
+          {
+            echo "result<<EOF"
+            echo "### seed-test-student-lessons (HTTP $CODE)"
+            echo ""
+            echo '```json'
+            echo "$BODY"
+            echo '```'
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
+
+      - name: Post result as Issue
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = `## Seed Test Student Lessons Result\n\n${{ steps.seed.outputs.result }}\n\n---\nRun: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`;
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `[Seed] 학생 홈 12종 상태 테스트 레슨 (전 학생)`,
+              body,
+              labels: ['seed-result']
+            });
