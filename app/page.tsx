@@ -107,10 +107,36 @@ export default async function Home({
     .eq("matchedCoachUserId", user.id)
     .eq("status", "PENDING");
 
+  // 등록된 학생 수 (CONFIRMED claim)
+  const { count: studentCount } = await admin
+    .from("student_self_claims")
+    .select("studentUserId", { count: "exact", head: true })
+    .eq("matchedCoachUserId", user.id)
+    .eq("status", "CONFIRMED");
+
+  // 이번 주(KST 월~일) 레슨 수 (CANCELLED 제외)
+  const nowKst = new Date(Date.now() + 9 * 60 * 60 * 1000);
+  const dow = nowKst.getUTCDay();
+  const offsetToMon = (dow + 6) % 7;
+  const monKst = new Date(nowKst);
+  monKst.setUTCDate(monKst.getUTCDate() - offsetToMon);
+  monKst.setUTCHours(0, 0, 0, 0);
+  const weekStartUtcIso = new Date(monKst.getTime() - 9 * 60 * 60 * 1000).toISOString();
+  const weekEndUtcIso = new Date(monKst.getTime() + 7 * 24 * 60 * 60 * 1000 - 9 * 60 * 60 * 1000).toISOString();
+  const { count: weeklyLessonCount } = await admin
+    .from("lessons")
+    .select("id", { count: "exact", head: true })
+    .eq("coachId", user.id)
+    .neq("status", "CANCELLED")
+    .gte("scheduledAt", weekStartUtcIso)
+    .lt("scheduledAt", weekEndUtcIso);
+
   return (
     <CoachHome
       nickname={nickname}
       pendingClaimCount={pendingClaimCount ?? 0}
+      studentCount={studentCount ?? 0}
+      weeklyLessonCount={weeklyLessonCount ?? 0}
       testMode={testMode === "lessons"}
       showDevButtons={showDevButtons}
     />
@@ -264,14 +290,67 @@ function thisWeekDates(now: Date = new Date()) {
   return days;
 }
 
+function KpiCard({
+  label,
+  value,
+  href,
+  highlight = false,
+  placeholder = false,
+}: {
+  label: string;
+  value?: string;
+  href?: string;
+  highlight?: boolean;
+  placeholder?: boolean;
+}) {
+  const content = (
+    <div
+      className={`rounded-xl border p-2.5 ${
+        placeholder
+          ? "border-line bg-soft/60"
+          : highlight
+            ? "border-amber-300 bg-amber-50"
+            : "border-line bg-surface"
+      }`}
+    >
+      <div
+        className={`text-[10px] font-semibold ${
+          placeholder ? "text-ink-3" : highlight ? "text-amber-700" : "text-ink-3"
+        }`}
+      >
+        {label}
+      </div>
+      <div
+        className={`mt-1 text-base font-extrabold ${
+          placeholder ? "text-ink-3" : highlight ? "text-amber-700" : "text-ink"
+        }`}
+      >
+        {placeholder ? <span className="text-xs font-medium text-ink-3">곧 제공</span> : value}
+      </div>
+    </div>
+  );
+  if (href && !placeholder) {
+    return (
+      <Link href={href} className="block active:scale-[0.98] transition">
+        {content}
+      </Link>
+    );
+  }
+  return content;
+}
+
 function CoachHome({
   nickname,
   pendingClaimCount,
+  studentCount,
+  weeklyLessonCount,
   testMode = false,
   showDevButtons = false,
 }: {
   nickname: string;
   pendingClaimCount: number;
+  studentCount: number;
+  weeklyLessonCount: number;
   testMode?: boolean;
   showDevButtons?: boolean;
 }) {
@@ -333,23 +412,20 @@ function CoachHome({
           </div>
         )}
 
-        {/* PENDING 배너 */}
-        {pendingClaimCount > 0 && (
-          <Link
+        {/* 운영 지표 — 6 카드 그리드 */}
+        <div className="mt-5 grid grid-cols-3 gap-2">
+          <KpiCard label="이번 주 레슨" value={`${weeklyLessonCount}건`} />
+          <KpiCard label="등록 학생" value={`${studentCount}명`} />
+          <KpiCard
+            label="응답 대기"
+            value={`${pendingClaimCount}건`}
             href="/coach/notifications"
-            className="mt-4 flex items-center gap-3 rounded-xl border-[1.5px] border-amber-300 bg-amber-50 px-3.5 py-3 transition active:scale-[0.99]"
-          >
-            <div className="flex-1 min-w-0">
-              <div className="text-xs font-bold text-amber-700">
-                새로운 학생 등록 요청이 {pendingClaimCount}건 있어요
-              </div>
-              <div className="mt-0.5 text-[11px] text-amber-700/80">
-                수강생이 회원님의 응답을 기다리고 있어요. 빠른 확인을 부탁드려요.
-              </div>
-            </div>
-            <span className="text-amber-700 text-base flex-none">›</span>
-          </Link>
-        )}
+            highlight={pendingClaimCount > 0}
+          />
+          <KpiCard label="이번 달 매출" placeholder />
+          <KpiCard label="잔여 회차 임박" placeholder />
+          <KpiCard label="이번 달 출석률" placeholder />
+        </div>
 
         {/* 주간 캘린더 + 선택 날짜 레슨 (인터랙티브) */}
         <CoachHomeCalendar testMode={testMode} />
