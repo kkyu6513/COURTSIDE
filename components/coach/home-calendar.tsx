@@ -651,8 +651,13 @@ function LessonCard({
 }) {
   const displayStatus = deriveDisplayStatus(lesson);
   const style = STATUS_STYLES[displayStatus] ?? FALLBACK_STYLE;
-  const sp = kstParts(parseIsoUtc(lesson.scheduledAt));
-  const timeText = `${sp.hh}:${sp.mm}`;
+
+  // 시작 ~ 종료 (KST) — "10:00 ~ 11:00"
+  const start = parseIsoUtc(lesson.scheduledAt);
+  const end = new Date(start.getTime() + lesson.durationMinutes * 60 * 1000);
+  const sp = kstParts(start);
+  const ep = kstParts(end);
+  const timeRangeText = `${sp.hh}:${sp.mm} ~ ${ep.hh}:${ep.mm}`;
 
   const oldTime = lesson.originalScheduledAt
     ? (() => {
@@ -663,14 +668,12 @@ function LessonCard({
 
   const formatLabel = lesson.lessonFormat === "GROUP" ? "그룹" : "1:1";
 
-  // 회차 + 메모 — 둘 다 가능하면 모두 표시 ("3/8회 · 자세 교정")
   const roundLabel =
     lesson.roundNumber != null && lesson.totalRounds != null
       ? `${lesson.roundNumber}/${lesson.totalRounds}회`
       : null;
   const notesLabel = lesson.notes && lesson.notes.trim() ? lesson.notes.trim() : null;
 
-  // 통합/분할 태그
   let durationTag: string | null = null;
   if (lesson.status === "MERGE") {
     durationTag = `${lesson.durationMinutes}분`;
@@ -678,27 +681,26 @@ function LessonCard({
     durationTag = `${lesson.durationMinutes}분 · ${lesson.splitIndex}/${lesson.splitTotal}`;
   }
 
-  // 결제 노트 — UNPAID(미결제)는 빨강 강조, EXTERNAL/PAID는 정보 표시
   let paymentNote: { text: string; tone: "danger" | "muted" | "ok" } | null = null;
   if (lesson.paymentStatus === "UNPAID") paymentNote = { text: "미결제", tone: "danger" };
   else if (lesson.paymentStatus === "EXTERNAL") paymentNote = { text: "외부결제", tone: "muted" };
   else if (lesson.paymentStatus === "PAID") paymentNote = { text: "결제완료", tone: "ok" };
 
+  // faded 카드는 텍스트만 살짝 흐리게 — 카드 자체는 클릭 가능 상태로 유지 (보기 차단 X)
+  const fadedTextClass = style.faded ? "text-ink-3" : "";
+
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`w-full rounded-xl border border-line bg-surface px-4 py-3 text-left transition active:scale-[0.99] ${style.faded ? "opacity-60" : ""}`}
+      className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-left transition active:scale-[0.99] hover:bg-soft/40"
     >
-      {/* 상태 — 좌측 정렬 */}
-      <div className={`text-xs font-semibold ${style.color}`}>{style.label}</div>
-
-      {/* 시간 + 수강생 정보 */}
-      <div className="mt-1 flex items-baseline gap-2">
+      {/* 1행 — 시간 + 수강생 (시간 상위 / 상태 하위로 재정렬) */}
+      <div className="flex items-baseline gap-2">
         <span
-          className={`flex-none text-sm font-bold text-ink ${style.strike ? "line-through" : ""}`}
+          className={`flex-none text-sm font-bold ${style.strike ? "line-through text-ink-3" : "text-ink"} ${fadedTextClass}`}
         >
-          {timeText}
+          {timeRangeText}
         </span>
         {oldTime && (
           <span className="flex-none text-[11px] text-ink-3 line-through">{oldTime}</span>
@@ -709,30 +711,31 @@ function LessonCard({
           </span>
         )}
         <span
-          className={`min-w-0 truncate text-xs text-ink-2 ${style.strike ? "line-through text-ink-3" : ""}`}
+          className={`min-w-0 truncate text-xs ${style.strike ? "line-through text-ink-3" : "text-ink-2"} ${fadedTextClass}`}
         >
           {studentName} · {formatLabel}
-          {roundLabel && <> · {roundLabel}</>}
-          {paymentNote && (
-            <>
-              {" · "}
-              <span
-                className={
-                  paymentNote.tone === "danger"
-                    ? "font-semibold text-red-500"
-                    : paymentNote.tone === "ok"
-                      ? "text-emerald-600"
-                      : "text-ink-3"
-                }
-              >
-                {paymentNote.text}
-              </span>
-            </>
-          )}
         </span>
       </div>
 
-      {/* 메모 — 별도 줄로 표시 (회차/결제 라인과 충돌 방지) */}
+      {/* 2행 — 상태 + 회차 + 결제 (서브 라인) */}
+      <div className="mt-1 flex items-center gap-2 flex-wrap">
+        <span className={`text-[11px] font-semibold ${style.color}`}>{style.label}</span>
+        {roundLabel && <span className="text-[11px] text-ink-3">· {roundLabel}</span>}
+        {paymentNote && (
+          <span
+            className={`text-[11px] ${
+              paymentNote.tone === "danger"
+                ? "font-semibold text-red-500"
+                : paymentNote.tone === "ok"
+                  ? "text-emerald-600"
+                  : "text-ink-3"
+            }`}
+          >
+            · {paymentNote.text}
+          </span>
+        )}
+      </div>
+
       {notesLabel && (
         <div
           className={`mt-1 truncate text-[11px] text-ink-3 ${style.strike ? "line-through" : ""}`}

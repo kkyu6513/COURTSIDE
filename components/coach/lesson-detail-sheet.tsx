@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { maskPhone } from "@/lib/masking";
 import { deriveDisplayStatus, getStatusLabel } from "@/lib/lesson-status";
@@ -72,13 +72,29 @@ export function LessonDetailSheet({
 }: Props) {
   const [notesDraft, setNotesDraft] = useState("");
 
+  // 닫기 확인용 — 최신 메모 변경 여부를 핸들러 안에서 확인하기 위한 ref
+  const notesDraftRef = useRef(notesDraft);
+  const originalNotesRef = useRef<string>(lesson?.notes ?? "");
   useEffect(() => {
-    if (lesson) setNotesDraft(lesson.notes ?? "");
+    notesDraftRef.current = notesDraft;
+  }, [notesDraft]);
+
+  useEffect(() => {
+    if (lesson) {
+      setNotesDraft(lesson.notes ?? "");
+      originalNotesRef.current = lesson.notes ?? "";
+    }
   }, [lesson]);
 
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      if (notesDraftRef.current.trim() !== originalNotesRef.current.trim()) {
+        if (!window.confirm("저장하지 않은 메모 변경이 있어요. 닫을까요?")) return;
+      }
+      onClose();
+    };
     document.addEventListener("keydown", onKey);
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -109,6 +125,15 @@ export function LessonDetailSheet({
   const anyPending = pendingCancel || !!pendingRestore || !!pendingComplete || !!pendingAbsent;
   const notesChanged = notesDraft.trim() !== (lesson.notes ?? "").trim();
 
+  // 메모 변경 미저장 상태에서 시트 닫기 시 확인
+  const requestClose = () => {
+    if (notesChanged) {
+      const ok = window.confirm("저장하지 않은 메모 변경이 있어요. 닫을까요?");
+      if (!ok) return;
+    }
+    onClose();
+  };
+
   return createPortal(
     <div
       role="dialog"
@@ -118,7 +143,7 @@ export function LessonDetailSheet({
       <div
         className="absolute inset-0"
         style={{ backgroundColor: "rgba(15, 23, 42, 0.4)" }}
-        onClick={onClose}
+        onClick={requestClose}
       />
       <div
         className="absolute left-0 right-0 bottom-0 bg-surface rounded-t-3xl px-5 pt-3 pb-6 shadow-2xl"
@@ -129,7 +154,7 @@ export function LessonDetailSheet({
           <div className="w-10 h-1 rounded-full bg-line mx-auto mb-4" />
           <button
             type="button"
-            onClick={onClose}
+            onClick={requestClose}
             aria-label="닫기"
             className="absolute -top-1 right-0 w-8 h-8 rounded-full text-ink-3 hover:bg-soft transition flex items-center justify-center"
           >
@@ -265,7 +290,7 @@ export function LessonDetailSheet({
 
           <button
             type="button"
-            onClick={onClose}
+            onClick={requestClose}
             className="w-full h-12 rounded-xl border border-line bg-surface text-sm font-semibold text-ink-2 hover:bg-soft transition"
           >
             닫기
