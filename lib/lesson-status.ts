@@ -58,6 +58,30 @@ export function getStatusLabel(s: string): StatusLabelStyle {
   return isLessonStatus(s) ? STATUS_LABEL[s] : FALLBACK_LABEL;
 }
 
+/**
+ * 1글자 한글 약어 — 좁은 셀에 색과 함께 노출해 색맹 대비 보강.
+ * 색만으로 구분하던 셀에 "예/완/결/보" 같은 시각 신호 추가용.
+ */
+export const STATUS_ABBR: Record<LessonStatus, string> = {
+  PENDING:              "신",
+  CONFIRMED:            "예",
+  IN_PROGRESS:          "진",
+  COMPLETED:            "완",
+  ABSENT:               "결",
+  CANCELLED:            "취",
+  RESCHEDULE_REQUESTED: "변",
+  RESCHEDULE_COMPLETED: "변",
+  MAKEUP_PENDING:       "보",
+  MAKEUP_CONFIRMED:     "보",
+  MAKEUP_REQUESTED:     "보",
+  MERGE:                "통",
+  SPLIT:                "분",
+};
+
+export function getStatusAbbr(s: string): string {
+  return isLessonStatus(s) ? STATUS_ABBR[s] : "·";
+}
+
 /** 캘린더 셀 배경/호버 (weekly-timetable 용) */
 export const STATUS_CELL_CLASS: Record<LessonStatus, string> = {
   PENDING:              "bg-amber-100 hover:bg-amber-200",

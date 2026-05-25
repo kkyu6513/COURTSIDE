@@ -16,7 +16,7 @@ import {
   restoreLesson,
   updateLessonNotes,
 } from "@/app/coach/schedule/actions";
-import { deriveDisplayStatus, getStatusCellClass } from "@/lib/lesson-status";
+import { deriveDisplayStatus, getStatusAbbr, getStatusCellClass } from "@/lib/lesson-status";
 
 export type LessonRow = {
   id: number;
@@ -870,7 +870,13 @@ function SlotRow({
             aria-label={`${slot.label} ${pastEmpty ? "지난 날짜 빈 시간" : count > 0 ? `레슨 ${count}개${full ? " (가득 참)" : ""}` : "빈 시간"} 옵션`}
           >
             {isHourMode && count >= 1 && (
-              <span className="absolute inset-0 flex items-center justify-center">
+              <span className="absolute inset-0 flex items-center justify-center gap-0.5">
+                {/* 단일 레슨일 때는 status 약어 표시 — 색 의존도 보완 (색맹 대비) */}
+                {count === 1 && !full && (
+                  <span className="text-[9px] font-extrabold text-ink leading-none">
+                    {getStatusAbbr(deriveDisplayStatus(first.status, first.scheduledAt, first.durationMinutes))}
+                  </span>
+                )}
                 <span className={`inline-flex items-center justify-center min-w-[18px] h-[18px] px-1.5 rounded-full text-white text-[9px] font-bold leading-none tracking-tight ${full ? "bg-red-500" : "bg-ink"}`}>
                   {full ? "FULL" : count}
                 </span>
