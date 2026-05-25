@@ -379,17 +379,21 @@ export function WeeklyTimetable({
     const f = formatKstDate(date);
     const arr = lessonByCell.get(`${f.y}-${f.m}-${f.day}-${hour}-${minute}`) ?? [];
 
-    // 과거 날짜의 빈 셀은 등록 불가
-    const nowKst = new Date(Date.now() + 9 * 60 * 60 * 1000);
-    const todayKey = nowKst.getUTCFullYear() * 10000 + nowKst.getUTCMonth() * 100 + nowKst.getUTCDate();
-    const cellKey = date.getUTCFullYear() * 10000 + date.getUTCMonth() * 100 + date.getUTCDate();
-    const isPast = cellKey < todayKey;
+    // 빈 셀 클릭 — 과거 시각(같은 날 포함)이면 등록 불가 (#3)
+    const cellUtcMs = Date.UTC(
+      date.getUTCFullYear(),
+      date.getUTCMonth(),
+      date.getUTCDate(),
+      hour - 9, // KST → UTC
+      minute,
+    );
+    const isPast = cellUtcMs < Date.now() - 5 * 60 * 1000; // 서버와 동일 5분 유예
 
     if (arr.length === 0) {
       if (isPast) {
         showError(
-          "과거 날짜에는 잡을 수 없어요",
-          "오늘 이전 날짜에는 새 레슨을 잡을 수 없습니다. 오늘 또는 이후 날짜를 선택해주세요.",
+          "이미 지난 시각에는 잡을 수 없어요",
+          "지나간 시간대에는 새 레슨을 잡을 수 없습니다. 현재 이후 시각을 선택해 주세요.",
         );
         return;
       }

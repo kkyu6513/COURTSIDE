@@ -28,13 +28,11 @@ export async function bookLesson(
   const date = new Date(scheduledAt);
   if (Number.isNaN(date.getTime())) return { ok: false, error: "시간이 올바르지 않습니다" };
 
-  // 과거 날짜 거부 (오늘 KST 00:00 이전이면 거부)
-  const nowKst = new Date(Date.now() + 9 * 60 * 60 * 1000);
-  const targetKst = new Date(date.getTime() + 9 * 60 * 60 * 1000);
-  const todayKey = nowKst.getUTCFullYear() * 10000 + nowKst.getUTCMonth() * 100 + nowKst.getUTCDate();
-  const targetKey = targetKst.getUTCFullYear() * 10000 + targetKst.getUTCMonth() * 100 + targetKst.getUTCDate();
-  if (targetKey < todayKey) {
-    return { ok: false, error: "오늘 이전 날짜에는 레슨을 잡을 수 없어요" };
+  // 과거 시각 거부 (#4) — 자정 단위가 아니라 정확한 시각 비교.
+  // 다만 클라이언트 시간 오차/네트워크 지연을 감안해 5분 유예 허용.
+  const PAST_GRACE_MS = 5 * 60 * 1000;
+  if (date.getTime() < Date.now() - PAST_GRACE_MS) {
+    return { ok: false, error: "이미 지난 시각에는 레슨을 잡을 수 없어요" };
   }
 
   const dur = Number.isInteger(durationMinutes) ? durationMinutes : 60;
@@ -58,8 +56,11 @@ export async function bookLesson(
   // 시간 겹침 체크 — 새 lesson의 [start, end] 구간이 기존 active lesson과 겹치면 거부
   const newStart = date.getTime();
   const newEnd = newStart + dur * 60 * 1000;
-  const windowStart = new Date(newStart - 24 * 60 * 60 * 1000).toISOString();
-  const windowEnd = new Date(newEnd + 24 * 60 * 60 * 1000).toISOString();
+  // 충돌 검색 윈도우 (#5) — 최대 레슨 길이(240분=4h) + 안전 마진을 고려.
+  // ±24h 고정이면 240분 레슨이 양 끝에 있을 때 사이 시간 충돌 검출 실패 가능.
+  const SAFETY_WINDOW_MS = (4 + 24) * 60 * 60 * 1000; // ±28h
+  const windowStart = new Date(newStart - SAFETY_WINDOW_MS).toISOString();
+  const windowEnd = new Date(newEnd + SAFETY_WINDOW_MS).toISOString();
 
   // 충돌 검증 — 슬롯 점유 해제 상태(CANCELLED/COMPLETED/ABSENT)는 제외.
   // 같은 시간에 보강·재등록이 가능해야 하므로 끝난 회차는 점유로 보지 않음.
@@ -246,8 +247,10 @@ export async function restoreLesson(lessonId: number): Promise<SimpleResult> {
   // 동일 시간 충돌 검증 (다른 active 레슨이 그 자리를 차지했는지)
   const start = new Date(lesson.scheduledAt).getTime();
   const end = start + lesson.durationMinutes * 60 * 1000;
-  const windowStart = new Date(start - 24 * 60 * 60 * 1000).toISOString();
-  const windowEnd = new Date(end + 24 * 60 * 60 * 1000).toISOString();
+  // 충돌 검색 윈도우 (#5) — 최대 레슨 길이(240분) + 안전 마진
+  const SAFETY_WINDOW_MS = (4 + 24) * 60 * 60 * 1000; // ±28h
+  const windowStart = new Date(start - SAFETY_WINDOW_MS).toISOString();
+  const windowEnd = new Date(end + SAFETY_WINDOW_MS).toISOString();
   const { data: nearby } = await admin
     .from("lessons")
     .select("id, scheduledAt, durationMinutes")
