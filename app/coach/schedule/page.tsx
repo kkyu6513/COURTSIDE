@@ -33,11 +33,17 @@ export default async function CoachSchedulePage({
     .maybeSingle();
   if (!profile) redirect("/onboarding/coach");
 
-  // 코치 본인의 lessons
+  // 코치 본인의 lessons — 가시 범위(-8주 ~ +12주) 한정.
+  // 누적 1년+ 데이터를 매번 전송하지 않기 위함. 그 밖 데이터는 클라이언트 fetch
+  // /api/coach/lessons 에서 별도 정책으로 가져오거나, 다른 주로 점프 시 재요청.
+  const windowStart = new Date(Date.now() - 8 * 7 * 24 * 60 * 60 * 1000).toISOString();
+  const windowEnd = new Date(Date.now() + 12 * 7 * 24 * 60 * 60 * 1000).toISOString();
   const { data: lessonsRaw } = await admin
     .from("lessons")
     .select("id, studentId, scheduledAt, durationMinutes, status")
-    .eq("coachId", user.id);
+    .eq("coachId", user.id)
+    .gte("scheduledAt", windowStart)
+    .lte("scheduledAt", windowEnd);
   const lessons = (lessonsRaw ?? []) as LessonRow[];
 
   // 코치 본인의 수강생 = matchedCoachUserId 본인 + status=CONFIRMED인 claim의 학생

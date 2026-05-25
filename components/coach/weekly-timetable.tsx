@@ -450,7 +450,7 @@ export function WeeklyTimetable({
         open: true,
         variant: "success",
         title: "레슨이 취소되었어요",
-        description: "수강생에게 안내가 전달돼요. (알림톡은 곧 적용 예정)",
+        description: "수강생 알림 발송은 다음 업데이트에 추가될 예정이에요.",
       });
       reload();
     });
@@ -610,8 +610,8 @@ export function WeeklyTimetable({
             <button
               type="button"
               onClick={goPrevWeek}
-              className="w-8 h-8 rounded-lg border border-line bg-surface text-sm text-ink-2 hover:bg-soft transition"
-              aria-label="이전주"
+              className="w-10 h-10 rounded-lg border border-line bg-surface text-base text-ink-2 hover:bg-soft transition active:scale-[0.96]"
+              aria-label="이전 주"
             >
               ‹
             </button>
@@ -619,8 +619,8 @@ export function WeeklyTimetable({
             <button
               type="button"
               onClick={goNextWeek}
-              className="w-8 h-8 rounded-lg border border-line bg-surface text-sm text-ink-2 hover:bg-soft transition"
-              aria-label="다음주"
+              className="w-10 h-10 rounded-lg border border-line bg-surface text-base text-ink-2 hover:bg-soft transition active:scale-[0.96]"
+              aria-label="다음 주"
             >
               ›
             </button>
