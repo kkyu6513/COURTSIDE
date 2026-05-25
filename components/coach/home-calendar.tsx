@@ -423,8 +423,7 @@ export function CoachHomeCalendar({ testMode = false }: { testMode?: boolean }) 
       setAlert({
         open: true,
         variant: "success",
-        title: "레슨이 등록되었어요",
-        description: `${selectedLabel} ${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}에 레슨이 잡혔습니다.`,
+        title: `${selectedLabel} ${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")} 레슨 등록 완료`,
       });
       reload();
     });
@@ -533,8 +532,12 @@ export function CoachHomeCalendar({ testMode = false }: { testMode?: boolean }) 
         </div>
 
         {isLoading ? (
-          <div className="rounded-2xl border border-line bg-surface p-8 text-center">
-            <span className="text-sm text-ink-3">불러오는 중…</span>
+          <div className="rounded-2xl border border-line bg-surface p-8 flex items-center justify-center gap-2.5">
+            <svg className="animate-spin h-4 w-4 text-primary flex-none" viewBox="0 0 24 24" fill="none" aria-hidden>
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z" />
+            </svg>
+            <span className="text-sm text-ink-3">레슨 정보를 불러오고 있어요…</span>
           </div>
         ) : selectedLessons.length === 0 ? (
           <div className="rounded-2xl border border-line bg-surface p-8 text-center">
