@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { maskPhone } from "@/lib/masking";
 import { deriveDisplayStatus, getStatusLabel } from "@/lib/lesson-status";
+import { KST_OFFSET_MS, parseIsoUtc } from "@/lib/kst";
 
 export type LessonDetail = {
   id: number;
@@ -37,13 +38,8 @@ type Props = {
 
 const DOW_KOR = ["일", "월", "화", "수", "목", "금", "토"];
 
-function parseIsoUtc(s: string): Date {
-  const hasTz = /Z$|[+-]\d{2}:?\d{2}$/.test(s);
-  return new Date(hasTz ? s : s + "Z");
-}
-
 function formatKstTimeRange(iso: string, durationMinutes: number) {
-  const start = new Date(parseIsoUtc(iso).getTime() + 9 * 60 * 60 * 1000);
+  const start = new Date(parseIsoUtc(iso).getTime() + KST_OFFSET_MS);
   const end = new Date(start.getTime() + durationMinutes * 60 * 1000);
   const m = start.getUTCMonth() + 1;
   const day = start.getUTCDate();

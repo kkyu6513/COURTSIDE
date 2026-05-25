@@ -19,6 +19,7 @@ import {
   updateLessonNotes,
 } from "@/app/coach/schedule/actions";
 import { deriveDisplayStatus, getStatusAbbr, getStatusCellClass } from "@/lib/lesson-status";
+import { KST_OFFSET_MS, parseIsoUtc } from "@/lib/kst";
 
 export type LessonRow = {
   id: number;
@@ -92,7 +93,7 @@ function sameStudentList(a: StudentOption[], b: StudentOption[]): boolean {
 }
 
 function startOfWeekMon(d: Date): Date {
-  const kst = new Date(d.getTime() + 9 * 60 * 60 * 1000);
+  const kst = new Date(d.getTime() + KST_OFFSET_MS);
   const dow = kst.getUTCDay();
   const offsetToMon = (dow + 6) % 7;
   const mon = new Date(kst);
@@ -116,16 +117,10 @@ function formatKstDate(d: Date) {
   };
 }
 
-/** Supabase가 timezone 없는 timestamp("...T23:00:00") 반환 가능 — UTC로 강제 해석 */
-function parseIsoUtc(s: string): Date {
-  const hasTz = /Z$|[+-]\d{2}:?\d{2}$/.test(s);
-  return new Date(hasTz ? s : s + "Z");
-}
-
 /** lesson.scheduledAt → KST 기준 (year, month, day, hour) 키 생성 */
 function lessonCellKey(iso: string): string {
   const d = parseIsoUtc(iso);
-  const kst = new Date(d.getTime() + 9 * 60 * 60 * 1000);
+  const kst = new Date(d.getTime() + KST_OFFSET_MS);
   return `${kst.getUTCFullYear()}-${kst.getUTCMonth() + 1}-${kst.getUTCDate()}-${kst.getUTCHours()}`;
 }
 
@@ -144,7 +139,7 @@ function isHourFull(lessons: LessonRow[], hour: number): boolean {
   const intervals: Array<[number, number]> = [];
   for (const l of lessons) {
     if (l.status === "CANCELLED") continue;
-    const startKst = new Date(parseIsoUtc(l.scheduledAt).getTime() + 9 * 60 * 60 * 1000);
+    const startKst = new Date(parseIsoUtc(l.scheduledAt).getTime() + KST_OFFSET_MS);
     const lessonStart = startKst.getUTCHours() * 60 + startKst.getUTCMinutes();
     const lessonEnd = lessonStart + l.durationMinutes;
     const oStart = Math.max(lessonStart, hourStartMin);
@@ -236,7 +231,7 @@ export function WeeklyTimetable({
       didAutoJumpRef.current = true;
       return; // 미래 lesson 없으면 이번 주 default 유지
     }
-    const wStartMs = weekStart.getTime() - 9 * 60 * 60 * 1000;
+    const wStartMs = weekStart.getTime() - KST_OFFSET_MS;
     const wEndMs = wStartMs + 7 * 24 * 60 * 60 * 1000;
     const inCurWeek = futureLessons.some((l) => {
       const ts = parseIsoUtc(l.scheduledAt).getTime();
@@ -328,7 +323,7 @@ export function WeeklyTimetable({
         isPast: false,
       });
     }
-    const nowKst = new Date(new Date().getTime() + 9 * 60 * 60 * 1000);
+    const nowKst = new Date(new Date().getTime() + KST_OFFSET_MS);
     const todayKey = nowKst.getUTCFullYear() * 10000 + nowKst.getUTCMonth() * 100 + nowKst.getUTCDate();
     days.forEach((wd) => {
       const wdKey = wd.date.getUTCFullYear() * 10000 + wd.date.getUTCMonth() * 100 + wd.date.getUTCDate();
@@ -340,7 +335,7 @@ export function WeeklyTimetable({
 
   // 가시 주 범위 — KST 기준 weekStart(월 00:00) ~ +7일.
   // weekStart 는 이미 KST 자정으로 정규화돼 있어 그대로 비교(ms 단위 +9h 보정 후).
-  const visibleStartMs = weekStart.getTime() - 9 * 60 * 60 * 1000;
+  const visibleStartMs = weekStart.getTime() - KST_OFFSET_MS;
   const visibleEndMs = visibleStartMs + 7 * 24 * 60 * 60 * 1000;
 
   const lessonByCell = useMemo(() => {
@@ -353,8 +348,8 @@ export function WeeklyTimetable({
       // 가시 주 밖 레슨은 셀 매핑 스킵 — 큰 코치(수백 lesson) 시 매 주 이동마다 무거워지는 것 방지.
       // 가시 주에 걸치는 케이스(자정 가로지름 등)도 포함하기 위해 start<end_window && end>start_window 로 판정.
       if (end.getTime() <= visibleStartMs || start.getTime() >= visibleEndMs) continue;
-      const startKst = new Date(start.getTime() + 9 * 60 * 60 * 1000);
-      const endKst = new Date(end.getTime() + 9 * 60 * 60 * 1000);
+      const startKst = new Date(start.getTime() + KST_OFFSET_MS);
+      const endKst = new Date(end.getTime() + KST_OFFSET_MS);
       // 시작 슬롯(step 단위로 내림)부터 종료 시각 직전까지 매핑
       const cursor = new Date(startKst);
       const curMin = cursor.getUTCMinutes();
@@ -393,8 +388,8 @@ export function WeeklyTimetable({
   const weekRangeLabel = `${weekStartLabel.m}/${weekStartLabel.day} ~ ${weekEndLabel.m}/${weekEndLabel.day}`;
 
   // 이번 주 lessons 카운트 (전체 카운트는 lessons.length)
-  const weekStartMs = weekStart.getTime() - 9 * 60 * 60 * 1000; // KST → UTC
-  const weekEndMs = addDays(weekStart, 7).getTime() - 9 * 60 * 60 * 1000;
+  const weekStartMs = weekStart.getTime() - KST_OFFSET_MS; // KST → UTC
+  const weekEndMs = addDays(weekStart, 7).getTime() - KST_OFFSET_MS;
   const thisWeekCount = lessons.filter((l) => {
     const ts = parseIsoUtc(l.scheduledAt).getTime();
     return ts >= weekStartMs && ts < weekEndMs;
@@ -450,7 +445,7 @@ export function WeeklyTimetable({
 
     if (arr.length === 0) {
       if (isPast) {
-        const nowKst = new Date(Date.now() + 9 * 60 * 60 * 1000);
+        const nowKst = new Date(Date.now() + KST_OFFSET_MS);
         const nowHh = String(nowKst.getUTCHours()).padStart(2, "0");
         const nowMm = String(nowKst.getUTCMinutes()).padStart(2, "0");
         const cellHh = String(hour).padStart(2, "0");
@@ -976,7 +971,7 @@ function SlotRow({
         // 10분 모드: 이 슬롯에서 시작하는 lesson만 학생 이름 표시
         const startingLesson = !isHourMode
           ? arr.find((l) => {
-              const startKst = new Date(parseIsoUtc(l.scheduledAt).getTime() + 9 * 60 * 60 * 1000);
+              const startKst = new Date(parseIsoUtc(l.scheduledAt).getTime() + KST_OFFSET_MS);
               return startKst.getUTCHours() === slot.hour && startKst.getUTCMinutes() === slot.minute;
             })
           : undefined;
@@ -999,7 +994,7 @@ function SlotRow({
                   ? arr
                       .map((l) => {
                         const s = studentMap.get(l.studentId)?.name ?? "이름 미입력";
-                        const startKst = new Date(parseIsoUtc(l.scheduledAt).getTime() + 9 * 60 * 60 * 1000);
+                        const startKst = new Date(parseIsoUtc(l.scheduledAt).getTime() + KST_OFFSET_MS);
                         const hh = String(startKst.getUTCHours()).padStart(2, "0");
                         const mm = String(startKst.getUTCMinutes()).padStart(2, "0");
                         return `${hh}:${mm} ${s}`;

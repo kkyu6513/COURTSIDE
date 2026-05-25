@@ -4,14 +4,10 @@ import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import type { LessonDetail } from "@/components/coach/lesson-detail-sheet";
 import { deriveDisplayStatus, getStatusLabel } from "@/lib/lesson-status";
-
-function parseIsoUtc(s: string): Date {
-  const hasTz = /Z$|[+-]\d{2}:?\d{2}$/.test(s);
-  return new Date(hasTz ? s : s + "Z");
-}
+import { KST_OFFSET_MS, parseIsoUtc } from "@/lib/kst";
 
 function formatKstHm(iso: string): string {
-  const kst = new Date(parseIsoUtc(iso).getTime() + 9 * 60 * 60 * 1000);
+  const kst = new Date(parseIsoUtc(iso).getTime() + KST_OFFSET_MS);
   const hh = String(kst.getUTCHours()).padStart(2, "0");
   const mm = String(kst.getUTCMinutes()).padStart(2, "0");
   return `${hh}:${mm}`;
@@ -116,7 +112,7 @@ export function LessonListSheet({ open, onClose, hourLabel, lessons, onPickLesso
             onClick={onBookNew}
             className="w-full h-12 rounded-xl bg-primary text-white text-sm font-semibold hover:opacity-90 transition active:scale-[0.99]"
           >
-            이 시간대에 레슨 추가로 잡기
+            + 같은 시간대에 다른 레슨 잡기
           </button>
           <button
             type="button"

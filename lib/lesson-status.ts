@@ -41,7 +41,7 @@ export const STATUS_LABEL: Record<LessonStatus, StatusLabelStyle> = {
   IN_PROGRESS:          { text: "진행중",    bg: "bg-red-50",     fg: "text-red-500"    },
   COMPLETED:            { text: "완료",      bg: "bg-blue-50",    fg: "text-blue-600"   },
   ABSENT:               { text: "결강",      bg: "bg-gray-100",   fg: "text-gray-500"   },
-  CANCELLED:            { text: "취소됨",    bg: "bg-soft",       fg: "text-ink-3"      },
+  CANCELLED:            { text: "취소됨",    bg: "bg-gray-100",   fg: "text-gray-600"   },
   RESCHEDULE_REQUESTED: { text: "변경 요청", bg: "bg-orange-50",  fg: "text-orange-600" },
   RESCHEDULE_COMPLETED: { text: "변경완료",  bg: "bg-blue-50",    fg: "text-blue-600"   },
   MAKEUP_PENDING:       { text: "보강 선택중", bg: "bg-emerald-50", fg: "text-emerald-600" },
