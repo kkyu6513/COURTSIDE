@@ -7,7 +7,7 @@ import { EmptySlotSheet } from "@/components/coach/empty-slot-sheet";
 import { StudentPickerSheet, type StudentOption } from "@/components/coach/student-picker-sheet";
 import { LessonDetailSheet, type LessonDetail } from "@/components/coach/lesson-detail-sheet";
 import { LessonListSheet } from "@/components/coach/lesson-list-sheet";
-import { bookLesson, cancelLesson, updateLessonNotes } from "@/app/coach/schedule/actions";
+import { bookLesson, cancelLesson, restoreLesson, updateLessonNotes } from "@/app/coach/schedule/actions";
 import { deriveDisplayStatus, getStatusCellClass } from "@/lib/lesson-status";
 
 export type LessonRow = {
@@ -235,6 +235,7 @@ export function WeeklyTimetable({
   const [pendingStudentId, setPendingStudentId] = useState<string | null>(null);
   const [pendingCancel, setPendingCancel] = useState(false);
   const [pendingNotes, setPendingNotes] = useState(false);
+  const [pendingRestore, setPendingRestore] = useState(false);
   const [, startTransition] = useTransition();
   const [alert, setAlert] = useState<{ open: boolean; variant: "error" | "success"; title: string; description?: string }>({
     open: false,
@@ -455,6 +456,32 @@ export function WeeklyTimetable({
     });
   };
 
+  const onRestoreLesson = () => {
+    if (!lessonDetail) return;
+    const lessonId = lessonDetail.lesson.id;
+    setPendingRestore(true);
+    startTransition(async () => {
+      const res = await restoreLesson(lessonId);
+      setPendingRestore(false);
+      if (!res.ok) {
+        setAlert({
+          open: true,
+          variant: "error",
+          title: "레슨 복구 실패",
+          description: res.error,
+        });
+        return;
+      }
+      setLessonDetail(null);
+      setAlert({
+        open: true,
+        variant: "success",
+        title: "레슨이 복구되었어요",
+      });
+      reload();
+    });
+  };
+
   const closeSheet = () => setSheet((s) => (s ? { ...s, open: false } : null));
 
   const onBookLessonAction = () => {
@@ -515,15 +542,27 @@ export function WeeklyTimetable({
           <span className="text-xs font-semibold text-ink-2">수강 정보를 불러오고 있어요…</span>
         </div>
       ) : loadError ? (
-        <div className="px-4 py-3 border-b border-line bg-red-50 flex items-center justify-between gap-2">
-          <span className="text-xs text-red-600 font-medium truncate">{loadError}</span>
-          <button
-            type="button"
-            onClick={reload}
-            className="flex-none rounded-md border border-red-200 bg-white text-[11px] font-semibold text-red-600 px-2.5 py-1 hover:bg-red-50"
-          >
-            다시 시도
-          </button>
+        <div className="px-4 py-3 border-b border-line bg-red-50">
+          <div className="flex items-start gap-2">
+            <svg className="w-4 h-4 text-red-500 flex-none mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+            <div className="flex-1 min-w-0">
+              <div className="text-xs font-bold text-red-700">일정을 불러올 수 없어요</div>
+              <div className="mt-0.5 text-[11px] text-red-600/90 leading-relaxed truncate">
+                {loadError} · 표시된 일정은 최신이 아닐 수 있어요
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={reload}
+              className="flex-none rounded-md border border-red-200 bg-white text-[11px] font-semibold text-red-600 px-2.5 py-1 hover:bg-red-50"
+            >
+              다시 시도
+            </button>
+          </div>
         </div>
       ) : (
         <div className="px-4 py-2 border-b border-line bg-emerald-50/60 flex items-center justify-between gap-2">
@@ -674,8 +713,10 @@ export function WeeklyTimetable({
           lesson={lessonDetail.lesson}
           pendingCancel={pendingCancel}
           pendingNotes={pendingNotes}
+          pendingRestore={pendingRestore}
           onCancel={onCancelLesson}
           onSaveNotes={onSaveLessonNotes}
+          onRestore={onRestoreLesson}
         />
       )}
 

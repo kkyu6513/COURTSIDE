@@ -22,8 +22,10 @@ type Props = {
   lesson: LessonDetail | null;
   pendingCancel: boolean;
   pendingNotes: boolean;
+  pendingRestore?: boolean;
   onCancel: () => void;
   onSaveNotes: (notes: string) => void;
+  onRestore?: () => void; // CANCELLED 레슨 복구
 };
 
 const DOW_KOR = ["일", "월", "화", "수", "목", "금", "토"];
@@ -49,7 +51,7 @@ function formatKstTimeRange(iso: string, durationMinutes: number) {
   };
 }
 
-export function LessonDetailSheet({ open, onClose, lesson, pendingCancel, pendingNotes, onCancel, onSaveNotes }: Props) {
+export function LessonDetailSheet({ open, onClose, lesson, pendingCancel, pendingNotes, pendingRestore, onCancel, onSaveNotes, onRestore }: Props) {
   const [notesDraft, setNotesDraft] = useState("");
 
   useEffect(() => {
@@ -80,6 +82,7 @@ export function LessonDetailSheet({ open, onClose, lesson, pendingCancel, pendin
   // 지난 레슨 (시작 시각이 현재보다 이전) — 취소 비표시
   const isPast = parseIsoUtc(lesson.scheduledAt).getTime() < Date.now();
   const canCancel = !isCancelled && !isPast;
+  const canRestore = isCancelled && !isPast && !!onRestore;
   const notesChanged = notesDraft.trim() !== (lesson.notes ?? "").trim();
 
   return createPortal(
@@ -178,6 +181,23 @@ export function LessonDetailSheet({ open, onClose, lesson, pendingCancel, pendin
                 </svg>
               )}
               {pendingCancel ? "취소 중…" : "레슨 취소"}
+            </button>
+          )}
+
+          {canRestore && (
+            <button
+              type="button"
+              onClick={onRestore}
+              disabled={!!pendingRestore}
+              className="w-full h-12 rounded-xl bg-emerald-50 text-emerald-600 text-sm font-semibold hover:bg-emerald-100 transition active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
+            >
+              {pendingRestore && (
+                <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z" />
+                </svg>
+              )}
+              {pendingRestore ? "복구 중…" : "취소된 레슨 복구"}
             </button>
           )}
 
