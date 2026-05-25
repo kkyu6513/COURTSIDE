@@ -1,15 +1,14 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { maskPhone } from "@/lib/masking";
 
 export const dynamic = "force-dynamic";
-export const revalidate = 0;
-export const fetchCache = "force-no-store";
 
 /**
  * GET /api/lessons/[id]
- * 본인 코치 또는 본인 학생만 조회 가능.
- * 코치/학생 양쪽 디테일 화면이 공유하는 단일 조회 엔드포인트.
+ * 본인 코치 또는 본인 학생만 조회 가능. 코치/학생 양쪽 디테일 화면 공용.
+ * counterpart.phone 은 항상 마스킹 (UI 미사용, 보안상 미노출).
  */
 export async function GET(_req: Request, { params }: { params: { id: string } }) {
   const supabase = createClient();
@@ -19,7 +18,7 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const lessonId = Number(params.id);
-  if (!Number.isFinite(lessonId)) {
+  if (!Number.isInteger(lessonId) || lessonId <= 0) {
     return NextResponse.json({ error: "잘못된 레슨 ID" }, { status: 400 });
   }
 
@@ -27,7 +26,7 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
   const { data: lesson, error } = await admin
     .from("lessons")
     .select(
-      "id, coachId, studentId, scheduledAt, durationMinutes, status, paymentStatus, lessonFormat, roundNumber, totalRounds, originalScheduledAt, originalLessonId, parentLessonId, splitIndex, splitTotal, notes, createdAt, updatedAt",
+      "id, coachId, studentId, scheduledAt, durationMinutes, status, paymentStatus, lessonFormat, roundNumber, totalRounds, originalScheduledAt, splitIndex, splitTotal, notes",
     )
     .eq("id", lessonId)
     .maybeSingle();
@@ -42,42 +41,27 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
   }
 
   const counterpartId = isOwnerCoach ? lesson.studentId : lesson.coachId;
-  const { data: counterpart } = await admin
-    .from("users")
-    .select("id, realName, name, phone")
-    .eq("id", counterpartId)
-    .maybeSingle();
 
-  // 학생 프로필 (코치 시점) — NTRP/연령/성별
-  let studentProfile:
-    | { gender: string | null; ageGroup: string | null; ntrpLevel: string | null }
-    | null = null;
-  if (isOwnerCoach) {
-    const { data: sp } = await admin
-      .from("student_profiles")
-      .select("gender, ageGroup, ntrpLevel")
-      .eq("userId", lesson.studentId)
-      .maybeSingle();
-    if (sp) studentProfile = sp;
-  }
+  // 3개 query 병렬화
+  const [counterpartRes, studentProfileRes, coachProfileRes] = await Promise.all([
+    admin.from("users").select("id, realName, name, phone").eq("id", counterpartId).maybeSingle(),
+    isOwnerCoach
+      ? admin
+          .from("student_profiles")
+          .select("gender, ageGroup, ntrpLevel")
+          .eq("userId", lesson.studentId)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+    isOwnerStudent
+      ? admin
+          .from("coach_profiles")
+          .select("areaSido, areaSigungu, ntrpMin, ntrpMax")
+          .eq("userId", lesson.coachId)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+  ]);
 
-  // 코치 프로필 (학생 시점) — 지역 + NTRP 범위
-  let coachProfile:
-    | {
-        areaSido: string | null;
-        areaSigungu: string | null;
-        ntrpMin: number | null;
-        ntrpMax: number | null;
-      }
-    | null = null;
-  if (isOwnerStudent) {
-    const { data: cp } = await admin
-      .from("coach_profiles")
-      .select("areaSido, areaSigungu, ntrpMin, ntrpMax")
-      .eq("userId", lesson.coachId)
-      .maybeSingle();
-    if (cp) coachProfile = cp;
-  }
+  const counterpart = counterpartRes.data;
 
   return NextResponse.json({
     lesson,
@@ -86,10 +70,10 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
       ? {
           id: counterpart.id,
           name: counterpart.realName || counterpart.name || "이름 미입력",
-          phone: counterpart.phone,
+          phone: maskPhone(counterpart.phone),
         }
       : null,
-    studentProfile,
-    coachProfile,
+    studentProfile: studentProfileRes.data ?? null,
+    coachProfile: coachProfileRes.data ?? null,
   });
 }

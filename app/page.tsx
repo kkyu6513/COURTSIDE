@@ -210,7 +210,7 @@ function StudentHome({
         </div>
 
         <div className="mt-6">
-          <h2 className="text-sm font-bold text-ink mb-2">이번 주 레슨</h2>
+          <h2 className="text-sm font-bold text-ink mb-2">다가오는 레슨</h2>
           <StudentHomeLessons />
         </div>
 

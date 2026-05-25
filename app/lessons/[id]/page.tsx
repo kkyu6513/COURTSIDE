@@ -1,21 +1,17 @@
 import { notFound, redirect } from "next/navigation";
-import { unstable_noStore as noStore } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { LessonDetailScreen, type LessonDetailData } from "@/components/lesson/lesson-detail-screen";
 
 export const dynamic = "force-dynamic";
-export const revalidate = 0;
-export const fetchCache = "force-no-store";
 
 export default async function StudentLessonDetailPage({
   params,
 }: {
   params: { id: string };
 }) {
-  noStore();
   const lessonId = Number(params.id);
-  if (!Number.isFinite(lessonId)) notFound();
+  if (!Number.isInteger(lessonId) || lessonId <= 0) notFound();
 
   const supabase = createClient();
   const {
@@ -31,32 +27,30 @@ export default async function StudentLessonDetailPage({
   const { data: lesson } = await admin
     .from("lessons")
     .select(
-      "id, coachId, studentId, scheduledAt, durationMinutes, status, paymentStatus, lessonFormat, roundNumber, totalRounds, originalScheduledAt, originalLessonId, parentLessonId, splitIndex, splitTotal, notes, createdAt, updatedAt",
+      "id, coachId, studentId, scheduledAt, durationMinutes, status, paymentStatus, lessonFormat, roundNumber, totalRounds, originalScheduledAt, splitIndex, splitTotal, notes",
     )
     .eq("id", lessonId)
     .maybeSingle();
 
   if (!lesson) notFound();
 
-  // 권한 — 본인 코치(코치 모드) OR 본인 학생만 진입 가능
   const isOwnerCoach = role === "COACH" && lesson.coachId === user.id;
   const isOwnerStudent = role === "STUDENT" && lesson.studentId === user.id;
-  if (!isOwnerCoach && !isOwnerStudent) redirect("/");
+  if (!isOwnerCoach && !isOwnerStudent) notFound();
 
-  // 코치가 잘못 진입한 경우 — 코치용 라우트로 리다이렉트
+  // 코치는 전용 라우트로 (알림톡 딥링크가 /lessons/[id] 로만 와도 코치 페이지로 가도록)
   if (isOwnerCoach) redirect(`/coach/lessons/${lessonId}`);
 
-  const { data: coach } = await admin
-    .from("users")
-    .select("id, realName, name, phone")
-    .eq("id", lesson.coachId)
-    .maybeSingle();
-
-  const { data: coachProfile } = await admin
-    .from("coach_profiles")
-    .select("areaSido, areaSigungu, ntrpMin, ntrpMax")
-    .eq("userId", lesson.coachId)
-    .maybeSingle();
+  const [coachRes, coachProfileRes] = await Promise.all([
+    admin.from("users").select("id, realName, name, phone").eq("id", lesson.coachId).maybeSingle(),
+    admin
+      .from("coach_profiles")
+      .select("areaSido, areaSigungu, ntrpMin, ntrpMax")
+      .eq("userId", lesson.coachId)
+      .maybeSingle(),
+  ]);
+  const coach = coachRes.data;
+  const coachProfile = coachProfileRes.data;
 
   const data: LessonDetailData = {
     lesson,
@@ -65,7 +59,7 @@ export default async function StudentLessonDetailPage({
       ? {
           id: coach.id,
           name: coach.realName || coach.name || "이름 미입력",
-          phone: coach.phone,
+          phone: null, // 학생 시점 — 코치 번호는 UI 노출 안 함
         }
       : null,
     studentProfile: null,

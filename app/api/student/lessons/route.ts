@@ -3,12 +3,11 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
-export const revalidate = 0;
-export const fetchCache = "force-no-store";
 
 /**
  * GET /api/student/lessons
- * 본인 학생의 이번 주 ~ 다음 14일 레슨 + 각 레슨의 코치 이름 반환.
+ * 본인 학생의 다가오는 21일(이번 주 시작 ~ +3주) 레슨 + 코치 이름.
+ * CANCELLED 제외.
  */
 export async function GET() {
   const supabase = createClient();
@@ -24,7 +23,6 @@ export async function GET() {
 
   const admin = createAdminClient();
 
-  // 이번 주 시작 (월요일, KST 00:00) ~ +21일까지
   const nowKst = new Date(Date.now() + 9 * 60 * 60 * 1000);
   const dow = nowKst.getUTCDay();
   const offsetToMon = (dow + 6) % 7;
@@ -40,6 +38,7 @@ export async function GET() {
       "id, coachId, scheduledAt, durationMinutes, status, paymentStatus, lessonFormat, roundNumber, totalRounds, originalScheduledAt",
     )
     .eq("studentId", user.id)
+    .neq("status", "CANCELLED")
     .gte("scheduledAt", fromUtc.toISOString())
     .lte("scheduledAt", toUtc.toISOString())
     .order("scheduledAt", { ascending: true });
