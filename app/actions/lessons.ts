@@ -231,3 +231,73 @@ export async function saveLessonNotes(lessonId: number, notes: string): Promise<
   revalidateLessonPaths(lessonId);
   return { ok: true };
 }
+
+/**
+ * 대기 신청 확정 — 코치 전용. PENDING → CONFIRMED.
+ * spec 7-0 "스케줄 확정하기" 액션. 이 시점에 학생에게 알림톡 발송 예정 (Sprint 3).
+ */
+export async function confirmPendingLesson(lessonId: number): Promise<Result> {
+  const user = await getAuthedUser();
+  if (!user) return { ok: false, error: "로그인이 필요합니다" };
+  const meta = user.app_metadata as { role?: string } | undefined;
+  if (meta?.role !== "COACH") return { ok: false, error: "코치만 가능해요" };
+
+  const admin = createAdminClient();
+  const { data: lesson } = await admin
+    .from("lessons")
+    .select("id, coachId, status, scheduledAt")
+    .eq("id", lessonId)
+    .maybeSingle();
+  if (!lesson) return { ok: false, error: "레슨을 찾을 수 없어요" };
+  if (lesson.coachId !== user.id) return { ok: false, error: "권한이 없어요" };
+  if (lesson.status !== "PENDING") {
+    return { ok: false, error: "대기 중인 신청만 확정할 수 있어요" };
+  }
+  if (new Date(lesson.scheduledAt).getTime() < Date.now()) {
+    return { ok: false, error: "이미 지난 시간이라 확정할 수 없어요" };
+  }
+
+  const { error } = await admin
+    .from("lessons")
+    .update({ status: "CONFIRMED", updatedAt: new Date().toISOString() })
+    .eq("id", lessonId);
+  if (error) return { ok: false, error: error.message };
+
+  revalidateLessonPaths(lessonId);
+  return { ok: true };
+}
+
+/**
+ * 결제 확인 — 코치 전용. paymentStatus UNPAID → PAID.
+ * spec FR-12b "결제확인" — 학생이 외부로 입금 완료 후 코치가 수동 확인.
+ */
+export async function markLessonPaid(lessonId: number): Promise<Result> {
+  const user = await getAuthedUser();
+  if (!user) return { ok: false, error: "로그인이 필요합니다" };
+  const meta = user.app_metadata as { role?: string } | undefined;
+  if (meta?.role !== "COACH") return { ok: false, error: "코치만 가능해요" };
+
+  const admin = createAdminClient();
+  const { data: lesson } = await admin
+    .from("lessons")
+    .select("id, coachId, paymentStatus")
+    .eq("id", lessonId)
+    .maybeSingle();
+  if (!lesson) return { ok: false, error: "레슨을 찾을 수 없어요" };
+  if (lesson.coachId !== user.id) return { ok: false, error: "권한이 없어요" };
+  if (lesson.paymentStatus === "PAID") {
+    return { ok: false, error: "이미 결제완료 상태예요" };
+  }
+  if (lesson.paymentStatus === "NONE") {
+    return { ok: false, error: "결제 무관 회차예요" };
+  }
+
+  const { error } = await admin
+    .from("lessons")
+    .update({ paymentStatus: "PAID", updatedAt: new Date().toISOString() })
+    .eq("id", lessonId);
+  if (error) return { ok: false, error: error.message };
+
+  revalidateLessonPaths(lessonId);
+  return { ok: true };
+}

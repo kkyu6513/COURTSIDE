@@ -3,12 +3,16 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { AlertModal, type AlertVariant } from "@/components/alert-modal";
+import { BottomNav } from "@/components/bottom-nav";
+import { Toast } from "@/components/toast";
 import {
   completeLesson,
   markLessonAbsent,
   requestMakeup,
   cancelLessonWithReason,
   saveLessonNotes,
+  confirmPendingLesson,
+  markLessonPaid,
 } from "@/app/actions/lessons";
 import { parseIsoUtc, toKstTrick } from "@/lib/kst";
 import {
@@ -94,7 +98,7 @@ function paymentBadge(status: string, lessonStatus: string): {
     case "NONE":
     default:
       return {
-        text: isAuxiliary ? "결제 무관" : "정보 없음",
+        text: isAuxiliary ? "해당 없음" : "정보 없음",
         bg: "bg-soft",
         fg: "text-ink-3",
       };
@@ -163,10 +167,21 @@ function TrashIcon() {
   );
 }
 
+type ConfirmAction =
+  | { kind: "COMPLETE" }
+  | { kind: "CONFIRM_PENDING" }
+  | { kind: "MARK_PAID" }
+  | { kind: "MAKEUP_FOLLOWUP" } // ABSENT 후 보강 안내
+  | { kind: "DIRTY_NAV"; proceed: () => void }; // 메모 미저장 + 이탈
+
 export function LessonDetailScreen({ data, backHref }: { data: LessonDetailData; backHref: string }) {
   const router = useRouter();
-  const { lesson, viewerRole, counterpart, studentProfile, coachProfile } = data;
+  const { viewerRole, counterpart, studentProfile, coachProfile } = data;
   const isCoach = viewerRole === "COACH";
+
+  // 낙관적 업데이트용 로컬 상태 — SSR refresh 도착 전에도 즉시 화면 반영
+  const [lesson, setLesson] = useState(data.lesson);
+  useEffect(() => setLesson(data.lesson), [data.lesson]);
 
   // hydration-safe — 실 시각은 mount 후에만 사용
   const [nowMs, setNowMs] = useState<number | null>(null);
@@ -184,34 +199,87 @@ export function LessonDetailScreen({ data, backHref }: { data: LessonDetailData;
   const badge = getStatusLabel(displayStatus);
   const payment = paymentBadge(lesson.paymentStatus, lesson.status);
 
+  // 지난 레슨 — 시작 시각이 현재보다 이전 + 아직 활성 상태
+  const isPast =
+    nowMs != null &&
+    new Date(lesson.scheduledAt).getTime() < nowMs &&
+    !["COMPLETED", "CANCELLED", "ABSENT", "RESCHEDULE_COMPLETED"].includes(lesson.status);
+
   const [statusSheetOpen, setStatusSheetOpen] = useState(false);
   const [reasonSheet, setReasonSheet] = useState<null | "ABSENT" | "MAKEUP" | "CANCEL">(null);
   const [reasonText, setReasonText] = useState("");
   const [notesDraft, setNotesDraft] = useState(lesson.notes ?? "");
   const [, startTransition] = useTransition();
   const [pending, setPending] = useState(false);
+  const [confirm, setConfirm] = useState<ConfirmAction | null>(null);
   const [alert, setAlert] = useState<{
     open: boolean;
     variant: AlertVariant;
     title: string;
     description?: string;
   }>({ open: false, variant: "success", title: "" });
+  const [toast, setToast] = useState<{
+    open: boolean;
+    variant: "success" | "info";
+    title: string;
+    description?: string;
+  }>({ open: false, variant: "success", title: "" });
 
   useEffect(() => setNotesDraft(lesson.notes ?? ""), [lesson.notes]);
 
-  const notesChanged = notesDraft.trim() !== (lesson.notes ?? "").trim();
+  const notesDirty = notesDraft.trim() !== (lesson.notes ?? "").trim();
 
-  const onComplete = () => {
+  const showSuccess = (title: string, description?: string) =>
+    setToast({ open: true, variant: "success", title, description });
+
+  const showError = (title: string, description?: string) =>
+    setAlert({ open: true, variant: "error", title, description });
+
+  // 낙관적 업데이트 헬퍼
+  const applyOptimistic = (patch: Partial<typeof lesson>) => setLesson((l) => ({ ...l, ...patch }));
+
+  const runComplete = () => {
     setStatusSheetOpen(false);
     setPending(true);
     startTransition(async () => {
       const res = await completeLesson(lesson.id);
       setPending(false);
       if (!res.ok) {
-        setAlert({ open: true, variant: "error", title: "처리 실패", description: res.error });
+        showError("완료 처리 실패", res.error);
         return;
       }
-      setAlert({ open: true, variant: "success", title: "레슨이 완료 처리되었어요" });
+      applyOptimistic({ status: "COMPLETED" });
+      showSuccess("레슨이 완료 처리되었어요");
+      router.refresh();
+    });
+  };
+
+  const runConfirmPending = () => {
+    setPending(true);
+    startTransition(async () => {
+      const res = await confirmPendingLesson(lesson.id);
+      setPending(false);
+      if (!res.ok) {
+        showError("스케줄 확정 실패", res.error);
+        return;
+      }
+      applyOptimistic({ status: "CONFIRMED" });
+      showSuccess("스케줄이 확정되었어요", "학생에게 알림이 전송됩니다.");
+      router.refresh();
+    });
+  };
+
+  const runMarkPaid = () => {
+    setPending(true);
+    startTransition(async () => {
+      const res = await markLessonPaid(lesson.id);
+      setPending(false);
+      if (!res.ok) {
+        showError("결제 확인 실패", res.error);
+        return;
+      }
+      applyOptimistic({ paymentStatus: "PAID" });
+      showSuccess("결제완료로 처리했어요");
       router.refresh();
     });
   };
@@ -236,20 +304,25 @@ export function LessonDetailScreen({ data, backHref }: { data: LessonDetailData;
       const res = await fn(lesson.id, reasonText);
       setPending(false);
       if (!res.ok) {
-        setAlert({ open: true, variant: "error", title: "처리 실패", description: res.error });
+        showError(
+          kind === "ABSENT" ? "결강 처리 실패" : kind === "MAKEUP" ? "보강 요청 실패" : "취소 실패",
+          res.error,
+        );
         return;
       }
       setReasonSheet(null);
-      setAlert({
-        open: true,
-        variant: "success",
-        title:
-          kind === "ABSENT"
-            ? "결강 처리되었어요"
-            : kind === "MAKEUP"
-              ? "보강 요청을 등록했어요"
-              : "레슨이 취소되었어요",
-      });
+
+      if (kind === "ABSENT") {
+        applyOptimistic({ status: "ABSENT" });
+        // 결강 후 보강 안내 (#46)
+        setConfirm({ kind: "MAKEUP_FOLLOWUP" });
+      } else if (kind === "MAKEUP") {
+        applyOptimistic({ status: "MAKEUP_REQUESTED" });
+        showSuccess("보강 요청을 등록했어요");
+      } else {
+        applyOptimistic({ status: "CANCELLED" });
+        showSuccess("레슨이 취소되었어요");
+      }
       router.refresh();
     });
   };
@@ -260,10 +333,11 @@ export function LessonDetailScreen({ data, backHref }: { data: LessonDetailData;
       const res = await saveLessonNotes(lesson.id, notesDraft);
       setPending(false);
       if (!res.ok) {
-        setAlert({ open: true, variant: "error", title: "메모 저장 실패", description: res.error });
+        showError("메모 저장 실패", res.error);
         return;
       }
-      setAlert({ open: true, variant: "success", title: "메모가 저장되었어요" });
+      applyOptimistic({ notes: notesDraft.trim() || null });
+      showSuccess("메모가 저장되었어요");
       router.refresh();
     });
   };
@@ -277,12 +351,32 @@ export function LessonDetailScreen({ data, backHref }: { data: LessonDetailData;
     });
   };
 
-  const handleBack = () => {
+  // 메모 변경 미저장 가드 후 실제 이동
+  const guardedNav = (proceed: () => void) => {
+    if (notesDirty) {
+      setConfirm({ kind: "DIRTY_NAV", proceed });
+      return;
+    }
+    proceed();
+  };
+
+  const navBack = () => {
     if (typeof window !== "undefined" && window.history.length > 1) {
       router.back();
       return;
     }
     router.push(backHref);
+  };
+
+  const handleBack = () => guardedNav(navBack);
+
+  const handleOpenStatusSheet = () => guardedNav(() => setStatusSheetOpen(true));
+
+  const handleConfirmPending = () => setConfirm({ kind: "CONFIRM_PENDING" });
+  const handleMarkPaid = () => setConfirm({ kind: "MARK_PAID" });
+  const handleCompleteFromSheet = () => {
+    setStatusSheetOpen(false);
+    setConfirm({ kind: "COMPLETE" });
   };
 
   const counterpartName = counterpart?.name ?? "이름 미입력";
@@ -296,26 +390,94 @@ export function LessonDetailScreen({ data, backHref }: { data: LessonDetailData;
     !["CANCELLED", "COMPLETED", "ABSENT", "RESCHEDULE_COMPLETED"].includes(lesson.status) &&
     new Date(lesson.scheduledAt).getTime() - nowMs >= 24 * 60 * 60 * 1000;
 
+  const onConfirmYes = () => {
+    if (!confirm) return;
+    const kind = confirm.kind;
+    if (kind === "DIRTY_NAV") {
+      const proceed = confirm.proceed;
+      setConfirm(null);
+      proceed();
+      return;
+    }
+    if (kind === "MAKEUP_FOLLOWUP") {
+      setConfirm(null);
+      // 보강 요청 사유 입력으로 이동
+      setReasonText("");
+      setReasonSheet("MAKEUP");
+      return;
+    }
+    setConfirm(null);
+    if (kind === "COMPLETE") runComplete();
+    else if (kind === "CONFIRM_PENDING") runConfirmPending();
+    else if (kind === "MARK_PAID") runMarkPaid();
+  };
+
+  const confirmCopy = (() => {
+    if (!confirm) return null;
+    switch (confirm.kind) {
+      case "COMPLETE":
+        return {
+          title: "레슨을 완료 처리할까요?",
+          description: "처리 후 학생에게 알림이 전송됩니다.",
+          yes: "완료 처리",
+          no: "취소",
+        };
+      case "CONFIRM_PENDING":
+        return {
+          title: "스케줄을 확정할까요?",
+          description: "확정 후 학생에게 알림이 전송됩니다.",
+          yes: "확정",
+          no: "취소",
+        };
+      case "MARK_PAID":
+        return {
+          title: "결제완료로 처리할까요?",
+          description: "학생이 외부로 결제한 내역을 확인한 후 처리해주세요.",
+          yes: "결제완료 처리",
+          no: "취소",
+        };
+      case "MAKEUP_FOLLOWUP":
+        return {
+          title: "결강 처리되었어요",
+          description: "보강 일정도 잡으시겠어요?",
+          yes: "보강 요청 보내기",
+          no: "나중에",
+        };
+      case "DIRTY_NAV":
+        return {
+          title: "저장하지 않은 메모가 있어요",
+          description: "지금 이동하면 변경 사항이 사라집니다.",
+          yes: "이동",
+          no: "계속 작성",
+        };
+    }
+  })();
+
   return (
-    <main className="min-h-screen bg-bg flex flex-col">
+    <main className="min-h-screen bg-bg flex flex-col pb-24">
       <div className="max-w-md mx-auto w-full flex-1 flex flex-col">
         {/* 상단 바 */}
-        <div className="flex items-center h-14 px-3 sticky top-0 z-10 bg-bg/85 backdrop-blur border-b border-line">
+        <div className="flex items-center h-14 px-3 sticky top-0 z-20 bg-bg/85 backdrop-blur border-b border-line">
           <button
             type="button"
             onClick={handleBack}
-            aria-label="뒤로가기"
+            aria-label={`뒤로가기 — ${counterpartName} ${formatDateLabel(lesson.scheduledAt)} 레슨`}
             className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-soft transition text-ink"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M15 18l-6-6 6-6" />
             </svg>
           </button>
-          <div className="flex-1 text-center text-sm font-bold text-ink">레슨 상세</div>
+          <div className="flex-1 min-w-0 text-center">
+            <div className="text-sm font-bold text-ink truncate">{counterpartName}</div>
+            <div className="text-[11px] text-ink-3 truncate">
+              {formatDateLabel(lesson.scheduledAt)} {formatTimeShort(lesson.scheduledAt)}
+            </div>
+          </div>
           <div className="w-10 h-10" />
         </div>
 
-        <div className="flex-1 px-5 py-4 pb-32">
+        <div className="flex-1 px-5 py-4 pb-40">
           {/* 헤더 — 날짜/시간 + 상태 배지 */}
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
@@ -334,10 +496,21 @@ export function LessonDetailScreen({ data, backHref }: { data: LessonDetailData;
                 </div>
               )}
             </div>
-            <span className={`flex-none rounded-full px-2.5 py-1 text-xs font-semibold ${badge.bg} ${badge.fg}`}>
+            <span
+              role="status"
+              aria-label={`레슨 상태: ${badge.text}`}
+              className={`flex-none rounded-full px-2.5 py-1 text-xs font-semibold ${badge.bg} ${badge.fg}`}
+            >
               {badge.text}
             </span>
           </div>
+
+          {/* 지난 레슨 안내 (#48) */}
+          {isPast && (
+            <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-2.5 text-xs text-amber-700 leading-relaxed">
+              지난 레슨이에요. 취소는 불가하며, 결강 또는 완료 처리만 가능합니다.
+            </div>
+          )}
 
           {/* 상대방 프로필 */}
           <div className="mt-4 rounded-2xl border border-line bg-surface p-4 flex items-center gap-3">
@@ -379,12 +552,23 @@ export function LessonDetailScreen({ data, backHref }: { data: LessonDetailData;
             {(() => {
               const rows: Array<{ k: string; v: React.ReactNode }> = [
                 { k: "레슨 형태", v: formatText },
-                { k: "레슨 시간", v: `${lesson.durationMinutes}분 (회당)` },
+                { k: "레슨 시간", v: `회당 ${lesson.durationMinutes}분` },
               ];
               if (lesson.roundNumber != null && lesson.totalRounds != null) {
+                const ratio = Math.max(0, Math.min(1, lesson.roundNumber / lesson.totalRounds));
                 rows.push({
                   k: "현재 회차",
-                  v: `${lesson.roundNumber} / ${lesson.totalRounds}회`,
+                  v: (
+                    <span className="inline-flex items-center gap-2">
+                      <span>{lesson.roundNumber} / {lesson.totalRounds}회</span>
+                      <span className="inline-block w-14 h-1.5 rounded-full bg-soft overflow-hidden" aria-hidden>
+                        <span
+                          className="block h-full bg-primary"
+                          style={{ width: `${ratio * 100}%` }}
+                        />
+                      </span>
+                    </span>
+                  ),
                 });
               }
               if (lesson.splitIndex != null && lesson.splitTotal != null) {
@@ -406,13 +590,27 @@ export function LessonDetailScreen({ data, backHref }: { data: LessonDetailData;
             })()}
           </div>
 
-          {/* TODO(FR-06,12b): paymentSchedule 컬럼 추가 후 결제일·다음 결제일·이번 달 변경 카운트 */}
+          {/* 결제 확인 액션 (#16) — 코치 + UNPAID 일 때만 */}
+          {isCoach && lesson.paymentStatus === "UNPAID" && (
+            <button
+              type="button"
+              onClick={handleMarkPaid}
+              disabled={pending}
+              className="mt-3 w-full flex items-center justify-between rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600 hover:bg-red-100 transition active:scale-[0.99] disabled:opacity-60"
+            >
+              <span>미결제 — 결제확인 처리</span>
+              <span aria-hidden>›</span>
+            </button>
+          )}
 
           {/* 메모 / 코치 코멘트 */}
           {isCoach ? (
-            <div className="mt-4">
-              <div className="text-xs font-semibold text-ink-2 mb-1.5">코치 메모</div>
+            <div className="mt-5">
+              <label htmlFor="lesson-notes" className="block text-sm font-semibold text-ink mb-1.5">
+                코치 메모
+              </label>
               <textarea
+                id="lesson-notes"
                 value={notesDraft}
                 onChange={(e) => setNotesDraft(e.target.value)}
                 placeholder="레슨 메모, 코칭 포인트, 다음 회차 계획 등을 기록하세요"
@@ -421,15 +619,23 @@ export function LessonDetailScreen({ data, backHref }: { data: LessonDetailData;
                 className="w-full rounded-xl border border-line bg-surface p-3 text-sm text-ink placeholder:text-ink-3 resize-none outline-none focus:ring-2 focus:ring-primary/40"
               />
               <div className="mt-1 flex items-center justify-between">
-                <span className="text-[11px] text-ink-3">{notesDraft.length} / 1000</span>
-                {notesChanged && (
+                <span className="text-[11px] text-ink-3">
+                  {notesDirty ? "저장되지 않은 변경 사항이 있어요" : `${notesDraft.length} / 1000`}
+                </span>
+                {notesDirty && (
                   <button
                     type="button"
                     onClick={onSaveNotes}
                     disabled={pending}
-                    className="text-xs font-semibold text-primary-700 px-3 py-1 rounded-md hover:bg-primary/10 disabled:opacity-60"
+                    className="text-xs font-semibold text-primary-700 px-3 py-1 rounded-md hover:bg-primary/10 disabled:opacity-60 inline-flex items-center gap-1.5"
                   >
-                    {pending ? "저장 중…" : "메모 저장"}
+                    {pending && (
+                      <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24" fill="none" aria-hidden>
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z" />
+                      </svg>
+                    )}
+                    {pending ? "저장 중" : "메모 저장"}
                   </button>
                 )}
               </div>
@@ -451,15 +657,20 @@ export function LessonDetailScreen({ data, backHref }: { data: LessonDetailData;
           )}
         </div>
 
-        {/* 하단 액션 영역 */}
-        <div className="sticky bottom-0 inset-x-0 bg-surface/95 backdrop-blur border-t border-line px-5 py-4 flex gap-2 max-w-md mx-auto w-full">
+        {/* 하단 액션 영역 — BottomNav 위에 sticky */}
+        <div
+          className="fixed inset-x-0 z-30 bg-surface/95 backdrop-blur border-t border-line px-5 py-3 flex gap-2 max-w-md mx-auto"
+          style={{ bottom: "76px" }}
+        >
           {isCoach ? (
             <CoachActions
               status={displayStatus as LessonStatus}
-              onComplete={onComplete}
-              onOpenStatusSheet={() => setStatusSheetOpen(true)}
+              isPast={isPast}
+              onComplete={handleCompleteFromSheet}
+              onOpenStatusSheet={handleOpenStatusSheet}
               onOpenCancel={() => openReasonSheet("CANCEL")}
               onOpenMakeup={() => openReasonSheet("MAKEUP")}
+              onConfirmPending={handleConfirmPending}
               onClose={handleBack}
               pending={pending}
             />
@@ -474,13 +685,19 @@ export function LessonDetailScreen({ data, backHref }: { data: LessonDetailData;
         </div>
       </div>
 
+      <BottomNav role={viewerRole} active="" />
+
       {/* 상태 처리 바텀시트 (코치 전용) */}
       {statusSheetOpen && (
         <BottomSheet onClose={() => setStatusSheetOpen(false)} title="상태 처리하기">
-          <SheetItem label="레슨 완료 처리" onClick={onComplete} icon={<CheckIcon />} />
+          <SheetItem label="레슨 완료 처리" onClick={handleCompleteFromSheet} icon={<CheckIcon />} primary />
           <SheetItem label="보강 처리" onClick={() => openReasonSheet("MAKEUP")} icon={<RefreshIcon />} />
           <SheetItem label="결강 처리" onClick={() => openReasonSheet("ABSENT")} icon={<XIcon />} />
-          <SheetItem label="레슨 취소" onClick={() => openReasonSheet("CANCEL")} icon={<TrashIcon />} danger />
+          <div className="my-2 border-t border-line/70" />
+          <SheetItem label="레슨 취소" onClick={() => openReasonSheet("CANCEL")} icon={<TrashIcon />} danger disabled={isPast} />
+          {isPast && (
+            <p className="px-2 mt-1 text-[11px] text-ink-3">지난 레슨은 취소할 수 없어요.</p>
+          )}
         </BottomSheet>
       )}
 
@@ -524,9 +741,45 @@ export function LessonDetailScreen({ data, backHref }: { data: LessonDetailData;
               type="button"
               onClick={submitReason}
               disabled={pending || !reasonText.trim()}
-              className="flex-1 h-12 rounded-xl bg-ink text-white text-sm font-semibold hover:opacity-90 transition disabled:opacity-50"
+              className="flex-1 h-12 rounded-xl bg-ink text-white text-sm font-semibold hover:opacity-90 transition disabled:opacity-50 inline-flex items-center justify-center gap-1.5"
             >
-              {pending ? "처리 중…" : "확인"}
+              {pending && (
+                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden>
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z" />
+                </svg>
+              )}
+              {pending ? "처리 중" : "확인"}
+            </button>
+          </div>
+        </BottomSheet>
+      )}
+
+      {/* 일반 확인 시트 (완료/확정/결제확인/보강안내/이탈가드) */}
+      {confirm && confirmCopy && (
+        <BottomSheet onClose={() => setConfirm(null)} title={confirmCopy.title}>
+          {confirmCopy.description && (
+            <p className="text-xs text-ink-2 leading-relaxed mb-4">{confirmCopy.description}</p>
+          )}
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setConfirm(null)}
+              className="flex-1 h-12 rounded-xl border border-line bg-surface text-sm font-semibold text-ink-2 hover:bg-soft transition"
+            >
+              {confirmCopy.no}
+            </button>
+            <button
+              type="button"
+              onClick={onConfirmYes}
+              disabled={pending}
+              className={`flex-1 h-12 rounded-xl text-sm font-semibold transition disabled:opacity-50 ${
+                confirm.kind === "DIRTY_NAV"
+                  ? "bg-red-500 text-white hover:bg-red-600"
+                  : "bg-ink text-white hover:opacity-90"
+              }`}
+            >
+              {confirmCopy.yes}
             </button>
           </div>
         </BottomSheet>
@@ -538,6 +791,14 @@ export function LessonDetailScreen({ data, backHref }: { data: LessonDetailData;
         variant={alert.variant}
         title={alert.title}
         description={alert.description}
+      />
+
+      <Toast
+        open={toast.open}
+        onClose={() => setToast((t) => ({ ...t, open: false }))}
+        variant={toast.variant}
+        title={toast.title}
+        description={toast.description}
       />
     </main>
   );
@@ -556,18 +817,22 @@ function InfoRow({ k, v, last }: { k: string; v: React.ReactNode; last?: boolean
 
 function CoachActions({
   status,
+  isPast,
   onComplete,
   onOpenStatusSheet,
   onOpenCancel,
   onOpenMakeup,
+  onConfirmPending,
   onClose,
   pending,
 }: {
   status: LessonStatus | string;
+  isPast: boolean;
   onComplete: () => void;
   onOpenStatusSheet: () => void;
   onOpenCancel: () => void;
   onOpenMakeup: () => void;
+  onConfirmPending: () => void;
   onClose: () => void;
   pending: boolean;
 }) {
@@ -591,7 +856,7 @@ function CoachActions({
         disabled={pending}
         className="flex-1 h-12 rounded-xl bg-ink text-white text-sm font-bold hover:opacity-90 transition disabled:opacity-60"
       >
-        상태 처리하기
+        상태 처리하기 (완료·보강·결강)
       </button>
     );
   }
@@ -629,10 +894,11 @@ function CoachActions({
         </button>
         <button
           type="button"
-          onClick={onClose}
-          className="flex-1 h-12 rounded-xl bg-ink text-white text-sm font-bold hover:opacity-90 transition"
+          onClick={onConfirmPending}
+          disabled={pending || isPast}
+          className="flex-1 h-12 rounded-xl bg-primary text-white text-sm font-bold hover:bg-primary-500 transition disabled:opacity-60"
         >
-          닫기
+          {pending ? "처리 중…" : "스케줄 확정"}
         </button>
       </>
     );
@@ -753,26 +1019,33 @@ function SheetItem({
   onClick,
   icon,
   danger,
+  primary,
+  disabled,
 }: {
   label: string;
   onClick: () => void;
   icon: React.ReactNode;
   danger?: boolean;
+  primary?: boolean;
+  disabled?: boolean;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`w-full flex items-center gap-3 py-3.5 px-2 rounded-lg hover:bg-soft transition text-left ${
-        danger ? "text-red-500" : "text-ink"
-      }`}
+      disabled={disabled}
+      className={`w-full flex items-center gap-3 py-3.5 px-2 rounded-lg transition text-left ${
+        disabled ? "opacity-40 cursor-not-allowed" : "hover:bg-soft"
+      } ${danger ? "text-red-500" : "text-ink"}`}
     >
       <span
-        className={`w-8 h-8 rounded-full flex items-center justify-center ${danger ? "bg-red-50 text-red-500" : "bg-soft text-ink-2"}`}
+        className={`w-8 h-8 rounded-full flex items-center justify-center ${
+          danger ? "bg-red-50 text-red-500" : primary ? "bg-primary/15 text-primary-700" : "bg-soft text-ink-2"
+        }`}
       >
         {icon}
       </span>
-      <span className="text-sm font-semibold">{label}</span>
+      <span className={`text-sm ${primary ? "font-bold" : "font-semibold"}`}>{label}</span>
     </button>
   );
 }
