@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { AlertModal } from "@/components/alert-modal";
+import { Toast } from "@/components/toast";
 import { EmptySlotSheet } from "@/components/coach/empty-slot-sheet";
 import { StudentPickerSheet, type StudentOption } from "@/components/coach/student-picker-sheet";
 import { LessonDetailSheet, type LessonDetail } from "@/components/coach/lesson-detail-sheet";
@@ -237,11 +238,21 @@ export function WeeklyTimetable({
   const [pendingNotes, setPendingNotes] = useState(false);
   const [pendingRestore, setPendingRestore] = useState(false);
   const [, startTransition] = useTransition();
-  const [alert, setAlert] = useState<{ open: boolean; variant: "error" | "success"; title: string; description?: string }>({
+  // 에러/경고 — 사용자 확인이 필요한 풀모달
+  const [alert, setAlert] = useState<{ open: boolean; variant: "error"; title: string; description?: string }>({
     open: false,
-    variant: "success",
+    variant: "error",
     title: "",
   });
+  // 성공 알림 — 흐름을 끊지 않는 toast(자동 닫힘)
+  const [toast, setToast] = useState<{ open: boolean; title: string; description?: string }>({
+    open: false,
+    title: "",
+  });
+  const showSuccess = (title: string, description?: string) =>
+    setToast({ open: true, title, description });
+  const showError = (title: string, description?: string) =>
+    setAlert({ open: true, variant: "error", title, description });
 
   const weekDays = useMemo(() => {
     const days: { date: Date; m: number; day: number; dowKor: string; isToday: boolean; isPast: boolean }[] = [];
@@ -364,12 +375,10 @@ export function WeeklyTimetable({
 
     if (arr.length === 0) {
       if (isPast) {
-        setAlert({
-          open: true,
-          variant: "error",
-          title: "과거 날짜에는 잡을 수 없어요",
-          description: "오늘 이전 날짜에는 새 레슨을 잡을 수 없습니다. 오늘 또는 이후 날짜를 선택해주세요.",
-        });
+        showError(
+          "과거 날짜에는 잡을 수 없어요",
+          "오늘 이전 날짜에는 새 레슨을 잡을 수 없습니다. 오늘 또는 이후 날짜를 선택해주세요.",
+        );
         return;
       }
       setSheet({ open: true, dayOfWeek, hour, date });
@@ -418,21 +427,12 @@ export function WeeklyTimetable({
       const res = await updateLessonNotes(lessonId, notes);
       setPendingNotes(false);
       if (!res.ok) {
-        setAlert({
-          open: true,
-          variant: "error",
-          title: "메모 저장 실패",
-          description: res.error,
-        });
+        showError("메모 저장 실패", res.error);
         return;
       }
       // 로컬 lessonDetail 즉시 갱신 (시트 안 textarea 동기화)
       setLessonDetail((s) => (s ? { ...s, lesson: { ...s.lesson, notes: notes.trim() || null } } : s));
-      setAlert({
-        open: true,
-        variant: "success",
-        title: "메모가 저장되었어요",
-      });
+      showSuccess("메모가 저장되었어요");
       reload();
     });
   };
@@ -445,21 +445,11 @@ export function WeeklyTimetable({
       const res = await cancelLesson(lessonId);
       setPendingCancel(false);
       if (!res.ok) {
-        setAlert({
-          open: true,
-          variant: "error",
-          title: "레슨 취소 실패",
-          description: res.error,
-        });
+        showError("레슨 취소 실패", res.error);
         return;
       }
       setLessonDetail(null);
-      setAlert({
-        open: true,
-        variant: "success",
-        title: "레슨이 취소되었어요",
-        description: "수강생 알림 발송은 다음 업데이트에 추가될 예정이에요.",
-      });
+      showSuccess("레슨이 취소되었어요", "수강생 알림 발송은 다음 업데이트에 추가될 예정이에요.");
       reload();
     });
   };
@@ -472,20 +462,11 @@ export function WeeklyTimetable({
       const res = await restoreLesson(lessonId);
       setPendingRestore(false);
       if (!res.ok) {
-        setAlert({
-          open: true,
-          variant: "error",
-          title: "레슨 복구 실패",
-          description: res.error,
-        });
+        showError("레슨 복구 실패", res.error);
         return;
       }
       setLessonDetail(null);
-      setAlert({
-        open: true,
-        variant: "success",
-        title: "레슨이 복구되었어요",
-      });
+      showSuccess("레슨이 복구되었어요");
       reload();
     });
   };
@@ -519,21 +500,11 @@ export function WeeklyTimetable({
       const res = await bookLesson(studentId, iso, durationMinutes);
       setPendingStudentId(null);
       if (!res.ok) {
-        setAlert({
-          open: true,
-          variant: "error",
-          title: "레슨 등록 실패",
-          description: res.error,
-        });
+        showError("레슨 등록 실패", res.error);
         return;
       }
       setStudentPicker(null);
-      setAlert({
-        open: true,
-        variant: "success",
-        title: "레슨이 등록되었어요",
-        description: `${fullTimeLabel}에 레슨이 잡혔습니다.`,
-      });
+      showSuccess("레슨이 등록되었어요", `${fullTimeLabel}에 레슨이 잡혔습니다.`);
       reload();
     });
   };
@@ -768,6 +739,14 @@ export function WeeklyTimetable({
         variant={alert.variant}
         title={alert.title}
         description={alert.description}
+      />
+
+      <Toast
+        open={toast.open}
+        onClose={() => setToast((t) => ({ ...t, open: false }))}
+        variant="success"
+        title={toast.title}
+        description={toast.description}
       />
     </div>
   );
