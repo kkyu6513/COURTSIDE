@@ -267,6 +267,11 @@ export function WeeklyTimetable({
     return days;
   }, [weekStart]);
 
+  // 가시 주 범위 — KST 기준 weekStart(월 00:00) ~ +7일.
+  // weekStart 는 이미 KST 자정으로 정규화돼 있어 그대로 비교(ms 단위 +9h 보정 후).
+  const visibleStartMs = weekStart.getTime() - 9 * 60 * 60 * 1000;
+  const visibleEndMs = visibleStartMs + 7 * 24 * 60 * 60 * 1000;
+
   const lessonByCell = useMemo(() => {
     const m = new Map<string, LessonRow[]>();
     for (const l of lessons) {
@@ -274,6 +279,9 @@ export function WeeklyTimetable({
       if (l.status === "CANCELLED") continue;
       const start = parseIsoUtc(l.scheduledAt);
       const end = new Date(start.getTime() + l.durationMinutes * 60 * 1000);
+      // 가시 주 밖 레슨은 셀 매핑 스킵 — 큰 코치(수백 lesson) 시 매 주 이동마다 무거워지는 것 방지.
+      // 가시 주에 걸치는 케이스(자정 가로지름 등)도 포함하기 위해 start<end_window && end>start_window 로 판정.
+      if (end.getTime() <= visibleStartMs || start.getTime() >= visibleEndMs) continue;
       const startKst = new Date(start.getTime() + 9 * 60 * 60 * 1000);
       const endKst = new Date(end.getTime() + 9 * 60 * 60 * 1000);
       // 시작 슬롯(step 단위로 내림)부터 종료 시각 직전까지 매핑
@@ -292,7 +300,7 @@ export function WeeklyTimetable({
       arr.sort((a, b) => parseIsoUtc(a.scheduledAt).getTime() - parseIsoUtc(b.scheduledAt).getTime());
     }
     return m;
-  }, [lessons, slotStepMin]);
+  }, [lessons, slotStepMin, visibleStartMs, visibleEndMs]);
 
   const studentMap = useMemo(() => {
     const m = new Map<string, StudentOption>();
@@ -586,12 +594,18 @@ export function WeeklyTimetable({
         <div className="flex items-center justify-between px-4 py-3 gap-2">
           <div className="text-sm font-extrabold text-ink truncate">{yearMonthLabel}</div>
           <div className="flex items-center gap-1 flex-none">
-            {/* 보기 모드 토글 */}
-            <div className="flex rounded-lg bg-soft p-0.5 mr-1">
+            {/* 보기 모드 토글 — 1시간 단위(간단)와 10분 단위(정밀) 선택 */}
+            <div
+              className="flex rounded-lg bg-soft p-0.5 mr-1"
+              role="group"
+              aria-label="보기 단위"
+            >
               <button
                 type="button"
                 onClick={() => setViewMode("hour")}
-                className={`px-2 h-7 rounded-md text-[11px] font-semibold transition ${
+                aria-pressed={viewMode === "hour"}
+                title="1시간 단위 — 한눈에 보기"
+                className={`px-2.5 h-8 rounded-md text-[11px] font-semibold transition ${
                   viewMode === "hour" ? "bg-surface text-ink shadow-sm" : "text-ink-3"
                 }`}
               >
@@ -600,7 +614,9 @@ export function WeeklyTimetable({
               <button
                 type="button"
                 onClick={() => setViewMode("minute")}
-                className={`px-2 h-7 rounded-md text-[11px] font-semibold transition ${
+                aria-pressed={viewMode === "minute"}
+                title="10분 단위 — 정밀 보기 (학생 이름 표시)"
+                className={`px-2.5 h-8 rounded-md text-[11px] font-semibold transition ${
                   viewMode === "minute" ? "bg-surface text-ink shadow-sm" : "text-ink-3"
                 }`}
               >

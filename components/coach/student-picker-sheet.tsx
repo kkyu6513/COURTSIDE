@@ -378,11 +378,25 @@ export function StudentPickerSheet({
 
             <div className="flex-1 overflow-y-auto px-3 pb-4">
               {filtered.length === 0 ? (
-                <div className="py-10 text-center">
-                  <p className="text-sm text-ink-2">
-                    {students.length === 0 ? "등록된 수강생이 없어요" : "검색 결과가 없어요"}
-                  </p>
-                </div>
+                students.length === 0 ? (
+                  <div className="py-10 text-center px-4">
+                    <p className="text-sm font-semibold text-ink">아직 등록된 수강생이 없어요</p>
+                    <p className="mt-2 text-xs text-ink-2 leading-relaxed">
+                      학생이 홈에서 회원님 이름·전화번호로 등록 요청을 보내면,
+                      알림 페이지에서 수락한 뒤 여기에 표시돼요.
+                    </p>
+                    <p className="mt-2 text-[11px] text-ink-3">
+                      수락 전이면 알림 페이지에서 확인해 주세요.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="py-10 text-center">
+                    <p className="text-sm text-ink-2">검색 결과가 없어요</p>
+                    <p className="mt-1 text-[11px] text-ink-3">
+                      이름 일부 또는 전화번호 숫자로 다시 검색해 보세요
+                    </p>
+                  </div>
+                )
               ) : (
                 <ul className="space-y-1.5 mt-1">
                   {filtered.map((s) => {
