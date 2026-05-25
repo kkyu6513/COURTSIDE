@@ -1,6 +1,8 @@
 // 학생 홈 — 이번 주 레슨 / 주간 미니 캘린더 / 응답 필요 / 결제 안내 표시
 // 디자인 가이드 — 중립 카드, 상태는 텍스트 라벨
 
+import Link from "next/link";
+
 export type StudentLessonRow = {
   id: number;
   coachId: string;
@@ -235,8 +237,10 @@ function StudentLessonCard({
   else if (lesson.paymentStatus === "EXTERNAL") paymentNote = "외부결제";
 
   return (
-    <div
-      className={`px-4 py-3 ${isFirst ? "" : "border-t border-line/70"} ${style.faded ? "opacity-60" : ""}`}
+    <Link
+      href={`/lessons/${lesson.id}`}
+      prefetch={false}
+      className={`block px-4 py-3 transition active:bg-soft/60 ${isFirst ? "" : "border-t border-line/70"} ${style.faded ? "opacity-60" : ""}`}
     >
       <div className={`text-xs font-semibold ${style.color}`}>{style.label}</div>
       <div className="mt-1 flex items-baseline gap-2">
@@ -269,7 +273,7 @@ function StudentLessonCard({
           )}
         </span>
       </div>
-    </div>
+    </Link>
   );
 }
 

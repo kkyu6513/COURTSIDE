@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { maskPhone } from "@/lib/masking";
@@ -339,6 +340,16 @@ export function LessonDetailSheet({
               {pendingRestore ? "복구 중…" : "취소된 레슨 복구"}
             </button>
           )}
+
+          <Link
+            href={`/coach/lessons/${lesson.id}`}
+            prefetch={false}
+            onClick={onClose}
+            className="w-full h-12 rounded-xl bg-ink text-white text-sm font-semibold hover:opacity-90 transition inline-flex items-center justify-center gap-1"
+          >
+            상태 처리·전체 상세
+            <span aria-hidden>›</span>
+          </Link>
 
           <button
             type="button"
