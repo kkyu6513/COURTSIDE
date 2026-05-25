@@ -4,6 +4,14 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
+// 과거 시각 유예 — 클라이언트/서버 시계 편차 + 네트워크 지연 흡수.
+// 클라이언트(weekly-timetable.tsx onCellClick)와 동일 값 사용.
+const PAST_GRACE_MS = 5 * 60 * 1000;
+
+// 충돌 검색 범위 — 최대 레슨 길이(4h) × 2 + 자정 경계 마진.
+// gte/lte로 scheduledAt 범위만 좁히기 위함이지, 실제 충돌 판정은 항상 [start,end] 교차로 한다.
+const CONFLICT_SEARCH_WINDOW_MS = (4 + 24) * 60 * 60 * 1000;
+
 type Result = { ok: true; lessonId: number } | { ok: false; error: string };
 
 /**
@@ -30,7 +38,6 @@ export async function bookLesson(
 
   // 과거 시각 거부 (#4) — 자정 단위가 아니라 정확한 시각 비교.
   // 다만 클라이언트 시간 오차/네트워크 지연을 감안해 5분 유예 허용.
-  const PAST_GRACE_MS = 5 * 60 * 1000;
   if (date.getTime() < Date.now() - PAST_GRACE_MS) {
     return { ok: false, error: "이미 지난 시각에는 레슨을 잡을 수 없어요" };
   }
@@ -53,17 +60,17 @@ export async function bookLesson(
     return { ok: false, error: "수락하지 않은 수강생이에요" };
   }
 
-  // 시간 겹침 체크 — 새 lesson의 [start, end] 구간이 기존 active lesson과 겹치면 거부
+  // 시간 겹침 체크 — 새 lesson의 [start, end] 구간이 기존 active lesson과 겹치면 거부.
+  // 참고: 검증 → insert 사이에 race condition이 존재합니다. 같은 코치 세션 2 탭에서
+  // 동시 등록 시 두 건 모두 통과될 수 있어, 완전 차단은 DB unique partial index(또는
+  // SERIALIZABLE 트랜잭션 RPC)가 필요합니다. 일반 사용 시나리오(한 코치 = 한 세션)에서는
+  // 발생 확률이 낮아 후속 작업으로 미룹니다.
   const newStart = date.getTime();
   const newEnd = newStart + dur * 60 * 1000;
-  // 충돌 검색 윈도우 (#5) — 최대 레슨 길이(240분=4h) + 안전 마진을 고려.
-  // ±24h 고정이면 240분 레슨이 양 끝에 있을 때 사이 시간 충돌 검출 실패 가능.
-  const SAFETY_WINDOW_MS = (4 + 24) * 60 * 60 * 1000; // ±28h
-  const windowStart = new Date(newStart - SAFETY_WINDOW_MS).toISOString();
-  const windowEnd = new Date(newEnd + SAFETY_WINDOW_MS).toISOString();
+  const windowStart = new Date(newStart - CONFLICT_SEARCH_WINDOW_MS).toISOString();
+  const windowEnd = new Date(newEnd + CONFLICT_SEARCH_WINDOW_MS).toISOString();
 
-  // 충돌 검증 — 슬롯 점유 해제 상태(CANCELLED/COMPLETED/ABSENT)는 제외.
-  // 같은 시간에 보강·재등록이 가능해야 하므로 끝난 회차는 점유로 보지 않음.
+  // 슬롯 점유 해제 상태(CANCELLED/COMPLETED/ABSENT)는 제외 — 보강·재등록 허용.
   const { data: nearby } = await admin
     .from("lessons")
     .select("id, studentId, scheduledAt, durationMinutes, status")
@@ -275,8 +282,6 @@ export async function bookRecurringLessons(
   if (!matchedClaim) return { ok: false, error: "수락하지 않은 수강생이에요" };
 
   const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
-  const SAFETY_WINDOW_MS = (4 + 24) * 60 * 60 * 1000;
-  const PAST_GRACE_MS = 5 * 60 * 1000;
   let bookedCount = 0;
   const skippedWeeks: Array<{ week: number; reason: string }> = [];
 
@@ -290,8 +295,8 @@ export async function bookRecurringLessons(
     }
 
     // 충돌 검증
-    const wStart = new Date(startMs - SAFETY_WINDOW_MS).toISOString();
-    const wEnd = new Date(endMs + SAFETY_WINDOW_MS).toISOString();
+    const wStart = new Date(startMs - CONFLICT_SEARCH_WINDOW_MS).toISOString();
+    const wEnd = new Date(endMs + CONFLICT_SEARCH_WINDOW_MS).toISOString();
     const { data: nearby } = await admin
       .from("lessons")
       .select("scheduledAt, durationMinutes, status")
@@ -381,9 +386,8 @@ export async function bookMakeupLesson(
   // 충돌 검증
   const newStart = date.getTime();
   const newEnd = newStart + dur * 60 * 1000;
-  const SAFETY_WINDOW_MS = (4 + 24) * 60 * 60 * 1000;
-  const windowStart = new Date(newStart - SAFETY_WINDOW_MS).toISOString();
-  const windowEnd = new Date(newEnd + SAFETY_WINDOW_MS).toISOString();
+  const windowStart = new Date(newStart - CONFLICT_SEARCH_WINDOW_MS).toISOString();
+  const windowEnd = new Date(newEnd + CONFLICT_SEARCH_WINDOW_MS).toISOString();
   const { data: nearby } = await admin
     .from("lessons")
     .select("id, scheduledAt, durationMinutes, status")
@@ -466,9 +470,8 @@ export async function updateLessonSchedule(
   // 충돌 검증 — 본인 외 active 레슨
   const newStart = newDate.getTime();
   const newEnd = newStart + dur * 60 * 1000;
-  const SAFETY_WINDOW_MS = (4 + 24) * 60 * 60 * 1000;
-  const windowStart = new Date(newStart - SAFETY_WINDOW_MS).toISOString();
-  const windowEnd = new Date(newEnd + SAFETY_WINDOW_MS).toISOString();
+  const windowStart = new Date(newStart - CONFLICT_SEARCH_WINDOW_MS).toISOString();
+  const windowEnd = new Date(newEnd + CONFLICT_SEARCH_WINDOW_MS).toISOString();
   const { data: nearby } = await admin
     .from("lessons")
     .select("id, scheduledAt, durationMinutes, status")
@@ -578,10 +581,8 @@ export async function restoreLesson(lessonId: number): Promise<SimpleResult> {
   // 동일 시간 충돌 검증 (다른 active 레슨이 그 자리를 차지했는지)
   const start = new Date(lesson.scheduledAt).getTime();
   const end = start + lesson.durationMinutes * 60 * 1000;
-  // 충돌 검색 윈도우 (#5) — 최대 레슨 길이(240분) + 안전 마진
-  const SAFETY_WINDOW_MS = (4 + 24) * 60 * 60 * 1000; // ±28h
-  const windowStart = new Date(start - SAFETY_WINDOW_MS).toISOString();
-  const windowEnd = new Date(end + SAFETY_WINDOW_MS).toISOString();
+  const windowStart = new Date(start - CONFLICT_SEARCH_WINDOW_MS).toISOString();
+  const windowEnd = new Date(end + CONFLICT_SEARCH_WINDOW_MS).toISOString();
   const { data: nearby } = await admin
     .from("lessons")
     .select("id, scheduledAt, durationMinutes")
@@ -653,5 +654,6 @@ export async function updateLessonNotes(lessonId: number, notes: string): Promis
   }
 
   revalidatePath("/coach/schedule");
+  revalidatePath("/");
   return { ok: true };
 }

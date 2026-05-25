@@ -176,13 +176,15 @@ export function WeeklyTimetable({
   const router = useRouter();
 
   // 클라이언트 fetch — 항상 fresh. 서버 RSC 캐시 layer 무관.
+  // SSR initialLessons가 있으면 즉시 표시하고, mount 후 silent refresh로 갱신 (#4 깜빡임 방지)
+  const hasSSRData = initialLessons.length > 0 || initialStudents.length > 0;
   const [lessons, setLessons] = useState<LessonRow[]>(initialLessons);
   const [students, setStudents] = useState<StudentOption[]>(initialStudents);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!hasSSRData);
   const [loadError, setLoadError] = useState<string | null>(null);
 
-  const reload = useCallback(async () => {
-    setIsLoading(true);
+  const reload = useCallback(async (silent = false) => {
+    if (!silent) setIsLoading(true);
     setLoadError(null);
     try {
       const res = await fetch("/api/coach/lessons", { cache: "no-store" });
@@ -200,13 +202,15 @@ export function WeeklyTimetable({
     } catch (e) {
       setLoadError(e instanceof Error ? e.message : "네트워크 오류");
     } finally {
-      setIsLoading(false);
+      if (!silent) setIsLoading(false);
     }
   }, []);
 
+  // 최초 mount — SSR 데이터가 있으면 silent refresh (스피너 없이 갱신)
   useEffect(() => {
-    reload();
-  }, [reload]);
+    reload(hasSSRData);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [weekStart, setWeekStart] = useState<Date>(() => {
     // initialDate("YYYY-MM-DD")가 있으면 그 날짜가 속한 주, 없으면 이번 주
@@ -348,11 +352,18 @@ export function WeeklyTimetable({
         cursor.setTime(cursor.getTime() + slotStepMin * 60 * 1000);
       }
     }
+    // 1순위 시간, 2순위 학생명(가나다) — 동률 시 결정적 순서 보장 (#6)
+    const studentNameOf = (id: string) => students.find((s) => s.id === id)?.name ?? "";
     for (const arr of m.values()) {
-      arr.sort((a, b) => parseIsoUtc(a.scheduledAt).getTime() - parseIsoUtc(b.scheduledAt).getTime());
+      arr.sort((a, b) => {
+        const ta = parseIsoUtc(a.scheduledAt).getTime();
+        const tb = parseIsoUtc(b.scheduledAt).getTime();
+        if (ta !== tb) return ta - tb;
+        return studentNameOf(a.studentId).localeCompare(studentNameOf(b.studentId), "ko");
+      });
     }
     return m;
-  }, [lessons, slotStepMin, visibleStartMs, visibleEndMs]);
+  }, [lessons, slotStepMin, visibleStartMs, visibleEndMs, students]);
 
   const studentMap = useMemo(() => {
     const m = new Map<string, StudentOption>();
@@ -661,7 +672,7 @@ export function WeeklyTimetable({
             </div>
             <button
               type="button"
-              onClick={reload}
+              onClick={() => reload()}
               className="flex-none rounded-md border border-red-200 bg-white text-[11px] font-semibold text-red-600 px-2.5 py-1 hover:bg-red-50"
             >
               다시 시도
@@ -685,7 +696,7 @@ export function WeeklyTimetable({
             )}
             <button
               type="button"
-              onClick={reload}
+              onClick={() => reload()}
               aria-label="새로고침"
               className="w-7 h-7 inline-flex items-center justify-center rounded-md border border-emerald-200 bg-white text-emerald-700 hover:bg-emerald-50 transition"
             >

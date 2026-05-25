@@ -127,7 +127,14 @@ export function LessonDetailSheet({
   const isInProgress = lesson.status === "CONFIRMED" || lesson.status === "IN_PROGRESS";
   const canComplete = isInProgress && !!onComplete;
   const canAbsent = isInProgress && !!onAbsent;
-  const anyPending = pendingCancel || !!pendingRestore || !!pendingComplete || !!pendingAbsent || !!pendingPaid;
+  // 메모 저장 중에도 상태 전이 액션 차단 — 둘이 동시에 들어가면 ordering 꼬임
+  const anyPending =
+    pendingCancel ||
+    pendingNotes ||
+    !!pendingRestore ||
+    !!pendingComplete ||
+    !!pendingAbsent ||
+    !!pendingPaid;
   const notesChanged = notesDraft.trim() !== (lesson.notes ?? "").trim();
   const canMarkPaid = lesson.paymentStatus === "UNPAID" && !!onMarkPaid;
   const paymentLabel = (() => {
@@ -225,7 +232,7 @@ export function LessonDetailSheet({
               <button
                 type="button"
                 onClick={() => onSaveNotes(notesDraft)}
-                disabled={pendingNotes}
+                disabled={anyPending}
                 className="text-[11px] font-semibold text-primary px-3 py-1 rounded-md hover:bg-primary/10 disabled:opacity-60"
               >
                 {pendingNotes ? "저장 중…" : "메모 저장"}
