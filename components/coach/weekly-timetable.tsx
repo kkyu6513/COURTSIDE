@@ -762,17 +762,17 @@ export function WeeklyTimetable({
             <button
               type="button"
               onClick={goPrevWeek}
-              className="w-10 h-10 rounded-lg border border-line bg-surface text-base text-ink-2 hover:bg-soft transition active:scale-[0.96]"
-              aria-label="이전 주"
+              className="w-10 h-10 rounded-lg border border-line bg-surface text-base text-ink-2 hover:bg-soft transition active:scale-[0.96] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+              aria-label={`이전 주 (현재 ${weekRangeLabel})`}
             >
               ‹
             </button>
-            <span className="text-xs font-semibold text-ink-2 px-1">{weekRangeLabel}</span>
+            <span className="text-xs font-semibold text-ink-2 px-1" aria-live="polite">{weekRangeLabel}</span>
             <button
               type="button"
               onClick={goNextWeek}
-              className="w-10 h-10 rounded-lg border border-line bg-surface text-base text-ink-2 hover:bg-soft transition active:scale-[0.96]"
-              aria-label="다음 주"
+              className="w-10 h-10 rounded-lg border border-line bg-surface text-base text-ink-2 hover:bg-soft transition active:scale-[0.96] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+              aria-label={`다음 주 (현재 ${weekRangeLabel})`}
             >
               ›
             </button>
@@ -1009,7 +1009,16 @@ function SlotRow({
                   ? `${getStatusCellClass(deriveDisplayStatus(first.status, first.scheduledAt, first.durationMinutes))} cursor-pointer ${wd.isPast ? "opacity-70" : ""}`
                   : "bg-surface hover:bg-soft cursor-pointer"
             }`}
-            aria-label={`${slot.label} ${pastEmpty ? "지난 날짜 빈 시간 (비활성)" : count > 0 ? `레슨 ${count}개${full ? " (가득 참)" : ""}` : "빈 시간"} 옵션`}
+            aria-label={(() => {
+              const dayPart = `${f.m}월 ${f.day}일 ${DOW_KOR[dow]}요일 ${slot.label}`;
+              if (pastEmpty) return `${dayPart} 지난 시각 (비활성)`;
+              if (count === 0) return `${dayPart} 빈 슬롯 — 클릭해서 레슨 등록`;
+              if (count === 1) {
+                const name = studentMap.get(first.studentId)?.name ?? "이름 미입력";
+                return `${dayPart} ${name} 레슨${full ? " (시간 가득)" : ""}`;
+              }
+              return `${dayPart} 레슨 ${count}개${full ? " (시간 가득)" : ""}`;
+            })()}
           >
             {isHourMode && count >= 1 && (
               <span className="absolute inset-0 flex flex-col items-center justify-center gap-0.5">
