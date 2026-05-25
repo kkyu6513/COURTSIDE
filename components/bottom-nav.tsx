@@ -41,11 +41,11 @@ export function BottomNav({
             const isActive = (active ?? "/") === t.href;
             const className = `flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition ${
               isActive
-                ? "text-emerald-500"
+                ? "text-primary-600"
                 : t.disabled
                   ? "text-ink-3"
                   : "text-ink-2"
-            } ${t.disabled ? "cursor-not-allowed" : "hover:text-ink"}`;
+            } ${t.disabled ? "cursor-not-allowed opacity-60" : "hover:text-ink"}`;
             return t.disabled ? (
               <div key={t.href} className={className} aria-disabled>
                 <span className="w-5 h-5">{t.icon}</span>

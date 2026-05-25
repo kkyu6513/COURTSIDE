@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { BottomNav } from "@/components/bottom-nav";
-import { BackButton } from "@/components/back-button";
 import { CoachRequestForm, CoachRequestPending } from "@/components/coach-request-form";
 import { StudentSplash } from "@/components/student-splash";
 import { CoachHomeCalendar } from "@/components/coach/home-calendar";
@@ -163,24 +162,19 @@ function StudentHome({
   const greeting = timeGreeting();
   const date = todayLabel();
   const quote = randomQuote();
+  // 이메일이 fallback 닉네임으로 노출되지 않도록 마스킹
+  const displayName = nickname.includes("@") ? "회원" : nickname;
 
   // 테스트 모드 — 정상 스케줄 등록된 케이스
   if (testMode === "scheduled") {
     return (
       <main className="min-h-screen bg-bg pb-24">
         <div className="max-w-md mx-auto px-5 pt-6">
-          <div className="flex items-start justify-between gap-3">
-            <BackButton />
-            <div className="min-w-0 flex-1">
-              <div className="text-base font-bold text-ink">{nickname}님, {greeting}</div>
-              <div className="mt-1 text-xs text-ink-3">{date}</div>
+          <div className="min-w-0">
+            <div className="text-base font-bold text-ink truncate">
+              {displayName}님, {greeting}
             </div>
-            <button type="button" aria-label="알림" className="flex-none w-10 h-10 flex items-center justify-center rounded-full bg-surface border border-line">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
-                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-              </svg>
-            </button>
+            <div className="mt-1 text-xs text-ink-3">{date}</div>
           </div>
 
           <div className="mt-6">
@@ -194,32 +188,34 @@ function StudentHome({
 
   // 상태 분기:
   // - latestClaim 없음 → 신청 폼
-  // - PENDING + matched(matchedCoachUserId) → 대기 카드 (알림 발송됨)
-  // - PENDING + 미매칭 → 다시 신청 폼 + 안내
-  // - CONFIRMED → 정식 코치 카드 (추후 코치 등록 환경 마련 전에는 도달 X)
-  const showPendingMatched = latestClaim?.status === "PENDING" && !!latestClaim.matchedCoachUserId;
-  const showRequestForm = !latestClaim || (latestClaim.status === "PENDING" && !latestClaim.matchedCoachUserId) || latestClaim.status === "REJECTED";
+  // - PENDING + matched → 대기 카드 (알림 발송됨)
+  // - PENDING + 미매칭 → 다시 신청 폼
+  // - CONFIRMED → 연결된 코치 카드 (상태 전환 플로우 구현 전엔 도달 X)
+  const showPendingMatched =
+    latestClaim?.status === "PENDING" && !!latestClaim.matchedCoachUserId;
+  const showRequestForm =
+    !latestClaim ||
+    (latestClaim.status === "PENDING" && !latestClaim.matchedCoachUserId) ||
+    latestClaim.status === "REJECTED";
+  const coachSectionTitle = showPendingMatched
+    ? "코치 등록 진행 중"
+    : showRequestForm
+      ? "코치 등록"
+      : "내 코치";
 
   return (
     <main className="min-h-screen bg-bg pb-24">
       <StudentSplash quote={quote} />
       <div className="max-w-md mx-auto px-5 pt-6">
-        <div className="flex items-start justify-between gap-3">
-          <BackButton />
-          <div className="min-w-0 flex-1">
-            <div className="text-base font-bold text-ink">{nickname}님, {greeting}</div>
-            <div className="mt-1 text-xs text-ink-3">{date}</div>
+        <div className="min-w-0">
+          <div className="text-base font-bold text-ink truncate">
+            {displayName}님, {greeting}
           </div>
-          <button type="button" aria-label="알림" className="flex-none w-10 h-10 flex items-center justify-center rounded-full bg-surface border border-line">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
-              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-            </svg>
-          </button>
+          <div className="mt-1 text-xs text-ink-3">{date}</div>
         </div>
 
         <div className="mt-6">
-          <h2 className="text-sm font-bold text-ink mb-2">내 코치</h2>
+          <h2 className="text-sm font-bold text-ink mb-2">{coachSectionTitle}</h2>
           {showPendingMatched && latestClaim ? (
             <CoachRequestPending
               coachName={latestClaim.claimedCoachName}
@@ -237,16 +233,20 @@ function StudentHome({
         <div className="mt-6">
           <h2 className="text-sm font-bold text-ink mb-2">이번 주 레슨</h2>
           <div className="rounded-2xl border border-line bg-surface p-8 text-center">
-            <div className="text-3xl">📅</div>
-            <p className="mt-2 text-sm text-ink-2">아직 예정된 레슨이 없어요</p>
-            <p className="mt-1 text-xs text-ink-3">코치에게 등록되면 여기에 표시됩니다</p>
+            <p className="text-sm text-ink-2">아직 예정된 레슨이 없어요</p>
+            <p className="mt-1 text-xs text-ink-3">
+              코치님이 회원님을 등록하면 여기에 표시돼요
+            </p>
           </div>
         </div>
 
         <div className="mt-6">
           <h2 className="text-sm font-bold text-ink mb-2">응답 필요</h2>
-          <div className="rounded-2xl bg-soft p-5 text-center">
+          <div className="rounded-2xl border border-line bg-surface p-5 text-center">
             <p className="text-sm text-ink-2">처리할 항목이 없어요</p>
+            <p className="mt-1 text-[11px] text-ink-3">
+              코치님이 보낸 변경·보강 요청이 있을 때 여기에 표시돼요
+            </p>
           </div>
         </div>
       </div>

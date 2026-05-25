@@ -75,10 +75,10 @@ export function CoachRequestForm() {
 
   return (
     <>
-      <div className="rounded-2xl border border-emerald-200 bg-emerald-50/40 p-4">
-        <div className="text-sm font-bold text-ink">🎾 코치 등록 요청</div>
+      <div className="rounded-2xl border border-line bg-surface p-4">
+        <div className="text-sm font-bold text-ink">코치 등록 요청</div>
         <p className="mt-1 text-xs text-ink-2 leading-relaxed">
-          레슨받으시는 코치님 정보를 입력하시면 알림이 발송돼요. 코치님이 회원님을 등록하면 자동 연결됩니다.
+          레슨받으시는 코치님 정보를 입력하시면 알림이 발송돼요. 코치님이 회원님을 등록하면 자동 연결돼요.
         </p>
 
         <div className="mt-3 space-y-3">
@@ -136,22 +136,23 @@ export function CoachRequestPending({
   notifiedAt: string | null;
 }) {
   return (
-    <div className="rounded-2xl border border-amber-200 bg-amber-50/40 p-4">
+    <div className="rounded-2xl border border-line bg-surface p-4">
       <div className="flex items-start gap-3">
-        <div className="w-10 h-10 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center flex-none">
+        <div className="w-10 h-10 rounded-full bg-soft text-ink-2 flex items-center justify-center flex-none">
           <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
             <circle cx="12" cy="12" r="10" />
             <polyline points="12 6 12 12 16 14" />
           </svg>
         </div>
         <div className="flex-1 min-w-0">
-          <div className="text-sm font-semibold text-ink">
+          <div className="text-xs font-semibold text-amber-600">신청 대기 중</div>
+          <div className="mt-0.5 text-sm font-semibold text-ink">
             <b>{coachName}</b> 코치님께 신청을 보냈어요
           </div>
           <p className="mt-1 text-xs text-ink-2 leading-relaxed">
             {notifiedAt
-              ? "알림이 발송되었어요. 코치님이 회원님을 학생으로 등록하면 자동 연결됩니다."
-              : "잠시 후 코치님께 알림이 발송됩니다."}
+              ? "알림이 발송됐어요. 코치님이 회원님을 학생으로 등록하면 자동 연결돼요."
+              : "잠시 후 코치님께 알림이 발송돼요."}
           </p>
         </div>
       </div>
