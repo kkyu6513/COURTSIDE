@@ -159,6 +159,65 @@ export async function cancelLesson(lessonId: number): Promise<SimpleResult> {
 }
 
 /**
+ * 레슨 상태 전이 공통 헬퍼 — 본인 코치의 lesson만 (fromStatuses) → toStatus.
+ */
+async function transitionLessonStatus(
+  lessonId: number,
+  fromStatuses: string[],
+  toStatus: string,
+): Promise<SimpleResult> {
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "로그인이 필요합니다" };
+
+  const meta = user.app_metadata as { role?: string } | undefined;
+  if (meta?.role !== "COACH") return { ok: false, error: "코치만 가능해요" };
+
+  const admin = createAdminClient();
+
+  const { data: lesson } = await admin
+    .from("lessons")
+    .select("id, coachId, status")
+    .eq("id", lessonId)
+    .maybeSingle();
+
+  if (!lesson) return { ok: false, error: "레슨을 찾을 수 없어요" };
+  if (lesson.coachId !== user.id) return { ok: false, error: "변경 권한이 없어요" };
+  if (!fromStatuses.includes(lesson.status)) {
+    return {
+      ok: false,
+      error: `현재 상태(${lesson.status})에서는 이 작업을 할 수 없어요`,
+    };
+  }
+
+  const { error: updateError } = await admin
+    .from("lessons")
+    .update({ status: toStatus, updatedAt: new Date().toISOString() })
+    .eq("id", lessonId);
+
+  if (updateError) {
+    console.error("[transitionLessonStatus] update error:", updateError);
+    return { ok: false, error: updateError.message };
+  }
+
+  revalidatePath("/coach/schedule");
+  revalidatePath("/");
+  return { ok: true };
+}
+
+/** 레슨 완료 처리 — CONFIRMED/IN_PROGRESS → COMPLETED */
+export async function markLessonCompleted(lessonId: number): Promise<SimpleResult> {
+  return transitionLessonStatus(lessonId, ["CONFIRMED", "IN_PROGRESS"], "COMPLETED");
+}
+
+/** 결강 처리 — CONFIRMED/IN_PROGRESS → ABSENT */
+export async function markLessonAbsent(lessonId: number): Promise<SimpleResult> {
+  return transitionLessonStatus(lessonId, ["CONFIRMED", "IN_PROGRESS"], "ABSENT");
+}
+
+/**
  * 취소된 레슨 복구 — CANCELLED → CONFIRMED.
  * 동일 시간에 새 active 레슨이 이미 있으면 실패(충돌).
  */

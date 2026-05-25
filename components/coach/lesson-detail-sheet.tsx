@@ -23,9 +23,13 @@ type Props = {
   pendingCancel: boolean;
   pendingNotes: boolean;
   pendingRestore?: boolean;
+  pendingComplete?: boolean;
+  pendingAbsent?: boolean;
   onCancel: () => void;
   onSaveNotes: (notes: string) => void;
   onRestore?: () => void; // CANCELLED 레슨 복구
+  onComplete?: () => void; // CONFIRMED/IN_PROGRESS → COMPLETED
+  onAbsent?: () => void; // CONFIRMED/IN_PROGRESS → ABSENT
 };
 
 const DOW_KOR = ["일", "월", "화", "수", "목", "금", "토"];
@@ -51,7 +55,21 @@ function formatKstTimeRange(iso: string, durationMinutes: number) {
   };
 }
 
-export function LessonDetailSheet({ open, onClose, lesson, pendingCancel, pendingNotes, pendingRestore, onCancel, onSaveNotes, onRestore }: Props) {
+export function LessonDetailSheet({
+  open,
+  onClose,
+  lesson,
+  pendingCancel,
+  pendingNotes,
+  pendingRestore,
+  pendingComplete,
+  pendingAbsent,
+  onCancel,
+  onSaveNotes,
+  onRestore,
+  onComplete,
+  onAbsent,
+}: Props) {
   const [notesDraft, setNotesDraft] = useState("");
 
   useEffect(() => {
@@ -83,6 +101,12 @@ export function LessonDetailSheet({ open, onClose, lesson, pendingCancel, pendin
   const isPast = parseIsoUtc(lesson.scheduledAt).getTime() < Date.now();
   const canCancel = !isCancelled && !isPast;
   const canRestore = isCancelled && !isPast && !!onRestore;
+
+  // 상태 전이 액션 — CONFIRMED / IN_PROGRESS 상태에서만 가능
+  const isInProgress = lesson.status === "CONFIRMED" || lesson.status === "IN_PROGRESS";
+  const canComplete = isInProgress && !!onComplete;
+  const canAbsent = isInProgress && !!onAbsent;
+  const anyPending = pendingCancel || !!pendingRestore || !!pendingComplete || !!pendingAbsent;
   const notesChanged = notesDraft.trim() !== (lesson.notes ?? "").trim();
 
   return createPortal(
@@ -167,11 +191,49 @@ export function LessonDetailSheet({ open, onClose, lesson, pendingCancel, pendin
         </div>
 
         <div className="mt-4 space-y-2">
+          {/* 상태 전이 — 완료/결강 (CONFIRMED/IN_PROGRESS 한정) */}
+          {(canComplete || canAbsent) && (
+            <div className="grid grid-cols-2 gap-2">
+              {canComplete && (
+                <button
+                  type="button"
+                  onClick={onComplete}
+                  disabled={anyPending}
+                  className="h-12 rounded-xl bg-blue-50 text-blue-700 text-sm font-semibold hover:bg-blue-100 transition active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
+                >
+                  {pendingComplete && (
+                    <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z" />
+                    </svg>
+                  )}
+                  {pendingComplete ? "처리 중…" : "레슨 완료"}
+                </button>
+              )}
+              {canAbsent && (
+                <button
+                  type="button"
+                  onClick={onAbsent}
+                  disabled={anyPending}
+                  className="h-12 rounded-xl bg-gray-100 text-gray-600 text-sm font-semibold hover:bg-gray-200 transition active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
+                >
+                  {pendingAbsent && (
+                    <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z" />
+                    </svg>
+                  )}
+                  {pendingAbsent ? "처리 중…" : "결강 처리"}
+                </button>
+              )}
+            </div>
+          )}
+
           {canCancel && (
             <button
               type="button"
               onClick={onCancel}
-              disabled={pendingCancel}
+              disabled={anyPending}
               className="w-full h-12 rounded-xl bg-red-50 text-red-500 text-sm font-semibold hover:bg-red-100 transition active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
             >
               {pendingCancel && (

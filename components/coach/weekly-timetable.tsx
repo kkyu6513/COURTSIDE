@@ -8,7 +8,14 @@ import { EmptySlotSheet } from "@/components/coach/empty-slot-sheet";
 import { StudentPickerSheet, type StudentOption } from "@/components/coach/student-picker-sheet";
 import { LessonDetailSheet, type LessonDetail } from "@/components/coach/lesson-detail-sheet";
 import { LessonListSheet } from "@/components/coach/lesson-list-sheet";
-import { bookLesson, cancelLesson, restoreLesson, updateLessonNotes } from "@/app/coach/schedule/actions";
+import {
+  bookLesson,
+  cancelLesson,
+  markLessonAbsent,
+  markLessonCompleted,
+  restoreLesson,
+  updateLessonNotes,
+} from "@/app/coach/schedule/actions";
 import { deriveDisplayStatus, getStatusCellClass } from "@/lib/lesson-status";
 
 export type LessonRow = {
@@ -237,6 +244,8 @@ export function WeeklyTimetable({
   const [pendingCancel, setPendingCancel] = useState(false);
   const [pendingNotes, setPendingNotes] = useState(false);
   const [pendingRestore, setPendingRestore] = useState(false);
+  const [pendingComplete, setPendingComplete] = useState(false);
+  const [pendingAbsent, setPendingAbsent] = useState(false);
   const [, startTransition] = useTransition();
   // 에러/경고 — 사용자 확인이 필요한 풀모달
   const [alert, setAlert] = useState<{ open: boolean; variant: "error"; title: string; description?: string }>({
@@ -450,6 +459,40 @@ export function WeeklyTimetable({
       }
       setLessonDetail(null);
       showSuccess("레슨이 취소되었어요", "수강생 알림 발송은 다음 업데이트에 추가될 예정이에요.");
+      reload();
+    });
+  };
+
+  const onCompleteLesson = () => {
+    if (!lessonDetail) return;
+    const lessonId = lessonDetail.lesson.id;
+    setPendingComplete(true);
+    startTransition(async () => {
+      const res = await markLessonCompleted(lessonId);
+      setPendingComplete(false);
+      if (!res.ok) {
+        showError("레슨 완료 처리 실패", res.error);
+        return;
+      }
+      setLessonDetail(null);
+      showSuccess("레슨을 완료 처리했어요");
+      reload();
+    });
+  };
+
+  const onAbsentLesson = () => {
+    if (!lessonDetail) return;
+    const lessonId = lessonDetail.lesson.id;
+    setPendingAbsent(true);
+    startTransition(async () => {
+      const res = await markLessonAbsent(lessonId);
+      setPendingAbsent(false);
+      if (!res.ok) {
+        showError("결강 처리 실패", res.error);
+        return;
+      }
+      setLessonDetail(null);
+      showSuccess("결강으로 처리했어요");
       reload();
     });
   };
@@ -716,9 +759,13 @@ export function WeeklyTimetable({
           pendingCancel={pendingCancel}
           pendingNotes={pendingNotes}
           pendingRestore={pendingRestore}
+          pendingComplete={pendingComplete}
+          pendingAbsent={pendingAbsent}
           onCancel={onCancelLesson}
           onSaveNotes={onSaveLessonNotes}
           onRestore={onRestoreLesson}
+          onComplete={onCompleteLesson}
+          onAbsent={onAbsentLesson}
         />
       )}
 
