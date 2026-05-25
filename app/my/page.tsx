@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { BottomNav } from "@/components/bottom-nav";
@@ -17,6 +18,7 @@ export default async function MyPage() {
     user.email ||
     "사용자";
   const displayName = nickname.includes("@") ? (role === "COACH" ? "코치" : "회원") : nickname;
+  const isStudent = role !== "COACH";
 
   return (
     <main className="min-h-screen bg-bg pb-24">
@@ -36,6 +38,31 @@ export default async function MyPage() {
             </div>
           </div>
         </div>
+
+        {/* FR-16 학생 리텐션 콘텐츠 메뉴 */}
+        {isStudent && (
+          <nav className="mt-6 rounded-2xl border border-line bg-surface overflow-hidden">
+            <MenuRow
+              href="/my/courtside"
+              icon="☀️"
+              label="오늘의 코트사이드"
+              badge="NEW"
+            />
+            <MenuRow
+              href="/my/racket"
+              icon="🎾"
+              label="내 라켓"
+              badge="NEW"
+            />
+            <MenuRow
+              href="/my/grand-slam"
+              icon="🏆"
+              label="그랜드슬램 시청 가이드"
+              badge="NEW"
+              last
+            />
+          </nav>
+        )}
 
         <div className="mt-6">
           <ComingSoon
@@ -57,5 +84,37 @@ export default async function MyPage() {
       </div>
       <BottomNav role={role === "COACH" ? "COACH" : "STUDENT"} active="/my" />
     </main>
+  );
+}
+
+function MenuRow({
+  href,
+  icon,
+  label,
+  badge,
+  last,
+}: {
+  href: string;
+  icon: string;
+  label: string;
+  badge?: string;
+  last?: boolean;
+}) {
+  return (
+    <Link
+      href={href}
+      className={`flex items-center gap-3 px-4 py-3.5 hover:bg-soft transition ${
+        last ? "" : "border-b border-line"
+      }`}
+    >
+      <span className="w-7 text-center text-base flex-none">{icon}</span>
+      <span className="flex-1 text-sm font-semibold text-ink">{label}</span>
+      {badge && (
+        <span className="text-[10px] font-extrabold px-2 py-0.5 bg-accent-purple text-white rounded-md tracking-wider">
+          {badge}
+        </span>
+      )}
+      <span className="text-ink-3 text-sm">›</span>
+    </Link>
   );
 }

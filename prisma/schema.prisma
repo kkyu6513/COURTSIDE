@@ -71,6 +71,11 @@ model User {
   coachProfile    CoachProfile?
   schedules       Schedule[]
   termsAgreements UserTermsAgreement[]
+  rackets         UserRacket[]
+  favoritePlayers FavoritePlayer[]
+
+  // FR-16a: 오늘의 코트사이드 푸시 시간 ("HH:mm" or null=OFF, 기본 "08:00")
+  dailyPushTime   String?         @default("08:00")
 
   @@unique([socialProvider, socialId])
   @@map("users")
@@ -390,4 +395,229 @@ model UserTermsAgreement {
   @@unique([userId, termsVersionId])
   @@index([userId])
   @@map("user_terms_agreements")
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// FR-16: 학생 리텐션 콘텐츠 (오늘의 코트사이드 / 내 라켓 / 그랜드슬램)
+// ─────────────────────────────────────────────────────────────────────
+
+enum DailyContentType {
+  WEATHER
+  KR_MATCH
+  HIGHLIGHT
+  LOCAL_TOURNAMENT
+}
+
+enum RacketBrand {
+  WILSON
+  BABOLAT
+  HEAD
+  YONEX
+  PRINCE
+  DUNLOP
+  TECNIFIBRE
+  PROKENNEX
+}
+
+enum TournamentType {
+  GRAND_SLAM
+  ATP
+  WTA
+  LOCAL
+}
+
+enum MatchStatus {
+  SCHEDULED
+  LIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum ProTour {
+  ATP
+  WTA
+}
+
+enum RacketNewsType {
+  NEW_MODEL
+  SALE
+  STRING_TIP
+  REVIEW
+}
+
+/// FR-16a 오늘의 코트사이드 콘텐츠 캐시 (외부 API + AI 요약 + 어드민 검수)
+model DailyContent {
+  id           Int              @id @default(autoincrement())
+  contentDate  DateTime         @db.Date
+  type         DailyContentType
+  region       String?          // WEATHER / LOCAL_TOURNAMENT 한정 (시·군·구)
+  title        String
+  summary      String?
+  body         String?
+  externalUrl  String?
+  meta         Json?            // 기온/풍속/PM10/선수명/스코어 등
+  isPublished  Boolean          @default(true)
+  createdAt    DateTime         @default(now())
+
+  @@index([contentDate, type, region])
+  @@map("daily_contents")
+}
+
+/// FR-16b 라켓 마스터 (어드민 관리)
+model Racket {
+  id          Int         @id @default(autoincrement())
+  brand       RacketBrand
+  model       String
+  headSize    Int?
+  weight      Int?
+  imageUrl    String?
+  releaseYear Int?
+  isActive    Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+
+  userRackets UserRacket[]
+  proPlayers  ProPlayer[]
+  news        RacketNews[]
+
+  @@unique([brand, model])
+  @@map("rackets")
+}
+
+/// FR-16b 학생-라켓 매핑 (현재 사용 라켓 + 이력)
+model UserRacket {
+  id                   Int       @id @default(autoincrement())
+  userId               String    @db.Uuid
+  racketId             Int
+  stringType           String?
+  stringTension        Int?      // lbs (30~70)
+  lastStringChangeDate DateTime? @db.Date
+  isActive             Boolean   @default(true)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  racket           Racket            @relation(fields: [racketId], references: [id])
+  stringChangeLogs StringChangeLog[]
+
+  @@index([userId, isActive])
+  @@map("user_rackets")
+}
+
+/// FR-16b 스트링 교체 이력 (평균 주기 산출용)
+model StringChangeLog {
+  id           Int      @id @default(autoincrement())
+  userRacketId Int
+  changeDate   DateTime @db.Date
+  tension      Int?
+  stringType   String?
+  memo         String?
+  createdAt    DateTime @default(now())
+
+  userRacket UserRacket @relation(fields: [userRacketId], references: [id], onDelete: Cascade)
+
+  @@index([userRacketId, changeDate])
+  @@map("string_change_logs")
+}
+
+/// FR-16b/c 프로 선수 마스터
+model ProPlayer {
+  id        Int      @id @default(autoincrement())
+  name      String
+  nameKo    String?
+  country   String   // ISO 2자리 (IT, KR, US 등)
+  tour      ProTour
+  racketId  Int?
+  atpRank   Int?
+  imageUrl  String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  racket    Racket?          @relation(fields: [racketId], references: [id])
+  matches1  ProMatch[]       @relation("Player1")
+  matches2  ProMatch[]       @relation("Player2")
+  favorited FavoritePlayer[]
+
+  @@map("pro_players")
+}
+
+/// FR-16c 즐겨찾기 선수 (경기 1시간 전 알림)
+model FavoritePlayer {
+  id          Int      @id @default(autoincrement())
+  userId      String   @db.Uuid
+  proPlayerId Int
+  createdAt   DateTime @default(now())
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  proPlayer ProPlayer @relation(fields: [proPlayerId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, proPlayerId])
+  @@map("favorite_players")
+}
+
+/// FR-16a/c 대회 마스터 (그랜드슬램 + ATP/WTA + 동호인)
+model Tournament {
+  id                    Int            @id @default(autoincrement())
+  name                  String
+  nameKo                String?
+  type                  TournamentType
+  city                  String
+  utcOffsetMinutes      Int            // 호주=+660 등
+  startDate             DateTime       @db.Date
+  endDate               DateTime       @db.Date
+  region                String?        // LOCAL 한정 (시·군·구)
+  minNtrp               Decimal?       @db.Decimal(2, 1)
+  maxNtrp               Decimal?       @db.Decimal(2, 1)
+  broadcastChannels     String[]
+  externalUrl           String?
+  registrationDeadline  DateTime?      @db.Date
+  isActive              Boolean        @default(true)
+  createdAt             DateTime       @default(now())
+
+  matches ProMatch[]
+
+  @@index([type, startDate])
+  @@map("tournaments")
+}
+
+/// FR-16a/c 프로 경기 일정·결과
+model ProMatch {
+  id            Int         @id @default(autoincrement())
+  tournamentId  Int
+  round         String      // R32 / QF / SF / F 등
+  player1Id     Int
+  player2Id     Int
+  scheduledAt   DateTime    // UTC
+  status        MatchStatus @default(SCHEDULED)
+  winnerId      Int?
+  score         String?
+  highlightUrl  String?
+  aiSummary     String?
+  createdAt     DateTime    @default(now())
+
+  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  player1    ProPlayer  @relation("Player1", fields: [player1Id], references: [id])
+  player2    ProPlayer  @relation("Player2", fields: [player2Id], references: [id])
+
+  @@index([scheduledAt, status])
+  @@index([tournamentId, round])
+  @@map("pro_matches")
+}
+
+/// FR-16b 라켓 뉴스·할인 (어드민 입력)
+model RacketNews {
+  id             Int            @id @default(autoincrement())
+  type           RacketNewsType
+  targetBrand    RacketBrand?
+  targetRacketId Int?
+  title          String
+  body           String?
+  imageUrl       String?
+  externalUrl    String?
+  publishedAt    DateTime       @default(now())
+  isActive       Boolean        @default(true)
+
+  targetRacket Racket? @relation(fields: [targetRacketId], references: [id])
+
+  @@index([type, publishedAt])
+  @@map("racket_news")
 }
