@@ -252,7 +252,22 @@ export function WeeklyTimetable({
     }
   }, [isLoading, lessons, weekStart]);
 
-  const [viewMode, setViewMode] = useState<ViewMode>("hour");
+  // 뷰모드 localStorage 영속 (#8) — 새로고침/세션 간 유지
+  const VIEW_MODE_KEY = "courtside.coach.schedule.viewMode";
+  const [viewMode, setViewModeState] = useState<ViewMode>("hour");
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const saved = window.localStorage.getItem(VIEW_MODE_KEY);
+    if (saved === "hour" || saved === "minute") setViewModeState(saved);
+  }, []);
+  const setViewMode = useCallback((mode: ViewMode) => {
+    setViewModeState(mode);
+    try {
+      window.localStorage.setItem(VIEW_MODE_KEY, mode);
+    } catch {
+      /* localStorage 비활성 환경 — 무시 */
+    }
+  }, []);
   const timeSlots = useMemo(() => buildTimeSlots(viewMode), [viewMode]);
   const slotStepMin = viewMode === "hour" ? 60 : 10;
   const [sheet, setSheet] = useState<{
@@ -435,9 +450,14 @@ export function WeeklyTimetable({
 
     if (arr.length === 0) {
       if (isPast) {
+        const nowKst = new Date(Date.now() + 9 * 60 * 60 * 1000);
+        const nowHh = String(nowKst.getUTCHours()).padStart(2, "0");
+        const nowMm = String(nowKst.getUTCMinutes()).padStart(2, "0");
+        const cellHh = String(hour).padStart(2, "0");
+        const cellMm = String(minute).padStart(2, "0");
         showError(
-          "이미 지난 시각에는 잡을 수 없어요",
-          "지나간 시간대에는 새 레슨을 잡을 수 없습니다. 현재 이후 시각을 선택해 주세요.",
+          "이미 지난 시각이에요",
+          `${cellHh}:${cellMm} 슬롯은 현재(${nowHh}:${nowMm}) 기준 이미 지났어요. 현재 이후 시각을 선택해 주세요.`,
         );
         return;
       }
@@ -925,8 +945,8 @@ function SlotRow({
   slotStepMin?: number;
 }) {
   const isHourMode = viewMode === "hour";
-  // 셀 높이 — 1시간 36 → 44 (탭 영역 강화), 10분 20 → 24
-  const rowHeight = isHourMode ? "h-11" : "h-6";
+  // 셀 높이 — 1시간 44px, 10분 32px (#9: 24 → 32, 터치 타겟 약간 강화. 44px 권장이나 grid density 절충)
+  const rowHeight = isHourMode ? "h-11" : "h-8";
   // 10분 모드에서 매 시각 단위 행만 강한 보더로 구분
   const isHourBoundary = slot.minute === 0;
   const topBorder = isHourMode
@@ -970,14 +990,31 @@ function SlotRow({
             key={i}
             role="gridcell"
             onClick={() => onCellClick(dow, slot.hour, wd.date, slot.minute)}
+            disabled={pastEmpty}
+            // 네이티브 tooltip — 잘려 보이지 않는 학생 이름 + 상태를 마우스 호버 시 노출 (#20)
+            title={
+              pastEmpty
+                ? "지난 시각 — 새 레슨 등록 불가"
+                : count > 0
+                  ? arr
+                      .map((l) => {
+                        const s = studentMap.get(l.studentId)?.name ?? "이름 미입력";
+                        const startKst = new Date(parseIsoUtc(l.scheduledAt).getTime() + 9 * 60 * 60 * 1000);
+                        const hh = String(startKst.getUTCHours()).padStart(2, "0");
+                        const mm = String(startKst.getUTCMinutes()).padStart(2, "0");
+                        return `${hh}:${mm} ${s}`;
+                      })
+                      .join(" / ")
+                  : "빈 슬롯 — 클릭해서 레슨 잡기"
+            }
             className={`relative ${rowHeight} ${cellTopBorder} border-l border-line/60 transition active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-primary/40 focus:relative overflow-hidden ${
               pastEmpty
-                ? "bg-soft/60 cursor-not-allowed"
+                ? "bg-soft/40 cursor-not-allowed"
                 : count > 0
                   ? `${getStatusCellClass(deriveDisplayStatus(first.status, first.scheduledAt, first.durationMinutes))} cursor-pointer ${wd.isPast ? "opacity-70" : ""}`
                   : "bg-surface hover:bg-soft cursor-pointer"
             }`}
-            aria-label={`${slot.label} ${pastEmpty ? "지난 날짜 빈 시간" : count > 0 ? `레슨 ${count}개${full ? " (가득 참)" : ""}` : "빈 시간"} 옵션`}
+            aria-label={`${slot.label} ${pastEmpty ? "지난 날짜 빈 시간 (비활성)" : count > 0 ? `레슨 ${count}개${full ? " (가득 참)" : ""}` : "빈 시간"} 옵션`}
           >
             {isHourMode && count >= 1 && (
               <span className="absolute inset-0 flex flex-col items-center justify-center gap-0.5">
@@ -997,8 +1034,8 @@ function SlotRow({
                   );
                 })()}
                 {(count > 1 || full) && (
-                  <span className={`inline-flex items-center justify-center min-w-[18px] h-[18px] px-1.5 rounded-full text-white text-[9px] font-bold leading-none tracking-tight ${full ? "bg-red-500" : "bg-ink"}`}>
-                    {full ? "FULL" : count}
+                  <span className={`inline-flex items-center justify-center min-w-[18px] h-[18px] px-1.5 rounded-full text-white text-[9px] font-bold leading-none tracking-tight ${full ? "bg-orange-600" : "bg-ink"}`}>
+                    {full ? "FULL" : count > 9 ? "9+" : count}
                   </span>
                 )}
               </span>

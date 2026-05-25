@@ -222,7 +222,7 @@ export function LessonDetailSheet({
             value={notesDraft}
             onChange={(e) => setNotesDraft(e.target.value)}
             placeholder={isPast ? "이 레슨에 대한 코멘트를 남겨보세요 (자세, 진도, 다음 회차 등)" : "레슨 전 메모, 코칭 포인트 등"}
-            rows={3}
+            rows={5}
             maxLength={1000}
             className="w-full rounded-xl border border-line bg-surface p-3 text-sm text-ink placeholder:text-ink-3 resize-none outline-none focus:ring-2 focus:ring-primary/40"
           />
@@ -312,6 +312,18 @@ export function LessonDetailSheet({
                 </svg>
               )}
               {pendingCancel ? "취소 중…" : "레슨 취소"}
+            </button>
+          )}
+
+          {/* 과거 레슨 — 취소 불가 이유 안내 (#18) */}
+          {!isCancelled && isPast && (
+            <button
+              type="button"
+              disabled
+              title="지난 레슨은 취소할 수 없어요"
+              className="w-full h-12 rounded-xl bg-soft text-ink-3 text-sm font-semibold cursor-not-allowed inline-flex items-center justify-center"
+            >
+              지난 레슨 — 취소 불가
             </button>
           )}
 

@@ -88,6 +88,8 @@ export function StudentPickerSheet({
   const [duration, setDuration] = useState(60);
   const [selectedStartMin, setSelectedStartMin] = useState<number | null>(null);
   const [weekCount, setWeekCount] = useState(1); // 정기 등록 주 수 (1 = 단발)
+  // 길이 변경으로 선택 시간이 리셋됐을 때 사용자 안내 (#14)
+  const [durationResetHint, setDurationResetHint] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -96,6 +98,7 @@ export function StudentPickerSheet({
       setDuration(60);
       setSelectedStartMin(null);
       setWeekCount(1);
+      setDurationResetHint(false);
     }
   }, [open, initialHour]);
 
@@ -156,13 +159,20 @@ export function StudentPickerSheet({
 
   const onSelectDuration = (d: number) => {
     setDuration(d);
-    // 새 그리드에 selectedStartMin이 정확히 있으면 유지, 없으면 null
+    // 새 그리드에 selectedStartMin이 정확히 있으면 유지, 없으면 null + 사용자 안내 (#14)
     if (selectedStartMin !== null) {
       const offset = (selectedStartMin - DAY_START_MIN) % d;
       const fitsInDay = selectedStartMin + d <= DAY_END_MIN;
       if (offset !== 0 || !fitsInDay) {
         setSelectedStartMin(null);
+        setDurationResetHint(true);
+        // 3초 후 안내 자동 제거
+        setTimeout(() => setDurationResetHint(false), 3000);
+      } else {
+        setDurationResetHint(false);
       }
+    } else {
+      setDurationResetHint(false);
     }
   };
 
@@ -253,8 +263,19 @@ export function StudentPickerSheet({
 
             {/* 시간 슬롯 리스트 (스크롤) */}
             <div className="px-3 pb-1 flex-none">
-              <div className="text-[11px] font-semibold text-ink-2 px-2">
-                시작 시간 선택 — 비어있는 시간을 탭하세요
+              <div className="px-2 flex items-center justify-between gap-2">
+                <div className="text-[11px] font-semibold text-ink-2">
+                  시작 시간 선택 — 비어있는 시간을 탭하세요
+                </div>
+                {durationResetHint && (
+                  <div
+                    className="text-[10px] font-semibold text-amber-600"
+                    role="status"
+                    aria-live="polite"
+                  >
+                    길이 변경 — 시간 다시 선택
+                  </div>
+                )}
               </div>
             </div>
             <div className="flex-1 overflow-y-auto px-3 pb-2">
@@ -377,6 +398,18 @@ export function StudentPickerSheet({
                   type="button"
                   onClick={() => setStep("student")}
                   disabled={!canProceed}
+                  aria-disabled={!canProceed}
+                  title={
+                    canProceed
+                      ? undefined
+                      : startMin === null
+                        ? "시작 시간을 먼저 선택하세요"
+                        : selectedIsPast
+                          ? "지난 시간은 선택할 수 없어요"
+                          : selectedConflict
+                            ? `${selectedConflict.studentName} 레슨과 겹쳐요`
+                            : undefined
+                  }
                   className="flex-1 h-12 rounded-xl bg-primary text-white text-sm font-semibold hover:opacity-90 transition active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   다음
@@ -431,7 +464,10 @@ export function StudentPickerSheet({
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="이름 또는 전화번호로 검색"
+                placeholder="이름, 초성, 전화번호 검색"
+                aria-label="수강생 검색"
+                // autoFocus는 모바일 키보드 즉시 팝업이라 학생 8명 이상일 때만 (#13)
+                autoFocus={students.length > 8}
                 className="mt-2 w-full h-11 rounded-xl bg-soft px-3.5 text-sm text-ink placeholder:text-ink-3 outline-none focus:ring-2 focus:ring-primary/40"
               />
             </div>
@@ -507,7 +543,7 @@ export function StudentPickerSheet({
                 disabled={!!pendingStudentId}
                 className="w-full h-12 rounded-xl border border-line bg-surface text-sm font-semibold text-ink-2 hover:bg-soft transition disabled:opacity-50"
               >
-                ‹ 이전 (시간 다시 선택)
+                ‹ 시간 변경 (선택한 시간은 유지돼요)
               </button>
             </div>
           </>

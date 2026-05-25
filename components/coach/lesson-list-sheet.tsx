@@ -89,16 +89,16 @@ export function LessonListSheet({ open, onClose, hourLabel, lessons, onPickLesso
                   <button
                     type="button"
                     onClick={() => onPickLesson(l)}
-                    className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl bg-soft hover:bg-line/60 transition active:scale-[0.99] text-left"
+                    className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl bg-soft hover:bg-line/60 transition active:scale-[0.99] text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
                   >
-                    <div className="w-12 flex-none text-center">
-                      <div className="text-xs font-bold text-ink">{formatKstHm(l.scheduledAt)}</div>
-                      <div className="text-[10px] text-ink-3">~{formatKstHm(endIso)}</div>
-                    </div>
-                    <div className="w-px h-10 bg-line flex-none" />
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-bold text-ink truncate">{l.studentName}</div>
-                      <div className="mt-0.5 text-[11px] text-ink-3">{l.durationMinutes}분</div>
+                      <div className="flex items-baseline gap-2">
+                        <span className="flex-none text-sm font-bold text-ink tabular-nums">
+                          {formatKstHm(l.scheduledAt)} ~ {formatKstHm(endIso)}
+                        </span>
+                        <span className="flex-none text-[10px] text-ink-3">{l.durationMinutes}분</span>
+                      </div>
+                      <div className="mt-0.5 text-xs text-ink-2 truncate">{l.studentName}</div>
                     </div>
                     <span className={`flex-none rounded-full px-2.5 py-1 text-[11px] font-semibold ${status.bg} ${status.fg}`}>
                       {status.text}
