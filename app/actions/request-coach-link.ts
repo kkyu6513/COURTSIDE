@@ -14,10 +14,10 @@ export async function requestCoachLink(formData: FormData): Promise<Result> {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { ok: false, error: "로그인이 필요합니다" };
+  if (!user) return { ok: false, error: "로그인이 필요해요" };
 
   const meta = user.app_metadata as { role?: string } | undefined;
-  if (meta?.role !== "STUDENT") return { ok: false, error: "학생만 신청할 수 있습니다" };
+  if (meta?.role !== "STUDENT") return { ok: false, error: "학생만 신청할 수 있어요" };
 
   const coachName = formData.get("coachName")?.toString()?.trim();
   const coachPhoneRaw = formData.get("coachPhone")?.toString()?.trim();
@@ -29,6 +29,30 @@ export async function requestCoachLink(formData: FormData): Promise<Result> {
   }
 
   const admin = createAdminClient();
+
+  // 본인 인증 확인 — 학생 본인 전화번호 등록 여부 (온보딩 SMS 인증 완료 검증)
+  const { data: selfRow } = await admin
+    .from("users")
+    .select("phone")
+    .eq("id", user.id)
+    .maybeSingle();
+  if (!selfRow?.phone) {
+    return { ok: false, error: "본인 전화번호 인증을 먼저 완료해주세요" };
+  }
+
+  // Rate limit — 10분 내 3건 초과 신청 차단 (스팸 방지)
+  const since = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+  const { count: recent } = await admin
+    .from("student_self_claims")
+    .select("id", { count: "exact", head: true })
+    .eq("studentUserId", user.id)
+    .gte("createdAt", since);
+  if ((recent ?? 0) >= 3) {
+    return {
+      ok: false,
+      error: "짧은 시간에 신청을 여러 번 보내셨어요. 잠시 후 다시 시도해주세요.",
+    };
+  }
 
   const { data: candidates } = await admin
     .from("users")

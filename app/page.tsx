@@ -7,6 +7,13 @@ import { CoachRequestForm, CoachRequestPending } from "@/components/coach-reques
 import { StudentSplash } from "@/components/student-splash";
 import { CoachHomeCalendar } from "@/components/coach/home-calendar";
 import { StudentTestCases } from "@/components/student-test-cases";
+import {
+  StudentWeekMini,
+  StudentWeekLessons,
+  StudentResponseRequired,
+  StudentPaymentNotice,
+  type StudentLessonRow,
+} from "@/components/student/lesson-list";
 import { signOutAction } from "@/app/actions/sign-out";
 import { randomQuote, timeGreeting, todayLabel } from "@/lib/quotes";
 
@@ -90,11 +97,62 @@ export default async function Home({
       .limit(1)
       .maybeSingle();
 
+    // 본인 레슨 (이번 주 KST 월~일 범위 + CANCELLED 제외)
+    const nowKst = new Date(Date.now() + 9 * 60 * 60 * 1000);
+    const dow = nowKst.getUTCDay();
+    const offsetToMon = (dow + 6) % 7;
+    const monKst = new Date(nowKst);
+    monKst.setUTCDate(monKst.getUTCDate() - offsetToMon);
+    monKst.setUTCHours(0, 0, 0, 0);
+    const weekStartUtcIso = new Date(monKst.getTime() - 9 * 60 * 60 * 1000).toISOString();
+    const weekEndUtcIso = new Date(
+      monKst.getTime() + 7 * 24 * 60 * 60 * 1000 - 9 * 60 * 60 * 1000,
+    ).toISOString();
+
+    const { data: studentLessons } = await admin
+      .from("lessons")
+      .select(
+        "id, coachId, scheduledAt, durationMinutes, status, paymentStatus, lessonFormat, roundNumber, totalRounds, originalScheduledAt, splitIndex, splitTotal, notes",
+      )
+      .eq("studentId", user.id)
+      .neq("status", "CANCELLED")
+      .gte("scheduledAt", weekStartUtcIso)
+      .lt("scheduledAt", weekEndUtcIso)
+      .order("scheduledAt", { ascending: true });
+
+    const lessons = (studentLessons ?? []) as StudentLessonRow[];
+
+    // 응답 필요 (MAKEUP_PENDING) — 주간 범위와 무관하게 항상 노출
+    const { data: actionLessons } = await admin
+      .from("lessons")
+      .select(
+        "id, coachId, scheduledAt, durationMinutes, status, paymentStatus, lessonFormat, roundNumber, totalRounds, originalScheduledAt, splitIndex, splitTotal, notes",
+      )
+      .eq("studentId", user.id)
+      .in("status", ["MAKEUP_PENDING"])
+      .order("scheduledAt", { ascending: true });
+
+    const allLessonsForNames = [...(actionLessons ?? []), ...lessons] as StudentLessonRow[];
+    const coachIds = Array.from(new Set(allLessonsForNames.map((l) => l.coachId)));
+    const coachNames: Record<string, string> = {};
+    if (coachIds.length > 0) {
+      const { data: coaches } = await admin
+        .from("users")
+        .select("id, realName, name")
+        .in("id", coachIds);
+      for (const c of (coaches ?? []) as Array<{ id: string; realName: string | null; name: string | null }>) {
+        coachNames[c.id] = c.realName || c.name || "코치";
+      }
+    }
+
     return (
       <StudentHome
         nickname={nickname}
         latestClaim={latestClaim}
         testMode={testMode === "scheduled" ? "scheduled" : null}
+        weekLessons={lessons}
+        actionLessons={(actionLessons ?? []) as StudentLessonRow[]}
+        coachNames={coachNames}
       />
     );
   }
@@ -154,10 +212,16 @@ function StudentHome({
   nickname,
   latestClaim,
   testMode,
+  weekLessons = [],
+  actionLessons = [],
+  coachNames = {},
 }: {
   nickname: string;
   latestClaim: LatestClaim;
   testMode: "scheduled" | null;
+  weekLessons?: StudentLessonRow[];
+  actionLessons?: StudentLessonRow[];
+  coachNames?: Record<string, string>;
 }) {
   const greeting = timeGreeting();
   const date = todayLabel();
@@ -254,66 +318,50 @@ function StudentHome({
           )}
         </div>
 
-        <div className="mt-6">
-          <h2 className="text-lg font-bold text-ink mb-2">이번 주 레슨</h2>
-          <div className="rounded-2xl border border-line bg-surface p-8 text-center">
-            <p className="text-sm text-ink-2">아직 예정된 레슨이 없어요</p>
-            <p className="mt-1 text-xs text-ink-3">
-              {isConnected
-                ? "코치님이 레슨을 등록하면 여기에 표시돼요"
-                : "코치님이 회원님을 등록하면 여기에 표시돼요"}
-            </p>
+        {/* 결제 안내 — 미결제 있을 때만 노출 */}
+        {weekLessons.length > 0 && (
+          <div className="mt-4">
+            <StudentPaymentNotice lessons={weekLessons} />
           </div>
+        )}
+
+        {/* 주간 미니 캘린더 + 이번 주 레슨 */}
+        <div className="mt-6">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-lg font-bold text-ink">이번 주 레슨</h2>
+            {weekLessons.length > 0 && (
+              <span className="text-xs text-ink-3 font-medium">{weekLessons.length}건</span>
+            )}
+          </div>
+          {weekLessons.length > 0 && (
+            <div className="mb-3">
+              <StudentWeekMini lessons={weekLessons} />
+            </div>
+          )}
+          {weekLessons.length > 0 ? (
+            <StudentWeekLessons lessons={weekLessons} coachNames={coachNames} />
+          ) : (
+            <div className="rounded-2xl border border-line bg-surface p-8 text-center">
+              <p className="text-sm text-ink-2">이번 주 예정된 레슨이 없어요</p>
+              <p className="mt-1 text-xs text-ink-3">
+                {isConnected
+                  ? "코치님이 레슨을 등록하면 여기에 표시돼요"
+                  : "코치님이 회원님을 등록하면 여기에 표시돼요"}
+              </p>
+            </div>
+          )}
         </div>
 
+        {/* 응답 필요 */}
         <div className="mt-6">
           <h2 className="text-lg font-bold text-ink mb-2">응답 필요</h2>
-          <div className="rounded-2xl border border-line bg-surface p-5 text-center">
-            <p className="text-sm text-ink-2">처리할 항목이 없어요</p>
-            <p className="mt-1 text-[11px] text-ink-3">
-              코치님이 보낸 변경·보강 요청이 있을 때 여기에 표시돼요
-            </p>
-          </div>
+          <StudentResponseRequired lessons={actionLessons} coachNames={coachNames} />
         </div>
       </div>
 
       <BottomNav role="STUDENT" active="/" />
     </main>
   );
-}
-
-const DOW_KOR = ["일", "월", "화", "수", "목", "금", "토"];
-
-function getKstParts(d: Date) {
-  const kst = new Date(d.getTime() + 9 * 60 * 60 * 1000);
-  return {
-    year: kst.getUTCFullYear(),
-    month: kst.getUTCMonth() + 1,
-    day: kst.getUTCDate(),
-    dow: kst.getUTCDay(),
-    raw: kst,
-  };
-}
-
-function thisWeekDates(now: Date = new Date()) {
-  // 한국 기준 주: 월요일 시작 ~ 일요일 종료 (프로토타입 컨벤션)
-  const today = getKstParts(now);
-  // 월요일까지의 차이 (월=1 ... 일=0)
-  const offsetToMon = (today.dow + 6) % 7;
-  const monKst = new Date(today.raw);
-  monKst.setUTCDate(monKst.getUTCDate() - offsetToMon);
-  const days: { day: number; dowKor: string; isToday: boolean; iso: string }[] = [];
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(monKst);
-    d.setUTCDate(d.getUTCDate() + i);
-    days.push({
-      day: d.getUTCDate(),
-      dowKor: DOW_KOR[d.getUTCDay()],
-      isToday: d.getUTCDate() === today.day && d.getUTCMonth() === today.raw.getUTCMonth(),
-      iso: d.toISOString().slice(0, 10),
-    });
-  }
-  return days;
 }
 
 function KpiCard({

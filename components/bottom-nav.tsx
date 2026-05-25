@@ -9,17 +9,17 @@ type Tab = {
 
 const STUDENT_TABS: Tab[] = [
   { href: "/", label: "홈", icon: <HomeIcon /> },
-  { href: "/reschedule", label: "변경요청", icon: <BellIcon />, disabled: true },
-  { href: "/chat", label: "메시지", icon: <ChatIcon />, disabled: true },
-  { href: "/my", label: "마이", icon: <UserIcon />, disabled: true },
+  { href: "/reschedule", label: "변경요청", icon: <BellIcon /> },
+  { href: "/chat", label: "메시지", icon: <ChatIcon /> },
+  { href: "/my", label: "마이", icon: <UserIcon /> },
 ];
 
 const COACH_TABS: Tab[] = [
   { href: "/", label: "스케줄", icon: <CalendarIcon /> },
   { href: "/coach/notifications", label: "알림", icon: <BellIcon /> },
-  { href: "/chat", label: "메시지", icon: <ChatIcon />, disabled: true },
+  { href: "/chat", label: "메시지", icon: <ChatIcon /> },
   { href: "/search", label: "회원 검색", icon: <SearchIcon />, disabled: true },
-  { href: "/my", label: "마이", icon: <UserIcon />, disabled: true },
+  { href: "/my", label: "마이", icon: <UserIcon /> },
 ];
 
 export function BottomNav({
