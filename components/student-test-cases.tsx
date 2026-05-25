@@ -135,7 +135,7 @@ export function StudentTestCases() {
       {/* 이번 주 레슨 — 그룹핑된 단일 카드 */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <h2 className="text-sm font-bold text-ink">이번 주 레슨</h2>
+          <h2 className="text-lg font-bold text-ink">이번 주 레슨</h2>
           <span className="text-[10px] font-semibold text-ink-3 bg-soft px-2 py-0.5 rounded-full">
             테스트 데이터
           </span>
@@ -154,7 +154,7 @@ export function StudentTestCases() {
 
       {/* 응답 필요 — 정상 케이스: 비어있음 */}
       <div>
-        <h2 className="text-sm font-bold text-ink mb-2">응답 필요</h2>
+        <h2 className="text-lg font-bold text-ink mb-2">응답 필요</h2>
         <div className="rounded-2xl border border-line bg-surface p-5 text-center">
           <p className="text-sm text-ink-2">처리할 항목이 없어요</p>
           <p className="mt-1 text-[11px] text-ink-3">

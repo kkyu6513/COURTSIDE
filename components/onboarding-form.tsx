@@ -148,7 +148,7 @@ export function TextInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
       {...props}
-      className="w-full h-12 rounded-lg border border-line bg-surface px-3 text-sm text-ink placeholder:text-ink-3"
+      className="w-full h-12 rounded-lg border border-line bg-surface px-3 text-sm text-ink placeholder:text-ink-3 disabled:bg-soft disabled:text-ink-3 disabled:cursor-not-allowed"
     />
   );
 }

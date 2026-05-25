@@ -105,3 +105,31 @@ export async function requestCoachLink(formData: FormData): Promise<Result> {
   revalidatePath("/");
   return { ok: true, matched: !!matched, notified };
 }
+
+type CancelResult = { ok: true } | { ok: false; error: string };
+
+export async function cancelCoachLink(claimId: number): Promise<CancelResult> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "로그인이 필요해요" };
+
+  const admin = createAdminClient();
+  const { data: claim } = await admin
+    .from("student_self_claims")
+    .select("id, studentUserId, status")
+    .eq("id", claimId)
+    .maybeSingle();
+
+  if (!claim) return { ok: false, error: "신청 정보를 찾을 수 없어요" };
+  if (claim.studentUserId !== user.id) return { ok: false, error: "본인 신청만 취소할 수 있어요" };
+  if (claim.status !== "PENDING") return { ok: false, error: "이미 처리된 신청이에요" };
+
+  const { error } = await admin
+    .from("student_self_claims")
+    .update({ status: "CANCELLED", updatedAt: new Date().toISOString() })
+    .eq("id", claimId);
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/");
+  return { ok: true };
+}

@@ -171,7 +171,7 @@ function StudentHome({
       <main className="min-h-screen bg-bg pb-24">
         <div className="max-w-md mx-auto px-5 pt-6">
           <div className="min-w-0">
-            <div className="text-base font-bold text-ink truncate">
+            <div className="text-xl font-extrabold text-ink truncate leading-tight">
               {displayName}님, {greeting}
             </div>
             <div className="mt-1 text-xs text-ink-3">{date}</div>
@@ -196,7 +196,8 @@ function StudentHome({
   const showRequestForm =
     !latestClaim ||
     (latestClaim.status === "PENDING" && !latestClaim.matchedCoachUserId) ||
-    latestClaim.status === "REJECTED";
+    latestClaim.status === "REJECTED" ||
+    latestClaim.status === "CANCELLED";
   const coachSectionTitle = showPendingMatched
     ? "코치 등록 진행 중"
     : showRequestForm
@@ -215,9 +216,10 @@ function StudentHome({
         </div>
 
         <div className="mt-6">
-          <h2 className="text-sm font-bold text-ink mb-2">{coachSectionTitle}</h2>
+          <h2 className="text-lg font-bold text-ink mb-2">{coachSectionTitle}</h2>
           {showPendingMatched && latestClaim ? (
             <CoachRequestPending
+              claimId={latestClaim.id}
               coachName={latestClaim.claimedCoachName}
               notifiedAt={latestClaim.notifiedAt}
             />
@@ -231,7 +233,7 @@ function StudentHome({
         </div>
 
         <div className="mt-6">
-          <h2 className="text-sm font-bold text-ink mb-2">이번 주 레슨</h2>
+          <h2 className="text-lg font-bold text-ink mb-2">이번 주 레슨</h2>
           <div className="rounded-2xl border border-line bg-surface p-8 text-center">
             <p className="text-sm text-ink-2">아직 예정된 레슨이 없어요</p>
             <p className="mt-1 text-xs text-ink-3">
@@ -241,7 +243,7 @@ function StudentHome({
         </div>
 
         <div className="mt-6">
-          <h2 className="text-sm font-bold text-ink mb-2">응답 필요</h2>
+          <h2 className="text-lg font-bold text-ink mb-2">응답 필요</h2>
           <div className="rounded-2xl border border-line bg-surface p-5 text-center">
             <p className="text-sm text-ink-2">처리할 항목이 없어요</p>
             <p className="mt-1 text-[11px] text-ink-3">

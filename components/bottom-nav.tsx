@@ -47,10 +47,17 @@ export function BottomNav({
                   : "text-ink-2"
             } ${t.disabled ? "cursor-not-allowed opacity-60" : "hover:text-ink"}`;
             return t.disabled ? (
-              <div key={t.href} className={className} aria-disabled>
+              <button
+                key={t.href}
+                type="button"
+                disabled
+                aria-disabled="true"
+                title="준비 중"
+                className={className}
+              >
                 <span className="w-5 h-5">{t.icon}</span>
                 <span>{t.label}</span>
-              </div>
+              </button>
             ) : (
               <Link key={t.href} href={t.href} className={className}>
                 <span className="w-5 h-5">{t.icon}</span>

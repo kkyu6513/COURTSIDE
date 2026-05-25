@@ -5,16 +5,33 @@ import type { Quote } from "@/lib/quotes";
 
 type Phase = "in" | "out" | "gone";
 
+const SHOWN_KEY = "courtside:splash:shown";
+
 export function StudentSplash({ quote }: { quote: Quote }) {
-  const [phase, setPhase] = useState<Phase>("in");
+  // 세션 1회 한정 — 이미 본 세션에서는 처음부터 gone
+  const [phase, setPhase] = useState<Phase>(() => {
+    if (typeof window === "undefined") return "in";
+    try {
+      return sessionStorage.getItem(SHOWN_KEY) === "1" ? "gone" : "in";
+    } catch {
+      return "in";
+    }
+  });
 
   useEffect(() => {
+    if (phase === "gone") return;
+    try {
+      sessionStorage.setItem(SHOWN_KEY, "1");
+    } catch {
+      // sessionStorage 사용 불가 환경 — 무시
+    }
     const fadeTimer = setTimeout(() => setPhase("out"), 2000);
     const removeTimer = setTimeout(() => setPhase("gone"), 2500);
     return () => {
       clearTimeout(fadeTimer);
       clearTimeout(removeTimer);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
