@@ -116,6 +116,8 @@ export async function bookLesson(
       scheduledAt: date.toISOString(),
       durationMinutes: dur,
       status: "CONFIRMED",
+      // 신규 레슨은 항상 미결제로 시작 — 코치 결제 확인 또는 결제 모듈로 PAID 전환
+      paymentStatus: "UNPAID",
       updatedAt: new Date().toISOString(),
     })
     .select("id")
@@ -324,6 +326,7 @@ export async function bookRecurringLessons(
       scheduledAt: new Date(startMs).toISOString(),
       durationMinutes: dur,
       status: "CONFIRMED",
+      paymentStatus: "UNPAID",
       updatedAt: new Date().toISOString(),
     });
     if (insertError) {

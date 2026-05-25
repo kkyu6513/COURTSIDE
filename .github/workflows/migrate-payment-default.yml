@@ -1,0 +1,53 @@
+name: Migrate Payment Status Default
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/migrate-payment-default.yml'
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Wait for Vercel build (3.5 minutes)
+        run: sleep 210
+
+      - name: Apply migration
+        id: run
+        run: |
+          BASE="https://courtside-two-silk.vercel.app"
+          TOKEN="courtside-payment-default-2026-05-15-Wt9xZqRk3p"
+          URL="$BASE/api/admin/migrate-payment-default?token=$TOKEN"
+          CODE=$(curl -sS -X POST -o /tmp/body.json -w "%{http_code}" "$URL" || echo "failed")
+          echo "HTTP $CODE"
+          BODY=$(cat /tmp/body.json)
+          echo "$BODY"
+          {
+            echo "results<<EOF"
+            echo "### migrate-payment-default (HTTP $CODE)"
+            echo '```json'
+            echo "$BODY"
+            echo '```'
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
+
+      - name: Post result as Issue
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = `## Payment Default Migration\n\n${{ steps.run.outputs.results }}\n\n---\nRun: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`;
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `[Migration] lessons.paymentStatus default → UNPAID`,
+              body,
+              labels: ['migration-result']
+            });

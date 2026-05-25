@@ -231,8 +231,12 @@ model Lesson {
   //       | MERGE | SPLIT
   status              String    @default("CONFIRMED")
 
-  // paymentStatus: PAID | UNPAID | EXTERNAL | NONE (정기·보강 등 결제 무관 회차)
-  paymentStatus       String    @default("PAID")
+  // paymentStatus: PAID | UNPAID | EXTERNAL | NONE
+  // - 신규 레슨 default = UNPAID (미결제)
+  // - PAID 도달 경로: ① 결제 모듈 자동 결제 완료, ② 코치가 레슨 상세에서 '결제 확인' 클릭
+  //   (두 경로 모두 동일 PAID 상태값으로 표시)
+  // - NONE: 보강 등 결제 대상이 아닌 회차
+  paymentStatus       String    @default("UNPAID")
 
   // lessonFormat: PRIVATE | GROUP
   lessonFormat        String    @default("PRIVATE")
