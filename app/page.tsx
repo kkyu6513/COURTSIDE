@@ -284,35 +284,33 @@ function StudentHome({
           <div className="mt-1 text-xs text-ink-3">{date}</div>
         </div>
 
-        {/* 디버그 영역 — ?debug=1 쿼리에서만 노출 (파운더 빠른 역할 전환용) */}
-        {showDevButtons && (
-          <div className="mt-3 flex flex-wrap gap-2">
-            <form action={testSwitchRole}>
-              <input type="hidden" name="role" value="COACH" />
-              <button
-                type="submit"
-                className="inline-flex items-center rounded-full border border-primary/30 bg-primary/10 text-primary-700 text-[11px] font-bold px-3 py-1.5 hover:bg-primary/15 transition"
-                title="본인 계정 role 을 COACH 로 전환하고 코치 홈으로 진입"
-              >
-                ⇄ 코치로 전환
-              </button>
-            </form>
-            <Link
-              href="/onboarding/role?force=1"
+        {/* 파운더 빠른 역할 전환 영역 — 항상 노출 (운영 출시 전 권한 게이트 예정) */}
+        <div className="mt-3 flex flex-wrap gap-2">
+          <form action={testSwitchRole}>
+            <input type="hidden" name="role" value="COACH" />
+            <button
+              type="submit"
+              className="inline-flex items-center rounded-full border border-primary/30 bg-primary/10 text-primary-700 text-[11px] font-bold px-3 py-1.5 hover:bg-primary/15 transition"
+              title="본인 계정 role 을 COACH 로 전환하고 코치 홈으로 진입"
+            >
+              ⇄ 코치로 전환
+            </button>
+          </form>
+          <Link
+            href="/onboarding/role?force=1"
+            className="inline-flex items-center rounded-full border border-line bg-surface text-ink-2 text-[11px] font-semibold px-3 py-1.5 hover:bg-soft transition"
+          >
+            [DEV] 역할 선택
+          </Link>
+          <form action={signOutAction}>
+            <button
+              type="submit"
               className="inline-flex items-center rounded-full border border-line bg-surface text-ink-2 text-[11px] font-semibold px-3 py-1.5 hover:bg-soft transition"
             >
-              [DEV] 역할 선택
-            </Link>
-            <form action={signOutAction}>
-              <button
-                type="submit"
-                className="inline-flex items-center rounded-full border border-line bg-surface text-ink-2 text-[11px] font-semibold px-3 py-1.5 hover:bg-soft transition"
-              >
-                [DEV] 로그아웃
-              </button>
-            </form>
-          </div>
-        )}
+              [DEV] 로그아웃
+            </button>
+          </form>
+        </div>
 
         <div className="mt-6">
           <h2 className="text-lg font-bold text-ink mb-2">{coachSectionTitle}</h2>
@@ -494,41 +492,39 @@ function CoachHome({
           </Link>
         </div>
 
-        {/* 디버그 영역 — ?debug=1 쿼리에서만 노출 */}
-        {showDevButtons && (
-          <div className="mt-3 flex flex-wrap gap-2">
-            <form action={testSwitchRole}>
-              <input type="hidden" name="role" value="STUDENT" />
-              <button
-                type="submit"
-                className="inline-flex items-center rounded-full border border-emerald-300 bg-emerald-50 text-emerald-700 text-[11px] font-bold px-3 py-1.5 hover:bg-emerald-100 transition"
-                title="본인 계정 role 을 STUDENT 로 전환하고 학생 홈으로 진입"
-              >
-                ⇄ 학생으로 전환
-              </button>
-            </form>
-            <Link
-              href="/?as=student"
+        {/* 파운더 빠른 역할 전환 영역 — 항상 노출 (운영 출시 전 권한 게이트 예정) */}
+        <div className="mt-3 flex flex-wrap gap-2">
+          <form action={testSwitchRole}>
+            <input type="hidden" name="role" value="STUDENT" />
+            <button
+              type="submit"
+              className="inline-flex items-center rounded-full border border-emerald-300 bg-emerald-50 text-emerald-700 text-[11px] font-bold px-3 py-1.5 hover:bg-emerald-100 transition"
+              title="본인 계정 role 을 STUDENT 로 전환하고 학생 홈으로 진입"
+            >
+              ⇄ 학생으로 전환
+            </button>
+          </form>
+          <Link
+            href="/?as=student"
+            className="inline-flex items-center rounded-full border border-line bg-surface text-ink-2 text-[11px] font-semibold px-3 py-1.5 hover:bg-soft transition"
+          >
+            [DEV] 학생 홈 미리보기
+          </Link>
+          <Link
+            href="/onboarding/role?force=1"
+            className="inline-flex items-center rounded-full border border-line bg-surface text-ink-2 text-[11px] font-semibold px-3 py-1.5 hover:bg-soft transition"
+          >
+            [DEV] 역할 선택
+          </Link>
+          <form action={signOutAction}>
+            <button
+              type="submit"
               className="inline-flex items-center rounded-full border border-line bg-surface text-ink-2 text-[11px] font-semibold px-3 py-1.5 hover:bg-soft transition"
             >
-              [DEV] 학생 홈 미리보기
-            </Link>
-            <Link
-              href="/onboarding/role?force=1"
-              className="inline-flex items-center rounded-full border border-line bg-surface text-ink-2 text-[11px] font-semibold px-3 py-1.5 hover:bg-soft transition"
-            >
-              [DEV] 역할 선택
-            </Link>
-            <form action={signOutAction}>
-              <button
-                type="submit"
-                className="inline-flex items-center rounded-full border border-line bg-surface text-ink-2 text-[11px] font-semibold px-3 py-1.5 hover:bg-soft transition"
-              >
-                [DEV] 로그아웃
-              </button>
-            </form>
-          </div>
-        )}
+              [DEV] 로그아웃
+            </button>
+          </form>
+        </div>
 
         {/* 운영 지표 — 6 카드 그리드 */}
         <div className="mt-5 grid grid-cols-3 gap-2">
