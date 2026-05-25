@@ -198,6 +198,7 @@ export function CoachHomeCalendar({ testMode = false }: { testMode?: boolean }) 
   const [lessonDetail, setLessonDetail] = useState<{ open: boolean; lesson: LessonDetail } | null>(null);
   const [pendingCancel, setPendingCancel] = useState(false);
   const [pendingNotes, setPendingNotes] = useState(false);
+  const [sortMode, setSortMode] = useState<"status" | "time">("status");
   const [, startTransition] = useTransition();
   const [alert, setAlert] = useState<{
     open: boolean;
@@ -284,20 +285,24 @@ export function CoachHomeCalendar({ testMode = false }: { testMode?: boolean }) 
     return m;
   }, [lessons]);
 
-  // 선택 날짜의 lesson 목록 (상태 우선순위 → 시간순)
+  // 선택 날짜의 lesson 목록 (sortMode: "status" — 상태 우선순위 → 시간순 / "time" — 시간순)
   const selectedLessons = useMemo(() => {
-    return lessons
-      .filter((l) => {
-        const p = kstParts(parseIsoUtc(l.scheduledAt));
-        return `${p.y}-${p.m}-${p.day}` === selectedKey;
-      })
-      .sort((a, b) => {
-        const sa = STATUS_SORT_ORDER[deriveDisplayStatus(a)] ?? 99;
-        const sb = STATUS_SORT_ORDER[deriveDisplayStatus(b)] ?? 99;
-        if (sa !== sb) return sa - sb;
-        return parseIsoUtc(a.scheduledAt).getTime() - parseIsoUtc(b.scheduledAt).getTime();
-      });
-  }, [lessons, selectedKey]);
+    const filtered = lessons.filter((l) => {
+      const p = kstParts(parseIsoUtc(l.scheduledAt));
+      return `${p.y}-${p.m}-${p.day}` === selectedKey;
+    });
+    if (sortMode === "time") {
+      return filtered.sort(
+        (a, b) => parseIsoUtc(a.scheduledAt).getTime() - parseIsoUtc(b.scheduledAt).getTime(),
+      );
+    }
+    return filtered.sort((a, b) => {
+      const sa = STATUS_SORT_ORDER[deriveDisplayStatus(a)] ?? 99;
+      const sb = STATUS_SORT_ORDER[deriveDisplayStatus(b)] ?? 99;
+      if (sa !== sb) return sa - sb;
+      return parseIsoUtc(a.scheduledAt).getTime() - parseIsoUtc(b.scheduledAt).getTime();
+    });
+  }, [lessons, selectedKey, sortMode]);
 
   const selectedDate = useMemo(() => {
     const wd = weekDays.find((d) => d.key === selectedKey);
@@ -358,13 +363,11 @@ export function CoachHomeCalendar({ testMode = false }: { testMode?: boolean }) 
       open: true,
       lesson: {
         id: l.id,
-        studentName: rawName, // 본인 학생이므로 풀 노출
+        studentName: rawName,
         studentPhone: student?.phone ?? null,
         scheduledAt: l.scheduledAt,
         durationMinutes: l.durationMinutes,
-        status: (["CONFIRMED", "PENDING", "UPCOMING", "CHANGE_REQUEST", "COMPLETED", "CANCELLED"].includes(l.status)
-          ? l.status
-          : "CONFIRMED") as LessonDetail["status"],
+        status: l.status,
         notes: l.notes ?? null,
       },
     });
@@ -531,6 +534,36 @@ export function CoachHomeCalendar({ testMode = false }: { testMode?: boolean }) 
           </button>
         </div>
 
+        {/* 정렬 토글 — 레슨이 2건 이상일 때만 노출 */}
+        {!isLoading && selectedLessons.length >= 2 && (
+          <div className="mb-2 flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => setSortMode("status")}
+              className={`text-[11px] font-semibold px-2 py-1 rounded-md transition ${
+                sortMode === "status"
+                  ? "bg-primary/10 text-primary"
+                  : "text-ink-3 hover:bg-soft"
+              }`}
+              aria-pressed={sortMode === "status"}
+            >
+              상태순
+            </button>
+            <button
+              type="button"
+              onClick={() => setSortMode("time")}
+              className={`text-[11px] font-semibold px-2 py-1 rounded-md transition ${
+                sortMode === "time"
+                  ? "bg-primary/10 text-primary"
+                  : "text-ink-3 hover:bg-soft"
+              }`}
+              aria-pressed={sortMode === "time"}
+            >
+              시간순
+            </button>
+          </div>
+        )}
+
         {isLoading ? (
           <div className="rounded-2xl border border-line bg-surface p-8 flex items-center justify-center gap-2.5">
             <svg className="animate-spin h-4 w-4 text-primary flex-none" viewBox="0 0 24 24" fill="none" aria-hidden>
@@ -630,13 +663,12 @@ function LessonCard({
 
   const formatLabel = lesson.lessonFormat === "GROUP" ? "그룹" : "1:1";
 
-  // 회차 노트 — notes 우선, 없으면 N/M회
-  let roundNote = "";
-  if (lesson.notes) {
-    roundNote = lesson.notes;
-  } else if (lesson.roundNumber != null && lesson.totalRounds != null) {
-    roundNote = `${lesson.roundNumber}/${lesson.totalRounds}회`;
-  }
+  // 회차 + 메모 — 둘 다 가능하면 모두 표시 ("3/8회 · 자세 교정")
+  const roundLabel =
+    lesson.roundNumber != null && lesson.totalRounds != null
+      ? `${lesson.roundNumber}/${lesson.totalRounds}회`
+      : null;
+  const notesLabel = lesson.notes && lesson.notes.trim() ? lesson.notes.trim() : null;
 
   // 통합/분할 태그
   let durationTag: string | null = null;
@@ -646,10 +678,11 @@ function LessonCard({
     durationTag = `${lesson.durationMinutes}분 · ${lesson.splitIndex}/${lesson.splitTotal}`;
   }
 
-  // 결제 노트
-  let paymentNote: "미결제" | "외부결제" | null = null;
-  if (lesson.paymentStatus === "UNPAID") paymentNote = "미결제";
-  else if (lesson.paymentStatus === "EXTERNAL") paymentNote = "외부결제";
+  // 결제 노트 — UNPAID(미결제)는 빨강 강조, EXTERNAL/PAID는 정보 표시
+  let paymentNote: { text: string; tone: "danger" | "muted" | "ok" } | null = null;
+  if (lesson.paymentStatus === "UNPAID") paymentNote = { text: "미결제", tone: "danger" };
+  else if (lesson.paymentStatus === "EXTERNAL") paymentNote = { text: "외부결제", tone: "muted" };
+  else if (lesson.paymentStatus === "PAID") paymentNote = { text: "결제완료", tone: "ok" };
 
   return (
     <button
@@ -679,19 +712,34 @@ function LessonCard({
           className={`min-w-0 truncate text-xs text-ink-2 ${style.strike ? "line-through text-ink-3" : ""}`}
         >
           {studentName} · {formatLabel}
-          {roundNote && <> · {roundNote}</>}
+          {roundLabel && <> · {roundLabel}</>}
           {paymentNote && (
             <>
               {" · "}
               <span
-                className={paymentNote === "미결제" ? "font-semibold text-red-500" : "text-ink-3"}
+                className={
+                  paymentNote.tone === "danger"
+                    ? "font-semibold text-red-500"
+                    : paymentNote.tone === "ok"
+                      ? "text-emerald-600"
+                      : "text-ink-3"
+                }
               >
-                {paymentNote}
+                {paymentNote.text}
               </span>
             </>
           )}
         </span>
       </div>
+
+      {/* 메모 — 별도 줄로 표시 (회차/결제 라인과 충돌 방지) */}
+      {notesLabel && (
+        <div
+          className={`mt-1 truncate text-[11px] text-ink-3 ${style.strike ? "line-through" : ""}`}
+        >
+          {notesLabel}
+        </div>
+      )}
     </button>
   );
 }
