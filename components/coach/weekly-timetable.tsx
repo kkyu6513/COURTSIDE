@@ -4,10 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from
 import { useRouter } from "next/navigation";
 import { AlertModal } from "@/components/alert-modal";
 import { Toast } from "@/components/toast";
-import { EmptySlotSheet } from "@/components/coach/empty-slot-sheet";
 import { StudentPickerSheet, type StudentOption } from "@/components/coach/student-picker-sheet";
 import { LessonDetailSheet, type LessonDetail } from "@/components/coach/lesson-detail-sheet";
-import { LessonListSheet } from "@/components/coach/lesson-list-sheet";
 import {
   bookLesson,
   bookRecurringLessons,
@@ -18,7 +16,11 @@ import {
   restoreLesson,
   updateLessonNotes,
 } from "@/app/coach/schedule/actions";
-import { deriveDisplayStatus, getStatusAbbr, getStatusCellClass } from "@/lib/lesson-status";
+import {
+  deriveDisplayStatus,
+  getStatusBlockAccent,
+  getStatusLabel,
+} from "@/lib/lesson-status";
 import { KST_OFFSET_MS, parseIsoUtc } from "@/lib/kst";
 
 export type LessonRow = {
@@ -26,8 +28,7 @@ export type LessonRow = {
   studentId: string;
   scheduledAt: string; // ISO
   durationMinutes: number;
-  // DB lessons.status — 12종 + 미래 확장에 대비해 string 으로 받음.
-  // 라벨/색 매핑은 @/lib/lesson-status 에서 단일 소스로 관리.
+  // DB lessons.status — 12종 + 미래 확장 대비 string. 라벨/색은 @/lib/lesson-status 단일 소스.
   status: string;
   paymentStatus?: string | null; // PAID | UNPAID | EXTERNAL | NONE
   notes?: string | null;
@@ -40,34 +41,17 @@ type Props = {
 };
 
 const DOW_KOR = ["일", "월", "화", "수", "목", "금", "토"];
-const HOURS = Array.from({ length: 18 }, (_, i) => i + 6); // 06 ~ 23 (23시 슬롯에서 60분 잡으면 24:00 종료)
+const DAY_START_HOUR = 6;   // 06:00
+const DAY_END_HOUR = 24;    // 24:00 (자정 종료 레슨 허용)
+const TOTAL_HOURS = DAY_END_HOUR - DAY_START_HOUR; // 18
+const HOUR_HEIGHT_PX = 56;  // 1시간 블록 = 56px (60분 레슨이 56px 박스로 표현됨)
+const SNAP_MIN = 10;        // 빈 영역 클릭 시 10분 단위로 스냅
 
-type ViewMode = "hour" | "minute";
+type LayoutMode = "day" | "week";
 
-type TimeSlot = { hour: number; minute: number; label: string; showLabel: boolean };
+// ---------- 유틸 ----------
 
-function buildTimeSlots(mode: ViewMode): TimeSlot[] {
-  const list: TimeSlot[] = [];
-  if (mode === "hour") {
-    for (const h of HOURS) {
-      list.push({ hour: h, minute: 0, label: `${String(h).padStart(2, "0")}:00`, showLabel: true });
-    }
-  } else {
-    for (const h of HOURS) {
-      for (let m = 0; m < 60; m += 10) {
-        list.push({
-          hour: h,
-          minute: m,
-          label: `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`,
-          showLabel: true,
-        });
-      }
-    }
-  }
-  return list;
-}
-
-// 가벼운 비교 — fetch 결과가 RSC initial 과 동일하면 setState skip (#50)
+// SSR initialLessons vs fetch 결과 동일성 비교 — 동일하면 setState skip(깜빡임 방지)
 function sameLessonList(a: LessonRow[], b: LessonRow[]): boolean {
   if (a.length !== b.length) return false;
   for (let i = 0; i < a.length; i++) {
@@ -117,51 +101,104 @@ function formatKstDate(d: Date) {
   };
 }
 
-/** lesson.scheduledAt → KST 기준 (year, month, day, hour) 키 생성 */
-function lessonCellKey(iso: string): string {
-  const d = parseIsoUtc(iso);
-  const kst = new Date(d.getTime() + KST_OFFSET_MS);
-  return `${kst.getUTCFullYear()}-${kst.getUTCMonth() + 1}-${kst.getUTCDate()}-${kst.getUTCHours()}`;
-}
-
-/** 캘린더 셀 → 클릭 시 그 셀이 가리키는 KST 시각 ISO 반환 (분 옵션) */
+/** KST 날짜 + hour/minute → 실제 UTC ISO (cellToIso에서 -9h 보정) */
 function cellToIso(date: Date, hour: number, minute: number = 0): string {
   const utc = new Date(date);
-  utc.setUTCHours(hour - 9, minute, 0, 0); // KST = UTC+9
+  utc.setUTCHours(hour - 9, minute, 0, 0);
   return utc.toISOString();
 }
 
-/** hour 셀이 60분 안에 lessons로 가득 차 있는지 — 각 lesson의 그 hour 안 점유 분 union */
-function isHourFull(lessons: LessonRow[], hour: number): boolean {
-  if (lessons.length === 0) return false;
-  const hourStartMin = hour * 60;
-  const hourEndMin = hour * 60 + 60;
-  const intervals: Array<[number, number]> = [];
+/** "16:00 ~ 17:30" 같은 KST 시간 라벨 */
+function hmRange(startMin: number, endMin: number): string {
+  const hh1 = String(Math.floor(startMin / 60)).padStart(2, "0");
+  const mm1 = String(startMin % 60).padStart(2, "0");
+  const hh2 = String(Math.floor(endMin / 60)).padStart(2, "0");
+  const mm2 = String(endMin % 60).padStart(2, "0");
+  return `${hh1}:${mm1}~${hh2}:${mm2}`;
+}
+
+// ---------- 블록 레이아웃 ----------
+
+type LessonBlock = {
+  lesson: LessonRow;
+  startMin: number;   // KST 자정 기준 분
+  endMin: number;     // 가시 범위로 클립된 값
+  laneIdx: number;    // 0-indexed (충돌 그룹 내 컬럼 인덱스)
+  laneCount: number;  // 충돌 그룹 내 전체 컬럼 수
+};
+
+/**
+ * 하루치 레슨을 시간-블록으로 레이아웃.
+ * - CANCELLED 제외
+ * - 가시 범위 [06:00, 24:00] 밖이면 클립
+ * - 시간이 겹치는 그룹을 만들고 그룹 내에서 greedy 레인 할당
+ *   (구글 캘린더 day-view 와 동일 알고리즘)
+ */
+function layoutDayBlocks(lessons: LessonRow[]): LessonBlock[] {
+  if (lessons.length === 0) return [];
+
+  const dayStartMin = DAY_START_HOUR * 60;
+  const dayEndMin = DAY_END_HOUR * 60;
+
+  const items: { lesson: LessonRow; startMin: number; endMin: number }[] = [];
   for (const l of lessons) {
     if (l.status === "CANCELLED") continue;
     const startKst = new Date(parseIsoUtc(l.scheduledAt).getTime() + KST_OFFSET_MS);
-    const lessonStart = startKst.getUTCHours() * 60 + startKst.getUTCMinutes();
-    const lessonEnd = lessonStart + l.durationMinutes;
-    const oStart = Math.max(lessonStart, hourStartMin);
-    const oEnd = Math.min(lessonEnd, hourEndMin);
-    if (oStart < oEnd) {
-      intervals.push([oStart - hourStartMin, oEnd - hourStartMin]);
+    const sRaw = startKst.getUTCHours() * 60 + startKst.getUTCMinutes();
+    const eRaw = sRaw + l.durationMinutes;
+    // 가시 범위 클립
+    const s = Math.max(sRaw, dayStartMin);
+    const e = Math.min(eRaw, dayEndMin);
+    if (e <= s) continue; // 가시 범위 밖
+    items.push({ lesson: l, startMin: s, endMin: e });
+  }
+  items.sort((a, b) => (a.startMin === b.startMin ? a.endMin - b.endMin : a.startMin - b.startMin));
+
+  // 연결된 충돌 그룹 추출
+  const groups: typeof items[] = [];
+  let cur: typeof items = [];
+  let curEnd = -Infinity;
+  for (const it of items) {
+    if (it.startMin >= curEnd && cur.length > 0) {
+      groups.push(cur);
+      cur = [];
+      curEnd = -Infinity;
+    }
+    cur.push(it);
+    curEnd = Math.max(curEnd, it.endMin);
+  }
+  if (cur.length > 0) groups.push(cur);
+
+  // 그룹 내 greedy 레인 할당
+  const blocks: LessonBlock[] = [];
+  for (const group of groups) {
+    const laneEnds: number[] = [];
+    const tmp: { lesson: LessonRow; startMin: number; endMin: number; laneIdx: number }[] = [];
+    for (const it of group) {
+      let lane = laneEnds.findIndex((e) => e <= it.startMin);
+      if (lane === -1) {
+        lane = laneEnds.length;
+        laneEnds.push(it.endMin);
+      } else {
+        laneEnds[lane] = it.endMin;
+      }
+      tmp.push({ ...it, laneIdx: lane });
+    }
+    const laneCount = laneEnds.length;
+    for (const t of tmp) {
+      blocks.push({
+        lesson: t.lesson,
+        startMin: t.startMin,
+        endMin: t.endMin,
+        laneIdx: t.laneIdx,
+        laneCount,
+      });
     }
   }
-  if (intervals.length === 0) return false;
-  intervals.sort((a, b) => a[0] - b[0]);
-  let covered = 0;
-  let lastEnd = 0;
-  for (const [s, e] of intervals) {
-    if (e <= lastEnd) continue;
-    covered += e - Math.max(s, lastEnd);
-    lastEnd = e;
-  }
-  return covered >= 60;
+  return blocks;
 }
 
-// statusToClass 는 @/lib/lesson-status 의 getStatusCellClass + deriveDisplayStatus 로 대체.
-// CONFIRMED 가 진행 시간대면 IN_PROGRESS 색(빨강 pulse)으로 표시 — 코치 홈과 동일 규칙.
+// ---------- 컴포넌트 ----------
 
 export function WeeklyTimetable({
   lessons: initialLessons = [],
@@ -170,8 +207,7 @@ export function WeeklyTimetable({
 }: Props) {
   const router = useRouter();
 
-  // 클라이언트 fetch — 항상 fresh. 서버 RSC 캐시 layer 무관.
-  // SSR initialLessons가 있으면 즉시 표시하고, mount 후 silent refresh로 갱신 (#4 깜빡임 방지)
+  // SSR initialLessons 있으면 즉시 표시, mount 후 silent refresh로 갱신
   const hasSSRData = initialLessons.length > 0 || initialStudents.length > 0;
   const [lessons, setLessons] = useState<LessonRow[]>(initialLessons);
   const [students, setStudents] = useState<StudentOption[]>(initialStudents);
@@ -191,7 +227,6 @@ export function WeeklyTimetable({
       const data = (await res.json()) as { lessons: LessonRow[]; students: StudentOption[] };
       const newLessons = data.lessons ?? [];
       const newStudents = data.students ?? [];
-      // RSC initial 과 동일하면 setState skip — 첫 진입 시 깜빡임 방지 (#50)
       setLessons((prev) => (sameLessonList(prev, newLessons) ? prev : newLessons));
       setStudents((prev) => (sameStudentList(prev, newStudents) ? prev : newStudents));
     } catch (e) {
@@ -201,23 +236,48 @@ export function WeeklyTimetable({
     }
   }, []);
 
-  // 최초 mount — SSR 데이터가 있으면 silent refresh (스피너 없이 갱신)
   useEffect(() => {
     reload(hasSSRData);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const [weekStart, setWeekStart] = useState<Date>(() => {
-    // initialDate("YYYY-MM-DD")가 있으면 그 날짜가 속한 주, 없으면 이번 주
     if (initialDate && /^\d{4}-\d{2}-\d{2}$/.test(initialDate)) {
       return startOfWeekMon(new Date(initialDate + "T00:00:00Z"));
     }
     return startOfWeekMon(new Date());
   });
-  // initialDate가 지정되면 자동 점프 비활성 (사용자가 명시적으로 그 주를 원함)
   const didAutoJumpRef = useRef(!!initialDate);
 
-  // 최초 lessons load 후, 이번 주에 미래 lesson이 없고 다른 미래 주에 있으면 그 주로 자동 이동
+  // ----- 레이아웃 모드(day/week) + selectedDayIdx -----
+  const LAYOUT_MODE_KEY = "courtside.coach.schedule.layoutMode";
+  const [layoutMode, setLayoutModeState] = useState<LayoutMode>("week");
+  // 초기값: localStorage > 모바일이면 day / 데스크탑이면 week
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const saved = window.localStorage.getItem(LAYOUT_MODE_KEY);
+    if (saved === "day" || saved === "week") {
+      setLayoutModeState(saved);
+    } else {
+      setLayoutModeState(window.innerWidth < 768 ? "day" : "week");
+    }
+  }, []);
+  const setLayoutMode = useCallback((mode: LayoutMode) => {
+    setLayoutModeState(mode);
+    try {
+      window.localStorage.setItem(LAYOUT_MODE_KEY, mode);
+    } catch {
+      /* localStorage 비활성 — 무시 */
+    }
+  }, []);
+
+  // day 모드에서 선택된 요일 (0=월 ~ 6=일). 초기값: 오늘이 속한 인덱스.
+  const [selectedDayIdx, setSelectedDayIdx] = useState<number>(() => {
+    const nowKst = new Date(Date.now() + KST_OFFSET_MS);
+    return (nowKst.getUTCDay() + 6) % 7;
+  });
+
+  // 미래 lesson 자동 점프 — 이번 주 비고 + 다른 미래 주에 lesson 있으면 그 주로 이동
   useEffect(() => {
     if (didAutoJumpRef.current) return;
     if (isLoading) return;
@@ -229,7 +289,7 @@ export function WeeklyTimetable({
     const futureLessons = lessons.filter((l) => parseIsoUtc(l.scheduledAt).getTime() >= nowMs);
     if (futureLessons.length === 0) {
       didAutoJumpRef.current = true;
-      return; // 미래 lesson 없으면 이번 주 default 유지
+      return;
     }
     const wStartMs = weekStart.getTime() - KST_OFFSET_MS;
     const wEndMs = wStartMs + 7 * 24 * 60 * 60 * 1000;
@@ -239,7 +299,6 @@ export function WeeklyTimetable({
     });
     didAutoJumpRef.current = true;
     if (!inCurWeek) {
-      // 가장 가까운 미래 lesson의 주로
       const sorted = [...futureLessons].sort(
         (a, b) => parseIsoUtc(a.scheduledAt).getTime() - parseIsoUtc(b.scheduledAt).getTime(),
       );
@@ -247,44 +306,15 @@ export function WeeklyTimetable({
     }
   }, [isLoading, lessons, weekStart]);
 
-  // 뷰모드 localStorage 영속 (#8) — 새로고침/세션 간 유지
-  const VIEW_MODE_KEY = "courtside.coach.schedule.viewMode";
-  const [viewMode, setViewModeState] = useState<ViewMode>("hour");
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const saved = window.localStorage.getItem(VIEW_MODE_KEY);
-    if (saved === "hour" || saved === "minute") setViewModeState(saved);
-  }, []);
-  const setViewMode = useCallback((mode: ViewMode) => {
-    setViewModeState(mode);
-    try {
-      window.localStorage.setItem(VIEW_MODE_KEY, mode);
-    } catch {
-      /* localStorage 비활성 환경 — 무시 */
-    }
-  }, []);
-  const timeSlots = useMemo(() => buildTimeSlots(viewMode), [viewMode]);
-  const slotStepMin = viewMode === "hour" ? 60 : 10;
-  const [sheet, setSheet] = useState<{
-    open: boolean;
-    dayOfWeek: number;
-    hour: number;
-    date: Date;
-  } | null>(null);
+  // ----- 시트/상태 -----
   const [studentPicker, setStudentPicker] = useState<{
     open: boolean;
     date: Date;
     hour: number;
+    minute: number;
     baseTimeLabel: string;
   } | null>(null);
   const [lessonDetail, setLessonDetail] = useState<{ open: boolean; lesson: LessonDetail } | null>(null);
-  const [lessonList, setLessonList] = useState<{
-    open: boolean;
-    hourLabel: string;
-    lessons: LessonDetail[];
-    date: Date;
-    hour: number;
-  } | null>(null);
   const [pendingStudentId, setPendingStudentId] = useState<string | null>(null);
   const [pendingCancel, setPendingCancel] = useState(false);
   const [pendingNotes, setPendingNotes] = useState(false);
@@ -293,116 +323,93 @@ export function WeeklyTimetable({
   const [pendingAbsent, setPendingAbsent] = useState(false);
   const [pendingPaid, setPendingPaid] = useState(false);
   const [, startTransition] = useTransition();
-  // 에러/경고 — 사용자 확인이 필요한 풀모달
   const [alert, setAlert] = useState<{ open: boolean; variant: "error"; title: string; description?: string }>({
-    open: false,
-    variant: "error",
-    title: "",
+    open: false, variant: "error", title: "",
   });
-  // 성공 알림 — 흐름을 끊지 않는 toast(자동 닫힘)
   const [toast, setToast] = useState<{ open: boolean; title: string; description?: string }>({
-    open: false,
-    title: "",
+    open: false, title: "",
   });
-  const showSuccess = (title: string, description?: string) =>
-    setToast({ open: true, title, description });
+  const showSuccess = (title: string, description?: string) => setToast({ open: true, title, description });
   const showError = (title: string, description?: string) =>
     setAlert({ open: true, variant: "error", title, description });
 
+  // ----- 주간 일자 메타 -----
   const weekDays = useMemo(() => {
-    const days: { date: Date; m: number; day: number; dowKor: string; isToday: boolean; isPast: boolean }[] = [];
-    for (let i = 0; i < 7; i++) {
+    const nowKst = new Date(Date.now() + KST_OFFSET_MS);
+    const todayKey = nowKst.getUTCFullYear() * 10000 + nowKst.getUTCMonth() * 100 + nowKst.getUTCDate();
+    return Array.from({ length: 7 }, (_, i) => {
       const d = addDays(weekStart, i);
       const f = formatKstDate(d);
-      days.push({
+      const wdKey = f.y * 10000 + (f.m - 1) * 100 + f.day;
+      return {
         date: d,
         m: f.m,
         day: f.day,
         dowKor: DOW_KOR[(weekStart.getUTCDay() + i) % 7],
-        isToday: false,
-        isPast: false,
-      });
-    }
-    const nowKst = new Date(new Date().getTime() + KST_OFFSET_MS);
-    const todayKey = nowKst.getUTCFullYear() * 10000 + nowKst.getUTCMonth() * 100 + nowKst.getUTCDate();
-    days.forEach((wd) => {
-      const wdKey = wd.date.getUTCFullYear() * 10000 + wd.date.getUTCMonth() * 100 + wd.date.getUTCDate();
-      if (wdKey === todayKey) wd.isToday = true;
-      if (wdKey < todayKey) wd.isPast = true;
+        isToday: wdKey === todayKey,
+        isPast: wdKey < todayKey,
+      };
     });
-    return days;
   }, [weekStart]);
 
-  // 가시 주 범위 — KST 기준 weekStart(월 00:00) ~ +7일.
-  // weekStart 는 이미 KST 자정으로 정규화돼 있어 그대로 비교(ms 단위 +9h 보정 후).
-  const visibleStartMs = weekStart.getTime() - KST_OFFSET_MS;
-  const visibleEndMs = visibleStartMs + 7 * 24 * 60 * 60 * 1000;
+  // 일별 lesson 인덱스 → 그룹화 + 레인 할당
+  const blocksByDay = useMemo(() => {
+    const m = new Map<string, LessonBlock[]>();
+    const visibleStartMs = weekStart.getTime() - KST_OFFSET_MS;
+    const visibleEndMs = visibleStartMs + 7 * 24 * 60 * 60 * 1000;
 
-  const lessonByCell = useMemo(() => {
-    const m = new Map<string, LessonRow[]>();
+    // weekday 별로 lessons 분류
+    const byDay = new Map<string, LessonRow[]>();
     for (const l of lessons) {
-      // 취소된 레슨은 셀 점유를 해제 — 동일 시간 새 레슨 등록 가능해야 함
       if (l.status === "CANCELLED") continue;
-      const start = parseIsoUtc(l.scheduledAt);
-      const end = new Date(start.getTime() + l.durationMinutes * 60 * 1000);
-      // 가시 주 밖 레슨은 셀 매핑 스킵 — 큰 코치(수백 lesson) 시 매 주 이동마다 무거워지는 것 방지.
-      // 가시 주에 걸치는 케이스(자정 가로지름 등)도 포함하기 위해 start<end_window && end>start_window 로 판정.
-      if (end.getTime() <= visibleStartMs || start.getTime() >= visibleEndMs) continue;
-      const startKst = new Date(start.getTime() + KST_OFFSET_MS);
-      const endKst = new Date(end.getTime() + KST_OFFSET_MS);
-      // 시작 슬롯(step 단위로 내림)부터 종료 시각 직전까지 매핑
-      const cursor = new Date(startKst);
-      const curMin = cursor.getUTCMinutes();
-      cursor.setUTCMinutes(Math.floor(curMin / slotStepMin) * slotStepMin, 0, 0);
-      while (cursor.getTime() < endKst.getTime()) {
-        const key = `${cursor.getUTCFullYear()}-${cursor.getUTCMonth() + 1}-${cursor.getUTCDate()}-${cursor.getUTCHours()}-${cursor.getUTCMinutes()}`;
-        const arr = m.get(key) ?? [];
-        arr.push(l);
-        m.set(key, arr);
-        cursor.setTime(cursor.getTime() + slotStepMin * 60 * 1000);
-      }
+      const startMs = parseIsoUtc(l.scheduledAt).getTime();
+      const endMs = startMs + l.durationMinutes * 60 * 1000;
+      // 주 범위 밖 스킵 (자정 가로지름 케이스도 포함하기 위해 start<end_window && end>start_window)
+      if (endMs <= visibleStartMs || startMs >= visibleEndMs) continue;
+      const startKst = new Date(startMs + KST_OFFSET_MS);
+      const dayKey = `${startKst.getUTCFullYear()}-${startKst.getUTCMonth() + 1}-${startKst.getUTCDate()}`;
+      const arr = byDay.get(dayKey) ?? [];
+      arr.push(l);
+      byDay.set(dayKey, arr);
     }
-    // 1순위 시간, 2순위 학생명(가나다) — 동률 시 결정적 순서 보장 (#6)
-    const studentNameOf = (id: string) => students.find((s) => s.id === id)?.name ?? "";
-    for (const arr of m.values()) {
-      arr.sort((a, b) => {
-        const ta = parseIsoUtc(a.scheduledAt).getTime();
-        const tb = parseIsoUtc(b.scheduledAt).getTime();
-        if (ta !== tb) return ta - tb;
-        return studentNameOf(a.studentId).localeCompare(studentNameOf(b.studentId), "ko");
-      });
+
+    for (const wd of weekDays) {
+      const key = `${wd.date.getUTCFullYear()}-${wd.date.getUTCMonth() + 1}-${wd.date.getUTCDate()}`;
+      m.set(key, layoutDayBlocks(byDay.get(key) ?? []));
     }
     return m;
-  }, [lessons, slotStepMin, visibleStartMs, visibleEndMs, students]);
+  }, [lessons, weekStart, weekDays]);
 
   const studentMap = useMemo(() => {
-    const m = new Map<string, StudentOption>();
-    for (const s of students) m.set(s.id, s);
-    return m;
+    const map = new Map<string, StudentOption>();
+    for (const s of students) map.set(s.id, s);
+    return map;
   }, [students]);
 
+  // ----- 헤더 라벨 -----
   const weekStartLabel = formatKstDate(weekStart);
   const weekEnd = addDays(weekStart, 6);
   const weekEndLabel = formatKstDate(weekEnd);
   const yearMonthLabel = `${weekStart.getUTCFullYear()}년 ${weekStartLabel.m}월`;
   const weekRangeLabel = `${weekStartLabel.m}/${weekStartLabel.day} ~ ${weekEndLabel.m}/${weekEndLabel.day}`;
+  const selectedDayMeta = weekDays[selectedDayIdx];
+  const dayLabel = selectedDayMeta
+    ? `${selectedDayMeta.m}월 ${selectedDayMeta.day}일 (${selectedDayMeta.dowKor})`
+    : "";
 
-  // 이번 주 lessons 카운트 (전체 카운트는 lessons.length)
-  const weekStartMs = weekStart.getTime() - KST_OFFSET_MS; // KST → UTC
+  // 이번 주 lessons 카운트
+  const weekStartMs = weekStart.getTime() - KST_OFFSET_MS;
   const weekEndMs = addDays(weekStart, 7).getTime() - KST_OFFSET_MS;
   const thisWeekCount = lessons.filter((l) => {
     const ts = parseIsoUtc(l.scheduledAt).getTime();
     return ts >= weekStartMs && ts < weekEndMs;
   }).length;
-  // "가장 가까운 주로 이동" 버튼은 이번 주 비고 + 미래에 lesson이 있을 때만 노출 (#26)
   const nowMs = Date.now();
   const hasFutureLesson = lessons.some((l) => parseIsoUtc(l.scheduledAt).getTime() >= nowMs);
 
-  // 다른 주에 lessons가 있을 때 가장 가까운 주로 점프
   const jumpToNearestLesson = () => {
     if (lessons.length === 0) return;
-    const nowMs = Date.now();
-    const future = lessons.filter((l) => parseIsoUtc(l.scheduledAt).getTime() >= nowMs);
+    const future = lessons.filter((l) => parseIsoUtc(l.scheduledAt).getTime() >= Date.now());
     const target = future.length > 0 ? future : lessons;
     const sorted = [...target].sort((a, b) => {
       const ad = Math.abs(parseIsoUtc(a.scheduledAt).getTime() - weekStart.getTime());
@@ -412,9 +419,38 @@ export function WeeklyTimetable({
     setWeekStart(startOfWeekMon(parseIsoUtc(sorted[0].scheduledAt)));
   };
 
-  const goPrevWeek = () => setWeekStart((d) => addDays(d, -7));
-  const goNextWeek = () => setWeekStart((d) => addDays(d, 7));
+  // ----- 네비 -----
+  const goPrev = () => {
+    if (layoutMode === "day") {
+      if (selectedDayIdx > 0) {
+        setSelectedDayIdx(selectedDayIdx - 1);
+      } else {
+        setWeekStart((d) => addDays(d, -7));
+        setSelectedDayIdx(6);
+      }
+    } else {
+      setWeekStart((d) => addDays(d, -7));
+    }
+  };
+  const goNext = () => {
+    if (layoutMode === "day") {
+      if (selectedDayIdx < 6) {
+        setSelectedDayIdx(selectedDayIdx + 1);
+      } else {
+        setWeekStart((d) => addDays(d, 7));
+        setSelectedDayIdx(0);
+      }
+    } else {
+      setWeekStart((d) => addDays(d, 7));
+    }
+  };
+  const goToday = () => {
+    setWeekStart(startOfWeekMon(new Date()));
+    const nowKst = new Date(Date.now() + KST_OFFSET_MS);
+    setSelectedDayIdx((nowKst.getUTCDay() + 6) % 7);
+  };
 
+  // ----- 변환 -----
   const toLessonDetail = (l: LessonRow): LessonDetail => {
     const student = studentMap.get(l.studentId);
     return {
@@ -429,70 +465,41 @@ export function WeeklyTimetable({
     };
   };
 
-  const onCellClick = (dayOfWeek: number, hour: number, date: Date, minute: number = 0) => {
-    const f = formatKstDate(date);
-    const arr = lessonByCell.get(`${f.y}-${f.m}-${f.day}-${hour}-${minute}`) ?? [];
+  // ----- 블록 클릭 → 디테일 시트 -----
+  const onBlockClick = (lesson: LessonRow) => {
+    setLessonDetail({ open: true, lesson: toLessonDetail(lesson) });
+  };
 
-    // 빈 셀 클릭 — 과거 시각(같은 날 포함)이면 등록 불가 (#3)
+  // ----- 빈 영역 클릭 → 학생 피커 직행 -----
+  const onEmptyClick = (date: Date, hour: number, minute: number) => {
+    // 과거 시각 거부 (서버 5분 유예와 동일)
     const cellUtcMs = Date.UTC(
       date.getUTCFullYear(),
       date.getUTCMonth(),
       date.getUTCDate(),
-      hour - 9, // KST → UTC
+      hour - 9,
       minute,
     );
-    const isPast = cellUtcMs < Date.now() - 5 * 60 * 1000; // 서버와 동일 5분 유예
-
-    if (arr.length === 0) {
-      if (isPast) {
-        const nowKst = new Date(Date.now() + KST_OFFSET_MS);
-        const nowHh = String(nowKst.getUTCHours()).padStart(2, "0");
-        const nowMm = String(nowKst.getUTCMinutes()).padStart(2, "0");
-        const cellHh = String(hour).padStart(2, "0");
-        const cellMm = String(minute).padStart(2, "0");
-        showError(
-          "이미 지난 시각이에요",
-          `${cellHh}:${cellMm} 슬롯은 현재(${nowHh}:${nowMm}) 기준 이미 지났어요. 현재 이후 시각을 선택해 주세요.`,
-        );
-        return;
-      }
-      setSheet({ open: true, dayOfWeek, hour, date });
+    if (cellUtcMs < Date.now() - 5 * 60 * 1000) {
+      const nowKst = new Date(Date.now() + KST_OFFSET_MS);
+      const nowHh = String(nowKst.getUTCHours()).padStart(2, "0");
+      const nowMm = String(nowKst.getUTCMinutes()).padStart(2, "0");
+      showError(
+        "이미 지난 시각이에요",
+        `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")} 슬롯은 현재(${nowHh}:${nowMm}) 기준 이미 지났어요.`,
+      );
       return;
     }
-
-    if (arr.length === 1) {
-      setLessonDetail({ open: true, lesson: toLessonDetail(arr[0]) });
-      return;
-    }
-
-    // 2개 이상 — 리스트 시트
+    const f = formatKstDate(date);
     const hh = String(hour).padStart(2, "0");
-    setLessonList({
-      open: true,
-      hourLabel: `${f.m}월 ${f.day}일 ${DOW_KOR[f.dow]}요일 · ${hh}시`,
-      lessons: arr.map(toLessonDetail),
-      date,
-      hour,
-    });
+    const mm = String(minute).padStart(2, "0");
+    const baseTimeLabel = `${f.m}월 ${f.day}일 ${DOW_KOR[f.dow]}요일 · ${hh}:${mm}`;
+    setStudentPicker({ open: true, date, hour, minute, baseTimeLabel });
   };
 
-  const closeLessonList = () => setLessonList((s) => (s ? { ...s, open: false } : null));
-
-  const onPickLessonFromList = (lesson: LessonDetail) => {
-    setLessonList(null);
-    setLessonDetail({ open: true, lesson });
-  };
-
-  const onBookNewFromList = () => {
-    if (!lessonList) return;
-    const f = formatKstDate(lessonList.date);
-    const hh = String(lessonList.hour).padStart(2, "0");
-    const baseTimeLabel = `${f.m}월 ${f.day}일 ${DOW_KOR[f.dow]}요일 · ${hh}시`;
-    setLessonList(null);
-    setStudentPicker({ open: true, date: lessonList.date, hour: lessonList.hour, baseTimeLabel });
-  };
-
+  // ----- 시트 핸들러 -----
   const closeLessonDetail = () => setLessonDetail((s) => (s ? { ...s, open: false } : null));
+  const closeStudentPicker = () => setStudentPicker((s) => (s ? { ...s, open: false } : null));
 
   const onSaveLessonNotes = (notes: string) => {
     if (!lessonDetail) return;
@@ -501,11 +508,7 @@ export function WeeklyTimetable({
     startTransition(async () => {
       const res = await updateLessonNotes(lessonId, notes);
       setPendingNotes(false);
-      if (!res.ok) {
-        showError("메모 저장 실패", res.error);
-        return;
-      }
-      // 로컬 lessonDetail 즉시 갱신 (시트 안 textarea 동기화)
+      if (!res.ok) { showError("메모 저장 실패", res.error); return; }
       setLessonDetail((s) => (s ? { ...s, lesson: { ...s.lesson, notes: notes.trim() || null } } : s));
       showSuccess("메모가 저장되었어요");
       reload();
@@ -519,12 +522,9 @@ export function WeeklyTimetable({
     startTransition(async () => {
       const res = await cancelLesson(lessonId);
       setPendingCancel(false);
-      if (!res.ok) {
-        showError("레슨 취소 실패", res.error);
-        return;
-      }
+      if (!res.ok) { showError("레슨 취소 실패", res.error); return; }
       setLessonDetail(null);
-      showSuccess("레슨이 취소되었어요", "수강생 알림 발송은 다음 업데이트에 추가될 예정이에요.");
+      showSuccess("레슨이 취소되었어요");
       reload();
     });
   };
@@ -536,10 +536,7 @@ export function WeeklyTimetable({
     startTransition(async () => {
       const res = await markLessonCompleted(lessonId);
       setPendingComplete(false);
-      if (!res.ok) {
-        showError("레슨 완료 처리 실패", res.error);
-        return;
-      }
+      if (!res.ok) { showError("레슨 완료 처리 실패", res.error); return; }
       setLessonDetail(null);
       showSuccess("레슨을 완료 처리했어요");
       reload();
@@ -553,10 +550,7 @@ export function WeeklyTimetable({
     startTransition(async () => {
       const res = await markLessonAbsent(lessonId);
       setPendingAbsent(false);
-      if (!res.ok) {
-        showError("결강 처리 실패", res.error);
-        return;
-      }
+      if (!res.ok) { showError("결강 처리 실패", res.error); return; }
       setLessonDetail(null);
       showSuccess("결강으로 처리했어요");
       reload();
@@ -570,10 +564,7 @@ export function WeeklyTimetable({
     startTransition(async () => {
       const res = await markLessonPaid(lessonId);
       setPendingPaid(false);
-      if (!res.ok) {
-        showError("결제 확인 실패", res.error);
-        return;
-      }
+      if (!res.ok) { showError("결제 확인 실패", res.error); return; }
       setLessonDetail((s) => (s ? { ...s, lesson: { ...s.lesson, paymentStatus: "PAID" } } : s));
       showSuccess("결제 완료로 처리했어요");
       reload();
@@ -587,29 +578,12 @@ export function WeeklyTimetable({
     startTransition(async () => {
       const res = await restoreLesson(lessonId);
       setPendingRestore(false);
-      if (!res.ok) {
-        showError("레슨 복구 실패", res.error);
-        return;
-      }
+      if (!res.ok) { showError("레슨 복구 실패", res.error); return; }
       setLessonDetail(null);
       showSuccess("레슨이 복구되었어요");
       reload();
     });
   };
-
-  const closeSheet = () => setSheet((s) => (s ? { ...s, open: false } : null));
-
-  const onBookLessonAction = () => {
-    if (!sheet) return;
-    const f = formatKstDate(sheet.date);
-    const hh = String(sheet.hour).padStart(2, "0");
-    const baseTimeLabel = `${f.m}월 ${f.day}일 ${DOW_KOR[f.dow]}요일 · ${hh}시`;
-    closeSheet();
-    setStudentPicker({ open: true, date: sheet.date, hour: sheet.hour, baseTimeLabel });
-  };
-
-  const closeStudentPicker = () =>
-    setStudentPicker((s) => (s ? { ...s, open: false } : null));
 
   const onPickStudent = (
     studentId: string,
@@ -630,13 +604,9 @@ export function WeeklyTimetable({
     setPendingStudentId(studentId);
     startTransition(async () => {
       if (weekCount > 1) {
-        // 정기 등록 (#19)
         const res = await bookRecurringLessons(studentId, iso, durationMinutes, weekCount);
         setPendingStudentId(null);
-        if (!res.ok) {
-          showError("정기 레슨 등록 실패", res.error);
-          return;
-        }
+        if (!res.ok) { showError("정기 레슨 등록 실패", res.error); return; }
         setStudentPicker(null);
         const skipMsg = res.skippedWeeks.length > 0
           ? ` (${res.skippedWeeks.length}주 건너뜀: ${res.skippedWeeks.map((s) => `${s.week}주차`).join(", ")})`
@@ -649,16 +619,22 @@ export function WeeklyTimetable({
       } else {
         const res = await bookLesson(studentId, iso, durationMinutes);
         setPendingStudentId(null);
-        if (!res.ok) {
-          showError("레슨 등록 실패", res.error);
-          return;
-        }
+        if (!res.ok) { showError("레슨 등록 실패", res.error); return; }
         setStudentPicker(null);
         showSuccess("레슨이 등록되었어요", `${fullTimeLabel}에 레슨이 잡혔습니다.`);
         reload();
       }
     });
   };
+
+  // ----- 현재 표시할 컬럼 결정 -----
+  const visibleColumns = layoutMode === "day"
+    ? selectedDayMeta ? [selectedDayMeta] : []
+    : weekDays;
+
+  // 본문 클릭 가능 여부 — pendingStudentId 있으면 차단 (시트가 떠 있으니)
+  const router_ = router; // 사용 가능성 보존 (재 export)
+  void router_;
 
   return (
     <div className="flex flex-col">
@@ -675,9 +651,7 @@ export function WeeklyTimetable({
         <div className="px-4 py-3 border-b border-line bg-red-50">
           <div className="flex items-start gap-2">
             <svg className="w-4 h-4 text-red-500 flex-none mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <circle cx="12" cy="12" r="10" />
-              <line x1="12" y1="8" x2="12" y2="12" />
-              <line x1="12" y1="16" x2="12.01" y2="16" />
+              <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
             </svg>
             <div className="flex-1 min-w-0">
               <div className="text-xs font-bold text-red-700">일정을 불러올 수 없어요</div>
@@ -728,138 +702,171 @@ export function WeeklyTimetable({
       {/* 월/주 네비 */}
       <div className="border-b border-line">
         <div className="flex items-center justify-between px-4 py-3 gap-2">
-          <div className="text-sm font-extrabold text-ink truncate">{yearMonthLabel}</div>
+          <div className="text-sm font-extrabold text-ink truncate">
+            {yearMonthLabel}
+            {layoutMode === "day" && selectedDayMeta && (
+              <span className="ml-2 text-xs font-semibold text-ink-2">· {dayLabel}</span>
+            )}
+          </div>
           <div className="flex items-center gap-1 flex-none">
-            {/* 보기 모드 토글 — 1시간 단위(간단)와 10분 단위(정밀) 선택 */}
-            <div
-              className="flex rounded-lg bg-soft p-0.5 mr-1"
-              role="group"
-              aria-label="보기 단위"
-            >
+            {/* 레이아웃 모드 토글 — 1일/주 */}
+            <div className="flex rounded-lg bg-soft p-0.5 mr-1" role="group" aria-label="보기 단위">
               <button
                 type="button"
-                onClick={() => setViewMode("hour")}
-                aria-pressed={viewMode === "hour"}
-                title="1시간 단위 — 한눈에 보기"
+                onClick={() => setLayoutMode("day")}
+                aria-pressed={layoutMode === "day"}
+                title="1일 보기 — 한 날짜에 집중"
                 className={`px-2.5 h-8 rounded-md text-[11px] font-semibold transition ${
-                  viewMode === "hour" ? "bg-surface text-ink shadow-sm" : "text-ink-3"
+                  layoutMode === "day" ? "bg-surface text-ink shadow-sm" : "text-ink-3"
                 }`}
               >
-                1시간
+                1일
               </button>
               <button
                 type="button"
-                onClick={() => setViewMode("minute")}
-                aria-pressed={viewMode === "minute"}
-                title="10분 단위 — 정밀 보기 (학생 이름 표시)"
+                onClick={() => setLayoutMode("week")}
+                aria-pressed={layoutMode === "week"}
+                title="주간 보기 — 7일 한눈에"
                 className={`px-2.5 h-8 rounded-md text-[11px] font-semibold transition ${
-                  viewMode === "minute" ? "bg-surface text-ink shadow-sm" : "text-ink-3"
+                  layoutMode === "week" ? "bg-surface text-ink shadow-sm" : "text-ink-3"
                 }`}
               >
-                10분
+                주
               </button>
             </div>
             <button
               type="button"
-              onClick={goPrevWeek}
+              onClick={goPrev}
               className="w-10 h-10 rounded-lg border border-line bg-surface text-base text-ink-2 hover:bg-soft transition active:scale-[0.96] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-              aria-label={`이전 주 (현재 ${weekRangeLabel})`}
+              aria-label={layoutMode === "day" ? "이전 날짜" : `이전 주 (현재 ${weekRangeLabel})`}
             >
               ‹
             </button>
-            <span className="text-xs font-semibold text-ink-2 px-1" aria-live="polite">{weekRangeLabel}</span>
             <button
               type="button"
-              onClick={goNextWeek}
+              onClick={goToday}
+              className="text-[11px] font-semibold text-ink-2 px-2 h-10 rounded-lg border border-line bg-surface hover:bg-soft transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+              aria-label="오늘로 이동"
+              title="오늘로 이동"
+            >
+              오늘
+            </button>
+            <button
+              type="button"
+              onClick={goNext}
               className="w-10 h-10 rounded-lg border border-line bg-surface text-base text-ink-2 hover:bg-soft transition active:scale-[0.96] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-              aria-label={`다음 주 (현재 ${weekRangeLabel})`}
+              aria-label={layoutMode === "day" ? "다음 날짜" : `다음 주 (현재 ${weekRangeLabel})`}
             >
               ›
             </button>
           </div>
         </div>
+        {layoutMode === "week" && (
+          <div className="px-4 pb-2 text-[11px] text-ink-3">{weekRangeLabel}</div>
+        )}
       </div>
 
-      {/* 주간 헤더 */}
+      {/* 주간 헤더 — week 모드만 + day 모드에서는 요일 스트립으로 빠른 점프 */}
       <div className="px-3 pt-2 pb-1 border-b border-line bg-surface sticky top-0 z-10 backdrop-blur">
-        <div className="grid grid-cols-[44px_repeat(7,1fr)] gap-0">
-          <div />
-          {weekDays.map((wd, i) => (
-            <div key={i} className="text-center py-1.5 relative">
-              {wd.isToday && (
-                <div className="absolute -top-0.5 left-1/2 -translate-x-1/2 text-[8px] font-extrabold text-primary tracking-wider">
-                  TODAY
+        {layoutMode === "week" ? (
+          <div className="grid grid-cols-[44px_repeat(7,1fr)] gap-0">
+            <div />
+            {weekDays.map((wd, i) => (
+              <div key={i} className="text-center py-1.5 relative">
+                {wd.isToday && (
+                  <div className="absolute -top-0.5 left-1/2 -translate-x-1/2 text-[8px] font-extrabold text-primary tracking-wider">
+                    TODAY
+                  </div>
+                )}
+                <div className={`text-[10px] ${wd.isToday ? "font-bold text-primary" : "text-ink-3"}`}>
+                  {wd.dowKor}
                 </div>
-              )}
-              <div className={`text-[10px] ${wd.isToday ? "font-bold text-primary" : "text-ink-3"}`}>
-                {wd.dowKor}
+                <div
+                  className={`mx-auto mt-0.5 flex items-center justify-center text-xs font-semibold ${
+                    wd.isToday
+                      ? "w-7 h-7 rounded-full bg-primary text-white shadow-[0_3px_8px_rgba(45,212,191,0.45)] font-extrabold"
+                      : "w-6 h-6 rounded-full text-ink"
+                  }`}
+                >
+                  {wd.day}
+                </div>
               </div>
-              <div
-                className={`mx-auto mt-0.5 flex items-center justify-center text-xs font-semibold ${
-                  wd.isToday
-                    ? "w-7 h-7 rounded-full bg-primary text-white shadow-[0_3px_8px_rgba(45,212,191,0.45)] font-extrabold"
-                    : "w-6 h-6 rounded-full text-ink"
-                }`}
-              >
-                {wd.day}
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-7 gap-1 pb-1">
+            {weekDays.map((wd, i) => {
+              const isSelected = i === selectedDayIdx;
+              return (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => setSelectedDayIdx(i)}
+                  className={`relative flex-1 py-1.5 rounded-lg text-center transition active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
+                    isSelected
+                      ? "bg-primary text-white shadow-[0_3px_8px_rgba(45,212,191,0.35)]"
+                      : wd.isToday
+                        ? "bg-primary/10 text-primary border border-primary/40"
+                        : "bg-soft text-ink"
+                  }`}
+                  aria-pressed={isSelected}
+                  aria-label={`${wd.m}월 ${wd.day}일 ${wd.dowKor}요일${wd.isToday ? " 오늘" : ""}${isSelected ? " (선택됨)" : ""}`}
+                >
+                  <div className={`text-[10px] ${isSelected ? "text-white/85" : wd.isToday ? "text-primary" : "text-ink-3"}`}>
+                    {wd.dowKor}
+                  </div>
+                  <div className={`text-xs font-bold mt-0.5 ${isSelected ? "text-white" : wd.isToday ? "text-primary" : "text-ink"}`}>
+                    {wd.day}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
-      {/* 타임테이블 */}
-      <div className="px-3">
+      {/* 시간-블록 캘린더 본문 */}
+      <div className="px-3 pt-2">
         <div
-          className="grid grid-cols-[44px_repeat(7,1fr)] gap-0"
+          className={`grid gap-0 ${layoutMode === "day" ? "grid-cols-[44px_1fr]" : "grid-cols-[44px_repeat(7,1fr)]"}`}
           role="grid"
-          aria-label={`주간 레슨 일정 — ${weekRangeLabel}`}
-          aria-rowcount={timeSlots.length}
-          aria-colcount={7}
+          aria-label={layoutMode === "day" ? `${dayLabel} 일정` : `주간 일정 — ${weekRangeLabel}`}
         >
-          {timeSlots.map((slot) => (
-            <SlotRow
-              key={`${slot.hour}-${slot.minute}`}
-              slot={slot}
-              weekDays={weekDays}
-              lessonByCell={lessonByCell}
-              studentMap={studentMap}
-              onCellClick={onCellClick}
-              viewMode={viewMode}
-              slotStepMin={slotStepMin}
-            />
-          ))}
+          <TimeAxis />
+          {visibleColumns.map((wd, i) => {
+            const key = `${wd.date.getUTCFullYear()}-${wd.date.getUTCMonth() + 1}-${wd.date.getUTCDate()}`;
+            const blocks = blocksByDay.get(key) ?? [];
+            return (
+              <DayColumn
+                key={i}
+                date={wd.date}
+                isToday={wd.isToday}
+                isPast={wd.isPast}
+                blocks={blocks}
+                studentMap={studentMap}
+                onEmptyClick={onEmptyClick}
+                onBlockClick={onBlockClick}
+                isLastColumn={i === visibleColumns.length - 1}
+              />
+            );
+          })}
         </div>
 
+        {/* 안내 + 범례 */}
         <p className="mt-3 text-[11px] text-ink-3 px-1">
-          빈 시간을 탭하면 그 시간에 레슨을 잡거나 일정을 차단할 수 있어요.
+          빈 영역을 탭하면 그 시간에 레슨을 잡을 수 있어요. 레슨 블록을 탭하면 상세보기가 열립니다.
         </p>
 
-        {/* 범례 — lib/lesson-status STATUS_CELL_CLASS 와 동일 컬러로 정렬 */}
         <div className="mt-3 mb-6 flex flex-wrap gap-x-3 gap-y-1.5 p-3 bg-soft rounded-xl">
-          <LegendItem color="bg-amber-100 border-amber-200" label="레슨 신청" />
-          <LegendItem color="bg-violet-100 border-violet-200" label="레슨 예정" />
-          <LegendItem color="bg-red-100 border-red-200" label="진행중" />
-          <LegendItem color="bg-blue-100 border-blue-200" label="완료 / 변경완료" />
-          <LegendItem color="bg-gray-100 border-line" label="결강" />
-          <LegendItem color="bg-orange-100 border-orange-200" label="변경 / 보강 요청" />
-          <LegendItem color="bg-emerald-100 border-emerald-200" label="보강" />
-          <LegendItem color="bg-surface border-line" label="빈 시간" />
+          <LegendDot color="border-l-amber-500 bg-amber-50" label="레슨 신청" />
+          <LegendDot color="border-l-violet-500 bg-violet-50" label="레슨 예정" />
+          <LegendDot color="border-l-red-500 bg-red-50" label="진행중" />
+          <LegendDot color="border-l-blue-500 bg-blue-50" label="완료 / 변경완료" />
+          <LegendDot color="border-l-gray-400 bg-gray-100" label="결강" />
+          <LegendDot color="border-l-orange-500 bg-orange-50" label="변경 / 보강 요청" />
+          <LegendDot color="border-l-emerald-500 bg-emerald-50" label="보강" />
         </div>
       </div>
-
-      {sheet && (
-        <EmptySlotSheet
-          open={sheet.open}
-          onClose={closeSheet}
-          timeLabel={(() => {
-            const f = formatKstDate(sheet.date);
-            const hh = String(sheet.hour).padStart(2, "0");
-            return `${f.m}월 ${f.day}일 ${DOW_KOR[f.dow]}요일 · ${hh}:00`;
-          })()}
-          onBookLesson={onBookLessonAction}
-        />
-      )}
 
       {studentPicker && (
         <StudentPickerSheet
@@ -893,17 +900,6 @@ export function WeeklyTimetable({
         />
       )}
 
-      {lessonList && (
-        <LessonListSheet
-          open={lessonList.open}
-          onClose={closeLessonList}
-          hourLabel={lessonList.hourLabel}
-          lessons={lessonList.lessons}
-          onPickLesson={onPickLessonFromList}
-          onBookNew={onBookNewFromList}
-        />
-      )}
-
       <AlertModal
         open={alert.open}
         onClose={() => setAlert((a) => ({ ...a, open: false }))}
@@ -911,7 +907,6 @@ export function WeeklyTimetable({
         title={alert.title}
         description={alert.description}
       />
-
       <Toast
         open={toast.open}
         onClose={() => setToast((t) => ({ ...t, open: false }))}
@@ -923,145 +918,206 @@ export function WeeklyTimetable({
   );
 }
 
-function SlotRow({
-  slot,
-  weekDays,
-  lessonByCell,
-  studentMap,
-  onCellClick,
-  viewMode,
-}: {
-  slot: TimeSlot;
-  weekDays: { date: Date; isToday: boolean; isPast: boolean }[];
-  lessonByCell: Map<string, LessonRow[]>;
-  studentMap: Map<string, StudentOption>;
-  onCellClick: (dayOfWeek: number, hour: number, date: Date, minute: number) => void;
-  viewMode: ViewMode;
-  slotStepMin?: number;
-}) {
-  const isHourMode = viewMode === "hour";
-  // 셀 높이 — 1시간 44px, 10분 32px (#9: 24 → 32, 터치 타겟 약간 강화. 44px 권장이나 grid density 절충)
-  const rowHeight = isHourMode ? "h-11" : "h-8";
-  // 10분 모드에서 매 시각 단위 행만 강한 보더로 구분
-  const isHourBoundary = slot.minute === 0;
-  const topBorder = isHourMode
-    ? "border-t border-line"
-    : isHourBoundary
-      ? "border-t border-line"
-      : "border-t border-line/30";
-  const labelFontClass = isHourMode ? "text-[10px]" : isHourBoundary ? "text-[10px] font-semibold text-ink-2" : "text-[9px]";
+// ---------- 좌측 시간 축 ----------
+function TimeAxis() {
+  const totalHeight = TOTAL_HOURS * HOUR_HEIGHT_PX;
   return (
-    <>
-      <div
-        role="rowheader"
-        aria-label={`${slot.label}`}
-        className={`${labelFontClass} text-right pr-1.5 ${isHourMode ? "pt-1" : "pt-0 leading-tight"} ${topBorder} ${!isHourMode && !isHourBoundary ? "text-ink-3" : ""}`}
-      >
-        {slot.label}
-      </div>
-      {weekDays.map((wd, i) => {
-        const dow = wd.date.getUTCDay();
-        const f = formatKstDate(wd.date);
-        const key = `${f.y}-${f.m}-${f.day}-${slot.hour}-${slot.minute}`;
-        const arr = lessonByCell.get(key) ?? [];
-        const count = arr.length;
-        const first = arr[0];
-        const full = isHourMode && count >= 1 && isHourFull(arr, slot.hour);
-        const pastEmpty = wd.isPast && count === 0;
-        // 10분 모드: 이 슬롯에서 시작하는 lesson만 학생 이름 표시
-        const startingLesson = !isHourMode
-          ? arr.find((l) => {
-              const startKst = new Date(parseIsoUtc(l.scheduledAt).getTime() + KST_OFFSET_MS);
-              return startKst.getUTCHours() === slot.hour && startKst.getUTCMinutes() === slot.minute;
-            })
-          : undefined;
-        const startingStudent = startingLesson ? studentMap.get(startingLesson.studentId) : undefined;
-        // 10분 모드 continuation: 이 셀이 lesson 시작이 아니고 점유중이면 위 보더 제거 → 시각적 병합
-        const isContinuation = !isHourMode && count > 0 && !startingLesson;
-        const cellTopBorder = isContinuation ? "" : topBorder;
+    <div className="relative" style={{ height: totalHeight }} aria-hidden>
+      {Array.from({ length: TOTAL_HOURS + 1 }, (_, i) => {
+        const hour = DAY_START_HOUR + i;
+        const top = i * HOUR_HEIGHT_PX;
         return (
-          <button
-            type="button"
+          <div
             key={i}
-            role="gridcell"
-            onClick={() => onCellClick(dow, slot.hour, wd.date, slot.minute)}
-            disabled={pastEmpty}
-            // 네이티브 tooltip — 잘려 보이지 않는 학생 이름 + 상태를 마우스 호버 시 노출 (#20)
-            title={
-              pastEmpty
-                ? "지난 시각 — 새 레슨 등록 불가"
-                : count > 0
-                  ? arr
-                      .map((l) => {
-                        const s = studentMap.get(l.studentId)?.name ?? "이름 미입력";
-                        const startKst = new Date(parseIsoUtc(l.scheduledAt).getTime() + KST_OFFSET_MS);
-                        const hh = String(startKst.getUTCHours()).padStart(2, "0");
-                        const mm = String(startKst.getUTCMinutes()).padStart(2, "0");
-                        return `${hh}:${mm} ${s}`;
-                      })
-                      .join(" / ")
-                  : "빈 슬롯 — 클릭해서 레슨 잡기"
-            }
-            className={`relative ${rowHeight} ${cellTopBorder} border-l border-line/60 transition active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-primary/40 focus:relative overflow-hidden ${
-              pastEmpty
-                ? "bg-soft/40 cursor-not-allowed"
-                : count > 0
-                  ? `${getStatusCellClass(deriveDisplayStatus(first.status, first.scheduledAt, first.durationMinutes))} cursor-pointer ${wd.isPast ? "opacity-70" : ""}`
-                  : "bg-surface hover:bg-soft cursor-pointer"
-            }`}
-            aria-label={(() => {
-              const dayPart = `${f.m}월 ${f.day}일 ${DOW_KOR[dow]}요일 ${slot.label}`;
-              if (pastEmpty) return `${dayPart} 지난 시각 (비활성)`;
-              if (count === 0) return `${dayPart} 빈 슬롯 — 클릭해서 레슨 등록`;
-              if (count === 1) {
-                const name = studentMap.get(first.studentId)?.name ?? "이름 미입력";
-                return `${dayPart} ${name} 레슨${full ? " (시간 가득)" : ""}`;
-              }
-              return `${dayPart} 레슨 ${count}개${full ? " (시간 가득)" : ""}`;
-            })()}
+            className="absolute right-1 text-[10px] text-ink-3 tabular-nums"
+            style={{ top: top - 6 }}
           >
-            {isHourMode && count >= 1 && (
-              <span className="absolute inset-0 flex flex-col items-center justify-center gap-0.5">
-                {/* 단일 레슨일 때 — 학생 첫 글자 + status 약어 (색맹 대비 + 컨텍스트) */}
-                {count === 1 && !full && (() => {
-                  const student = studentMap.get(first.studentId);
-                  const nameInitial = student?.name?.slice(0, 1) ?? "";
-                  return (
-                    <span className="flex items-baseline gap-0.5 leading-none">
-                      {nameInitial && (
-                        <span className="text-[10px] font-extrabold text-ink">{nameInitial}</span>
-                      )}
-                      <span className="text-[9px] font-bold text-ink-2">
-                        {getStatusAbbr(deriveDisplayStatus(first.status, first.scheduledAt, first.durationMinutes))}
-                      </span>
-                    </span>
-                  );
-                })()}
-                {(count > 1 || full) && (
-                  <span className={`inline-flex items-center justify-center min-w-[18px] h-[18px] px-1.5 rounded-full text-white text-[9px] font-bold leading-none tracking-tight ${full ? "bg-orange-600" : "bg-ink"}`}>
-                    {full ? "FULL" : count > 9 ? "9+" : count}
-                  </span>
-                )}
-              </span>
-            )}
-            {!isHourMode && startingStudent && (
-              <span className="absolute inset-0 flex items-center justify-center px-0.5 pointer-events-none">
-                <span className="text-[9px] font-bold text-ink truncate leading-none">
-                  {startingStudent.name}
-                </span>
-              </span>
-            )}
-          </button>
+            {String(hour).padStart(2, "0")}:00
+          </div>
         );
       })}
-    </>
+    </div>
   );
 }
 
-function LegendItem({ color, label }: { color: string; label: string }) {
+// ---------- 하루 컬럼 ----------
+function DayColumn({
+  date,
+  isToday,
+  isPast,
+  blocks,
+  studentMap,
+  onEmptyClick,
+  onBlockClick,
+  isLastColumn,
+}: {
+  date: Date;
+  isToday: boolean;
+  isPast: boolean;
+  blocks: LessonBlock[];
+  studentMap: Map<string, StudentOption>;
+  onEmptyClick: (date: Date, hour: number, minute: number) => void;
+  onBlockClick: (lesson: LessonRow) => void;
+  isLastColumn: boolean;
+}) {
+  const totalHeight = TOTAL_HOURS * HOUR_HEIGHT_PX;
+  const dayStartMin = DAY_START_HOUR * 60;
+
+  const onAreaClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const y = Math.max(0, Math.min(rect.height, e.clientY - rect.top));
+    const totalMinFromStart = (y / HOUR_HEIGHT_PX) * 60;
+    // 10분 단위 스냅
+    const snapped = Math.floor(totalMinFromStart / SNAP_MIN) * SNAP_MIN;
+    const hour = DAY_START_HOUR + Math.floor(snapped / 60);
+    const minute = snapped % 60;
+    onEmptyClick(date, hour, minute);
+  };
+
+  // 현재 시각 라인 (오늘 컬럼만)
+  let nowLineTop: number | null = null;
+  if (isToday) {
+    const nowKst = new Date(Date.now() + KST_OFFSET_MS);
+    const nowMin = nowKst.getUTCHours() * 60 + nowKst.getUTCMinutes();
+    if (nowMin >= dayStartMin && nowMin <= DAY_END_HOUR * 60) {
+      nowLineTop = ((nowMin - dayStartMin) / 60) * HOUR_HEIGHT_PX;
+    }
+  }
+
+  return (
+    <div
+      className={`relative border-l border-line/60 ${isLastColumn ? "border-r" : ""} ${isPast ? "bg-soft/30" : "bg-surface"}`}
+      style={{ height: totalHeight }}
+      role="gridcell"
+      aria-label={`${date.getUTCMonth() + 1}월 ${date.getUTCDate()}일 일정 컬럼`}
+    >
+      {/* hour 그리드 라인 — 매시 정각 진한 선 + 30분 흐린 선 */}
+      {Array.from({ length: TOTAL_HOURS + 1 }, (_, i) => (
+        <div
+          key={`hour-${i}`}
+          className="absolute left-0 right-0 border-t border-line/40 pointer-events-none"
+          style={{ top: i * HOUR_HEIGHT_PX }}
+        />
+      ))}
+      {Array.from({ length: TOTAL_HOURS }, (_, i) => (
+        <div
+          key={`half-${i}`}
+          className="absolute left-0 right-0 border-t border-line/15 pointer-events-none"
+          style={{ top: i * HOUR_HEIGHT_PX + HOUR_HEIGHT_PX / 2 }}
+        />
+      ))}
+
+      {/* 빈 영역 클릭 오버레이 — 블록 아래에 깔림 (DOM 순서) */}
+      <button
+        type="button"
+        onClick={onAreaClick}
+        aria-label={`${date.getUTCMonth() + 1}월 ${date.getUTCDate()}일 — 빈 시간 탭해서 레슨 잡기`}
+        className="absolute inset-0 cursor-cell hover:bg-primary/[0.04] focus:outline-none focus-visible:bg-primary/[0.06]"
+      />
+
+      {/* 레슨 블록 */}
+      {blocks.map((b) => (
+        <LessonBlockView
+          key={b.lesson.id}
+          block={b}
+          studentMap={studentMap}
+          onClick={() => onBlockClick(b.lesson)}
+        />
+      ))}
+
+      {/* 현재 시각 라인 */}
+      {nowLineTop != null && (
+        <div
+          className="absolute left-0 right-0 z-20 pointer-events-none"
+          style={{ top: nowLineTop }}
+          aria-hidden
+        >
+          <div className="absolute -left-1 -top-1 w-2.5 h-2.5 rounded-full bg-red-500 shadow" />
+          <div className="h-[2px] bg-red-500" />
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------- 레슨 블록 ----------
+function LessonBlockView({
+  block,
+  studentMap,
+  onClick,
+}: {
+  block: LessonBlock;
+  studentMap: Map<string, StudentOption>;
+  onClick: () => void;
+}) {
+  const { lesson, startMin, endMin, laneIdx, laneCount } = block;
+  const dayStartMin = DAY_START_HOUR * 60;
+  const topPx = ((startMin - dayStartMin) / 60) * HOUR_HEIGHT_PX;
+  const heightPx = Math.max(((endMin - startMin) / 60) * HOUR_HEIGHT_PX - 2, 20);
+  const leftPct = (laneIdx / laneCount) * 100;
+  const widthPct = (1 / laneCount) * 100;
+
+  const student = studentMap.get(lesson.studentId);
+  const studentName = student?.name ?? "이름 미입력";
+  const displayStatus = deriveDisplayStatus(lesson.status, lesson.scheduledAt, lesson.durationMinutes);
+  const accent = getStatusBlockAccent(displayStatus);
+  const statusLabel = getStatusLabel(displayStatus);
+
+  // 짧은 블록(30분 미만)은 한 줄만 표시
+  const isVeryShort = heightPx < 30;
+  const isShort = heightPx < 48;
+
+  return (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick();
+      }}
+      style={{
+        position: "absolute",
+        top: `${topPx}px`,
+        height: `${heightPx}px`,
+        left: `calc(${leftPct}% + 1px)`,
+        width: `calc(${widthPct}% - 2px)`,
+      }}
+      className={`absolute rounded-md border-l-4 px-1.5 py-0.5 text-left overflow-hidden transition active:scale-[0.99] hover:shadow-md hover:z-10 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 z-[5] ${accent.bg} ${accent.border}`}
+      title={`${studentName} · ${hmRange(startMin, endMin)} · ${statusLabel.text}`}
+      aria-label={`${studentName} ${hmRange(startMin, endMin)} ${statusLabel.text}`}
+    >
+      <div
+        className={`font-bold truncate ${accent.text} ${
+          isVeryShort ? "text-[10px] leading-none" : "text-[11px] leading-tight"
+        }`}
+      >
+        {studentName}
+      </div>
+      {!isVeryShort && (
+        <div className="mt-0.5 flex items-center gap-1 text-[9px] text-ink-2 leading-tight">
+          <span className="tabular-nums truncate">{hmRange(startMin, endMin)}</span>
+          {!isShort && lesson.paymentStatus === "UNPAID" && (
+            <span className="text-red-500 font-semibold flex-none">· 미결제</span>
+          )}
+          {!isShort && lesson.paymentStatus === "PAID" && (
+            <span className="text-emerald-600 flex-none">· 결제</span>
+          )}
+        </div>
+      )}
+      {/* 60분 이상 + lane이 1개면 상태 라벨도 한 줄 더 표시 */}
+      {heightPx >= 60 && laneCount === 1 && (
+        <div className={`mt-0.5 text-[9px] font-semibold ${accent.text} opacity-80 truncate`}>
+          {statusLabel.text}
+        </div>
+      )}
+    </button>
+  );
+}
+
+// ---------- 범례 ----------
+function LegendDot({ color, label }: { color: string; label: string }) {
   return (
     <div className="flex items-center gap-1.5">
-      <span className={`inline-block w-2.5 h-2.5 rounded-sm border ${color}`} />
+      <span className={`inline-block w-3 h-3 rounded-sm border-l-4 ${color}`} />
       <span className="text-[10px] text-ink-3">{label}</span>
     </div>
   );

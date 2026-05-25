@@ -106,6 +106,39 @@ export function getStatusCellClass(s: string): string {
 }
 
 /**
+ * 시간-블록 캘린더(weekly-timetable 신규) 전용 액센트.
+ * 구글 캘린더 스타일 — 연한 배경 + 좌측 두꺼운 컬러 스트라이프 + 본문 텍스트.
+ * 셀 표가 아니라 진짜 블록(absolute box)이라 더 또렷한 컬러를 사용할 수 있다.
+ */
+export type StatusBlockAccent = { bg: string; border: string; text: string };
+
+export const STATUS_BLOCK_ACCENT: Record<LessonStatus, StatusBlockAccent> = {
+  PENDING:              { bg: "bg-amber-50",   border: "border-l-amber-500",   text: "text-amber-900"   },
+  CONFIRMED:            { bg: "bg-violet-50",  border: "border-l-violet-500",  text: "text-violet-900"  },
+  IN_PROGRESS:          { bg: "bg-red-50",     border: "border-l-red-500",     text: "text-red-900"     },
+  COMPLETED:            { bg: "bg-blue-50",    border: "border-l-blue-500",    text: "text-blue-900"    },
+  ABSENT:               { bg: "bg-gray-100",   border: "border-l-gray-400",    text: "text-gray-700"    },
+  CANCELLED:            { bg: "bg-gray-50",    border: "border-l-gray-300",    text: "text-gray-500"    },
+  RESCHEDULE_REQUESTED: { bg: "bg-orange-50",  border: "border-l-orange-500",  text: "text-orange-900"  },
+  RESCHEDULE_COMPLETED: { bg: "bg-blue-50",    border: "border-l-blue-500",    text: "text-blue-900"    },
+  MAKEUP_PENDING:       { bg: "bg-emerald-50", border: "border-l-emerald-500", text: "text-emerald-900" },
+  MAKEUP_CONFIRMED:     { bg: "bg-emerald-50", border: "border-l-emerald-600", text: "text-emerald-900" },
+  MAKEUP_REQUESTED:     { bg: "bg-orange-50",  border: "border-l-orange-500",  text: "text-orange-900"  },
+  MERGE:                { bg: "bg-violet-50",  border: "border-l-violet-600",  text: "text-violet-900"  },
+  SPLIT:                { bg: "bg-violet-50",  border: "border-l-violet-600",  text: "text-violet-900"  },
+};
+
+const FALLBACK_BLOCK_ACCENT: StatusBlockAccent = {
+  bg: "bg-soft",
+  border: "border-l-gray-300",
+  text: "text-ink",
+};
+
+export function getStatusBlockAccent(s: string): StatusBlockAccent {
+  return isLessonStatus(s) ? STATUS_BLOCK_ACCENT[s] : FALLBACK_BLOCK_ACCENT;
+}
+
+/**
  * DB status + 현재 시각으로 표시용 상태 도출.
  * CONFIRMED 레슨이 실제 진행 시간대(시작 ~ 종료)에 들어오면 IN_PROGRESS로 표시.
  * 그 외에는 DB status 그대로 사용.
