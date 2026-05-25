@@ -16,10 +16,11 @@ export const dynamic = "force-dynamic";
 export default async function Home({
   searchParams,
 }: {
-  searchParams?: { test?: string; as?: string };
+  searchParams?: { test?: string; as?: string; debug?: string };
 }) {
   const testMode = searchParams?.test;
   const asStudent = searchParams?.as === "student";
+  const showDevButtons = searchParams?.debug === "1";
   const supabase = createClient();
   const {
     data: { user },
@@ -111,6 +112,7 @@ export default async function Home({
       nickname={nickname}
       pendingClaimCount={pendingClaimCount ?? 0}
       testMode={testMode === "lessons"}
+      showDevButtons={showDevButtons}
     />
   );
 }
@@ -266,10 +268,12 @@ function CoachHome({
   nickname,
   pendingClaimCount,
   testMode = false,
+  showDevButtons = false,
 }: {
   nickname: string;
   pendingClaimCount: number;
   testMode?: boolean;
+  showDevButtons?: boolean;
 }) {
 
   return (
@@ -289,22 +293,26 @@ function CoachHome({
             </div>
             <div className="mt-1.5 text-xs text-ink-3">안녕하세요, {nickname} 코치님</div>
           </div>
-          <Link
-            href="/?as=student"
-            className="flex-none inline-flex items-center rounded-full border border-line bg-surface text-ink-2 text-[11px] font-semibold px-3 py-1.5 hover:bg-soft transition active:scale-[0.98]"
-            title="임시 학생 홈 미리보기 (테스트용)"
-          >
-            학생 홈
-          </Link>
-          <form action={signOutAction} className="flex-none">
-            <button
-              type="submit"
-              className="inline-flex items-center rounded-full border border-line bg-surface text-ink-2 text-[11px] font-semibold px-3 py-1.5 hover:bg-soft transition active:scale-[0.98]"
-              title="임시 로그아웃 (테스트용)"
-            >
-              로그아웃
-            </button>
-          </form>
+          {showDevButtons && (
+            <>
+              <Link
+                href="/?as=student"
+                className="flex-none inline-flex items-center rounded-full border border-line bg-surface text-ink-2 text-[11px] font-semibold px-3 py-1.5 hover:bg-soft transition active:scale-[0.98]"
+                title="임시 학생 홈 미리보기 (테스트용)"
+              >
+                학생 홈
+              </Link>
+              <form action={signOutAction} className="flex-none">
+                <button
+                  type="submit"
+                  className="inline-flex items-center rounded-full border border-line bg-surface text-ink-2 text-[11px] font-semibold px-3 py-1.5 hover:bg-soft transition active:scale-[0.98]"
+                  title="임시 로그아웃 (테스트용)"
+                >
+                  로그아웃
+                </button>
+              </form>
+            </>
+          )}
           <Link
             href="/coach/schedule"
             prefetch={false}

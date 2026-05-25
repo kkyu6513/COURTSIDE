@@ -3,7 +3,9 @@
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { AlertModal } from "@/components/alert-modal";
 import { StudentPickerSheet, type StudentOption } from "@/components/coach/student-picker-sheet";
-import { bookLesson } from "@/app/coach/schedule/actions";
+import { LessonDetailSheet, type LessonDetail } from "@/components/coach/lesson-detail-sheet";
+import { bookLesson, cancelLesson, updateLessonNotes } from "@/app/coach/schedule/actions";
+import { maskName } from "@/lib/masking";
 
 type LessonRow = {
   id: number;
@@ -193,6 +195,9 @@ export function CoachHomeCalendar({ testMode = false }: { testMode?: boolean }) 
   const [isLoading, setIsLoading] = useState(true);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pendingStudentId, setPendingStudentId] = useState<string | null>(null);
+  const [lessonDetail, setLessonDetail] = useState<{ open: boolean; lesson: LessonDetail } | null>(null);
+  const [pendingCancel, setPendingCancel] = useState(false);
+  const [pendingNotes, setPendingNotes] = useState(false);
   const [, startTransition] = useTransition();
   const [alert, setAlert] = useState<{
     open: boolean;
@@ -335,6 +340,63 @@ export function CoachHomeCalendar({ testMode = false }: { testMode?: boolean }) 
     setPickerOpen(true);
   };
 
+  const openLessonDetail = (l: LessonRow) => {
+    const student = studentMap.get(l.studentId);
+    const rawName = student?.name ?? studentNames[l.studentId] ?? "이름 미입력";
+    setLessonDetail({
+      open: true,
+      lesson: {
+        id: l.id,
+        studentName: rawName, // 본인 학생이므로 풀 노출
+        studentPhone: student?.phone ?? null,
+        scheduledAt: l.scheduledAt,
+        durationMinutes: l.durationMinutes,
+        status: (["CONFIRMED", "PENDING", "UPCOMING", "CHANGE_REQUEST", "COMPLETED", "CANCELLED"].includes(l.status)
+          ? l.status
+          : "CONFIRMED") as LessonDetail["status"],
+        notes: l.notes ?? null,
+      },
+    });
+  };
+
+  const closeLessonDetail = () => setLessonDetail((s) => (s ? { ...s, open: false } : null));
+
+  const onCancelLesson = () => {
+    if (!lessonDetail) return;
+    const id = lessonDetail.lesson.id;
+    setPendingCancel(true);
+    startTransition(async () => {
+      const res = await cancelLesson(id);
+      setPendingCancel(false);
+      if (!res.ok) {
+        setAlert({ open: true, variant: "error", title: "레슨 취소 실패", description: res.error });
+        return;
+      }
+      setLessonDetail(null);
+      setAlert({ open: true, variant: "success", title: "레슨이 취소되었어요" });
+      reload();
+    });
+  };
+
+  const onSaveLessonNotes = (notes: string) => {
+    if (!lessonDetail) return;
+    const id = lessonDetail.lesson.id;
+    setPendingNotes(true);
+    startTransition(async () => {
+      const res = await updateLessonNotes(id, notes);
+      setPendingNotes(false);
+      if (!res.ok) {
+        setAlert({ open: true, variant: "error", title: "메모 저장 실패", description: res.error });
+        return;
+      }
+      setLessonDetail((s) =>
+        s ? { ...s, lesson: { ...s.lesson, notes: notes.trim() || null } } : s,
+      );
+      setAlert({ open: true, variant: "success", title: "메모가 저장되었어요" });
+      reload();
+    });
+  };
+
   const onPickStudent = (studentId: string, hour: number, minute: number, durationMinutes: number) => {
     if (!selectedDate) return;
     const iso = cellToIso(selectedDate, hour, minute);
@@ -466,7 +528,7 @@ export function CoachHomeCalendar({ testMode = false }: { testMode?: boolean }) 
                     studentMap.get(l.studentId)?.name ??
                     "이름 미입력"
                   }
-                  onClick={openPicker}
+                  onClick={() => openLessonDetail(l)}
                 />
               </li>
             ))}
@@ -486,6 +548,18 @@ export function CoachHomeCalendar({ testMode = false }: { testMode?: boolean }) 
           students={students}
           pendingStudentId={pendingStudentId}
           onPick={onPickStudent}
+        />
+      )}
+
+      {lessonDetail && (
+        <LessonDetailSheet
+          open={lessonDetail.open}
+          onClose={closeLessonDetail}
+          lesson={lessonDetail.lesson}
+          pendingCancel={pendingCancel}
+          pendingNotes={pendingNotes}
+          onCancel={onCancelLesson}
+          onSaveNotes={onSaveLessonNotes}
         />
       )}
 
