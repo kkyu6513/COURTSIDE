@@ -69,7 +69,7 @@ type Props = {
   dayStartUtcMs?: number;
   students: StudentOption[];
   pendingStudentId: string | null;
-  onPick: (studentId: string, hour: number, minute: number, durationMinutes: number) => void;
+  onPick: (studentId: string, hour: number, minute: number, durationMinutes: number, weekCount: number) => void;
 };
 
 export function StudentPickerSheet({
@@ -87,6 +87,7 @@ export function StudentPickerSheet({
   const [search, setSearch] = useState("");
   const [duration, setDuration] = useState(60);
   const [selectedStartMin, setSelectedStartMin] = useState<number | null>(null);
+  const [weekCount, setWeekCount] = useState(1); // 정기 등록 주 수 (1 = 단발)
 
   useEffect(() => {
     if (open) {
@@ -94,6 +95,7 @@ export function StudentPickerSheet({
       setSearch("");
       setDuration(60);
       setSelectedStartMin(null);
+      setWeekCount(1);
     }
   }, [open, initialHour]);
 
@@ -392,8 +394,39 @@ export function StudentPickerSheet({
                 <span className="font-semibold text-ink">
                   {hmLabel(startMin)} ~ {hmLabel(endMin)}
                 </span>{" "}
-                ({duration}분) 레슨을 받을 수강생을 선택하세요
+                ({duration}분){weekCount > 1 && (
+                  <span className="ml-1 inline-block text-[10px] font-bold text-primary-600 bg-primary/10 px-1.5 py-0.5 rounded">
+                    {weekCount}주 반복
+                  </span>
+                )}{" "}레슨을 받을 수강생을 선택하세요
               </div>
+
+              {/* 정기 등록 — 동일 요일·시간 N주 반복 (#19) */}
+              <div className="mt-2.5 flex items-center justify-between gap-2 rounded-lg border border-line bg-surface px-3 py-2">
+                <div className="min-w-0 flex-1">
+                  <div className="text-[11px] font-bold text-ink">정기 등록</div>
+                  <div className="mt-0.5 text-[10px] text-ink-3 leading-tight">
+                    같은 요일·시간으로 N주 한 번에 등록
+                  </div>
+                </div>
+                <div className="flex-none flex items-center gap-1">
+                  {[1, 4, 8, 12].map((n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() => setWeekCount(n)}
+                      className={`h-7 px-2 rounded-md text-[11px] font-bold transition ${
+                        weekCount === n
+                          ? "bg-primary text-white shadow-sm"
+                          : "bg-soft text-ink-2 hover:bg-line"
+                      }`}
+                    >
+                      {n === 1 ? "1회" : `${n}주`}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <input
                 type="text"
                 value={search}
@@ -438,6 +471,7 @@ export function StudentPickerSheet({
                               Math.floor(startMin / 60),
                               startMin % 60,
                               duration,
+                              weekCount,
                             )
                           }
                           disabled={!!pendingStudentId}

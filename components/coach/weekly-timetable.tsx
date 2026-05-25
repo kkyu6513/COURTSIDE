@@ -10,6 +10,7 @@ import { LessonDetailSheet, type LessonDetail } from "@/components/coach/lesson-
 import { LessonListSheet } from "@/components/coach/lesson-list-sheet";
 import {
   bookLesson,
+  bookRecurringLessons,
   cancelLesson,
   markLessonAbsent,
   markLessonCompleted,
@@ -584,7 +585,13 @@ export function WeeklyTimetable({
   const closeStudentPicker = () =>
     setStudentPicker((s) => (s ? { ...s, open: false } : null));
 
-  const onPickStudent = (studentId: string, hour: number, minute: number, durationMinutes: number) => {
+  const onPickStudent = (
+    studentId: string,
+    hour: number,
+    minute: number,
+    durationMinutes: number,
+    weekCount: number = 1,
+  ) => {
     if (!studentPicker) return;
     const iso = cellToIso(studentPicker.date, hour, minute);
     const hh = String(hour).padStart(2, "0");
@@ -596,15 +603,34 @@ export function WeeklyTimetable({
     const fullTimeLabel = `${baseDate} · ${hh}:${mm} ~ ${endHh}:${endMm} (${durationMinutes}분)`;
     setPendingStudentId(studentId);
     startTransition(async () => {
-      const res = await bookLesson(studentId, iso, durationMinutes);
-      setPendingStudentId(null);
-      if (!res.ok) {
-        showError("레슨 등록 실패", res.error);
-        return;
+      if (weekCount > 1) {
+        // 정기 등록 (#19)
+        const res = await bookRecurringLessons(studentId, iso, durationMinutes, weekCount);
+        setPendingStudentId(null);
+        if (!res.ok) {
+          showError("정기 레슨 등록 실패", res.error);
+          return;
+        }
+        setStudentPicker(null);
+        const skipMsg = res.skippedWeeks.length > 0
+          ? ` (${res.skippedWeeks.length}주 건너뜀: ${res.skippedWeeks.map((s) => `${s.week}주차`).join(", ")})`
+          : "";
+        showSuccess(
+          `${res.bookedCount}건의 정기 레슨이 등록되었어요`,
+          `${weekCount}주 중 ${res.bookedCount}건 성공${skipMsg}`,
+        );
+        reload();
+      } else {
+        const res = await bookLesson(studentId, iso, durationMinutes);
+        setPendingStudentId(null);
+        if (!res.ok) {
+          showError("레슨 등록 실패", res.error);
+          return;
+        }
+        setStudentPicker(null);
+        showSuccess("레슨이 등록되었어요", `${fullTimeLabel}에 레슨이 잡혔습니다.`);
+        reload();
       }
-      setStudentPicker(null);
-      showSuccess("레슨이 등록되었어요", `${fullTimeLabel}에 레슨이 잡혔습니다.`);
-      reload();
     });
   };
 

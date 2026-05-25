@@ -229,6 +229,115 @@ export async function markLessonAbsent(lessonId: number): Promise<SimpleResult> 
   return transitionLessonStatus(lessonId, ["CONFIRMED", "IN_PROGRESS"], "ABSENT");
 }
 
+type RecurringResult =
+  | { ok: true; bookedCount: number; skippedWeeks: Array<{ week: number; reason: string }> }
+  | { ok: false; error: string };
+
+/**
+ * 정기 레슨 일괄 등록 (#19) — baseScheduledAt 기준 매 주 같은 요일·시간으로 weekCount 회 반복.
+ * 충돌이 있는 주는 skip 하고 결과 리포트로 알림. 0건 등록 시 전체 실패로 처리.
+ */
+export async function bookRecurringLessons(
+  studentId: string,
+  baseScheduledAt: string,
+  durationMinutes: number,
+  weekCount: number,
+): Promise<RecurringResult> {
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "로그인이 필요합니다" };
+
+  const meta = user.app_metadata as { role?: string } | undefined;
+  if (meta?.role !== "COACH") return { ok: false, error: "코치만 가능해요" };
+
+  if (!studentId) return { ok: false, error: "수강생을 선택해주세요" };
+  if (!Number.isInteger(weekCount) || weekCount < 1 || weekCount > 24) {
+    return { ok: false, error: "반복 주 수는 1~24 사이여야 해요" };
+  }
+  const dur = Number.isInteger(durationMinutes) ? durationMinutes : 60;
+  if (dur < 10 || dur > 240) return { ok: false, error: "레슨 시간이 올바르지 않습니다" };
+
+  const baseDate = new Date(baseScheduledAt);
+  if (Number.isNaN(baseDate.getTime())) return { ok: false, error: "시간이 올바르지 않습니다" };
+
+  const admin = createAdminClient();
+
+  // 학생 매칭 검증 (bookLesson 과 동일)
+  const { data: matchedClaim } = await admin
+    .from("student_self_claims")
+    .select("id")
+    .eq("studentUserId", studentId)
+    .eq("matchedCoachUserId", user.id)
+    .eq("status", "CONFIRMED")
+    .maybeSingle();
+  if (!matchedClaim) return { ok: false, error: "수락하지 않은 수강생이에요" };
+
+  const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+  const SAFETY_WINDOW_MS = (4 + 24) * 60 * 60 * 1000;
+  const PAST_GRACE_MS = 5 * 60 * 1000;
+  let bookedCount = 0;
+  const skippedWeeks: Array<{ week: number; reason: string }> = [];
+
+  for (let w = 0; w < weekCount; w++) {
+    const startMs = baseDate.getTime() + w * WEEK_MS;
+    const endMs = startMs + dur * 60 * 1000;
+
+    if (startMs < Date.now() - PAST_GRACE_MS) {
+      skippedWeeks.push({ week: w + 1, reason: "이미 지난 시각" });
+      continue;
+    }
+
+    // 충돌 검증
+    const wStart = new Date(startMs - SAFETY_WINDOW_MS).toISOString();
+    const wEnd = new Date(endMs + SAFETY_WINDOW_MS).toISOString();
+    const { data: nearby } = await admin
+      .from("lessons")
+      .select("scheduledAt, durationMinutes, status")
+      .eq("coachId", user.id)
+      .not("status", "in", "(CANCELLED,COMPLETED,ABSENT)")
+      .gte("scheduledAt", wStart)
+      .lte("scheduledAt", wEnd);
+    let conflict = false;
+    for (const ex of nearby ?? []) {
+      const exStart = new Date(ex.scheduledAt).getTime();
+      const exEnd = exStart + (ex.durationMinutes ?? 60) * 60 * 1000;
+      if (startMs < exEnd && endMs > exStart) {
+        conflict = true;
+        break;
+      }
+    }
+    if (conflict) {
+      skippedWeeks.push({ week: w + 1, reason: "이미 잡힌 레슨과 겹침" });
+      continue;
+    }
+
+    const { error: insertError } = await admin.from("lessons").insert({
+      coachId: user.id,
+      studentId,
+      scheduledAt: new Date(startMs).toISOString(),
+      durationMinutes: dur,
+      status: "CONFIRMED",
+      updatedAt: new Date().toISOString(),
+    });
+    if (insertError) {
+      console.error("[bookRecurringLessons] insert error:", insertError);
+      skippedWeeks.push({ week: w + 1, reason: "등록 중 오류" });
+      continue;
+    }
+    bookedCount += 1;
+  }
+
+  if (bookedCount === 0) {
+    return { ok: false, error: "등록 가능한 주가 없어요. 시간 또는 반복 횟수를 다시 확인해 주세요." };
+  }
+
+  revalidatePath("/coach/schedule");
+  revalidatePath("/");
+  return { ok: true, bookedCount, skippedWeeks };
+}
+
 /**
  * 결제확인 처리 — paymentStatus UNPAID → PAID.
  * EXTERNAL/PAID/NONE 상태에서는 호출 불가.
