@@ -645,15 +645,24 @@ export function WeeklyTimetable({
       </div>
 
       {/* 주간 헤더 */}
-      <div className="px-3 pt-2 pb-1 border-b border-line bg-surface">
+      <div className="px-3 pt-2 pb-1 border-b border-line bg-surface sticky top-0 z-10 backdrop-blur">
         <div className="grid grid-cols-[44px_repeat(7,1fr)] gap-0">
           <div />
           {weekDays.map((wd, i) => (
-            <div key={i} className="text-center py-1.5">
-              <div className={`text-[10px] ${wd.isToday ? "text-primary" : "text-ink-3"}`}>{wd.dowKor}</div>
+            <div key={i} className="text-center py-1.5 relative">
+              {wd.isToday && (
+                <div className="absolute -top-0.5 left-1/2 -translate-x-1/2 text-[8px] font-extrabold text-primary tracking-wider">
+                  TODAY
+                </div>
+              )}
+              <div className={`text-[10px] ${wd.isToday ? "font-bold text-primary" : "text-ink-3"}`}>
+                {wd.dowKor}
+              </div>
               <div
-                className={`mx-auto mt-0.5 w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold ${
-                  wd.isToday ? "bg-primary text-white" : "text-ink"
+                className={`mx-auto mt-0.5 flex items-center justify-center text-xs font-semibold ${
+                  wd.isToday
+                    ? "w-7 h-7 rounded-full bg-primary text-white shadow-[0_3px_8px_rgba(45,212,191,0.45)] font-extrabold"
+                    : "w-6 h-6 rounded-full text-ink"
                 }`}
               >
                 {wd.day}
@@ -665,7 +674,13 @@ export function WeeklyTimetable({
 
       {/* 타임테이블 */}
       <div className="px-3">
-        <div className="grid grid-cols-[44px_repeat(7,1fr)] gap-0">
+        <div
+          className="grid grid-cols-[44px_repeat(7,1fr)] gap-0"
+          role="grid"
+          aria-label={`주간 레슨 일정 — ${weekRangeLabel}`}
+          aria-rowcount={timeSlots.length}
+          aria-colcount={7}
+        >
           {timeSlots.map((slot) => (
             <SlotRow
               key={`${slot.hour}-${slot.minute}`}
@@ -786,7 +801,11 @@ function SlotRow({
   const labelFontClass = isHourMode ? "text-[10px]" : isHourBoundary ? "text-[10px] font-semibold text-ink-2" : "text-[9px]";
   return (
     <>
-      <div className={`${labelFontClass} text-right pr-1.5 ${isHourMode ? "pt-1" : "pt-0 leading-tight"} ${topBorder} ${!isHourMode && !isHourBoundary ? "text-ink-3" : ""}`}>
+      <div
+        role="rowheader"
+        aria-label={`${slot.label}`}
+        className={`${labelFontClass} text-right pr-1.5 ${isHourMode ? "pt-1" : "pt-0 leading-tight"} ${topBorder} ${!isHourMode && !isHourBoundary ? "text-ink-3" : ""}`}
+      >
         {slot.label}
       </div>
       {weekDays.map((wd, i) => {
@@ -813,6 +832,7 @@ function SlotRow({
           <button
             type="button"
             key={i}
+            role="gridcell"
             onClick={() => onCellClick(dow, slot.hour, wd.date, slot.minute)}
             className={`relative ${rowHeight} ${cellTopBorder} border-l border-line/60 transition active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-primary/40 focus:relative overflow-hidden ${
               pastEmpty
