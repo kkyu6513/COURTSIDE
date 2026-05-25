@@ -66,7 +66,7 @@ export async function bookLesson(
   // 같은 시간에 보강·재등록이 가능해야 하므로 끝난 회차는 점유로 보지 않음.
   const { data: nearby } = await admin
     .from("lessons")
-    .select("id, scheduledAt, durationMinutes, status")
+    .select("id, studentId, scheduledAt, durationMinutes, status")
     .eq("coachId", user.id)
     .not("status", "in", "(CANCELLED,COMPLETED,ABSENT)")
     .gte("scheduledAt", windowStart)
@@ -83,9 +83,20 @@ export async function bookLesson(
       const endKst = new Date(exEnd + 9 * 60 * 60 * 1000);
       const eh = String(endKst.getUTCHours()).padStart(2, "0");
       const em = String(endKst.getUTCMinutes()).padStart(2, "0");
+      // 충돌 학생 이름 조회 (#32) — 어떤 레슨이 막고 있는지 명시
+      let conflictStudentName = "";
+      if (ex.studentId) {
+        const { data: u } = await admin
+          .from("users")
+          .select("realName, name")
+          .eq("id", ex.studentId)
+          .maybeSingle();
+        conflictStudentName = u?.realName || u?.name || "";
+      }
+      const studentLabel = conflictStudentName ? ` (${conflictStudentName} 학생)` : "";
       return {
         ok: false,
-        error: `${hh}:${mm} ~ ${eh}:${em} 시간대에 이미 잡힌 레슨이 있어요`,
+        error: `${hh}:${mm} ~ ${eh}:${em} 시간대에 이미 잡힌 레슨이 있어요${studentLabel}`,
       };
     }
   }
