@@ -56,8 +56,8 @@ export default function LoginPage() {
           가입 시 이용약관 및 개인정보 처리방침에 동의합니다
         </p>
 
-        {/* 테스트용 — 가입자 목록 확인 */}
-        <div className="mt-6 flex justify-center">
+        {/* 테스트용 — 가입자 목록 / 역할 선택 화면 진입 */}
+        <div className="mt-6 flex flex-wrap justify-center gap-2">
           <Link
             href="/dev/users"
             className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-ink-3 px-3 py-1.5 rounded-full border border-dashed border-line hover:bg-soft transition"
@@ -69,6 +69,16 @@ export default function LoginPage() {
               <path d="M16 3.13a4 4 0 0 1 0 7.75" />
             </svg>
             테스트용: 가입자 목록 보기
+          </Link>
+          <Link
+            href="/onboarding/role?force=1"
+            className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-ink-3 px-3 py-1.5 rounded-full border border-dashed border-line hover:bg-soft transition"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <polyline points="9 11 12 14 22 4" />
+              <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+            </svg>
+            테스트용: 역할 선택 화면
           </Link>
         </div>
       </div>
