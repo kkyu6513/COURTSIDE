@@ -17,15 +17,18 @@ export default async function RoleOnboardingPage({
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) {
+  // force=1 이면 미로그인 상태에서도 화면을 볼 수 있게 가드 우회 (테스트용 점프)
+  // 단, 실제 selectRole/testSwitchRole 액션은 user 가드가 있어 호출 시점에 다시 검증됨
+  if (!user && !force) {
     redirect("/login");
   }
 
-  const currentRole = (user.app_metadata as { role?: string } | undefined)
-    ?.role;
+  const currentRole = user
+    ? (user.app_metadata as { role?: string } | undefined)?.role
+    : undefined;
 
   const nickname =
-    (user.user_metadata?.nickname as string | undefined) || "회원";
+    (user?.user_metadata?.nickname as string | undefined) || "회원";
 
   const quote = randomQuote();
 
