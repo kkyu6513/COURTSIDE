@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState, useTransition } from "react"
 import { AlertModal } from "@/components/alert-modal";
 import { StudentPickerSheet, type StudentOption } from "@/components/coach/student-picker-sheet";
 import { LessonDetailSheet, type LessonDetail } from "@/components/coach/lesson-detail-sheet";
-import { bookLesson, cancelLesson, updateLessonNotes } from "@/app/coach/schedule/actions";
+import { bookLesson, bookRecurringLessons, cancelLesson, updateLessonNotes } from "@/app/coach/schedule/actions";
 import { maskName } from "@/lib/masking";
 
 type LessonRow = {
@@ -411,23 +411,52 @@ export function CoachHomeCalendar({ testMode = false }: { testMode?: boolean }) 
     });
   };
 
-  const onPickStudent = (studentId: string, hour: number, minute: number, durationMinutes: number) => {
+  const onPickStudent = (
+    studentId: string,
+    hour: number,
+    minute: number,
+    durationMinutes: number,
+    weekCount: number = 1,
+  ) => {
     if (!selectedDate) return;
     const iso = cellToIso(selectedDate, hour, minute);
+    const timeLabel = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
     setPendingStudentId(studentId);
     startTransition(async () => {
-      const res = await bookLesson(studentId, iso, durationMinutes);
-      setPendingStudentId(null);
-      if (!res.ok) {
-        setAlert({ open: true, variant: "error", title: "레슨 등록 실패", description: res.error });
-        return;
+      if (weekCount <= 1) {
+        const res = await bookLesson(studentId, iso, durationMinutes);
+        setPendingStudentId(null);
+        if (!res.ok) {
+          setAlert({ open: true, variant: "error", title: "레슨 등록 실패", description: res.error });
+          return;
+        }
+        setPickerOpen(false);
+        setAlert({
+          open: true,
+          variant: "success",
+          title: `${selectedLabel} ${timeLabel} 레슨 등록 완료`,
+        });
+      } else {
+        const res = await bookRecurringLessons(studentId, iso, durationMinutes, weekCount);
+        setPendingStudentId(null);
+        if (!res.ok) {
+          setAlert({ open: true, variant: "error", title: "정기 등록 실패", description: res.error });
+          return;
+        }
+        setPickerOpen(false);
+        const skippedNote =
+          res.skippedWeeks.length > 0
+            ? `\n\n건너뛴 회차: ${res.skippedWeeks
+                .map((s) => `${s.week}주차 (${s.reason})`)
+                .join(", ")}`
+            : "";
+        setAlert({
+          open: true,
+          variant: "success",
+          title: `${weekCount}주 정기 등록 — ${res.bookedCount}회 완료`,
+          description: `${selectedLabel} ${timeLabel}부터 매주 같은 요일·시간으로 등록됐어요.${skippedNote}`,
+        });
       }
-      setPickerOpen(false);
-      setAlert({
-        open: true,
-        variant: "success",
-        title: `${selectedLabel} ${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")} 레슨 등록 완료`,
-      });
       reload();
     });
   };
