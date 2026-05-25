@@ -7,6 +7,7 @@ import { BackButton } from "@/components/back-button";
 import { CoachRequestForm, CoachRequestPending } from "@/components/coach-request-form";
 import { StudentSplash } from "@/components/student-splash";
 import { CoachHomeCalendar } from "@/components/coach/home-calendar";
+import { StudentHomeLessons } from "@/components/student/student-home-lessons";
 import { StudentTestCases } from "@/components/student-test-cases";
 import { signOutAction } from "@/app/actions/sign-out";
 import { randomQuote, timeGreeting, todayLabel } from "@/lib/quotes";
@@ -210,11 +211,7 @@ function StudentHome({
 
         <div className="mt-6">
           <h2 className="text-sm font-bold text-ink mb-2">이번 주 레슨</h2>
-          <div className="rounded-2xl border border-line bg-surface p-8 text-center">
-            <div className="text-3xl">📅</div>
-            <p className="mt-2 text-sm text-ink-2">아직 예정된 레슨이 없어요</p>
-            <p className="mt-1 text-xs text-ink-3">코치에게 등록되면 여기에 표시됩니다</p>
-          </div>
+          <StudentHomeLessons />
         </div>
 
         <div className="mt-6">
