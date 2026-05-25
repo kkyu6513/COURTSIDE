@@ -47,6 +47,9 @@
 | 20 | MAKEUP_SPLIT_PROPOSED | 회차 조정 | 수강생 | 코치 회차 분할 제안 시 (FR-14m) | bookingAlert |
 | 21 | MAKEUP_ADJUSTMENT_CONFIRMED | 회차 조정 | 코치 | 수강생 통합/분할 수락 시 (FR-14m) | bookingAlert |
 | 22 | STUDENT_SELF_CLAIM | 가입/매칭 | 코치 | 학생이 가입 시 본인을 코치로 지정 + 매칭 성공 | 항상 |
+| 23 | DAILY_COURTSIDE | 리텐션 | 수강생 | 매일 학생 지정 시각 (기본 08:00, FR-16a) | dailyCourtside |
+| 24 | RACKET_STRING_DUE | 리텐션 | 수강생 | 스트링 교체 D-7 진입 시 1회 (FR-16b) | racketAlert |
+| 25 | GRAND_SLAM_FAVORITE_MATCH | 리텐션 | 수강생 | 즐겨찾기 선수 경기 시작 1시간 전 (FR-16c) | grandSlamAlert |
 
 ---
 
@@ -727,6 +730,115 @@ PRO 플랜을 다시 구독하시면 모든 기능을 이용하실 수 있어요
 
 ---
 
+### 3.9 리텐션 카테고리 (FR-16)
+
+#### DAILY_COURTSIDE — 수강생에게 발송 (FR-16a)
+
+```
+[COURTSIDE] 오늘의 코트사이드 🎾
+
+#{수강생명}님, 오늘의 코트사이드를 확인해보세요!
+
+■ 코트 컨디션: #{지역} #{컨디션}
+■ 한국 선수 경기: 오늘 #{한국선수경기수}경기
+■ 다음 레슨: #{다음레슨일정}
+
+매일 새로운 테니스 소식이 기다리고 있어요.
+
+[오늘의 코트사이드 보기]
+```
+
+**변수**:
+| 변수 | 출처 | 예시 |
+|------|------|------|
+| #{수강생명} | User.name | 홍길동 |
+| #{지역} | StudentProfile.preferredAreaSigungu | 강남구 |
+| #{컨디션} | DailyContent(WEATHER) 자동 판정 | "야외 가능 🟢" / "주의 🟡" / "비추천 🔴" |
+| #{한국선수경기수} | ProMatch where 한국 선수 + 오늘 KST | 2 |
+| #{다음레슨일정} | Booking.nextLesson | "5/27 (목) 19:00 김민수 코치" or "예정 없음" |
+
+**버튼**: 웹링크 → `https://courtside.app/my/courtside`
+
+**발송 정책**:
+- 매일 학생 지정 시각 (`User.dailyPushTime`, 기본 08:00 / 옵션 06:00/07:00/09:00/OFF)
+- 학생 알림 설정 `dailyCourtside`가 true일 때만 (NotificationSetting 추가 예정)
+- 카드 모듈 5종 중 노출 가능한 게 0개면 발송 스킵
+
+---
+
+#### RACKET_STRING_DUE — 수강생에게 발송 (FR-16b)
+
+```
+[COURTSIDE] 스트링 교체 시기가 다가왔어요 🪡
+
+#{수강생명}님, 스트링 교체를 권장해요.
+
+■ 라켓: #{라켓브랜드} #{라켓모델}
+■ 마지막 교체: #{마지막교체일} (#{경과주차}주 전)
+■ 권장 주기: NTRP #{ntrp} 기준 #{권장주기}주
+
+다음 레슨 전에 교체하면 최상의 컨디션으로 칠 수 있어요.
+
+[교체 기록하기]
+```
+
+**변수**:
+| 변수 | 출처 | 예시 |
+|------|------|------|
+| #{수강생명} | User.name | 홍길동 |
+| #{라켓브랜드} | Racket.brand 한글 | 윌슨 |
+| #{라켓모델} | Racket.model | Blade 98 v8 |
+| #{마지막교체일} | UserRacket.lastStringChangeDate | 4월 13일 |
+| #{경과주차} | computed | 5 |
+| #{ntrp} | StudentProfile.ntrpLevel | 3.0 |
+| #{권장주기} | stringChangeIntervalDays / 7 | 6 |
+
+**버튼**: 웹링크 → `https://courtside.app/my/racket`
+
+**발송 정책**:
+- `stringChangeStatus(lastChangeDate, ntrp) === "WARN"` 진입 시 1회 (중복 방지)
+- 학생 알림 설정 `racketAlert`가 true일 때만
+- 라켓 미등록·교체일 미입력 시 발송 스킵
+- `OVERDUE` 진입 시 7일 간격으로 재발송 (최대 2회)
+
+---
+
+#### GRAND_SLAM_FAVORITE_MATCH — 수강생에게 발송 (FR-16c)
+
+```
+[COURTSIDE] 응원하는 선수의 경기가 곧 시작돼요 🎾
+
+#{수강생명}님, #{선수명} 경기가 1시간 후 시작돼요.
+
+■ 대회: #{대회명} #{라운드}
+■ 상대: #{상대선수명} (#{상대국가})
+■ 한국시간: #{경기시각}
+■ 중계: #{중계채널}
+
+[시청 가이드 보기]
+```
+
+**변수**:
+| 변수 | 출처 | 예시 |
+|------|------|------|
+| #{수강생명} | User.name | 홍길동 |
+| #{선수명} | ProPlayer.nameKo (FavoritePlayer) | 야닉 시너 |
+| #{대회명} | Tournament.nameKo | 롤랑가로스 2026 |
+| #{라운드} | ProMatch.round | 16강 |
+| #{상대선수명} | 상대 ProPlayer.nameKo | 디미트로프 |
+| #{상대국가} | 상대 ProPlayer.country (한글) | 불가리아 |
+| #{경기시각} | ProMatch.scheduledAt → KST | 5/25 (화) 19:00 |
+| #{중계채널} | Tournament.broadcastChannels[0] | SBS 스포츠 |
+
+**버튼**: 웹링크 → `https://courtside.app/my/grand-slam`
+
+**발송 정책**:
+- 즐겨찾기 등록된 선수의 ProMatch.scheduledAt 1시간 전 (스케줄러)
+- 학생 알림 설정 `grandSlamAlert`가 true일 때만
+- 같은 경기 중복 발송 방지 (NotificationLog로 idempotency)
+
+---
+
 ## 4. 카카오 알림톡 연동 스펙
 
 ### 4.1 API 정보
@@ -773,3 +885,4 @@ PRO 플랜을 다시 구독하시면 모든 기능을 이용하실 수 있어요
 | 1.1 | 2026-04-13 | RESCHEDULE_COMPLETED 템플릿 추가 (수강생에게 변경 확정 알림) — 18개 |
 | 1.2 | 2026-04-28 | FR-14m 회차 통합/분할 템플릿 3종 추가 (MAKEUP_MERGE_PROPOSED, MAKEUP_SPLIT_PROPOSED, MAKEUP_ADJUSTMENT_CONFIRMED) — 21개 |
 | 1.3 | 2026-05-14 | STUDENT_SELF_CLAIM 추가 (학생 셀프 신청 시 매칭 코치에게 SMS 발송, 알림톡 템플릿 승인 후 ATA 전환 예정) — 22개 |
+| 1.4 | 2026-05-25 | FR-16 학생 리텐션 카테고리 3종 추가 (DAILY_COURTSIDE / RACKET_STRING_DUE / GRAND_SLAM_FAVORITE_MATCH). 발송 트리거·중복 방지·NotificationSetting 키(dailyCourtside/racketAlert/grandSlamAlert) 정의 — 25개 |

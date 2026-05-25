@@ -16,6 +16,7 @@ import {
 } from "@/components/student/lesson-list";
 import { signOutAction } from "@/app/actions/sign-out";
 import { randomQuote, timeGreeting, todayLabel } from "@/lib/quotes";
+import { getGrandSlamState, type GrandSlamState } from "@/lib/grand-slam";
 
 export const dynamic = "force-dynamic";
 
@@ -145,6 +146,14 @@ export default async function Home({
       }
     }
 
+    // FR-16c 그랜드슬램 활성 시 학생 홈 상단 배너 자동 노출. 테이블 미존재 시 graceful fallback.
+    let grandSlam: GrandSlamState = { mode: "NONE" };
+    try {
+      grandSlam = await getGrandSlamState();
+    } catch {
+      // FR-16 마이그레이션 미적용 시 무시
+    }
+
     return (
       <StudentHome
         nickname={nickname}
@@ -153,6 +162,7 @@ export default async function Home({
         weekLessons={lessons}
         actionLessons={(actionLessons ?? []) as StudentLessonRow[]}
         coachNames={coachNames}
+        grandSlam={grandSlam}
       />
     );
   }
@@ -215,6 +225,7 @@ function StudentHome({
   weekLessons = [],
   actionLessons = [],
   coachNames = {},
+  grandSlam = { mode: "NONE" },
 }: {
   nickname: string;
   latestClaim: LatestClaim;
@@ -222,6 +233,7 @@ function StudentHome({
   weekLessons?: StudentLessonRow[];
   actionLessons?: StudentLessonRow[];
   coachNames?: Record<string, string>;
+  grandSlam?: GrandSlamState;
 }) {
   const greeting = timeGreeting();
   const date = todayLabel();
@@ -279,6 +291,49 @@ function StudentHome({
           </div>
           <div className="mt-1 text-xs text-ink-3">{date}</div>
         </div>
+
+        {/* FR-16c 그랜드슬램 활성 배너 — 진행 중/임박(D-30 이내)에만 노출 */}
+        {grandSlam.mode === "ACTIVE" && (
+          <Link
+            href="/my/grand-slam"
+            className="mt-5 block rounded-2xl bg-gradient-to-br from-red-600 to-red-700 text-white p-3.5"
+          >
+            <div className="flex items-center gap-3">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-white/15 rounded-full text-[9px] font-extrabold tracking-wider uppercase flex-none">
+                <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                Live · Day {grandSlam.dayOfTournament}
+              </span>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-extrabold tracking-tight truncate">
+                  {grandSlam.tournament.nameKo} 진행 중
+                </div>
+                <div className="mt-0.5 text-[11px] text-white/85 font-medium truncate">
+                  오늘 한국 선수 경기 보러 가기 →
+                </div>
+              </div>
+            </div>
+          </Link>
+        )}
+        {grandSlam.mode === "UPCOMING" && grandSlam.daysUntil <= 30 && (
+          <Link
+            href="/my/grand-slam"
+            className="mt-5 block rounded-2xl bg-gradient-to-br from-indigo-900 to-indigo-700 text-white p-3.5"
+          >
+            <div className="flex items-center gap-3">
+              <span className="inline-flex items-center px-2 py-0.5 bg-white/15 rounded-full text-[9px] font-extrabold tracking-wider uppercase flex-none">
+                D-{grandSlam.daysUntil}
+              </span>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-extrabold tracking-tight truncate">
+                  {grandSlam.tournament.nameKo} 곧 시작!
+                </div>
+                <div className="mt-0.5 text-[11px] text-white/85 font-medium truncate">
+                  중계 채널·시청 가이드 확인 →
+                </div>
+              </div>
+            </div>
+          </Link>
+        )}
 
         <div className="mt-6">
           <h2 className="text-lg font-bold text-ink mb-2">{coachSectionTitle}</h2>
@@ -357,6 +412,30 @@ function StudentHome({
           <h2 className="text-lg font-bold text-ink mb-2">응답 필요</h2>
           <StudentResponseRequired lessons={actionLessons} coachNames={coachNames} />
         </div>
+
+        {/* FR-16a 오늘의 코트사이드 진입 카드 — 매일 새 콘텐츠 */}
+        <Link
+          href="/my/courtside"
+          className="mt-6 block rounded-2xl bg-gradient-to-br from-[#0F172A] to-[#1E3A5F] text-white p-4 active:scale-[0.99] transition"
+        >
+          <div className="flex items-start gap-3">
+            <div className="w-11 h-11 rounded-xl bg-white/10 flex items-center justify-center text-xl flex-none">
+              ☀️
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-[10px] font-bold tracking-wider uppercase text-white/65">
+                Today&apos;s Courtside
+              </div>
+              <div className="mt-1 text-base font-extrabold tracking-tight truncate">
+                오늘의 코트사이드
+              </div>
+              <div className="mt-1 text-[11px] text-white/80 font-medium leading-relaxed">
+                코트 컨디션 · 한국 선수 경기 · 어제 하이라이트
+              </div>
+            </div>
+            <span className="text-white/60 text-base flex-none">›</span>
+          </div>
+        </Link>
       </div>
 
       <BottomNav role="STUDENT" active="/" />
