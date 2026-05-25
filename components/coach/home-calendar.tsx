@@ -522,13 +522,20 @@ export function CoachHomeCalendar({ testMode = false }: { testMode?: boolean }) 
           <h2 className="text-sm font-bold text-ink">
             {selectedLabel} 레슨
             {selectedLessons.length > 0 && (
-              <span className="ml-1.5 text-xs text-ink-3 font-medium">{selectedLessons.length}건</span>
+              <span className="ml-1.5 text-xs font-semibold text-ink-2">
+                {selectedLessons.length}건
+              </span>
+            )}
+            {!isOnTodayWeek && (
+              <span className="ml-1.5 text-[10px] font-semibold text-amber-600 align-middle">
+                · 이번 주 아님
+              </span>
             )}
           </h2>
           <button
             type="button"
             onClick={openPicker}
-            className="text-xs font-semibold text-primary px-2.5 py-1 rounded-md hover:bg-primary/10 transition"
+            className="text-xs font-semibold text-primary px-2.5 py-1 rounded-md hover:bg-primary/10 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
           >
             + 레슨 잡기
           </button>
@@ -669,7 +676,8 @@ function LessonCard({
       })()
     : null;
 
-  const formatLabel = lesson.lessonFormat === "GROUP" ? "그룹" : "1:1";
+  const isGroup = lesson.lessonFormat === "GROUP";
+  const formatLabel = isGroup ? "그룹" : "1:1";
 
   const roundLabel =
     lesson.roundNumber != null && lesson.totalRounds != null
@@ -699,24 +707,24 @@ function LessonCard({
     <button
       type="button"
       onClick={onClick}
-      className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-left transition active:scale-[0.99] hover:bg-soft/40"
+      className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-left transition active:scale-[0.99] hover:bg-soft/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary/40"
     >
       <div className="flex items-start gap-3">
-        {/* 학생 이니셜 아바타 — faded면 함께 흐려짐 */}
+        {/* 학생 이니셜 아바타 — 그룹은 violet 톤으로 구분 */}
         <div
-          className={`flex-none w-8 h-8 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-xs ${
-            style.faded ? "opacity-60" : ""
-          }`}
+          className={`flex-none w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${
+            isGroup ? "bg-violet-100 text-violet-700" : "bg-primary/15 text-primary"
+          } ${style.faded ? "opacity-60" : ""}`}
           aria-hidden
         >
           {initial}
         </div>
 
         <div className="min-w-0 flex-1">
-          {/* 1행 — 시간 + 수강생 (시간 상위 / 상태 하위로 재정렬) */}
+          {/* 1행 — 시간 (시각 정보가 핵심: text-base) + 수강생 */}
           <div className="flex items-baseline gap-2">
             <span
-              className={`flex-none text-sm font-bold ${style.strike ? "line-through text-ink-3" : "text-ink"} ${fadedTextClass}`}
+              className={`flex-none text-base font-bold tabular-nums ${style.strike ? "line-through text-ink-3" : "text-ink"} ${fadedTextClass}`}
             >
               {timeRangeText}
             </span>
@@ -734,11 +742,12 @@ function LessonCard({
             <span
               className={`min-w-0 truncate text-xs ${style.strike ? "line-through text-ink-3" : "text-ink-2"} ${fadedTextClass}`}
             >
-              {studentName} · {formatLabel}
+              {studentName}{" "}
+              <span className={isGroup ? "text-violet-700 font-semibold" : ""}>· {formatLabel}</span>
             </span>
           </div>
 
-          {/* 2행 — 상태 + 회차 + 결제 (서브 라인) */}
+          {/* 2행 — 상태 + 회차 + 결제 */}
           <div className="mt-1 flex items-center gap-2 flex-wrap">
             <span className={`text-[11px] font-semibold ${style.color}`}>{style.label}</span>
             {roundLabel && <span className="text-[11px] text-ink-3">· {roundLabel}</span>}
@@ -757,9 +766,10 @@ function LessonCard({
             )}
           </div>
 
+          {/* 메모 — 최대 2줄까지 표시 (#31) */}
           {notesLabel && (
             <div
-              className={`mt-1 truncate text-[11px] text-ink-3 ${style.strike ? "line-through" : ""}`}
+              className={`mt-1 text-[11px] text-ink-3 line-clamp-2 break-words ${style.strike ? "line-through" : ""}`}
             >
               {notesLabel}
             </div>
