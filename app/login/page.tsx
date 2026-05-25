@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 
 export default function LoginPage() {
@@ -54,6 +55,22 @@ export default function LoginPage() {
         <p className="mt-8 text-center text-xs text-ink-3 leading-relaxed">
           가입 시 이용약관 및 개인정보 처리방침에 동의합니다
         </p>
+
+        {/* 테스트용 — 가입자 목록 확인 */}
+        <div className="mt-6 flex justify-center">
+          <Link
+            href="/dev/users"
+            className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-ink-3 px-3 py-1.5 rounded-full border border-dashed border-line hover:bg-soft transition"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+            </svg>
+            테스트용: 가입자 목록 보기
+          </Link>
+        </div>
       </div>
     </main>
   );
