@@ -125,7 +125,7 @@ export function LessonDetailSheet({
   const anyPending = pendingCancel || !!pendingRestore || !!pendingComplete || !!pendingAbsent;
   const notesChanged = notesDraft.trim() !== (lesson.notes ?? "").trim();
 
-  // 메모 변경 미저장 상태에서 시트 닫기 시 확인
+  // 메모 변경 미저장 상태에서 시트 닫기 시 확인 (#39)
   const requestClose = () => {
     if (notesChanged) {
       const ok = window.confirm("저장하지 않은 메모 변경이 있어요. 닫을까요?");

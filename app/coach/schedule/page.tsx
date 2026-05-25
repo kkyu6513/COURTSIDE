@@ -70,6 +70,13 @@ export default async function CoachSchedulePage({
     );
   }
 
+  // 헤더 컨텍스트 — 코치 닉네임 + 등록 학생 수
+  const nickname =
+    (user.user_metadata?.nickname as string | undefined) ||
+    user.email ||
+    "코치";
+  const studentCount = students.length;
+
   return (
     <main className="min-h-screen bg-bg">
       <div className="max-w-md mx-auto">
@@ -83,7 +90,12 @@ export default async function CoachSchedulePage({
               <path d="M15 18l-6-6 6-6" />
             </svg>
           </Link>
-          <div className="flex-1 text-center text-sm font-bold text-ink">전체 스케줄</div>
+          <div className="flex-1 text-center min-w-0">
+            <div className="text-sm font-bold text-ink truncate">전체 스케줄</div>
+            <div className="text-[10px] text-ink-3 truncate">
+              {nickname} 코치 · 학생 {studentCount}명
+            </div>
+          </div>
           <div className="w-10 h-10" />
         </div>
 

@@ -912,7 +912,7 @@ function SlotRow({
               </span>
             )}
             {!isHourMode && startingStudent && (
-              <span className="absolute inset-0 flex items-center justify-start pl-1 pointer-events-none">
+              <span className="absolute inset-0 flex items-center justify-center px-0.5 pointer-events-none">
                 <span className="text-[9px] font-bold text-ink truncate leading-none">
                   {startingStudent.name}
                 </span>
