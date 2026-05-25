@@ -15,6 +15,7 @@ import {
   type StudentLessonRow,
 } from "@/components/student/lesson-list";
 import { signOutAction } from "@/app/actions/sign-out";
+import { testSwitchRole } from "@/app/actions/test-switch-role";
 import { randomQuote, timeGreeting, todayLabel } from "@/lib/quotes";
 
 export const dynamic = "force-dynamic";
@@ -153,6 +154,7 @@ export default async function Home({
         weekLessons={lessons}
         actionLessons={(actionLessons ?? []) as StudentLessonRow[]}
         coachNames={coachNames}
+        showDevButtons={showDevButtons}
       />
     );
   }
@@ -215,6 +217,7 @@ function StudentHome({
   weekLessons = [],
   actionLessons = [],
   coachNames = {},
+  showDevButtons = false,
 }: {
   nickname: string;
   latestClaim: LatestClaim;
@@ -222,6 +225,7 @@ function StudentHome({
   weekLessons?: StudentLessonRow[];
   actionLessons?: StudentLessonRow[];
   coachNames?: Record<string, string>;
+  showDevButtons?: boolean;
 }) {
   const greeting = timeGreeting();
   const date = todayLabel();
@@ -279,6 +283,36 @@ function StudentHome({
           </div>
           <div className="mt-1 text-xs text-ink-3">{date}</div>
         </div>
+
+        {/* 디버그 영역 — ?debug=1 쿼리에서만 노출 (파운더 빠른 역할 전환용) */}
+        {showDevButtons && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            <form action={testSwitchRole}>
+              <input type="hidden" name="role" value="COACH" />
+              <button
+                type="submit"
+                className="inline-flex items-center rounded-full border border-primary/30 bg-primary/10 text-primary-700 text-[11px] font-bold px-3 py-1.5 hover:bg-primary/15 transition"
+                title="본인 계정 role 을 COACH 로 전환하고 코치 홈으로 진입"
+              >
+                ⇄ 코치로 전환
+              </button>
+            </form>
+            <Link
+              href="/onboarding/role?force=1"
+              className="inline-flex items-center rounded-full border border-line bg-surface text-ink-2 text-[11px] font-semibold px-3 py-1.5 hover:bg-soft transition"
+            >
+              [DEV] 역할 선택
+            </Link>
+            <form action={signOutAction}>
+              <button
+                type="submit"
+                className="inline-flex items-center rounded-full border border-line bg-surface text-ink-2 text-[11px] font-semibold px-3 py-1.5 hover:bg-soft transition"
+              >
+                [DEV] 로그아웃
+              </button>
+            </form>
+          </div>
+        )}
 
         <div className="mt-6">
           <h2 className="text-lg font-bold text-ink mb-2">{coachSectionTitle}</h2>
@@ -463,6 +497,16 @@ function CoachHome({
         {/* 디버그 영역 — ?debug=1 쿼리에서만 노출 */}
         {showDevButtons && (
           <div className="mt-3 flex flex-wrap gap-2">
+            <form action={testSwitchRole}>
+              <input type="hidden" name="role" value="STUDENT" />
+              <button
+                type="submit"
+                className="inline-flex items-center rounded-full border border-emerald-300 bg-emerald-50 text-emerald-700 text-[11px] font-bold px-3 py-1.5 hover:bg-emerald-100 transition"
+                title="본인 계정 role 을 STUDENT 로 전환하고 학생 홈으로 진입"
+              >
+                ⇄ 학생으로 전환
+              </button>
+            </form>
             <Link
               href="/?as=student"
               className="inline-flex items-center rounded-full border border-line bg-surface text-ink-2 text-[11px] font-semibold px-3 py-1.5 hover:bg-soft transition"
