@@ -27,6 +27,23 @@ function hmLabel(totalMin: number): string {
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
+// 한글 초성 추출 — 한글 음절(0xAC00 ~ 0xD7A3)을 초성으로 매핑.
+// "김민서" → "ㄱㅁㅅ" — 자음만 입력하는 사용자 검색 케이스 (#33)
+const CHO = [
+  "ㄱ","ㄲ","ㄴ","ㄷ","ㄸ","ㄹ","ㅁ","ㅂ","ㅃ","ㅅ","ㅆ","ㅇ","ㅈ","ㅉ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ",
+];
+function toChosung(s: string): string {
+  let out = "";
+  for (const ch of s) {
+    const code = ch.charCodeAt(0);
+    if (code >= 0xac00 && code <= 0xd7a3) {
+      const idx = Math.floor((code - 0xac00) / 588);
+      out += CHO[idx] ?? "";
+    }
+  }
+  return out;
+}
+
 /** [start, start+dur)가 겹치는 첫 booked lesson 반환 (없으면 null) */
 function findConflict(
   startMin: number,
@@ -96,9 +113,19 @@ export function StudentPickerSheet({
   const filtered = useMemo(
     () =>
       q
-        ? students.filter(
-            (s) => s.name.includes(q) || (s.phone ?? "").includes(q.replace(/[^\d]/g, "")),
-          )
+        ? students.filter((s) => {
+            // 1. 이름 부분 일치
+            if (s.name.includes(q)) return true;
+            // 2. 전화번호 숫자 부분 일치
+            const phoneDigits = q.replace(/[^\d]/g, "");
+            if (phoneDigits && (s.phone ?? "").includes(phoneDigits)) return true;
+            // 3. 한글 초성 검색 (#33) — "ㄱㄴ" 같이 자음만 입력해도 매칭
+            if (/^[ㄱ-ㅎ]+$/.test(q)) {
+              const nameChosung = toChosung(s.name);
+              if (nameChosung.includes(q)) return true;
+            }
+            return false;
+          })
         : students,
     [q, students],
   );

@@ -65,6 +65,31 @@ function buildTimeSlots(mode: ViewMode): TimeSlot[] {
   return list;
 }
 
+// 가벼운 비교 — fetch 결과가 RSC initial 과 동일하면 setState skip (#50)
+function sameLessonList(a: LessonRow[], b: LessonRow[]): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    const x = a[i];
+    const y = b[i];
+    if (
+      x.id !== y.id ||
+      x.status !== y.status ||
+      x.scheduledAt !== y.scheduledAt ||
+      x.durationMinutes !== y.durationMinutes ||
+      (x.paymentStatus ?? null) !== (y.paymentStatus ?? null) ||
+      (x.notes ?? null) !== (y.notes ?? null)
+    ) return false;
+  }
+  return true;
+}
+function sameStudentList(a: StudentOption[], b: StudentOption[]): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i].id !== b[i].id || a[i].name !== b[i].name || a[i].phone !== b[i].phone) return false;
+  }
+  return true;
+}
+
 function startOfWeekMon(d: Date): Date {
   const kst = new Date(d.getTime() + 9 * 60 * 60 * 1000);
   const dow = kst.getUTCDay();
@@ -166,8 +191,11 @@ export function WeeklyTimetable({
         return;
       }
       const data = (await res.json()) as { lessons: LessonRow[]; students: StudentOption[] };
-      setLessons(data.lessons ?? []);
-      setStudents(data.students ?? []);
+      const newLessons = data.lessons ?? [];
+      const newStudents = data.students ?? [];
+      // RSC initial 과 동일하면 setState skip — 첫 진입 시 깜빡임 방지 (#50)
+      setLessons((prev) => (sameLessonList(prev, newLessons) ? prev : newLessons));
+      setStudents((prev) => (sameStudentList(prev, newStudents) ? prev : newStudents));
     } catch (e) {
       setLoadError(e instanceof Error ? e.message : "네트워크 오류");
     } finally {
