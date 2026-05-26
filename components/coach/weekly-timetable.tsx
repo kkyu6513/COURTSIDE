@@ -50,10 +50,14 @@ const DOW_KOR = ["일", "월", "화", "수", "목", "금", "토"];
 const DAY_START_HOUR = 6;   // 06:00
 const DAY_END_HOUR = 24;    // 24:00 (자정 종료 레슨 허용)
 const TOTAL_HOURS = DAY_END_HOUR - DAY_START_HOUR; // 18
-const HOUR_HEIGHT_PX = 56;  // 1시간 블록 = 56px (60분 레슨이 56px 박스로 표현됨)
+const HOUR_HEIGHT_HOUR_MODE_PX = 56;    // 1시간 모드: 1시간 = 56px
+const HOUR_HEIGHT_MINUTE10_MODE_PX = 144; // 10분 모드: 1시간 = 144px (10분 = 24px)
 const SNAP_MIN = 10;        // 빈 영역 클릭 시 10분 단위로 스냅
 
 type LayoutMode = "day" | "week";
+type ZoomMode = "hour" | "minute10";
+
+const STORAGE_KEY_ZOOM = "courtside.weekly.zoom";
 
 // ---------- 유틸 ----------
 
@@ -349,15 +353,14 @@ export function WeeklyTimetable({
   // ----- 레이아웃 모드(day/week) + selectedDayIdx -----
   const LAYOUT_MODE_KEY = "courtside.coach.schedule.layoutMode";
   const [layoutMode, setLayoutModeState] = useState<LayoutMode>("week");
-  // 초기값: localStorage > 모바일이면 day / 데스크탑이면 week
+  // 초기값: localStorage > 디폴트 week (주간 보기)
   useEffect(() => {
     if (typeof window === "undefined") return;
     const saved = window.localStorage.getItem(LAYOUT_MODE_KEY);
     if (saved === "day" || saved === "week") {
       setLayoutModeState(saved);
-    } else {
-      setLayoutModeState(window.innerWidth < 768 ? "day" : "week");
     }
+    // saved 없으면 week 유지 (보스 지정: 디폴트 = 주간 10분 단위 보기)
   }, []);
   const setLayoutMode = useCallback((mode: LayoutMode) => {
     setLayoutModeState(mode);
@@ -367,6 +370,23 @@ export function WeeklyTimetable({
       /* localStorage 비활성 — 무시 */
     }
   }, []);
+
+  // ----- 줌 모드 (hour / minute10) — 디폴트: minute10 (10분 단위 보기) -----
+  const [zoom, setZoomState] = useState<ZoomMode>("minute10");
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const saved = window.localStorage.getItem(STORAGE_KEY_ZOOM);
+    if (saved === "hour" || saved === "minute10") setZoomState(saved);
+  }, []);
+  const setZoom = useCallback((m: ZoomMode) => {
+    setZoomState(m);
+    try {
+      window.localStorage.setItem(STORAGE_KEY_ZOOM, m);
+    } catch {
+      /* noop */
+    }
+  }, []);
+  const hourHeight = zoom === "minute10" ? HOUR_HEIGHT_MINUTE10_MODE_PX : HOUR_HEIGHT_HOUR_MODE_PX;
 
   // day 모드 선택된 요일 (0=월 ~ 6=일). initialDate 우선, 없으면 오늘 요일 (#43)
   const [selectedDayIdx, setSelectedDayIdx] = useState<number>(() => {
@@ -892,6 +912,33 @@ export function WeeklyTimetable({
                 주
               </button>
             </div>
+
+            {/* 줌 토글 — 1시간/10분 단위 (디폴트: 10분) */}
+            <div className="flex rounded-lg bg-soft p-0.5 mr-1" role="group" aria-label="시간 단위">
+              <button
+                type="button"
+                onClick={() => setZoom("hour")}
+                aria-pressed={zoom === "hour"}
+                title="1시간 단위 — 한눈에 보기"
+                className={`px-2.5 h-8 rounded-md text-[11px] font-semibold transition ${
+                  zoom === "hour" ? "bg-surface text-ink shadow-sm" : "text-ink-3"
+                }`}
+              >
+                1시간
+              </button>
+              <button
+                type="button"
+                onClick={() => setZoom("minute10")}
+                aria-pressed={zoom === "minute10"}
+                title="10분 단위 — 정밀 보기 (기본)"
+                className={`px-2.5 h-8 rounded-md text-[11px] font-semibold transition ${
+                  zoom === "minute10" ? "bg-surface text-ink shadow-sm" : "text-ink-3"
+                }`}
+              >
+                10분
+              </button>
+            </div>
+
             <button
               type="button"
               onClick={goPrev}
@@ -993,7 +1040,7 @@ export function WeeklyTimetable({
           role="grid"
           aria-label={layoutMode === "day" ? `${dayLabel} 일정` : `주간 일정 — ${weekRangeLabel}`}
         >
-          <TimeAxis nowMin={nowMin} />
+          <TimeAxis nowMin={nowMin} hourHeight={hourHeight} zoom={zoom} />
           {visibleColumns.map((wd, i) => {
             const key = `${wd.date.getUTCFullYear()}-${wd.date.getUTCMonth() + 1}-${wd.date.getUTCDate()}`;
             const blocks = blocksByDay.get(key) ?? [];
@@ -1011,6 +1058,8 @@ export function WeeklyTimetable({
                 isLastColumn={i === visibleColumns.length - 1}
                 nowLineRef={wd.isToday ? nowLineRef : undefined}
                 nowMin={nowMin}
+                hourHeight={hourHeight}
+                zoom={zoom}
               />
             );
           })}
@@ -1115,18 +1164,26 @@ export function WeeklyTimetable({
 }
 
 // ---------- 좌측 시간 축 ----------
-function TimeAxis({ nowMin }: { nowMin: number | null }) {
-  const totalHeight = TOTAL_HOURS * HOUR_HEIGHT_PX;
+function TimeAxis({
+  nowMin,
+  hourHeight,
+  zoom,
+}: {
+  nowMin: number | null;
+  hourHeight: number;
+  zoom: ZoomMode;
+}) {
+  const totalHeight = TOTAL_HOURS * hourHeight;
   const dayStartMin = DAY_START_HOUR * 60;
   const nowTop =
     nowMin != null && nowMin >= dayStartMin && nowMin <= DAY_END_HOUR * 60
-      ? ((nowMin - dayStartMin) / 60) * HOUR_HEIGHT_PX
+      ? ((nowMin - dayStartMin) / 60) * hourHeight
       : null;
   return (
     <div className="relative" style={{ height: totalHeight }} aria-hidden>
       {Array.from({ length: TOTAL_HOURS + 1 }, (_, i) => {
         const hour = DAY_START_HOUR + i;
-        const top = i * HOUR_HEIGHT_PX;
+        const top = i * hourHeight;
         return (
           <div key={`h-${i}`}>
             <div
@@ -1135,11 +1192,24 @@ function TimeAxis({ nowMin }: { nowMin: number | null }) {
             >
               {String(hour).padStart(2, "0")}:00
             </div>
-            {/* 30분 마이너 라벨 — 정각 사이 (#26) */}
-            {i < TOTAL_HOURS && (
+            {/* 10분 모드: 10/20/30/40/50 마이너 라벨 6칸. 1시간 모드: :30 1칸만 */}
+            {i < TOTAL_HOURS && zoom === "minute10" && (
+              <>
+                {[10, 20, 30, 40, 50].map((m) => (
+                  <div
+                    key={`m-${i}-${m}`}
+                    className="absolute right-1 text-[8px] text-ink-3/60 tabular-nums leading-none"
+                    style={{ top: top + (m / 60) * hourHeight - 4 }}
+                  >
+                    :{m}
+                  </div>
+                ))}
+              </>
+            )}
+            {i < TOTAL_HOURS && zoom === "hour" && (
               <div
                 className="absolute right-1 text-[8px] text-ink-3/60 tabular-nums leading-none"
-                style={{ top: top + HOUR_HEIGHT_PX / 2 - 4 }}
+                style={{ top: top + hourHeight / 2 - 4 }}
               >
                 :30
               </div>
@@ -1176,6 +1246,8 @@ function DayColumn({
   isLastColumn,
   nowLineRef,
   nowMin,
+  hourHeight,
+  zoom,
 }: {
   date: Date;
   isToday: boolean;
@@ -1188,8 +1260,10 @@ function DayColumn({
   isLastColumn: boolean;
   nowLineRef?: React.RefObject<HTMLDivElement>;
   nowMin: number | null;
+  hourHeight: number;
+  zoom: ZoomMode;
 }) {
-  const totalHeight = TOTAL_HOURS * HOUR_HEIGHT_PX;
+  const totalHeight = TOTAL_HOURS * hourHeight;
   const dayStartMin = DAY_START_HOUR * 60;
 
   const onAreaClick = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -1199,7 +1273,7 @@ function DayColumn({
     if (e.clientY > 0) {
       const rect = e.currentTarget.getBoundingClientRect();
       const y = Math.max(0, Math.min(rect.height, e.clientY - rect.top));
-      const totalMinFromStart = (y / HOUR_HEIGHT_PX) * 60;
+      const totalMinFromStart = (y / hourHeight) * 60;
       const snapped = Math.floor(totalMinFromStart / SNAP_MIN) * SNAP_MIN;
       hour = DAY_START_HOUR + Math.floor(snapped / 60);
       minute = snapped % 60;
@@ -1210,7 +1284,7 @@ function DayColumn({
   // 현재 시각 라인 (오늘 컬럼만) — nowMin 1분 단위 갱신으로 정확 (#29)
   let nowLineTop: number | null = null;
   if (isToday && nowMin != null && nowMin >= dayStartMin && nowMin <= DAY_END_HOUR * 60) {
-    nowLineTop = ((nowMin - dayStartMin) / 60) * HOUR_HEIGHT_PX;
+    nowLineTop = ((nowMin - dayStartMin) / 60) * hourHeight;
   }
 
   return (
@@ -1220,21 +1294,36 @@ function DayColumn({
       role="gridcell"
       aria-label={`${date.getUTCMonth() + 1}월 ${date.getUTCDate()}일 일정 컬럼`}
     >
-      {/* hour 그리드 라인 — 매시 정각 진한 선 + 30분 흐린 선 */}
+      {/* hour 그리드 라인 — 매시 정각 진한 선 */}
       {Array.from({ length: TOTAL_HOURS + 1 }, (_, i) => (
         <div
           key={`hour-${i}`}
           className="absolute left-0 right-0 border-t border-line/40 pointer-events-none"
-          style={{ top: i * HOUR_HEIGHT_PX }}
+          style={{ top: i * hourHeight }}
         />
       ))}
-      {Array.from({ length: TOTAL_HOURS }, (_, i) => (
-        <div
-          key={`half-${i}`}
-          className="absolute left-0 right-0 border-t border-dashed border-line/40 pointer-events-none"
-          style={{ top: i * HOUR_HEIGHT_PX + HOUR_HEIGHT_PX / 2 }}
-        />
-      ))}
+      {/* 보조 그리드: 10분 모드는 10/20/30/40/50분, 1시간 모드는 30분만 */}
+      {zoom === "minute10"
+        ? Array.from({ length: TOTAL_HOURS }).map((_, i) => (
+            <div key={`m-${i}`}>
+              {[10, 20, 30, 40, 50].map((m) => (
+                <div
+                  key={`m-${i}-${m}`}
+                  className={`absolute left-0 right-0 border-t pointer-events-none ${
+                    m === 30 ? "border-line/40 border-dashed" : "border-line/20"
+                  }`}
+                  style={{ top: i * hourHeight + (m / 60) * hourHeight }}
+                />
+              ))}
+            </div>
+          ))
+        : Array.from({ length: TOTAL_HOURS }, (_, i) => (
+            <div
+              key={`half-${i}`}
+              className="absolute left-0 right-0 border-t border-dashed border-line/40 pointer-events-none"
+              style={{ top: i * hourHeight + hourHeight / 2 }}
+            />
+          ))}
 
       {/* 빈 영역 클릭 오버레이 — 블록 아래에 깔림 (DOM 순서) */}
       <button
@@ -1252,12 +1341,14 @@ function DayColumn({
             block={b}
             studentMap={studentMap}
             onClick={() => onBlockClick(b.lesson)}
+            hourHeight={hourHeight}
           />
         ) : (
           <OverflowBadge
             key={`o-${i}-${b.startMin}`}
             block={b}
             onClick={() => onOverflowClick(date, b.lessons)}
+            hourHeight={hourHeight}
           />
         ),
       )}
@@ -1283,18 +1374,20 @@ function LessonBlockView({
   block,
   studentMap,
   onClick,
+  hourHeight,
 }: {
   block: LessonBlock;
   studentMap: Map<string, StudentOption>;
   onClick: () => void;
+  hourHeight: number;
 }) {
   const {
     lesson, startMin, endMin, startTimeLabel, endTimeLabel,
     clipTop, clipBottom, laneIdx, laneCount,
   } = block;
   const dayStartMin = DAY_START_HOUR * 60;
-  const topPx = ((startMin - dayStartMin) / 60) * HOUR_HEIGHT_PX;
-  const heightPx = Math.max(((endMin - startMin) / 60) * HOUR_HEIGHT_PX - 2, 20);
+  const topPx = ((startMin - dayStartMin) / 60) * hourHeight;
+  const heightPx = Math.max(((endMin - startMin) / 60) * hourHeight - 2, 20);
   const leftPct = (laneIdx / laneCount) * 100;
   const widthPct = (1 / laneCount) * 100;
 
@@ -1438,14 +1531,16 @@ function LessonBlockView({
 function OverflowBadge({
   block,
   onClick,
+  hourHeight,
 }: {
   block: OverflowBlock;
   onClick: () => void;
+  hourHeight: number;
 }) {
   const { startMin, endMin, lessons, laneIdx, laneCount } = block;
   const dayStartMin = DAY_START_HOUR * 60;
-  const topPx = ((startMin - dayStartMin) / 60) * HOUR_HEIGHT_PX;
-  const heightPx = Math.max(((endMin - startMin) / 60) * HOUR_HEIGHT_PX - 2, 20);
+  const topPx = ((startMin - dayStartMin) / 60) * hourHeight;
+  const heightPx = Math.max(((endMin - startMin) / 60) * hourHeight - 2, 20);
   const leftPct = (laneIdx / laneCount) * 100;
   const widthPct = (1 / laneCount) * 100;
   return (
