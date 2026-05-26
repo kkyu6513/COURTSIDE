@@ -328,25 +328,6 @@ function StudentHome({
           </form>
         </div>
 
-        {/* 오늘의 테니스 컨디션 — 날씨 / 미세먼지 / 자외선 / 한 줄 추천 (#C1 + #C2) */}
-        {weather && (
-          <div className="mt-5">
-            <WeatherCard weather={weather} />
-          </div>
-        )}
-
-        {/* 한국 ATP/WTA 랭킹 — 매주 자동 갱신 (#C3) */}
-        {koreanTennis && (
-          koreanTennis.atp.top5.length > 0 ||
-          koreanTennis.atp.koreanTop5.length > 0 ||
-          koreanTennis.wta.top5.length > 0 ||
-          koreanTennis.wta.koreanTop5.length > 0
-        ) && (
-          <div className="mt-4">
-            <KoreanTennisCard data={koreanTennis} />
-          </div>
-        )}
-
         {/* 1. 코치 등록 / 진행 중 / 내 코치 — 별도 박스 */}
         <section className="mt-4 rounded-2xl border border-line bg-surface p-5 shadow-sm">
           <h2 className="text-base font-bold text-ink mb-3">{coachSectionTitle}</h2>
@@ -414,6 +395,25 @@ function StudentHome({
           <h2 className="text-base font-bold text-ink mb-3">응답 필요</h2>
           <StudentResponseRequired lessons={actionLessons} coachNames={coachNames} bare />
         </section>
+
+        {/* 오늘의 테니스 컨디션 — 날씨 / 미세먼지 / 자외선 / 한 줄 추천 (#C1 + #C2) */}
+        {weather && (
+          <div className="mt-4">
+            <WeatherCard weather={weather} />
+          </div>
+        )}
+
+        {/* 한국 ATP/WTA 랭킹 — 매주 자동 갱신 (#C3) */}
+        {koreanTennis && (
+          koreanTennis.atp.top5.length > 0 ||
+          koreanTennis.atp.koreanTop5.length > 0 ||
+          koreanTennis.wta.top5.length > 0 ||
+          koreanTennis.wta.koreanTop5.length > 0
+        ) && (
+          <div className="mt-4">
+            <KoreanTennisCard data={koreanTennis} />
+          </div>
+        )}
       </div>
 
       <BottomNav role="STUDENT" active="/" />
