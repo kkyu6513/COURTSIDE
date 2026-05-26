@@ -388,11 +388,13 @@ function StudentHome({
           </div>
         )}
 
-        {/* 3. 응답 필요 — 별도 박스 */}
-        <section className="mt-4 rounded-2xl border border-line bg-surface p-5 shadow-sm">
-          <h2 className="text-base font-bold text-ink mb-3">응답 필요</h2>
-          <StudentResponseRequired lessons={actionLessons} coachNames={coachNames} bare />
-        </section>
+        {/* 3. 응답 필요 — 항목 있을 때만 박스 노출 */}
+        {actionLessons.length > 0 && (
+          <section className="mt-4 rounded-2xl border border-line bg-surface p-5 shadow-sm">
+            <h2 className="text-base font-bold text-ink mb-3">응답 필요</h2>
+            <StudentResponseRequired lessons={actionLessons} coachNames={coachNames} bare />
+          </section>
+        )}
 
         {/* 오늘의 테니스 컨디션 — 날씨 / 미세먼지 / 자외선 / 한 줄 추천 (#C1 + #C2) */}
         {weather && (
