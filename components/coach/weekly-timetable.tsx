@@ -652,6 +652,33 @@ export function WeeklyTimetable({
     setStudentPicker({ open: true, date, hour, minute, baseTimeLabel });
   };
 
+  // 명시적 "+ 레슨 잡기" 버튼 → 선택된 날짜의 가장 합리적인 시각으로 피커 열기.
+  // - 오늘이면 현재 시각 다음 10분 단위 슬롯
+  // - 미래 날이면 오전 9시 디폴트
+  const openBookingPicker = () => {
+    // selectedDayIdx 기준 date 산정 (week 모드에서도 안전)
+    const target = addDays(weekStart, selectedDayIdx);
+    const nowKst = new Date(Date.now() + KST_OFFSET_MS);
+    const isToday =
+      target.getUTCFullYear() === nowKst.getUTCFullYear() &&
+      target.getUTCMonth() === nowKst.getUTCMonth() &&
+      target.getUTCDate() === nowKst.getUTCDate();
+    let hour = 9;
+    let minute = 0;
+    if (isToday) {
+      const nowMinTotal = nowKst.getUTCHours() * 60 + nowKst.getUTCMinutes();
+      const snapped = Math.ceil(nowMinTotal / SNAP_MIN) * SNAP_MIN;
+      hour = Math.floor(snapped / 60);
+      minute = snapped % 60;
+      // 오늘 운영 시간 지났으면 다음 날 9시로 fallback — 그러나 자정 넘기지 않게
+      if (hour >= DAY_END_HOUR) {
+        hour = 9;
+        minute = 0;
+      }
+    }
+    onEmptyClick(target, hour, minute);
+  };
+
   // ----- 시트 핸들러 -----
   // 레슨 상세/취소/완료/결강/결제확인/복구/메모는 /coach/lessons/[id] 상세 페이지에서 처리.
   const closeStudentPicker = () => setStudentPicker((s) => (s ? { ...s, open: false } : null));
@@ -750,6 +777,14 @@ export function WeeklyTimetable({
                 가장 가까운 주로 이동
               </button>
             )}
+            <button
+              type="button"
+              onClick={openBookingPicker}
+              className="inline-flex items-center gap-0.5 rounded-md bg-primary text-white text-[11px] font-bold px-2.5 py-1 hover:opacity-90 transition active:scale-[0.97]"
+              title="선택한 날짜의 가장 합리적인 시각으로 레슨 잡기"
+            >
+              + 레슨 잡기
+            </button>
             <button
               type="button"
               onClick={() => reload()}
