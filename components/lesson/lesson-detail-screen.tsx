@@ -13,6 +13,8 @@ import {
   saveLessonNotes,
   confirmPendingLesson,
   markLessonPaid,
+  revertLessonStatus,
+  unmarkLessonPaid,
 } from "@/app/actions/lessons";
 import { parseIsoUtc, toKstTrick } from "@/lib/kst";
 import {
@@ -167,6 +169,15 @@ function TrashIcon() {
   );
 }
 
+function UndoIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <polyline points="9 14 4 9 9 4" />
+      <path d="M20 20v-7a4 4 0 0 0-4-4H4" />
+    </svg>
+  );
+}
+
 type ConfirmAction =
   | { kind: "COMPLETE" }
   | { kind: "CONFIRM_PENDING" }
@@ -280,6 +291,41 @@ export function LessonDetailScreen({ data, backHref }: { data: LessonDetailData;
       }
       applyOptimistic({ paymentStatus: "PAID" });
       showSuccess("결제완료로 처리했어요");
+      router.refresh();
+    });
+  };
+
+  // 되돌리기 — 완료/결강 → 예정
+  const runRevertStatus = () => {
+    setStatusSheetOpen(false);
+    if (!window.confirm("완료/결강 처리를 취소하고 예정 상태로 되돌릴까요?")) return;
+    setPending(true);
+    startTransition(async () => {
+      const res = await revertLessonStatus(lesson.id);
+      setPending(false);
+      if (!res.ok) {
+        showError("되돌리기 실패", res.error);
+        return;
+      }
+      applyOptimistic({ status: "CONFIRMED" });
+      showSuccess("예정 상태로 되돌렸어요");
+      router.refresh();
+    });
+  };
+
+  // 되돌리기 — 결제확인 → 미결제
+  const runUnmarkPaid = () => {
+    if (!window.confirm("결제 확인을 취소하고 미결제로 되돌릴까요?")) return;
+    setPending(true);
+    startTransition(async () => {
+      const res = await unmarkLessonPaid(lesson.id);
+      setPending(false);
+      if (!res.ok) {
+        showError("결제 되돌리기 실패", res.error);
+        return;
+      }
+      applyOptimistic({ paymentStatus: "UNPAID" });
+      showSuccess("미결제로 되돌렸어요");
       router.refresh();
     });
   };
@@ -603,6 +649,20 @@ export function LessonDetailScreen({ data, backHref }: { data: LessonDetailData;
             </button>
           )}
 
+          {/* 결제 되돌리기 — 코치 + PAID 일 때만 */}
+          {isCoach && lesson.paymentStatus === "PAID" && (
+            <button
+              type="button"
+              onClick={runUnmarkPaid}
+              disabled={pending}
+              className="mt-3 w-full flex items-center justify-between rounded-xl border border-line bg-surface px-4 py-3 text-xs font-semibold text-ink-3 hover:bg-soft transition active:scale-[0.99] disabled:opacity-60"
+              title="실수로 결제 확인한 경우 미결제로 되돌립니다"
+            >
+              <span>결제 확인 되돌리기 (미결제로)</span>
+              <span aria-hidden>↺</span>
+            </button>
+          )}
+
           {/* 메모 / 코치 코멘트 */}
           {isCoach ? (
             <div className="mt-5">
@@ -690,9 +750,39 @@ export function LessonDetailScreen({ data, backHref }: { data: LessonDetailData;
       {/* 상태 처리 바텀시트 (코치 전용) */}
       {statusSheetOpen && (
         <BottomSheet onClose={() => setStatusSheetOpen(false)} title="상태 처리하기">
-          <SheetItem label="레슨 완료 처리" onClick={handleCompleteFromSheet} icon={<CheckIcon />} primary />
-          <SheetItem label="보강 처리" onClick={() => openReasonSheet("MAKEUP")} icon={<RefreshIcon />} />
-          <SheetItem label="결강 처리" onClick={() => openReasonSheet("ABSENT")} icon={<XIcon />} />
+          {/* 이미 완료/결강 처리됐으면 "되돌리기" 가 최상단에 노출 */}
+          {(lesson.status === "COMPLETED" || lesson.status === "ABSENT") && (
+            <>
+              <SheetItem
+                label={lesson.status === "COMPLETED" ? "완료 처리 되돌리기" : "결강 처리 되돌리기"}
+                onClick={runRevertStatus}
+                icon={<UndoIcon />}
+                primary
+              />
+              <p className="px-2 mt-1 text-[11px] text-ink-3">실수로 처리한 경우 예정 상태로 복원합니다.</p>
+              <div className="my-2 border-t border-line/70" />
+            </>
+          )}
+
+          <SheetItem
+            label="레슨 완료 처리"
+            onClick={handleCompleteFromSheet}
+            icon={<CheckIcon />}
+            primary
+            disabled={lesson.status === "COMPLETED" || lesson.status === "ABSENT"}
+          />
+          <SheetItem
+            label="보강 처리"
+            onClick={() => openReasonSheet("MAKEUP")}
+            icon={<RefreshIcon />}
+            disabled={lesson.status === "COMPLETED" || lesson.status === "ABSENT"}
+          />
+          <SheetItem
+            label="결강 처리"
+            onClick={() => openReasonSheet("ABSENT")}
+            icon={<XIcon />}
+            disabled={lesson.status === "COMPLETED" || lesson.status === "ABSENT"}
+          />
           <div className="my-2 border-t border-line/70" />
           <SheetItem label="레슨 취소" onClick={() => openReasonSheet("CANCEL")} icon={<TrashIcon />} danger disabled={isPast} />
           {isPast && (

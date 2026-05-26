@@ -301,3 +301,67 @@ export async function markLessonPaid(lessonId: number): Promise<Result> {
   revalidateLessonPaths(lessonId);
   return { ok: true };
 }
+
+/**
+ * 완료/결강 처리 되돌리기 — COMPLETED/ABSENT → CONFIRMED.
+ * 코치가 실수로 처리한 경우 다시 예정 상태로 복원.
+ */
+export async function revertLessonStatus(lessonId: number): Promise<Result> {
+  const user = await getAuthedUser();
+  if (!user) return { ok: false, error: "로그인이 필요합니다" };
+  const meta = user.app_metadata as { role?: string } | undefined;
+  if (meta?.role !== "COACH") return { ok: false, error: "코치만 가능해요" };
+
+  const admin = createAdminClient();
+  const { data: lesson } = await admin
+    .from("lessons")
+    .select("id, coachId, status")
+    .eq("id", lessonId)
+    .maybeSingle();
+  if (!lesson) return { ok: false, error: "레슨을 찾을 수 없어요" };
+  if (lesson.coachId !== user.id) return { ok: false, error: "권한이 없어요" };
+  if (!["COMPLETED", "ABSENT"].includes(lesson.status)) {
+    return { ok: false, error: "완료/결강 처리된 레슨만 되돌릴 수 있어요" };
+  }
+
+  const { error } = await admin
+    .from("lessons")
+    .update({ status: "CONFIRMED", updatedAt: new Date().toISOString() })
+    .eq("id", lessonId);
+  if (error) return { ok: false, error: error.message };
+
+  revalidateLessonPaths(lessonId);
+  return { ok: true };
+}
+
+/**
+ * 결제 확인 되돌리기 — paymentStatus PAID → UNPAID.
+ * 코치가 실수로 결제 확인을 누른 경우. EXTERNAL/NONE 은 토글 불가.
+ */
+export async function unmarkLessonPaid(lessonId: number): Promise<Result> {
+  const user = await getAuthedUser();
+  if (!user) return { ok: false, error: "로그인이 필요합니다" };
+  const meta = user.app_metadata as { role?: string } | undefined;
+  if (meta?.role !== "COACH") return { ok: false, error: "코치만 가능해요" };
+
+  const admin = createAdminClient();
+  const { data: lesson } = await admin
+    .from("lessons")
+    .select("id, coachId, paymentStatus")
+    .eq("id", lessonId)
+    .maybeSingle();
+  if (!lesson) return { ok: false, error: "레슨을 찾을 수 없어요" };
+  if (lesson.coachId !== user.id) return { ok: false, error: "권한이 없어요" };
+  if (lesson.paymentStatus !== "PAID") {
+    return { ok: false, error: "결제 완료된 레슨만 되돌릴 수 있어요" };
+  }
+
+  const { error } = await admin
+    .from("lessons")
+    .update({ paymentStatus: "UNPAID", updatedAt: new Date().toISOString() })
+    .eq("id", lessonId);
+  if (error) return { ok: false, error: error.message };
+
+  revalidateLessonPaths(lessonId);
+  return { ok: true };
+}

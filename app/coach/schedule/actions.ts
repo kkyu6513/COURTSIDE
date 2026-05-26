@@ -235,6 +235,58 @@ export async function markLessonAbsent(lessonId: number): Promise<SimpleResult> 
   return transitionLessonStatus(lessonId, ["CONFIRMED", "IN_PROGRESS"], "ABSENT");
 }
 
+/**
+ * 완료/결강 처리 되돌리기 — COMPLETED/ABSENT → CONFIRMED.
+ * 코치가 실수로 완료/결강 처리한 경우 다시 예정 상태로 복원.
+ */
+export async function revertLessonStatus(lessonId: number): Promise<SimpleResult> {
+  return transitionLessonStatus(lessonId, ["COMPLETED", "ABSENT"], "CONFIRMED");
+}
+
+/**
+ * 결제 확인 되돌리기 — paymentStatus PAID → UNPAID.
+ * 코치가 실수로 결제 확인을 누른 경우 다시 미결제로 복원.
+ * EXTERNAL/NONE 상태에서는 호출 불가 (외부결제는 코치가 토글할 대상이 아님).
+ */
+export async function unmarkLessonPaid(lessonId: number): Promise<SimpleResult> {
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "로그인이 필요합니다" };
+
+  const meta = user.app_metadata as { role?: string } | undefined;
+  if (meta?.role !== "COACH") return { ok: false, error: "코치만 가능해요" };
+
+  const admin = createAdminClient();
+
+  const { data: lesson } = await admin
+    .from("lessons")
+    .select("id, coachId, paymentStatus")
+    .eq("id", lessonId)
+    .maybeSingle();
+
+  if (!lesson) return { ok: false, error: "레슨을 찾을 수 없어요" };
+  if (lesson.coachId !== user.id) return { ok: false, error: "권한이 없어요" };
+  if (lesson.paymentStatus !== "PAID") {
+    return { ok: false, error: "결제 완료된 레슨만 되돌릴 수 있어요" };
+  }
+
+  const { error: updateError } = await admin
+    .from("lessons")
+    .update({ paymentStatus: "UNPAID", updatedAt: new Date().toISOString() })
+    .eq("id", lessonId);
+
+  if (updateError) {
+    console.error("[unmarkLessonPaid] update error:", updateError);
+    return { ok: false, error: "결제 되돌리기 중 문제가 발생했어요. 잠시 후 다시 시도해 주세요." };
+  }
+
+  revalidatePath("/coach/schedule");
+  revalidatePath("/");
+  return { ok: true };
+}
+
 type RecurringResult =
   | { ok: true; bookedCount: number; skippedWeeks: Array<{ week: number; reason: string }> }
   | { ok: false; error: string };
