@@ -389,43 +389,13 @@ export function WeeklyTimetable({
     return (nowKst.getUTCDay() + 6) % 7;
   });
 
-  // 미래 lesson 자동 점프 — 이번 주 비고 + 다른 미래 주에 lesson 있으면 그 주로 이동
+  // 자동 점프 비활성 — 보스 지시: 진입 시 항상 현재 날짜로 노출되어야 함.
+  // 미래 lesson 이 다른 주에 있어도 강제로 이번 주(오늘 포함 주)에 머무름.
+  // 사용자는 "가장 가까운 주로 이동" 버튼(상단 배지 영역)으로 명시적 점프 가능.
+  // (이전 동작: 이번 주 비고 + 다른 미래 주에 lesson 있으면 그 주로 자동 setWeekStart)
   useEffect(() => {
-    if (didAutoJumpRef.current) return;
-    if (isLoading) return;
-    if (lessons.length === 0) {
-      didAutoJumpRef.current = true;
-      return;
-    }
-    const nowMs = Date.now();
-    const futureLessons = lessons.filter((l) => parseIsoUtc(l.scheduledAt).getTime() >= nowMs);
-    if (futureLessons.length === 0) {
-      didAutoJumpRef.current = true;
-      return;
-    }
-    const wStartMs = weekStart.getTime() - KST_OFFSET_MS;
-    const wEndMs = wStartMs + 7 * 24 * 60 * 60 * 1000;
-    const inCurWeek = futureLessons.some((l) => {
-      const ts = parseIsoUtc(l.scheduledAt).getTime();
-      return ts >= wStartMs && ts < wEndMs;
-    });
     didAutoJumpRef.current = true;
-    if (!inCurWeek) {
-      const sorted = [...futureLessons].sort(
-        (a, b) => parseIsoUtc(a.scheduledAt).getTime() - parseIsoUtc(b.scheduledAt).getTime(),
-      );
-      const nextWeekStart = startOfWeekMon(parseIsoUtc(sorted[0].scheduledAt));
-      setWeekStart(nextWeekStart);
-      // 자동 점프 알림 (#22) — 사용자에게 "왜 이번 주가 안 보이는지" 설명
-      const nws = formatKstDate(nextWeekStart);
-      const nwe = formatKstDate(addDays(nextWeekStart, 6));
-      setToast({
-        open: true,
-        title: "가장 가까운 미래 레슨이 있는 주로 이동했어요",
-        description: `${nws.m}/${nws.day} ~ ${nwe.m}/${nwe.day}`,
-      });
-    }
-  }, [isLoading, lessons, weekStart]);
+  }, []);
 
   // ----- 시트/상태 -----
   const [studentPicker, setStudentPicker] = useState<{
