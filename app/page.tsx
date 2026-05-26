@@ -16,6 +16,8 @@ import {
 } from "@/components/student/lesson-list";
 import { signOutAction } from "@/app/actions/sign-out";
 import { testSwitchRole } from "@/app/actions/test-switch-role";
+import { fetchTennisWeather, type WeatherSnapshot } from "@/lib/weather";
+import { WeatherCard } from "@/components/student/weather-card";
 import { randomQuote, timeGreeting, todayLabel } from "@/lib/quotes";
 
 export const dynamic = "force-dynamic";
@@ -146,6 +148,9 @@ export default async function Home({
       }
     }
 
+    // 오늘의 테니스 컨디션 (Open-Meteo) — fetch 실패 시 null, 카드 자체 미노출
+    const weather = await fetchTennisWeather();
+
     return (
       <StudentHome
         nickname={nickname}
@@ -154,6 +159,7 @@ export default async function Home({
         weekLessons={lessons}
         actionLessons={(actionLessons ?? []) as StudentLessonRow[]}
         coachNames={coachNames}
+        weather={weather}
         showDevButtons={showDevButtons}
       />
     );
@@ -218,6 +224,7 @@ function StudentHome({
   actionLessons = [],
   coachNames = {},
   showDevButtons = false,
+  weather = null,
 }: {
   nickname: string;
   latestClaim: LatestClaim;
@@ -226,6 +233,7 @@ function StudentHome({
   actionLessons?: StudentLessonRow[];
   coachNames?: Record<string, string>;
   showDevButtons?: boolean;
+  weather?: WeatherSnapshot | null;
 }) {
   const greeting = timeGreeting();
   const date = todayLabel();
@@ -311,6 +319,13 @@ function StudentHome({
             </button>
           </form>
         </div>
+
+        {/* 오늘의 테니스 컨디션 — 날씨 / 미세먼지 / 자외선 / 한 줄 추천 (#C1 + #C2) */}
+        {weather && (
+          <div className="mt-5">
+            <WeatherCard weather={weather} />
+          </div>
+        )}
 
         <div className="mt-6">
           <h2 className="text-lg font-bold text-ink mb-2">{coachSectionTitle}</h2>
