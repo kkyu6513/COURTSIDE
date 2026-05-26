@@ -18,6 +18,8 @@ import { signOutAction } from "@/app/actions/sign-out";
 import { testSwitchRole } from "@/app/actions/test-switch-role";
 import { fetchTennisWeather, type WeatherSnapshot } from "@/lib/weather";
 import { WeatherCard } from "@/components/student/weather-card";
+import { fetchKoreanTennis, type KoreanTennisData } from "@/lib/korean-tennis";
+import { KoreanTennisCard } from "@/components/student/korean-tennis-card";
 import { randomQuote, timeGreeting, todayLabel } from "@/lib/quotes";
 
 export const dynamic = "force-dynamic";
@@ -148,8 +150,11 @@ export default async function Home({
       }
     }
 
-    // 오늘의 테니스 컨디션 (Open-Meteo) — fetch 실패 시 null, 카드 자체 미노출
-    const weather = await fetchTennisWeather();
+    // 외부 콘텐츠 — 날씨/컨디션 + 한국 테니스 랭킹 (병렬, 실패 시 각자 null/fallback)
+    const [weather, koreanTennis] = await Promise.all([
+      fetchTennisWeather(),
+      fetchKoreanTennis({ limit: 3 }),
+    ]);
 
     return (
       <StudentHome
@@ -160,6 +165,7 @@ export default async function Home({
         actionLessons={(actionLessons ?? []) as StudentLessonRow[]}
         coachNames={coachNames}
         weather={weather}
+        koreanTennis={koreanTennis}
         showDevButtons={showDevButtons}
       />
     );
@@ -225,6 +231,7 @@ function StudentHome({
   coachNames = {},
   showDevButtons = false,
   weather = null,
+  koreanTennis = null,
 }: {
   nickname: string;
   latestClaim: LatestClaim;
@@ -234,6 +241,7 @@ function StudentHome({
   coachNames?: Record<string, string>;
   showDevButtons?: boolean;
   weather?: WeatherSnapshot | null;
+  koreanTennis?: KoreanTennisData | null;
 }) {
   const greeting = timeGreeting();
   const date = todayLabel();
@@ -324,6 +332,13 @@ function StudentHome({
         {weather && (
           <div className="mt-5">
             <WeatherCard weather={weather} />
+          </div>
+        )}
+
+        {/* 한국 ATP/WTA 랭킹 — 매주 자동 갱신 (#C3) */}
+        {koreanTennis && (koreanTennis.atp.length > 0 || koreanTennis.wta.length > 0) && (
+          <div className="mt-4">
+            <KoreanTennisCard data={koreanTennis} />
           </div>
         )}
 
