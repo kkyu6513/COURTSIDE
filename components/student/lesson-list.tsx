@@ -160,13 +160,22 @@ export function StudentWeekMini({ lessons }: { lessons: StudentLessonRow[] }) {
 export function StudentWeekLessons({
   lessons,
   coachNames,
+  bare = false,
 }: {
   lessons: StudentLessonRow[];
   coachNames: Record<string, string>;
+  /** 외곽 박스에 wrap되어 있을 때 — 자체 border/bg 제거, divide-y 분리만 */
+  bare?: boolean;
 }) {
   if (lessons.length === 0) {
     return (
-      <div className="rounded-2xl border border-line bg-surface p-8 text-center">
+      <div
+        className={
+          bare
+            ? "rounded-xl bg-soft p-6 text-center"
+            : "rounded-2xl border border-line bg-surface p-8 text-center"
+        }
+      >
         <p className="text-sm text-ink-2">이번 주 예정된 레슨이 없어요</p>
         <p className="mt-1 text-xs text-ink-3">
           코치님이 레슨을 등록하면 여기에 표시돼요
@@ -183,7 +192,13 @@ export function StudentWeekLessons({
   });
 
   return (
-    <ul className="rounded-2xl border border-line bg-surface overflow-hidden">
+    <ul
+      className={
+        bare
+          ? "divide-y divide-line"
+          : "rounded-2xl border border-line bg-surface overflow-hidden"
+      }
+    >
       {sorted.map((l, idx) => (
         <li key={l.id}>
           <StudentLessonCard
@@ -284,14 +299,23 @@ const ACTION_REQUIRED_STATUSES = new Set(["MAKEUP_PENDING"]);
 export function StudentResponseRequired({
   lessons,
   coachNames,
+  bare = false,
 }: {
   lessons: StudentLessonRow[];
   coachNames: Record<string, string>;
+  /** 외곽 박스에 wrap되어 있을 때 — 자체 border/bg 제거 */
+  bare?: boolean;
 }) {
   const items = lessons.filter((l) => ACTION_REQUIRED_STATUSES.has(l.status));
   if (items.length === 0) {
     return (
-      <div className="rounded-2xl border border-line bg-surface p-5 text-center">
+      <div
+        className={
+          bare
+            ? "rounded-xl bg-soft p-5 text-center"
+            : "rounded-2xl border border-line bg-surface p-5 text-center"
+        }
+      >
         <p className="text-sm text-ink-2">처리할 항목이 없어요</p>
         <p className="mt-1 text-[11px] text-ink-3">
           코치님이 보낸 변경·보강 요청이 있을 때 여기에 표시돼요
@@ -300,7 +324,13 @@ export function StudentResponseRequired({
     );
   }
   return (
-    <ul className="rounded-2xl border border-line bg-surface overflow-hidden">
+    <ul
+      className={
+        bare
+          ? "divide-y divide-line"
+          : "rounded-2xl border border-line bg-surface overflow-hidden"
+      }
+    >
       {items.map((l, idx) => (
         <li key={l.id}>
           <StudentLessonCard
