@@ -365,14 +365,13 @@ function StudentHome({
           )}
         </section>
 
-        {/* 2. 이번 주 레슨 — 별도 박스 */}
+        {/* 2. 이번 주 레슨 — 별도 박스 (타이틀 제거) */}
         <section className="mt-4 rounded-2xl border border-line bg-surface p-5 shadow-sm">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-base font-bold text-ink">이번 주 레슨</h2>
-            {weekLessons.length > 0 && (
+          {weekLessons.length > 0 && (
+            <div className="mb-3 flex justify-end">
               <span className="text-xs text-ink-3 font-medium">{weekLessons.length}건</span>
-            )}
-          </div>
+            </div>
+          )}
           {weekLessons.length > 0 && (
             <div className="mb-3">
               <StudentWeekMini lessons={weekLessons} />
