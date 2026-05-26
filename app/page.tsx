@@ -347,8 +347,10 @@ function StudentHome({
           </div>
         )}
 
-        <div className="mt-6">
-          <h2 className="text-lg font-bold text-ink mb-2">{coachSectionTitle}</h2>
+        {/* 코치 등록 + 이번 주 레슨 — 하나의 그루핑 박스 */}
+        <div className="mt-4 rounded-2xl border border-line bg-surface p-5 shadow-sm">
+          {/* 1. 코치 등록 / 진행 중 / 내 코치 */}
+          <h2 className="text-base font-bold text-ink mb-3">{coachSectionTitle}</h2>
           {showPendingMatched && latestClaim ? (
             <CoachRequestPending
               claimId={latestClaim.id}
@@ -358,7 +360,7 @@ function StudentHome({
           ) : showRequestForm ? (
             <CoachRequestForm />
           ) : isConnected && latestClaim ? (
-            <div className="rounded-2xl border border-line bg-surface p-4 flex items-center gap-3">
+            <div className="rounded-xl border border-line bg-soft p-4 flex items-center gap-3">
               <div className="w-12 h-12 rounded-full bg-primary/10 text-primary-600 flex items-center justify-center flex-none text-lg font-bold">
                 {latestClaim.claimedCoachName.slice(0, 1)}
               </div>
@@ -379,49 +381,49 @@ function StudentHome({
               </button>
             </div>
           ) : (
-            <div className="rounded-2xl border border-line bg-surface p-4 text-sm text-ink-2">
+            <div className="rounded-xl border border-line bg-soft p-4 text-sm text-ink-2">
               코치 연결 상태 확인 중
             </div>
           )}
+
+          {/* 2. 이번 주 레슨 — 같은 박스 안 sub-section */}
+          <div className="mt-5 pt-5 border-t border-line">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-base font-bold text-ink">이번 주 레슨</h2>
+              {weekLessons.length > 0 && (
+                <span className="text-xs text-ink-3 font-medium">{weekLessons.length}건</span>
+              )}
+            </div>
+            {weekLessons.length > 0 && (
+              <div className="mb-3">
+                <StudentWeekMini lessons={weekLessons} />
+              </div>
+            )}
+            {weekLessons.length > 0 ? (
+              <StudentWeekLessons lessons={weekLessons} coachNames={coachNames} />
+            ) : (
+              <div className="rounded-xl bg-soft p-6 text-center">
+                <p className="text-sm text-ink-2">이번 주 예정된 레슨이 없어요</p>
+                <p className="mt-1 text-xs text-ink-3">
+                  {isConnected
+                    ? "코치님이 레슨을 등록하면 여기에 표시돼요"
+                    : "코치 연결 후 레슨이 잡히면 여기에 표시돼요"}
+                </p>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* 결제 안내 — 미결제 있을 때만 노출 */}
+        {/* 결제 안내 — 미결제 있을 때만 노출 (별도 박스) */}
         {weekLessons.length > 0 && (
           <div className="mt-4">
             <StudentPaymentNotice lessons={weekLessons} />
           </div>
         )}
 
-        {/* 주간 미니 캘린더 + 이번 주 레슨 */}
-        <div className="mt-6">
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-lg font-bold text-ink">이번 주 레슨</h2>
-            {weekLessons.length > 0 && (
-              <span className="text-xs text-ink-3 font-medium">{weekLessons.length}건</span>
-            )}
-          </div>
-          {weekLessons.length > 0 && (
-            <div className="mb-3">
-              <StudentWeekMini lessons={weekLessons} />
-            </div>
-          )}
-          {weekLessons.length > 0 ? (
-            <StudentWeekLessons lessons={weekLessons} coachNames={coachNames} />
-          ) : (
-            <div className="rounded-2xl border border-line bg-surface p-8 text-center">
-              <p className="text-sm text-ink-2">이번 주 예정된 레슨이 없어요</p>
-              <p className="mt-1 text-xs text-ink-3">
-                {isConnected
-                  ? "코치님이 레슨을 등록하면 여기에 표시돼요"
-                  : "코치님이 회원님을 등록하면 여기에 표시돼요"}
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* 응답 필요 */}
-        <div className="mt-6">
-          <h2 className="text-lg font-bold text-ink mb-2">응답 필요</h2>
+        {/* 응답 필요 — StudentResponseRequired가 자체 박스를 그리므로 외곽 wrap 없이 */}
+        <div className="mt-4">
+          <h2 className="text-base font-bold text-ink mb-2">응답 필요</h2>
           <StudentResponseRequired lessons={actionLessons} coachNames={coachNames} />
         </div>
       </div>
