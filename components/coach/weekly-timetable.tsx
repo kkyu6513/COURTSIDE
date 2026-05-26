@@ -1,21 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { AlertModal } from "@/components/alert-modal";
 import { Toast } from "@/components/toast";
 import { StudentPickerSheet, type StudentOption } from "@/components/coach/student-picker-sheet";
-import { LessonDetailSheet, type LessonDetail } from "@/components/coach/lesson-detail-sheet";
-import { LessonListSheet } from "@/components/coach/lesson-list-sheet";
-import {
-  bookLesson,
-  bookRecurringLessons,
-  cancelLesson,
-  markLessonAbsent,
-  markLessonCompleted,
-  markLessonPaid,
-  restoreLesson,
-  updateLessonNotes,
-} from "@/app/coach/schedule/actions";
+import { LessonListSheet, type LessonDetail } from "@/components/coach/lesson-list-sheet";
+import { bookLesson, bookRecurringLessons } from "@/app/coach/schedule/actions";
 import {
   deriveDisplayStatus,
   getStatusBlockAccent,
@@ -444,20 +435,14 @@ export function WeeklyTimetable({
     minute: number;
     baseTimeLabel: string;
   } | null>(null);
-  const [lessonDetail, setLessonDetail] = useState<{ open: boolean; lesson: LessonDetail } | null>(null);
   const [lessonList, setLessonList] = useState<{
     open: boolean;
     hourLabel: string;
     lessons: LessonDetail[];
   } | null>(null);
   const [pendingStudentId, setPendingStudentId] = useState<string | null>(null);
-  const [pendingCancel, setPendingCancel] = useState(false);
-  const [pendingNotes, setPendingNotes] = useState(false);
-  const [pendingRestore, setPendingRestore] = useState(false);
-  const [pendingComplete, setPendingComplete] = useState(false);
-  const [pendingAbsent, setPendingAbsent] = useState(false);
-  const [pendingPaid, setPendingPaid] = useState(false);
   const [, startTransition] = useTransition();
+  const router = useRouter();
   // 본문 컨테이너 + 현재 시각 라인 ref — "오늘" 클릭 시 scrollIntoView
   const bodyRef = useRef<HTMLDivElement | null>(null);
   const nowLineRef = useRef<HTMLDivElement | null>(null);
@@ -632,9 +617,9 @@ export function WeeklyTimetable({
     };
   };
 
-  // ----- 블록 클릭 → 디테일 시트 -----
+  // ----- 블록 클릭 → 레슨 상세 페이지 -----
   const onBlockClick = (lesson: LessonRow) => {
-    setLessonDetail({ open: true, lesson: toLessonDetail(lesson) });
+    router.push(`/coach/lessons/${lesson.id}`);
   };
 
   // ----- 오버플로우 배지 클릭 → 리스트 시트 -----
@@ -649,7 +634,7 @@ export function WeeklyTimetable({
   const closeLessonList = () => setLessonList((s) => (s ? { ...s, open: false } : null));
   const onPickLessonFromList = (lesson: LessonDetail) => {
     setLessonList(null);
-    setLessonDetail({ open: true, lesson });
+    router.push(`/coach/lessons/${lesson.id}`);
   };
 
   // ----- 빈 영역 클릭 → 학생 피커 직행 -----
@@ -680,92 +665,8 @@ export function WeeklyTimetable({
   };
 
   // ----- 시트 핸들러 -----
-  const closeLessonDetail = () => setLessonDetail((s) => (s ? { ...s, open: false } : null));
+  // 레슨 상세/취소/완료/결강/결제확인/복구/메모는 /coach/lessons/[id] 상세 페이지에서 처리.
   const closeStudentPicker = () => setStudentPicker((s) => (s ? { ...s, open: false } : null));
-
-  const onSaveLessonNotes = (notes: string) => {
-    if (!lessonDetail) return;
-    const lessonId = lessonDetail.lesson.id;
-    setPendingNotes(true);
-    startTransition(async () => {
-      const res = await updateLessonNotes(lessonId, notes);
-      setPendingNotes(false);
-      if (!res.ok) { showError("메모 저장 실패", res.error); return; }
-      setLessonDetail((s) => (s ? { ...s, lesson: { ...s.lesson, notes: notes.trim() || null } } : s));
-      showSuccess("메모가 저장되었어요");
-      reload();
-    });
-  };
-
-  const onCancelLesson = () => {
-    if (!lessonDetail) return;
-    const lessonId = lessonDetail.lesson.id;
-    setPendingCancel(true);
-    startTransition(async () => {
-      const res = await cancelLesson(lessonId);
-      setPendingCancel(false);
-      if (!res.ok) { showError("레슨 취소 실패", res.error); return; }
-      setLessonDetail(null);
-      showSuccess("레슨이 취소되었어요");
-      reload();
-    });
-  };
-
-  const onCompleteLesson = () => {
-    if (!lessonDetail) return;
-    const lessonId = lessonDetail.lesson.id;
-    setPendingComplete(true);
-    startTransition(async () => {
-      const res = await markLessonCompleted(lessonId);
-      setPendingComplete(false);
-      if (!res.ok) { showError("레슨 완료 처리 실패", res.error); return; }
-      setLessonDetail(null);
-      showSuccess("레슨을 완료 처리했어요");
-      reload();
-    });
-  };
-
-  const onAbsentLesson = () => {
-    if (!lessonDetail) return;
-    const lessonId = lessonDetail.lesson.id;
-    setPendingAbsent(true);
-    startTransition(async () => {
-      const res = await markLessonAbsent(lessonId);
-      setPendingAbsent(false);
-      if (!res.ok) { showError("결강 처리 실패", res.error); return; }
-      setLessonDetail(null);
-      showSuccess("결강으로 처리했어요");
-      reload();
-    });
-  };
-
-  const onMarkPaid = () => {
-    if (!lessonDetail) return;
-    const lessonId = lessonDetail.lesson.id;
-    setPendingPaid(true);
-    startTransition(async () => {
-      const res = await markLessonPaid(lessonId);
-      setPendingPaid(false);
-      if (!res.ok) { showError("결제 확인 실패", res.error); return; }
-      setLessonDetail((s) => (s ? { ...s, lesson: { ...s.lesson, paymentStatus: "PAID" } } : s));
-      showSuccess("결제 완료로 처리했어요");
-      reload();
-    });
-  };
-
-  const onRestoreLesson = () => {
-    if (!lessonDetail) return;
-    const lessonId = lessonDetail.lesson.id;
-    setPendingRestore(true);
-    startTransition(async () => {
-      const res = await restoreLesson(lessonId);
-      setPendingRestore(false);
-      if (!res.ok) { showError("레슨 복구 실패", res.error); return; }
-      setLessonDetail(null);
-      showSuccess("레슨이 복구되었어요");
-      reload();
-    });
-  };
 
   const onPickStudent = (
     studentId: string,
@@ -1122,26 +1023,6 @@ export function WeeklyTimetable({
           lessons={lessonList.lessons}
           onPickLesson={onPickLessonFromList}
           onBookNew={() => { /* 오버플로우 시트에서는 + 잡기 미사용 — picker 직행이 빈 영역 클릭으로 가능 */ closeLessonList(); }}
-        />
-      )}
-
-      {lessonDetail && (
-        <LessonDetailSheet
-          open={lessonDetail.open}
-          onClose={closeLessonDetail}
-          lesson={lessonDetail.lesson}
-          pendingCancel={pendingCancel}
-          pendingNotes={pendingNotes}
-          pendingRestore={pendingRestore}
-          pendingComplete={pendingComplete}
-          pendingAbsent={pendingAbsent}
-          pendingPaid={pendingPaid}
-          onCancel={onCancelLesson}
-          onSaveNotes={onSaveLessonNotes}
-          onRestore={onRestoreLesson}
-          onComplete={onCompleteLesson}
-          onAbsent={onAbsentLesson}
-          onMarkPaid={onMarkPaid}
         />
       )}
 

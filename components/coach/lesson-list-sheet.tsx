@@ -2,9 +2,21 @@
 
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
-import type { LessonDetail } from "@/components/coach/lesson-detail-sheet";
 import { deriveDisplayStatus, getStatusLabel } from "@/lib/lesson-status";
 import { KST_OFFSET_MS, parseIsoUtc } from "@/lib/kst";
+
+// 같은 시간대 겹친 레슨 리스트 / 타임테이블 블록 클릭 데이터 공용 타입
+export type LessonDetail = {
+  id: number;
+  studentName: string;
+  studentPhone: string | null;
+  scheduledAt: string; // ISO
+  durationMinutes: number;
+  // DB lessons.status (12종)
+  status: string;
+  paymentStatus?: string | null; // PAID | UNPAID | EXTERNAL | NONE
+  notes?: string | null;
+};
 
 function formatKstHm(iso: string): string {
   const kst = new Date(parseIsoUtc(iso).getTime() + KST_OFFSET_MS);
