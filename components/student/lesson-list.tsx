@@ -129,10 +129,10 @@ export function StudentWeekMini({ lessons }: { lessons: StudentLessonRow[] }) {
         return (
           <div
             key={d.key}
-            className={`flex-1 text-center py-2 rounded-xl transition ${
+            className={`flex-1 text-center py-2 transition ${
               d.isToday
-                ? "bg-primary text-white shadow-[0_4px_12px_rgba(45,212,191,0.35)]"
-                : "bg-soft"
+                ? "rounded-full bg-primary text-white shadow-[0_4px_12px_rgba(45,212,191,0.35)]"
+                : ""
             }`}
           >
             <div className={`text-[10px] ${d.isToday ? "text-white/85" : "text-ink-3"}`}>
