@@ -75,7 +75,7 @@ export function CoachRequestForm() {
 
   return (
     <>
-      <div className="rounded-2xl border border-line bg-surface p-4">
+      <div>
         <p className="text-xs text-ink-2 leading-relaxed">
           레슨받으시는 코치님 정보를 입력하시면 알림이 발송돼요. 코치님이 회원님을 등록하면 자동 연결돼요.
         </p>
@@ -156,7 +156,7 @@ export function CoachRequestPending({
 
   return (
     <>
-      <div className="rounded-2xl border border-line bg-surface p-4">
+      <div>
         <div className="flex items-start gap-3">
           <div className="w-10 h-10 rounded-full bg-soft text-ink-2 flex items-center justify-center flex-none">
             <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>

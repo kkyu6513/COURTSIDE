@@ -172,7 +172,7 @@ export function StudentWeekLessons({
       <div
         className={
           bare
-            ? "rounded-xl bg-soft p-6 text-center"
+            ? "py-6 text-center"
             : "rounded-2xl border border-line bg-surface p-8 text-center"
         }
       >
@@ -312,7 +312,7 @@ export function StudentResponseRequired({
       <div
         className={
           bare
-            ? "rounded-xl bg-soft p-5 text-center"
+            ? "py-4 text-center"
             : "rounded-2xl border border-line bg-surface p-5 text-center"
         }
       >

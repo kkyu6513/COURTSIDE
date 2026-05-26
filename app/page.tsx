@@ -340,7 +340,7 @@ function StudentHome({
           ) : showRequestForm ? (
             <CoachRequestForm />
           ) : isConnected && latestClaim ? (
-            <div className="rounded-xl bg-soft p-4 flex items-center gap-3">
+            <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-full bg-primary/10 text-primary-600 flex items-center justify-center flex-none text-lg font-bold">
                 {latestClaim.claimedCoachName.slice(0, 1)}
               </div>
@@ -361,9 +361,7 @@ function StudentHome({
               </button>
             </div>
           ) : (
-            <div className="rounded-xl bg-soft p-4 text-sm text-ink-2">
-              코치 연결 상태 확인 중
-            </div>
+            <div className="text-sm text-ink-2">코치 연결 상태 확인 중</div>
           )}
         </section>
 
