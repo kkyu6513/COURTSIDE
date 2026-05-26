@@ -447,6 +447,24 @@ export function WeeklyTimetable({
   const bodyRef = useRef<HTMLDivElement | null>(null);
   const nowLineRef = useRef<HTMLDivElement | null>(null);
 
+  // 진입 시 한 번 — 오늘 컬럼의 현재 시각 라인으로 자동 포커싱 (#initial-focus)
+  // 조건: initialDate(URL 강제) 없을 때만, nowLineRef 가 마운트된 직후 즉시 1회.
+  const didInitialFocusRef = useRef(false);
+  useEffect(() => {
+    if (didInitialFocusRef.current) return;
+    if (initialDate) {
+      // 사용자가 명시적으로 다른 주를 지정했으면 자동 포커스 안 함
+      didInitialFocusRef.current = true;
+      return;
+    }
+    if (!nowLineRef.current) return; // 오늘 컬럼이 아직 안 보임 (day 모드에서 다른 요일 선택 등)
+    didInitialFocusRef.current = true;
+    // 첫 paint 직후 실행 — smooth 가 아니라 즉시(auto) 로 깔끔하게
+    requestAnimationFrame(() => {
+      nowLineRef.current?.scrollIntoView({ behavior: "auto", block: "center" });
+    });
+  });
+
   // 현재 시각 (KST 분) — 1분마다 갱신 (#29)
   const [nowMin, setNowMin] = useState<number | null>(() => {
     const k = new Date(Date.now() + KST_OFFSET_MS);
