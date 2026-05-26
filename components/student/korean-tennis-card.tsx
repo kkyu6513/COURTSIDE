@@ -1,24 +1,23 @@
 /**
- * 학생 홈 — 한국 ATP/WTA 선수 랭킹 카드 (#C3)
- *
- * 데이터: lib/korean-tennis.ts (Jeff Sackmann GitHub 데이터셋)
- * 매주 자동 업데이트, fetch 실패 시 fallback 리스트
+ * 학생 홈 — ATP/WTA 랭킹 카드 (#C3)
+ * 4 섹션: ATP 한국 Top5 / ATP 전체 Top5 / WTA 한국 Top5 / WTA 전체 Top5
  */
 
-import { formatRankingDate, type KoreanTennisData, type RankedPlayer } from "@/lib/korean-tennis";
+import { flagEmoji, formatRankingDate, type RankedPlayer, type TennisRankings } from "@/lib/korean-tennis";
 
-export function KoreanTennisCard({ data }: { data: KoreanTennisData }) {
-  const hasAtp = data.atp.length > 0;
-  const hasWta = data.wta.length > 0;
-  if (!hasAtp && !hasWta) return null;
+export function KoreanTennisCard({ data }: { data: TennisRankings }) {
+  const hasAny =
+    data.atp.top5.length > 0 ||
+    data.atp.koreanTop5.length > 0 ||
+    data.wta.top5.length > 0 ||
+    data.wta.koreanTop5.length > 0;
+  if (!hasAny) return null;
 
   return (
     <div className="rounded-2xl border border-line bg-surface overflow-hidden">
       <div className="px-4 pt-4 pb-2 flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="text-sm font-extrabold text-ink flex items-center gap-1.5">
-            🇰🇷 한국 테니스 랭킹
-          </div>
+          <div className="text-sm font-extrabold text-ink">ATP / WTA 랭킹</div>
           <div className="mt-0.5 text-[10px] text-ink-3">
             {data.source === "live" ? formatRankingDate(data.rankingDate) : "최근 등록 선수"}
             {" · 주간 자동 갱신"}
@@ -31,65 +30,89 @@ export function KoreanTennisCard({ data }: { data: KoreanTennisData }) {
         )}
       </div>
 
-      {hasAtp && (
-        <TourSection title="ATP (남자)" players={data.atp} accent="text-sky-600" />
-      )}
-      {hasWta && (
-        <TourSection title="WTA (여자)" players={data.wta} accent="text-rose-600" />
-      )}
+      {/* ATP */}
+      <div className="px-4 pt-2">
+        <div className="text-[11px] font-bold text-sky-600">ATP (남자)</div>
+        <div className="mt-1.5 grid grid-cols-1 gap-3">
+          <SubSection title="🇰🇷 한국 Top 5" players={data.atp.koreanTop5} emptyText="최근 한국 ATP 랭커 데이터가 없어요" />
+          <SubSection title="🌐 전체 Top 5" players={data.atp.top5} emptyText="ATP 데이터 불러올 수 없음" />
+        </div>
+      </div>
 
-      <div className="px-4 py-2 text-[10px] text-ink-3 text-right">
+      <div className="mx-4 my-3 h-px bg-line/70" />
+
+      {/* WTA */}
+      <div className="px-4 pb-2">
+        <div className="text-[11px] font-bold text-rose-600">WTA (여자)</div>
+        <div className="mt-1.5 grid grid-cols-1 gap-3">
+          <SubSection title="🇰🇷 한국 Top 5" players={data.wta.koreanTop5} emptyText="최근 한국 WTA 랭커 데이터가 없어요" />
+          <SubSection title="🌐 전체 Top 5" players={data.wta.top5} emptyText="WTA 데이터 불러올 수 없음" />
+        </div>
+      </div>
+
+      <div className="px-4 py-2 text-[10px] text-ink-3 text-right border-t border-line/60">
         데이터: Jeff Sackmann tennis_atp / wta · 매주 갱신
       </div>
     </div>
   );
 }
 
-function TourSection({
+function SubSection({
   title,
   players,
-  accent,
+  emptyText,
 }: {
   title: string;
   players: RankedPlayer[];
-  accent: string;
+  emptyText: string;
 }) {
   return (
-    <div className="px-4 pt-2 pb-1">
-      <div className={`text-[11px] font-bold ${accent} mb-1.5`}>{title}</div>
-      <ul className="divide-y divide-line/60">
-        {players.map((p, idx) => (
-          <li key={`${p.playerId}-${idx}`} className="py-2 flex items-center gap-3">
-            <div className="w-9 text-center flex-none">
-              {p.rank > 0 ? (
-                <>
-                  <div className="text-[9px] text-ink-3 leading-none">세계</div>
-                  <div className="text-sm font-extrabold text-ink leading-none tabular-nums mt-0.5">
-                    {p.rank}
-                  </div>
-                </>
-              ) : (
-                <div className="text-[9px] text-ink-3">—</div>
-              )}
-            </div>
-            <div className="w-px h-8 bg-line flex-none" />
-            <div className="flex-1 min-w-0">
-              <div className="text-sm font-bold text-ink truncate">{p.name}</div>
-              {p.name !== p.nameEn && (
-                <div className="text-[10px] text-ink-3 truncate">{p.nameEn}</div>
-              )}
-            </div>
-            {p.points > 0 && (
-              <div className="flex-none text-right">
-                <div className="text-[9px] text-ink-3 leading-none">포인트</div>
-                <div className="text-xs font-semibold text-ink-2 leading-none tabular-nums mt-0.5">
-                  {p.points.toLocaleString()}
-                </div>
-              </div>
-            )}
-          </li>
-        ))}
-      </ul>
+    <div>
+      <div className="text-[10px] font-semibold text-ink-3 mb-1">{title}</div>
+      {players.length === 0 ? (
+        <div className="rounded-lg bg-soft px-3 py-2.5 text-[11px] text-ink-3 text-center">
+          {emptyText}
+        </div>
+      ) : (
+        <ul className="rounded-lg bg-soft/60 overflow-hidden divide-y divide-line/50">
+          {players.map((p, idx) => (
+            <PlayerRow key={`${p.playerId}-${idx}`} player={p} />
+          ))}
+        </ul>
+      )}
     </div>
+  );
+}
+
+function PlayerRow({ player: p }: { player: RankedPlayer }) {
+  return (
+    <li className="px-3 py-2 flex items-center gap-2.5">
+      <div className="w-8 text-center flex-none">
+        {p.rank > 0 ? (
+          <div className="text-sm font-extrabold text-ink leading-none tabular-nums">
+            {p.rank}
+          </div>
+        ) : (
+          <div className="text-[10px] text-ink-3">—</div>
+        )}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="text-sm font-bold text-ink truncate flex items-center gap-1.5">
+          <span className="flex-none text-[12px] leading-none">{flagEmoji(p.countryCode) || "🏳️"}</span>
+          <span className="truncate">{p.name}</span>
+        </div>
+        {p.name !== p.nameEn && (
+          <div className="text-[10px] text-ink-3 truncate">{p.nameEn}</div>
+        )}
+      </div>
+      {p.points > 0 && (
+        <div className="flex-none text-right">
+          <div className="text-[9px] text-ink-3 leading-none">pts</div>
+          <div className="text-[11px] font-semibold text-ink-2 leading-none tabular-nums mt-0.5">
+            {p.points.toLocaleString()}
+          </div>
+        </div>
+      )}
+    </li>
   );
 }

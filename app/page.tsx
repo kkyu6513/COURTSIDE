@@ -18,7 +18,7 @@ import { signOutAction } from "@/app/actions/sign-out";
 import { testSwitchRole } from "@/app/actions/test-switch-role";
 import { fetchTennisWeather, type WeatherSnapshot } from "@/lib/weather";
 import { WeatherCard } from "@/components/student/weather-card";
-import { fetchKoreanTennis, type KoreanTennisData } from "@/lib/korean-tennis";
+import { fetchTennisRankings, type TennisRankings } from "@/lib/korean-tennis";
 import { KoreanTennisCard } from "@/components/student/korean-tennis-card";
 import { randomQuote, timeGreeting, todayLabel } from "@/lib/quotes";
 
@@ -153,7 +153,7 @@ export default async function Home({
     // 외부 콘텐츠 — 날씨/컨디션 + 한국 테니스 랭킹 (병렬, 실패 시 각자 null/fallback)
     const [weather, koreanTennis] = await Promise.all([
       fetchTennisWeather(),
-      fetchKoreanTennis({ limit: 3 }),
+      fetchTennisRankings({ limit: 5 }),
     ]);
 
     return (
@@ -241,7 +241,7 @@ function StudentHome({
   coachNames?: Record<string, string>;
   showDevButtons?: boolean;
   weather?: WeatherSnapshot | null;
-  koreanTennis?: KoreanTennisData | null;
+  koreanTennis?: TennisRankings | null;
 }) {
   const greeting = timeGreeting();
   const date = todayLabel();
@@ -336,7 +336,12 @@ function StudentHome({
         )}
 
         {/* 한국 ATP/WTA 랭킹 — 매주 자동 갱신 (#C3) */}
-        {koreanTennis && (koreanTennis.atp.length > 0 || koreanTennis.wta.length > 0) && (
+        {koreanTennis && (
+          koreanTennis.atp.top5.length > 0 ||
+          koreanTennis.atp.koreanTop5.length > 0 ||
+          koreanTennis.wta.top5.length > 0 ||
+          koreanTennis.wta.koreanTop5.length > 0
+        ) && (
           <div className="mt-4">
             <KoreanTennisCard data={koreanTennis} />
           </div>
