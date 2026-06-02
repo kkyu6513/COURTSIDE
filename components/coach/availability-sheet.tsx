@@ -12,7 +12,6 @@ type Lesson = {
 };
 
 type RangeKey = "today" | "tomorrow" | "thisWeek" | "nextWeek";
-type TimeBandKey = "morning" | "afternoon" | "evening" | "all";
 
 const RANGE_OPTIONS: { key: RangeKey; label: string }[] = [
   { key: "today", label: "오늘" },
@@ -21,15 +20,13 @@ const RANGE_OPTIONS: { key: RangeKey; label: string }[] = [
   { key: "nextWeek", label: "다음 주" },
 ];
 
-const TIME_BAND_OPTIONS: { key: TimeBandKey; label: string; startHour: number; endHour: number }[] = [
-  { key: "morning", label: "오전 (06~12시)", startHour: 6, endHour: 12 },
-  { key: "afternoon", label: "오후 (12~18시)", startHour: 12, endHour: 18 },
-  { key: "evening", label: "저녁 (18~22시)", startHour: 18, endHour: 22 },
-  { key: "all", label: "전체 (06~22시)", startHour: 6, endHour: 22 },
-];
+const DURATION_OPTIONS = [20, 30, 40, 60];
+const SLOT_STEP_MIN = 10; // 10분 단위 슬롯 후보 생성
 
-const DURATION_OPTIONS = [30, 60, 90];
-const SLOT_STEP_MIN = 30; // 30분 단위 슬롯 후보 생성
+const HOUR_MIN = 6;       // 06시
+const HOUR_MAX = 23;      // 23시 (23시 시작 슬롯이 마지막)
+const DAY_END_MIN = 24 * 60; // 자정까지
+const DEFAULT_HOUR = 9;
 
 const DOW_KOR = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -39,15 +36,14 @@ type Props = {
 };
 
 type AvailableSlot = {
-  date: Date;       // KST trick
-  startMin: number; // KST 자정 기준 분
+  date: Date;
+  startMin: number;
   endMin: number;
 };
 
 export function AvailabilitySheet({ open, onClose }: Props) {
-  const [step, setStep] = useState<"select" | "result">("select");
   const [range, setRange] = useState<RangeKey>("today");
-  const [timeBand, setTimeBand] = useState<TimeBandKey>("all");
+  const [hour, setHour] = useState<number>(DEFAULT_HOUR);
   const [duration, setDuration] = useState<number>(60);
 
   const [lessons, setLessons] = useState<Lesson[]>([]);
@@ -57,9 +53,8 @@ export function AvailabilitySheet({ open, onClose }: Props) {
   // 시트 열릴 때 초기화 + lessons fetch
   useEffect(() => {
     if (!open) return;
-    setStep("select");
     setRange("today");
-    setTimeBand("all");
+    setHour(DEFAULT_HOUR);
     setDuration(60);
     setError(null);
     let cancelled = false;
@@ -99,26 +94,24 @@ export function AvailabilitySheet({ open, onClose }: Props) {
     };
   }, [open, onClose]);
 
-  // 결과 — 선택된 조건으로 가능 시간 슬롯 계산
+  // 가능 슬롯 — 선택된 시간(1시간) 범위 내, 기존 active 레슨과 충돌하지 않는 것만
   const availableSlots = useMemo<AvailableSlot[]>(() => {
-    if (step !== "result") return [];
-    const band = TIME_BAND_OPTIONS.find((b) => b.key === timeBand)!;
+    if (loading || error) return [];
     const dates = getDateRange(range);
     const out: AvailableSlot[] = [];
     const nowMs = Date.now();
+    const bandStartMin = hour * 60;
+    const bandEndMin = (hour + 1) * 60;
     for (const date of dates) {
       const dayUtcMidnight = date.getTime() - KST_OFFSET_MS;
-      // 30분 단위 슬롯 후보
-      for (
-        let startMin = band.startHour * 60;
-        startMin + duration <= band.endHour * 60;
-        startMin += SLOT_STEP_MIN
-      ) {
+      // 시작 시각이 선택된 1시간 범위 [bandStart, bandEnd) 안에 있어야 함.
+      // 종료는 자정(24:00)까지 허용 — 그래야 22~23시 슬롯에서 60분 레슨도 표시됨.
+      for (let startMin = bandStartMin; startMin < bandEndMin; startMin += SLOT_STEP_MIN) {
+        const endMin = startMin + duration;
+        if (endMin > DAY_END_MIN) break;
         const slotStartMs = dayUtcMidnight + startMin * 60 * 1000;
         const slotEndMs = slotStartMs + duration * 60 * 1000;
-        // 과거 시각 제외
         if (slotStartMs < nowMs) continue;
-        // 충돌 검사
         const conflict = lessons.some((l) => {
           if (l.status === "CANCELLED" || l.status === "COMPLETED" || l.status === "ABSENT") {
             return false;
@@ -128,17 +121,13 @@ export function AvailabilitySheet({ open, onClose }: Props) {
           return slotStartMs < lEnd && slotEndMs > lStart;
         });
         if (conflict) continue;
-        out.push({
-          date,
-          startMin,
-          endMin: startMin + duration,
-        });
+        out.push({ date, startMin, endMin });
       }
     }
     return out;
-  }, [step, range, timeBand, duration, lessons]);
+  }, [loading, error, range, hour, duration, lessons]);
 
-  // 결과 날짜별 그룹
+  // 날짜별 그룹
   const groupedByDay = useMemo(() => {
     const m = new Map<string, { date: Date; slots: AvailableSlot[] }>();
     for (const s of availableSlots) {
@@ -149,6 +138,9 @@ export function AvailabilitySheet({ open, onClose }: Props) {
     }
     return Array.from(m.values());
   }, [availableSlots]);
+
+  const goPrevHour = () => setHour((h) => Math.max(HOUR_MIN, h - 1));
+  const goNextHour = () => setHour((h) => Math.min(HOUR_MAX, h + 1));
 
   if (!open) return null;
   if (typeof document === "undefined") return null;
@@ -184,132 +176,119 @@ export function AvailabilitySheet({ open, onClose }: Props) {
               </svg>
             </button>
           </div>
-          <div className="text-base font-extrabold text-ink">
-            {step === "select" ? "가능한 시간대 확인" : "가능한 시간"}
-          </div>
-          <div className="mt-1 text-xs text-ink-3">
-            {step === "select"
-              ? "기간과 시간대, 레슨 길이를 선택하세요"
-              : `${rangeLabel(range)} · ${TIME_BAND_OPTIONS.find((b) => b.key === timeBand)?.label} · ${duration}분`}
-          </div>
+          <div className="text-base font-extrabold text-ink">가능한 시간대 확인</div>
+          <div className="mt-1 text-xs text-ink-3">기간 / 시간 / 길이를 선택하면 바로 결과가 보여요</div>
         </div>
 
         {/* 본문 */}
-        <div className="flex-1 overflow-y-auto px-5 pb-2">
-          {step === "select" ? (
-            <div className="space-y-4">
-              <Section title="기간">
-                <ChipGrid
-                  options={RANGE_OPTIONS.map((o) => ({ key: o.key, label: o.label }))}
-                  value={range}
-                  onChange={(v) => setRange(v as RangeKey)}
-                  cols={4}
-                />
-              </Section>
+        <div className="flex-1 overflow-y-auto px-5 pb-2 space-y-4">
+          <Section title="기간">
+            <ChipGrid
+              options={RANGE_OPTIONS.map((o) => ({ key: o.key, label: o.label }))}
+              value={range}
+              onChange={(v) => setRange(v as RangeKey)}
+              cols={4}
+            />
+          </Section>
 
-              <Section title="시간대">
-                <ChipGrid
-                  options={TIME_BAND_OPTIONS.map((o) => ({ key: o.key, label: o.label }))}
-                  value={timeBand}
-                  onChange={(v) => setTimeBand(v as TimeBandKey)}
-                  cols={2}
-                />
-              </Section>
-
-              <Section title="레슨 길이">
-                <ChipGrid
-                  options={DURATION_OPTIONS.map((d) => ({ key: String(d), label: `${d}분` }))}
-                  value={String(duration)}
-                  onChange={(v) => setDuration(Number(v))}
-                  cols={3}
-                />
-              </Section>
+          <Section title="시간">
+            <div className="flex items-center justify-between gap-2">
+              <button
+                type="button"
+                onClick={goPrevHour}
+                disabled={hour <= HOUR_MIN}
+                aria-label="이전 시간"
+                className="flex-none w-12 h-12 rounded-xl border border-line bg-surface text-ink-2 text-lg font-bold hover:bg-soft transition active:scale-[0.96] disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+              >
+                ‹
+              </button>
+              <div className="flex-1 h-12 rounded-xl bg-primary/10 text-primary-700 flex items-center justify-center font-extrabold text-lg tabular-nums">
+                {String(hour).padStart(2, "0")}시 ~ {String(hour + 1).padStart(2, "0")}시
+              </div>
+              <button
+                type="button"
+                onClick={goNextHour}
+                disabled={hour >= HOUR_MAX}
+                aria-label="다음 시간"
+                className="flex-none w-12 h-12 rounded-xl border border-line bg-surface text-ink-2 text-lg font-bold hover:bg-soft transition active:scale-[0.96] disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+              >
+                ›
+              </button>
             </div>
-          ) : (
-            <div>
-              {loading ? (
-                <div className="py-10 text-center text-xs text-ink-3">불러오는 중…</div>
-              ) : error ? (
-                <div className="py-10 text-center">
-                  <p className="text-sm text-red-500">{error}</p>
-                </div>
-              ) : groupedByDay.length === 0 ? (
-                <div className="py-10 text-center">
-                  <p className="text-sm font-semibold text-ink">가능한 시간이 없어요</p>
-                  <p className="mt-1 text-xs text-ink-3">
-                    기간이나 시간대를 넓혀서 다시 시도해 보세요
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-4 pb-2">
-                  {groupedByDay.map(({ date, slots }) => {
-                    const m = date.getUTCMonth() + 1;
-                    const d = date.getUTCDate();
-                    const dow = DOW_KOR[date.getUTCDay()];
-                    return (
-                      <div key={`${m}-${d}`}>
-                        <div className="text-xs font-bold text-ink-2 mb-2">
-                          {m}월 {d}일 ({dow})
-                          <span className="ml-1.5 text-[11px] text-ink-3 font-medium">
-                            {slots.length}개 슬롯
-                          </span>
-                        </div>
-                        <div className="grid grid-cols-3 gap-1.5">
-                          {slots.map((s) => (
-                            <div
-                              key={`${s.startMin}`}
-                              className="rounded-lg border border-line bg-soft px-2 py-1.5 text-center text-[11px] font-semibold text-ink tabular-nums"
-                            >
-                              {hm(s.startMin)}~{hm(s.endMin)}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+          </Section>
+
+          <Section title="레슨 길이">
+            <ChipGrid
+              options={DURATION_OPTIONS.map((d) => ({ key: String(d), label: `${d}분` }))}
+              value={String(duration)}
+              onChange={(v) => setDuration(Number(v))}
+              cols={4}
+            />
+          </Section>
+
+          {/* 결과 */}
+          <div>
+            <div className="text-[11px] font-semibold text-ink-2 mb-2 flex items-center justify-between">
+              <span>가능한 시간</span>
+              {!loading && !error && (
+                <span className="text-[11px] text-ink-3 font-medium">
+                  총 {availableSlots.length}개 슬롯
+                </span>
               )}
             </div>
-          )}
+            {loading ? (
+              <div className="py-8 text-center text-xs text-ink-3">불러오는 중…</div>
+            ) : error ? (
+              <div className="py-8 text-center">
+                <p className="text-sm text-red-500">{error}</p>
+              </div>
+            ) : groupedByDay.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-line py-8 text-center">
+                <p className="text-sm font-semibold text-ink">가능한 시간이 없어요</p>
+                <p className="mt-1 text-xs text-ink-3">
+                  ‹ › 로 다른 시간을 보거나, 길이를 줄여보세요
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3 pb-2">
+                {groupedByDay.map(({ date, slots }) => {
+                  const m = date.getUTCMonth() + 1;
+                  const d = date.getUTCDate();
+                  const dow = DOW_KOR[date.getUTCDay()];
+                  return (
+                    <div key={`${m}-${d}`}>
+                      <div className="text-[11px] font-bold text-ink-2 mb-1.5">
+                        {m}월 {d}일 ({dow})
+                        <span className="ml-1.5 text-[10px] text-ink-3 font-medium">
+                          {slots.length}개
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-3 gap-1.5">
+                        {slots.map((s) => (
+                          <div
+                            key={`${s.startMin}`}
+                            className="rounded-lg border border-line bg-soft px-2 py-1.5 text-center text-[11px] font-semibold text-ink tabular-nums"
+                          >
+                            {hm(s.startMin)}~{hm(s.endMin)}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
 
-        <div className="px-5 pb-6 pt-3 border-t border-line flex-none space-y-2">
-          {step === "select" ? (
-            <>
-              <button
-                type="button"
-                onClick={() => setStep("result")}
-                disabled={loading}
-                className="w-full h-12 rounded-xl bg-primary text-white text-sm font-semibold hover:opacity-90 transition active:scale-[0.99] disabled:opacity-60"
-              >
-                {loading ? "불러오는 중…" : "가능한 시간 보기"}
-              </button>
-              <button
-                type="button"
-                onClick={onClose}
-                className="w-full h-12 rounded-xl border border-line bg-surface text-sm font-semibold text-ink-2 hover:bg-soft transition"
-              >
-                닫기
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                type="button"
-                onClick={() => setStep("select")}
-                className="w-full h-12 rounded-xl bg-primary text-white text-sm font-semibold hover:opacity-90 transition active:scale-[0.99]"
-              >
-                다시 선택하기
-              </button>
-              <button
-                type="button"
-                onClick={onClose}
-                className="w-full h-12 rounded-xl border border-line bg-surface text-sm font-semibold text-ink-2 hover:bg-soft transition"
-              >
-                닫기
-              </button>
-            </>
-          )}
+        <div className="px-5 pb-6 pt-3 border-t border-line flex-none">
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-full h-12 rounded-xl border border-line bg-surface text-sm font-semibold text-ink-2 hover:bg-soft transition"
+          >
+            닫기
+          </button>
         </div>
       </div>
     </div>,
@@ -362,7 +341,6 @@ function ChipGrid({
 // ---------- 유틸 ----------
 
 function todayKstTrick(): Date {
-  // KST trick — getTime()이 KST midnight + 9h ms 가 되는 Date
   const nowKst = new Date(Date.now() + KST_OFFSET_MS);
   return new Date(Date.UTC(nowKst.getUTCFullYear(), nowKst.getUTCMonth(), nowKst.getUTCDate()));
 }
@@ -377,15 +355,13 @@ function getDateRange(range: RangeKey): Date[] {
   const today = todayKstTrick();
   if (range === "today") return [today];
   if (range === "tomorrow") return [addDays(today, 1)];
-  // 이번 주: today부터 이번 주 일요일까지 (월요일 기준 주)
-  const dow = today.getUTCDay(); // 0=일
-  const daysToSun = (7 - dow) % 7; // 일요일까지 남은 일수
+  const dow = today.getUTCDay();
+  const daysToSun = (7 - dow) % 7;
   if (range === "thisWeek") {
     const arr: Date[] = [];
     for (let i = 0; i <= daysToSun; i++) arr.push(addDays(today, i));
     return arr;
   }
-  // 다음 주 월~일
   const nextMon = addDays(today, daysToSun + 1);
   const arr: Date[] = [];
   for (let i = 0; i < 7; i++) arr.push(addDays(nextMon, i));
@@ -396,13 +372,4 @@ function hm(totalMin: number): string {
   const h = Math.floor(totalMin / 60);
   const m = totalMin % 60;
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
-}
-
-function rangeLabel(r: RangeKey): string {
-  switch (r) {
-    case "today": return "오늘";
-    case "tomorrow": return "내일";
-    case "thisWeek": return "이번 주";
-    case "nextWeek": return "다음 주";
-  }
 }
