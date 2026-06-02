@@ -1,14 +1,23 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
 import { KST_OFFSET_MS, parseIsoUtc } from "@/lib/kst";
+import { Toast } from "@/components/toast";
+import { AlertModal } from "@/components/alert-modal";
+import { sendAvailabilityToStudent } from "@/app/coach/schedule/availability-actions";
 
 type Lesson = {
   id: number;
   scheduledAt: string;
   durationMinutes: number;
   status: string;
+};
+
+type Student = {
+  id: string;
+  name: string;
+  phone: string | null;
 };
 
 // 요일 — 0=일 ~ 6=토 (Date.getUTCDay 와 동일)
@@ -56,8 +65,24 @@ export function AvailabilitySheet({ open, onClose }: Props) {
   const [duration, setDuration] = useState<number>(60);
 
   const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // 학생 선택 모드 — true면 본문이 학생 리스트로 전환
+  const [pickingStudent, setPickingStudent] = useState(false);
+  const [sendingTo, setSendingTo] = useState<string | null>(null);
+  const [, startTransition] = useTransition();
+
+  // 토스트 / 알림
+  const [toast, setToast] = useState<{ open: boolean; title: string; description?: string }>({
+    open: false,
+    title: "",
+  });
+  const [alert, setAlert] = useState<{ open: boolean; title: string; description?: string }>({
+    open: false,
+    title: "",
+  });
 
   // 시트 열릴 때 초기화 + lessons fetch
   useEffect(() => {
@@ -77,6 +102,7 @@ export function AvailabilitySheet({ open, onClose }: Props) {
       .then((data) => {
         if (cancelled) return;
         setLessons((data?.lessons ?? []) as Lesson[]);
+        setStudents((data?.students ?? []) as Student[]);
       })
       .catch((e) => {
         if (cancelled) return;
@@ -154,6 +180,67 @@ export function AvailabilitySheet({ open, onClose }: Props) {
   const goPrevHour = () => setHour((h) => Math.max(HOUR_MIN, h - 1));
   const goNextHour = () => setHour((h) => Math.min(HOUR_MAX, h + 1));
 
+  // 메시지 빌드 — 복사 / 발송 공용
+  const messageText = useMemo(() => {
+    if (groupedByDay.length === 0) return "";
+    const lines: string[] = ["[COURTSIDE]", ""];
+    for (const { date, slots } of groupedByDay) {
+      const m = date.getUTCMonth() + 1;
+      const d = date.getUTCDate();
+      const dowK = DOW_KOR[date.getUTCDay()];
+      lines.push(`${m}/${d} (${dowK}) 가능한 레슨 시간`);
+      lines.push("");
+      for (const s of slots) {
+        lines.push(`- ${hm(s.startMin)}~${hm(s.endMin)}`);
+      }
+      lines.push("");
+    }
+    lines.push("원하시는 시간 알려주세요.");
+    return lines.join("\n");
+  }, [groupedByDay]);
+
+  const canShare = availableSlots.length > 0;
+
+  const handleCopy = async () => {
+    if (!canShare) return;
+    try {
+      await navigator.clipboard.writeText(messageText);
+      setToast({ open: true, title: "복사되었어요", description: "카톡이나 문자에 붙여넣어 사용하세요" });
+    } catch {
+      setAlert({
+        open: true,
+        title: "복사에 실패했어요",
+        description: "브라우저가 클립보드를 차단했어요. 수동으로 메시지를 길게 눌러 복사해주세요.",
+      });
+    }
+  };
+
+  const handleStartMessaging = () => {
+    if (!canShare) return;
+    setPickingStudent(true);
+  };
+
+  const handleSendTo = (studentId: string) => {
+    if (!canShare || sendingTo) return;
+    setSendingTo(studentId);
+    startTransition(async () => {
+      const res = await sendAvailabilityToStudent(studentId, messageText);
+      setSendingTo(null);
+      if (!res.ok) {
+        setAlert({ open: true, title: "메시지 발송 실패", description: res.error });
+        return;
+      }
+      setPickingStudent(false);
+      setToast({
+        open: true,
+        title: res.skipped ? "메시지 큐에 저장됐어요 (개발 모드)" : "메시지를 보냈어요",
+        description: res.skipped
+          ? "운영 환경에서는 학생에게 SMS로 발송됩니다"
+          : undefined,
+      });
+    });
+  };
+
   if (!open) return null;
   if (typeof document === "undefined") return null;
 
@@ -188,11 +275,25 @@ export function AvailabilitySheet({ open, onClose }: Props) {
               </svg>
             </button>
           </div>
-          <div className="text-base font-extrabold text-ink">가능한 시간대 확인</div>
-          <div className="mt-1 text-xs text-ink-3">기간 / 시간 / 길이를 선택하면 바로 결과가 보여요</div>
+          <div className="text-base font-extrabold text-ink">
+            {pickingStudent ? "메시지 보낼 수강생 선택" : "가능한 시간대 확인"}
+          </div>
+          <div className="mt-1 text-xs text-ink-3">
+            {pickingStudent
+              ? `${availableSlots.length}개 슬롯이 학생에게 SMS로 발송돼요`
+              : "기간 / 시간 / 길이를 선택하면 바로 결과가 보여요"}
+          </div>
         </div>
 
         {/* 본문 */}
+        {pickingStudent ? (
+          <StudentList
+            students={students}
+            sendingTo={sendingTo}
+            onPick={handleSendTo}
+            onBack={() => setPickingStudent(false)}
+          />
+        ) : (
         <div className="flex-1 overflow-y-auto px-5 pb-2 space-y-4">
           <Section
             title="요일"
@@ -311,19 +412,135 @@ export function AvailabilitySheet({ open, onClose }: Props) {
             )}
           </div>
         </div>
+        )}
 
-        <div className="px-5 pb-6 pt-3 border-t border-line flex-none">
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-full h-12 rounded-xl border border-line bg-surface text-sm font-semibold text-ink-2 hover:bg-soft transition"
-          >
-            닫기
-          </button>
-        </div>
+        {!pickingStudent && (
+          <div className="px-5 pb-6 pt-3 border-t border-line flex-none space-y-2">
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={handleCopy}
+                disabled={!canShare}
+                className="h-12 rounded-xl border border-line bg-surface text-sm font-semibold text-ink-2 hover:bg-soft transition active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center justify-center gap-1.5"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                </svg>
+                복사하기
+              </button>
+              <button
+                type="button"
+                onClick={handleStartMessaging}
+                disabled={!canShare}
+                className="h-12 rounded-xl bg-primary text-white text-sm font-semibold hover:opacity-90 transition active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center justify-center gap-1.5"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+                </svg>
+                메시지 보내기
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-full h-11 rounded-xl text-xs font-semibold text-ink-3 hover:bg-soft transition"
+            >
+              닫기
+            </button>
+          </div>
+        )}
       </div>
+
+      <Toast
+        open={toast.open}
+        onClose={() => setToast((t) => ({ ...t, open: false }))}
+        variant="success"
+        title={toast.title}
+        description={toast.description}
+      />
+      <AlertModal
+        open={alert.open}
+        onClose={() => setAlert((a) => ({ ...a, open: false }))}
+        variant="error"
+        title={alert.title}
+        description={alert.description}
+      />
     </div>,
     document.body,
+  );
+}
+
+// 학생 선택 (메시지 보내기 단계) — 시트 본문 영역만 교체
+function StudentList({
+  students,
+  sendingTo,
+  onPick,
+  onBack,
+}: {
+  students: Student[];
+  sendingTo: string | null;
+  onPick: (studentId: string) => void;
+  onBack: () => void;
+}) {
+  return (
+    <>
+      <div className="flex-1 overflow-y-auto px-3 pb-2">
+        {students.length === 0 ? (
+          <div className="py-10 text-center">
+            <p className="text-sm font-semibold text-ink">연결된 수강생이 없어요</p>
+            <p className="mt-1 text-xs text-ink-3">
+              학생 신청 수락 후 메시지를 보낼 수 있어요
+            </p>
+          </div>
+        ) : (
+          <ul className="space-y-1.5 mt-1">
+            {students.map((s) => {
+              const hasPhone = !!s.phone;
+              const pending = sendingTo === s.id;
+              return (
+                <li key={s.id}>
+                  <button
+                    type="button"
+                    onClick={() => hasPhone && onPick(s.id)}
+                    disabled={!hasPhone || !!sendingTo}
+                    title={hasPhone ? undefined : "전화번호가 등록되어 있지 않아요"}
+                    className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl hover:bg-soft transition active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-sm flex-none">
+                      {s.name.slice(0, 1)}
+                    </div>
+                    <div className="flex-1 min-w-0 text-left">
+                      <div className="text-sm font-bold text-ink">{s.name}</div>
+                      <div className="mt-0.5 text-[11px] text-ink-3">
+                        {hasPhone ? "SMS 발송 가능" : "전화번호 없음"}
+                      </div>
+                    </div>
+                    {pending && (
+                      <svg className="animate-spin h-4 w-4 text-ink-3 flex-none" viewBox="0 0 24 24" fill="none" aria-hidden>
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z" />
+                      </svg>
+                    )}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+
+      <div className="px-5 pb-6 pt-3 border-t border-line flex-none">
+        <button
+          type="button"
+          onClick={onBack}
+          disabled={!!sendingTo}
+          className="w-full h-12 rounded-xl border border-line bg-surface text-sm font-semibold text-ink-2 hover:bg-soft transition disabled:opacity-50"
+        >
+          ‹ 이전
+        </button>
+      </div>
+    </>
   );
 }
 
