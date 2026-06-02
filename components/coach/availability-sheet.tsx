@@ -11,21 +11,25 @@ type Lesson = {
   status: string;
 };
 
-type RangeKey = "today" | "tomorrow" | "thisWeek" | "nextWeek";
+// 요일 — 0=일 ~ 6=토 (Date.getUTCDay 와 동일)
+type DowKey = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
-const RANGE_OPTIONS: { key: RangeKey; label: string }[] = [
-  { key: "today", label: "오늘" },
-  { key: "tomorrow", label: "내일" },
-  { key: "thisWeek", label: "이번 주" },
-  { key: "nextWeek", label: "다음 주" },
+const DOW_OPTIONS: { key: DowKey; label: string }[] = [
+  { key: 1, label: "월" },
+  { key: 2, label: "화" },
+  { key: 3, label: "수" },
+  { key: 4, label: "목" },
+  { key: 5, label: "금" },
+  { key: 6, label: "토" },
+  { key: 0, label: "일" },
 ];
 
 const DURATION_OPTIONS = [20, 30, 40, 60];
-const SLOT_STEP_MIN = 10; // 10분 단위 슬롯 후보 생성
+const SLOT_STEP_MIN = 10;
 
-const HOUR_MIN = 6;       // 06시
-const HOUR_MAX = 23;      // 23시 (23시 시작 슬롯이 마지막)
-const DAY_END_MIN = 24 * 60; // 자정까지
+const HOUR_MIN = 6;
+const HOUR_MAX = 23;
+const DAY_END_MIN = 24 * 60;
 const DEFAULT_HOUR = 9;
 
 const DOW_KOR = ["일", "월", "화", "수", "목", "금", "토"];
@@ -42,7 +46,12 @@ type AvailableSlot = {
 };
 
 export function AvailabilitySheet({ open, onClose }: Props) {
-  const [range, setRange] = useState<RangeKey>("today");
+  // 기본 요일 — 오늘
+  const todayDow = ((): DowKey => {
+    const k = new Date(Date.now() + KST_OFFSET_MS);
+    return k.getUTCDay() as DowKey;
+  })();
+  const [dow, setDow] = useState<DowKey>(todayDow);
   const [hour, setHour] = useState<number>(DEFAULT_HOUR);
   const [duration, setDuration] = useState<number>(60);
 
@@ -53,7 +62,8 @@ export function AvailabilitySheet({ open, onClose }: Props) {
   // 시트 열릴 때 초기화 + lessons fetch
   useEffect(() => {
     if (!open) return;
-    setRange("today");
+    const k = new Date(Date.now() + KST_OFFSET_MS);
+    setDow(k.getUTCDay() as DowKey);
     setHour(DEFAULT_HOUR);
     setDuration(60);
     setError(null);
@@ -94,10 +104,12 @@ export function AvailabilitySheet({ open, onClose }: Props) {
     };
   }, [open, onClose]);
 
-  // 가능 슬롯 — 선택된 시간(1시간) 범위 내, 기존 active 레슨과 충돌하지 않는 것만
+  // 가능 슬롯 — 선택된 요일의 가장 가까운 미래 날짜 + 선택된 시간(1시간) 범위 내
+  const targetDate = useMemo(() => nextDateForDow(dow), [dow]);
+
   const availableSlots = useMemo<AvailableSlot[]>(() => {
     if (loading || error) return [];
-    const dates = getDateRange(range);
+    const dates = [targetDate];
     const out: AvailableSlot[] = [];
     const nowMs = Date.now();
     const bandStartMin = hour * 60;
@@ -125,7 +137,7 @@ export function AvailabilitySheet({ open, onClose }: Props) {
       }
     }
     return out;
-  }, [loading, error, range, hour, duration, lessons]);
+  }, [loading, error, targetDate, hour, duration, lessons]);
 
   // 날짜별 그룹
   const groupedByDay = useMemo(() => {
@@ -182,13 +194,32 @@ export function AvailabilitySheet({ open, onClose }: Props) {
 
         {/* 본문 */}
         <div className="flex-1 overflow-y-auto px-5 pb-2 space-y-4">
-          <Section title="기간">
-            <ChipGrid
-              options={RANGE_OPTIONS.map((o) => ({ key: o.key, label: o.label }))}
-              value={range}
-              onChange={(v) => setRange(v as RangeKey)}
-              cols={4}
-            />
+          <Section
+            title="요일"
+            sub={`선택한 요일의 가장 가까운 날짜 — ${targetDate.getUTCMonth() + 1}월 ${targetDate.getUTCDate()}일`}
+          >
+            <div className="grid grid-cols-7 gap-1">
+              {DOW_OPTIONS.map((o) => {
+                const active = o.key === dow;
+                const isWeekend = o.key === 0 || o.key === 6;
+                return (
+                  <button
+                    key={o.key}
+                    type="button"
+                    onClick={() => setDow(o.key)}
+                    className={`h-10 rounded-lg text-xs font-bold transition active:scale-[0.97] ${
+                      active
+                        ? "bg-primary text-white shadow-sm"
+                        : isWeekend
+                          ? "bg-soft text-red-500 hover:bg-line"
+                          : "bg-soft text-ink-2 hover:bg-line"
+                    }`}
+                  >
+                    {o.label}
+                  </button>
+                );
+              })}
+            </div>
           </Section>
 
           <Section title="시간">
@@ -246,7 +277,7 @@ export function AvailabilitySheet({ open, onClose }: Props) {
               <div className="rounded-xl border border-dashed border-line py-8 text-center">
                 <p className="text-sm font-semibold text-ink">가능한 시간이 없어요</p>
                 <p className="mt-1 text-xs text-ink-3">
-                  ‹ › 로 다른 시간을 보거나, 길이를 줄여보세요
+                  다른 요일이나 시간을 선택하거나 길이를 줄여보세요
                 </p>
               </div>
             ) : (
@@ -296,10 +327,21 @@ export function AvailabilitySheet({ open, onClose }: Props) {
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({
+  title,
+  sub,
+  children,
+}: {
+  title: string;
+  sub?: string;
+  children: React.ReactNode;
+}) {
   return (
     <div>
-      <div className="text-[11px] font-semibold text-ink-2 mb-1.5">{title}</div>
+      <div className="flex items-baseline justify-between mb-1.5">
+        <div className="text-[11px] font-semibold text-ink-2">{title}</div>
+        {sub && <div className="text-[10px] text-ink-3 font-medium truncate ml-2">{sub}</div>}
+      </div>
       {children}
     </div>
   );
@@ -351,21 +393,12 @@ function addDays(d: Date, n: number): Date {
   return next;
 }
 
-function getDateRange(range: RangeKey): Date[] {
+/** 선택된 요일(dow)의 가장 가까운 미래 날짜 — 오늘이 해당 요일이면 오늘 반환 */
+function nextDateForDow(dow: DowKey): Date {
   const today = todayKstTrick();
-  if (range === "today") return [today];
-  if (range === "tomorrow") return [addDays(today, 1)];
-  const dow = today.getUTCDay();
-  const daysToSun = (7 - dow) % 7;
-  if (range === "thisWeek") {
-    const arr: Date[] = [];
-    for (let i = 0; i <= daysToSun; i++) arr.push(addDays(today, i));
-    return arr;
-  }
-  const nextMon = addDays(today, daysToSun + 1);
-  const arr: Date[] = [];
-  for (let i = 0; i < 7; i++) arr.push(addDays(nextMon, i));
-  return arr;
+  const todayDow = today.getUTCDay();
+  const diff = (dow - todayDow + 7) % 7;
+  return addDays(today, diff);
 }
 
 function hm(totalMin: number): string {
