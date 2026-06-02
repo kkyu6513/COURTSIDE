@@ -6,6 +6,7 @@ import { BottomNav } from "@/components/bottom-nav";
 import { CoachRequestForm, CoachRequestPending } from "@/components/coach-request-form";
 import { StudentSplash } from "@/components/student-splash";
 import { CoachHomeCalendar } from "@/components/coach/home-calendar";
+import { AvailabilityButton } from "@/components/coach/availability-button";
 import { StudentTestCases } from "@/components/student-test-cases";
 import {
   StudentWeekMini,
@@ -507,13 +508,16 @@ function CoachHome({
               안녕하세요, {displayName} 코치님
             </div>
           </div>
-          <Link
-            href="/coach/schedule"
-            prefetch={false}
-            className="flex-none inline-flex items-center rounded-full bg-primary text-white text-xs font-semibold px-4 py-2 shadow-sm hover:opacity-90 transition active:scale-[0.98]"
-          >
-            전체 스케줄
-          </Link>
+          <div className="flex-none flex items-center gap-1.5">
+            <AvailabilityButton />
+            <Link
+              href="/coach/schedule"
+              prefetch={false}
+              className="inline-flex items-center rounded-full bg-primary text-white text-xs font-semibold px-4 py-2 shadow-sm hover:opacity-90 transition active:scale-[0.98]"
+            >
+              전체 스케줄
+            </Link>
+          </div>
         </div>
 
         {/* 파운더 빠른 역할 전환 영역 — 항상 노출 (운영 출시 전 권한 게이트 예정) */}
