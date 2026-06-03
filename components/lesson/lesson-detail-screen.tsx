@@ -5,10 +5,10 @@ import { useEffect, useState, useTransition } from "react";
 import { AlertModal, type AlertVariant } from "@/components/alert-modal";
 import { BottomNav } from "@/components/bottom-nav";
 import { Toast } from "@/components/toast";
+import { MakeupWizard } from "@/components/lesson/makeup-wizard";
 import {
   completeLesson,
   markLessonAbsent,
-  requestMakeup,
   cancelLessonWithReason,
   saveLessonNotes,
   confirmPendingLesson,
@@ -217,8 +217,10 @@ export function LessonDetailScreen({ data, backHref }: { data: LessonDetailData;
     !["COMPLETED", "CANCELLED", "ABSENT", "RESCHEDULE_COMPLETED"].includes(lesson.status);
 
   const [statusSheetOpen, setStatusSheetOpen] = useState(false);
-  const [reasonSheet, setReasonSheet] = useState<null | "ABSENT" | "MAKEUP" | "CANCEL">(null);
+  // ABSENT/CANCEL은 사유 텍스트 단일 입력 시트, MAKEUP은 별도 위저드(MakeupWizard)
+  const [reasonSheet, setReasonSheet] = useState<null | "ABSENT" | "CANCEL">(null);
   const [reasonText, setReasonText] = useState("");
+  const [makeupOpen, setMakeupOpen] = useState(false);
   const [notesDraft, setNotesDraft] = useState(lesson.notes ?? "");
   const [, startTransition] = useTransition();
   const [pending, setPending] = useState(false);
@@ -330,10 +332,15 @@ export function LessonDetailScreen({ data, backHref }: { data: LessonDetailData;
     });
   };
 
-  const openReasonSheet = (kind: "ABSENT" | "MAKEUP" | "CANCEL") => {
+  const openReasonSheet = (kind: "ABSENT" | "CANCEL") => {
     setStatusSheetOpen(false);
     setReasonText("");
     setReasonSheet(kind);
+  };
+
+  const openMakeupWizard = () => {
+    setStatusSheetOpen(false);
+    setMakeupOpen(true);
   };
 
   const submitReason = () => {
@@ -341,30 +348,19 @@ export function LessonDetailScreen({ data, backHref }: { data: LessonDetailData;
     const kind = reasonSheet;
     setPending(true);
     startTransition(async () => {
-      const fn =
-        kind === "ABSENT"
-          ? markLessonAbsent
-          : kind === "MAKEUP"
-            ? requestMakeup
-            : cancelLessonWithReason;
+      const fn = kind === "ABSENT" ? markLessonAbsent : cancelLessonWithReason;
       const res = await fn(lesson.id, reasonText);
       setPending(false);
       if (!res.ok) {
-        showError(
-          kind === "ABSENT" ? "결강 처리 실패" : kind === "MAKEUP" ? "보강 요청 실패" : "취소 실패",
-          res.error,
-        );
+        showError(kind === "ABSENT" ? "결강 처리 실패" : "취소 실패", res.error);
         return;
       }
       setReasonSheet(null);
 
       if (kind === "ABSENT") {
         applyOptimistic({ status: "ABSENT" });
-        // 결강 후 보강 안내 (#46)
+        // 결강 후 보강 안내 (#46) — 위저드로 진입
         setConfirm({ kind: "MAKEUP_FOLLOWUP" });
-      } else if (kind === "MAKEUP") {
-        applyOptimistic({ status: "MAKEUP_REQUESTED" });
-        showSuccess("보강 요청을 등록했어요");
       } else {
         applyOptimistic({ status: "CANCELLED" });
         showSuccess("레슨이 취소되었어요");
@@ -447,9 +443,8 @@ export function LessonDetailScreen({ data, backHref }: { data: LessonDetailData;
     }
     if (kind === "MAKEUP_FOLLOWUP") {
       setConfirm(null);
-      // 보강 요청 사유 입력으로 이동
-      setReasonText("");
-      setReasonSheet("MAKEUP");
+      // 보강 처리 위저드 진입 (사유 → 방식 → 날짜)
+      setMakeupOpen(true);
       return;
     }
     setConfirm(null);
@@ -729,7 +724,7 @@ export function LessonDetailScreen({ data, backHref }: { data: LessonDetailData;
               onComplete={handleCompleteFromSheet}
               onOpenStatusSheet={handleOpenStatusSheet}
               onOpenCancel={() => openReasonSheet("CANCEL")}
-              onOpenMakeup={() => openReasonSheet("MAKEUP")}
+              onOpenMakeup={openMakeupWizard}
               onConfirmPending={handleConfirmPending}
               onClose={handleBack}
               pending={pending}
@@ -773,7 +768,7 @@ export function LessonDetailScreen({ data, backHref }: { data: LessonDetailData;
           />
           <SheetItem
             label="보강 처리"
-            onClick={() => openReasonSheet("MAKEUP")}
+            onClick={openMakeupWizard}
             icon={<RefreshIcon />}
             disabled={lesson.status === "COMPLETED" || lesson.status === "ABSENT"}
           />
@@ -795,13 +790,7 @@ export function LessonDetailScreen({ data, backHref }: { data: LessonDetailData;
       {reasonSheet && (
         <BottomSheet
           onClose={() => setReasonSheet(null)}
-          title={
-            reasonSheet === "ABSENT"
-              ? "결강 사유"
-              : reasonSheet === "MAKEUP"
-                ? "보강 요청 사유"
-                : "취소 사유"
-          }
+          title={reasonSheet === "ABSENT" ? "결강 사유" : "취소 사유"}
         >
           <textarea
             value={reasonText}
@@ -809,9 +798,7 @@ export function LessonDetailScreen({ data, backHref }: { data: LessonDetailData;
             placeholder={
               reasonSheet === "ABSENT"
                 ? "예: 학생 무단 불참, 코치 사정 등 (필수)"
-                : reasonSheet === "MAKEUP"
-                  ? "예: 우천, 학생 사정 등 보강이 필요한 사유 (필수)"
-                  : "취소 사유를 입력해주세요 (필수)"
+                : "취소 사유를 입력해주세요 (필수)"
             }
             rows={4}
             maxLength={500}
@@ -874,6 +861,19 @@ export function LessonDetailScreen({ data, backHref }: { data: LessonDetailData;
           </div>
         </BottomSheet>
       )}
+
+      {/* 보강 처리 위저드 — 사유 → 방식 → 날짜 3단계 (프로토타입 7-0 기준) */}
+      <MakeupWizard
+        open={makeupOpen}
+        onClose={() => setMakeupOpen(false)}
+        originalLessonId={lesson.id}
+        originalScheduledAt={lesson.scheduledAt}
+        originalDurationMinutes={lesson.durationMinutes}
+        onProposed={() => {
+          showSuccess("보강 제안을 보냈어요", "수강생이 수락하면 확정됩니다.");
+          router.refresh();
+        }}
+      />
 
       <AlertModal
         open={alert.open}

@@ -145,11 +145,94 @@ export async function requestMakeup(lessonId: number, reason: string): Promise<R
 }
 
 /**
- * 레슨 취소 (사유 필수) — 코치/학생 공통.
- * - 학생: 레슨 24시간 전까지
- * (환불 자동 계산은 결제 모듈 도입 후 다음 PR)
+ * 보강 제안 (추가 모드) — 결강 또는 진행 예정 원 회차에 대해 새 보강 회차를 제안.
+ * 새 lessons row 생성 (status=MAKEUP_PENDING + originalLessonId 참조 + notes=사유).
+ * 학생이 수락하면 별도 액션에서 MAKEUP_CONFIRMED로 전환.
+ *
+ * 통합(MERGE)/분할(SPLIT) 모드는 후속 작업.
  */
-export async function cancelLessonWithReason(lessonId: number, reason: string): Promise<Result> {
+export async function proposeMakeup(
+  originalLessonId: number,
+  reason: string,
+  scheduledAt: string,
+  durationMinutes: number,
+): Promise<Result> {
+  const user = await getAuthedUser();
+  if (!user) return { ok: false, error: "로그인이 필요합니다" };
+  const meta = user.app_metadata as { role?: string } | undefined;
+  if (meta?.role !== "COACH") return { ok: false, error: "코치만 가능해요" };
+
+  const trimmed = reason.trim();
+  if (!trimmed) return { ok: false, error: "보강 사유를 선택해주세요" };
+  if (trimmed.length > 500) return { ok: false, error: "사유는 500자 이내로 입력해주세요" };
+
+  const date = new Date(scheduledAt);
+  if (Number.isNaN(date.getTime())) return { ok: false, error: "보강 일정 시각이 올바르지 않습니다" };
+  if (date.getTime() < Date.now() - 5 * 60 * 1000) {
+    return { ok: false, error: "이미 지난 시각에는 보강을 잡을 수 없어요" };
+  }
+
+  const dur = Number.isInteger(durationMinutes) ? durationMinutes : 60;
+  if (dur < 10 || dur > 240) return { ok: false, error: "레슨 시간이 올바르지 않습니다" };
+
+  const admin = createAdminClient();
+
+  // 원 회차 검증 — 본인 코치의 레슨이어야 함
+  const { data: orig } = await admin
+    .from("lessons")
+    .select("id, coachId, studentId, status")
+    .eq("id", originalLessonId)
+    .maybeSingle();
+
+  if (!orig) return { ok: false, error: "원 레슨을 찾을 수 없어요" };
+  if (orig.coachId !== user.id) return { ok: false, error: "권한이 없어요" };
+  if (orig.status === "CANCELLED") {
+    return { ok: false, error: "취소된 레슨에는 보강을 제안할 수 없어요" };
+  }
+
+  // 충돌 검증 (다른 활성 레슨과 시간 겹침 차단)
+  const newStart = date.getTime();
+  const newEnd = newStart + dur * 60 * 1000;
+  const SEARCH_MS = 28 * 60 * 60 * 1000;
+  const windowStart = new Date(newStart - SEARCH_MS).toISOString();
+  const windowEnd = new Date(newEnd + SEARCH_MS).toISOString();
+  const { data: nearby } = await admin
+    .from("lessons")
+    .select("id, scheduledAt, durationMinutes, status")
+    .eq("coachId", user.id)
+    .not("status", "in", "(CANCELLED,COMPLETED,ABSENT)")
+    .gte("scheduledAt", windowStart)
+    .lte("scheduledAt", windowEnd);
+  for (const ex of nearby ?? []) {
+    const exStart = new Date(ex.scheduledAt).getTime();
+    const exEnd = exStart + (ex.durationMinutes ?? 60) * 60 * 1000;
+    if (newStart < exEnd && newEnd > exStart) {
+      return { ok: false, error: "그 시간에 이미 잡힌 레슨이 있어요" };
+    }
+  }
+
+  const { error: insertError } = await admin.from("lessons").insert({
+    coachId: user.id,
+    studentId: orig.studentId,
+    scheduledAt: date.toISOString(),
+    durationMinutes: dur,
+    status: "MAKEUP_PENDING",
+    paymentStatus: "NONE",
+    originalLessonId: orig.id,
+    notes: `[보강 제안] ${trimmed}`,
+    updatedAt: new Date().toISOString(),
+  });
+
+  if (insertError) {
+    console.error("[proposeMakeup] insert error:", insertError);
+    return { ok: false, error: "보강 제안 등록 중 문제가 발생했어요. 잠시 후 다시 시도해 주세요." };
+  }
+
+  revalidateLessonPaths(originalLessonId);
+  revalidatePath("/coach/schedule");
+  revalidatePath("/");
+  return { ok: true };
+}
   const user = await getAuthedUser();
   if (!user) return { ok: false, error: "로그인이 필요합니다" };
   const meta = user.app_metadata as { role?: string } | undefined;
