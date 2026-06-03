@@ -233,6 +233,101 @@ export async function proposeMakeup(
   revalidatePath("/");
   return { ok: true };
 }
+
+/**
+ * 학생 — 보강 제안 수락. MAKEUP_PENDING → MAKEUP_CONFIRMED.
+ * 본인 레슨만 처리. 시간 충돌 시 거부.
+ */
+export async function acceptMakeup(lessonId: number): Promise<Result> {
+  const user = await getAuthedUser();
+  if (!user) return { ok: false, error: "로그인이 필요합니다" };
+  const meta = user.app_metadata as { role?: string } | undefined;
+  if (meta?.role !== "STUDENT") return { ok: false, error: "학생만 수락할 수 있어요" };
+
+  const admin = createAdminClient();
+  const { data: lesson } = await admin
+    .from("lessons")
+    .select("id, studentId, status, scheduledAt, durationMinutes")
+    .eq("id", lessonId)
+    .maybeSingle();
+  if (!lesson) return { ok: false, error: "레슨을 찾을 수 없어요" };
+  if (lesson.studentId !== user.id) return { ok: false, error: "본인 레슨만 수락할 수 있어요" };
+  if (lesson.status !== "MAKEUP_PENDING") {
+    return { ok: false, error: "이미 처리된 보강 제안이에요" };
+  }
+
+  // 본인의 다른 활성 레슨과 시간 충돌 확인
+  const start = new Date(lesson.scheduledAt).getTime();
+  const end = start + (lesson.durationMinutes ?? 60) * 60 * 1000;
+  const SEARCH_MS = 28 * 60 * 60 * 1000;
+  const { data: nearby } = await admin
+    .from("lessons")
+    .select("id, scheduledAt, durationMinutes, status")
+    .eq("studentId", user.id)
+    .not("status", "in", "(CANCELLED,COMPLETED,ABSENT,MAKEUP_PENDING)")
+    .gte("scheduledAt", new Date(start - SEARCH_MS).toISOString())
+    .lte("scheduledAt", new Date(end + SEARCH_MS).toISOString());
+  for (const ex of nearby ?? []) {
+    if (ex.id === lessonId) continue;
+    const exStart = new Date(ex.scheduledAt).getTime();
+    const exEnd = exStart + (ex.durationMinutes ?? 60) * 60 * 1000;
+    if (start < exEnd && end > exStart) {
+      return {
+        ok: false,
+        error: "그 시간에 이미 잡혀 있는 다른 레슨이 있어요. 코치님께 다른 시간을 요청해 주세요.",
+      };
+    }
+  }
+
+  const { error } = await admin
+    .from("lessons")
+    .update({ status: "MAKEUP_CONFIRMED", updatedAt: new Date().toISOString() })
+    .eq("id", lessonId);
+  if (error) {
+    console.error("[acceptMakeup] update error:", error);
+    return { ok: false, error: "보강 수락 중 문제가 발생했어요." };
+  }
+
+  revalidateLessonPaths(lessonId);
+  revalidatePath("/");
+  return { ok: true };
+}
+
+/**
+ * 학생 — 보강 제안 거절. MAKEUP_PENDING → CANCELLED. 본인 레슨만.
+ * 코치는 새 제안을 다시 보낼 수 있음.
+ */
+export async function rejectMakeup(lessonId: number): Promise<Result> {
+  const user = await getAuthedUser();
+  if (!user) return { ok: false, error: "로그인이 필요합니다" };
+  const meta = user.app_metadata as { role?: string } | undefined;
+  if (meta?.role !== "STUDENT") return { ok: false, error: "학생만 거절할 수 있어요" };
+
+  const admin = createAdminClient();
+  const { data: lesson } = await admin
+    .from("lessons")
+    .select("id, studentId, status")
+    .eq("id", lessonId)
+    .maybeSingle();
+  if (!lesson) return { ok: false, error: "레슨을 찾을 수 없어요" };
+  if (lesson.studentId !== user.id) return { ok: false, error: "본인 레슨만 거절할 수 있어요" };
+  if (lesson.status !== "MAKEUP_PENDING") {
+    return { ok: false, error: "이미 처리된 보강 제안이에요" };
+  }
+
+  const { error } = await admin
+    .from("lessons")
+    .update({ status: "CANCELLED", updatedAt: new Date().toISOString() })
+    .eq("id", lessonId);
+  if (error) {
+    console.error("[rejectMakeup] update error:", error);
+    return { ok: false, error: "보강 거절 중 문제가 발생했어요." };
+  }
+
+  revalidateLessonPaths(lessonId);
+  revalidatePath("/");
+  return { ok: true };
+}
   const user = await getAuthedUser();
   if (!user) return { ok: false, error: "로그인이 필요합니다" };
   const meta = user.app_metadata as { role?: string } | undefined;

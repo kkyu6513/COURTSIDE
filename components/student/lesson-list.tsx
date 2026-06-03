@@ -2,6 +2,7 @@
 // 디자인 가이드 — 중립 카드, 상태는 텍스트 라벨
 
 import Link from "next/link";
+import { MakeupResponseActions } from "@/components/student/makeup-response-card";
 
 export type StudentLessonRow = {
   id: number;
@@ -338,6 +339,7 @@ export function StudentResponseRequired({
             coachName={coachNames[l.coachId] ?? "코치"}
             isFirst={idx === 0}
           />
+          {l.status === "MAKEUP_PENDING" && <MakeupResponseActions lessonId={l.id} />}
         </li>
       ))}
     </ul>
