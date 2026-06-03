@@ -605,11 +605,11 @@ export function LessonDetailScreen({ data, backHref }: { data: LessonDetailData;
             </button>
           </div>
 
-          {/* 코치 전용 — 학생 정규 패턴 + 해당 월 결강/보강 통계 */}
-          {isCoach && studentInsights && (
+          {/* 정규 패턴 + 해당 월 결강/보강 통계 — 코치/학생 공용 */}
+          {studentInsights && (
             <div className="mt-3 rounded-2xl border border-line bg-surface px-4 py-3">
               <div className="text-[11px] font-bold text-ink-3 mb-2 tracking-wide">
-                {counterpart?.name ?? "학생"} 정보
+                {isCoach ? `${counterpart?.name ?? "학생"} 정보` : "내 레슨 정보"}
               </div>
               <div className="space-y-2.5">
                 {/* 정규 패턴 */}
