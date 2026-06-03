@@ -15,6 +15,7 @@ import {
   StudentPaymentNotice,
   type StudentLessonRow,
 } from "@/components/student/lesson-list";
+import { StudentCoachMessages, type CoachMessageRow } from "@/components/student/coach-messages";
 import { signOutAction } from "@/app/actions/sign-out";
 import { testSwitchRole } from "@/app/actions/test-switch-role";
 import { fetchTennisWeather, type WeatherSnapshot } from "@/lib/weather";
@@ -138,8 +139,22 @@ export default async function Home({
       .in("status", ["MAKEUP_PENDING"])
       .order("scheduledAt", { ascending: true });
 
+    // 코치 → 학생 인앱 메시지 (최근 10건, 안 읽음 우선)
+    const { data: coachMessagesRaw } = await admin
+      .from("coach_messages")
+      .select("id, coachId, content, kind, createdAt, readAt")
+      .eq("studentId", user.id)
+      .order("createdAt", { ascending: false })
+      .limit(10);
+    const coachMessages = (coachMessagesRaw ?? []) as CoachMessageRow[];
+
     const allLessonsForNames = [...(actionLessons ?? []), ...lessons] as StudentLessonRow[];
-    const coachIds = Array.from(new Set(allLessonsForNames.map((l) => l.coachId)));
+    const coachIds = Array.from(
+      new Set([
+        ...allLessonsForNames.map((l) => l.coachId),
+        ...coachMessages.map((m) => m.coachId),
+      ]),
+    );
     const coachNames: Record<string, string> = {};
     if (coachIds.length > 0) {
       const { data: coaches } = await admin
@@ -164,6 +179,7 @@ export default async function Home({
         testMode={testMode === "scheduled" ? "scheduled" : null}
         weekLessons={lessons}
         actionLessons={(actionLessons ?? []) as StudentLessonRow[]}
+        coachMessages={coachMessages}
         coachNames={coachNames}
         weather={weather}
         koreanTennis={koreanTennis}
@@ -229,6 +245,7 @@ function StudentHome({
   testMode,
   weekLessons = [],
   actionLessons = [],
+  coachMessages = [],
   coachNames = {},
   showDevButtons = false,
   weather = null,
@@ -239,6 +256,7 @@ function StudentHome({
   testMode: "scheduled" | null;
   weekLessons?: StudentLessonRow[];
   actionLessons?: StudentLessonRow[];
+  coachMessages?: CoachMessageRow[];
   coachNames?: Record<string, string>;
   showDevButtons?: boolean;
   weather?: WeatherSnapshot | null;
@@ -393,6 +411,14 @@ function StudentHome({
           <section className="mt-4 rounded-2xl border border-line bg-surface p-5 shadow-sm">
             <h2 className="text-base font-bold text-ink mb-3">응답 필요</h2>
             <StudentResponseRequired lessons={actionLessons} coachNames={coachNames} bare />
+          </section>
+        )}
+
+        {/* 4. 코치 메시지 — 메시지 있을 때만 박스 노출 */}
+        {coachMessages.length > 0 && (
+          <section className="mt-4 rounded-2xl border border-line bg-surface p-5 shadow-sm">
+            <h2 className="text-base font-bold text-ink mb-3">코치 메시지</h2>
+            <StudentCoachMessages messages={coachMessages} coachNames={coachNames} />
           </section>
         )}
 

@@ -233,10 +233,8 @@ export function AvailabilitySheet({ open, onClose }: Props) {
       setPickingStudent(false);
       setToast({
         open: true,
-        title: res.skipped ? "메시지 큐에 저장됐어요 (개발 모드)" : "메시지를 보냈어요",
-        description: res.skipped
-          ? "운영 환경에서는 학생에게 SMS로 발송됩니다"
-          : undefined,
+        title: "메시지를 보냈어요",
+        description: "학생 홈에서 코치 메시지로 확인할 수 있어요",
       });
     });
   };
@@ -280,7 +278,7 @@ export function AvailabilitySheet({ open, onClose }: Props) {
           </div>
           <div className="mt-1 text-xs text-ink-3">
             {pickingStudent
-              ? `${availableSlots.length}개 슬롯이 학생에게 SMS로 발송돼요`
+              ? `${availableSlots.length}개 슬롯이 학생 홈에 메시지로 전달돼요`
               : "기간 / 시간 / 길이를 선택하면 바로 결과가 보여요"}
           </div>
         </div>
@@ -496,15 +494,13 @@ function StudentList({
         ) : (
           <ul className="space-y-1.5 mt-1">
             {students.map((s) => {
-              const hasPhone = !!s.phone;
               const pending = sendingTo === s.id;
               return (
                 <li key={s.id}>
                   <button
                     type="button"
-                    onClick={() => hasPhone && onPick(s.id)}
-                    disabled={!hasPhone || !!sendingTo}
-                    title={hasPhone ? undefined : "전화번호가 등록되어 있지 않아요"}
+                    onClick={() => onPick(s.id)}
+                    disabled={!!sendingTo}
                     className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl hover:bg-soft transition active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed"
                   >
                     <div className="w-10 h-10 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-sm flex-none">
@@ -512,9 +508,6 @@ function StudentList({
                     </div>
                     <div className="flex-1 min-w-0 text-left">
                       <div className="text-sm font-bold text-ink">{s.name}</div>
-                      <div className="mt-0.5 text-[11px] text-ink-3">
-                        {hasPhone ? "SMS 발송 가능" : "전화번호 없음"}
-                      </div>
                     </div>
                     {pending && (
                       <svg className="animate-spin h-4 w-4 text-ink-3 flex-none" viewBox="0 0 24 24" fill="none" aria-hidden>

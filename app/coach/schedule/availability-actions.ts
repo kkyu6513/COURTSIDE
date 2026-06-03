@@ -1,13 +1,14 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { sendSms } from "@/lib/notification";
 
-type Result = { ok: true; skipped?: boolean } | { ok: false; error: string };
+type Result = { ok: true } | { ok: false; error: string };
 
 /**
- * 가능 시간 안내 메시지를 학생에게 SMS로 발송.
+ * 가능 시간 안내 메시지를 학생에게 인앱 메시지로 발송.
+ * coach_messages 테이블에 INSERT — 학생 홈 "코치 메시지" 박스에서 노출됨.
  * 코치 본인의 CONFIRMED 학생만 발송 허용.
  */
 export async function sendAvailabilityToStudent(
@@ -42,24 +43,21 @@ export async function sendAvailabilityToStudent(
     .maybeSingle();
   if (!matched) return { ok: false, error: "수락하지 않은 수강생이에요" };
 
-  // 학생 phone 조회
-  const { data: student } = await admin
-    .from("users")
-    .select("phone, realName, name")
-    .eq("id", studentId)
-    .maybeSingle();
-  if (!student?.phone) {
-    return { ok: false, error: "수강생 전화번호가 등록되어 있지 않아요" };
+  // 인앱 메시지 INSERT
+  const { error: insertError } = await admin.from("coach_messages").insert({
+    coachId: user.id,
+    studentId,
+    content: trimmed,
+    kind: "AVAILABILITY",
+  });
+
+  if (insertError) {
+    console.error("[sendAvailabilityToStudent] insert error:", insertError);
+    return { ok: false, error: "메시지 전송 중 문제가 발생했어요. 잠시 후 다시 시도해 주세요." };
   }
 
-  // SMS 발송 — Solapi env 없으면 console.log + skipped
-  const result = await sendSms(student.phone, trimmed);
-  if (result.ok) {
-    return { ok: true };
-  }
-  if (result.skipped) {
-    // ENV 미설정 — 운영 전 환경에선 성공으로 간주하되 skip 표시
-    return { ok: true, skipped: true };
-  }
-  return { ok: false, error: result.error || "메시지 발송 실패" };
+  // 학생 홈에서 즉시 노출되도록 revalidate
+  revalidatePath("/");
+
+  return { ok: true };
 }
