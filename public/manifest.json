@@ -1,0 +1,9 @@
+{
+  "name": "COURTSIDE",
+  "short_name": "COURTSIDE",
+  "description": "테니스 코치-수강생 레슨 관리",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2DD4BF"
+}

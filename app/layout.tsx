@@ -5,6 +5,8 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "COURTSIDE",
   description: "테니스 코치 SaaS",
+  manifest: "/manifest.json",
+  themeColor: "#2DD4BF",
 };
 
 export default function RootLayout({

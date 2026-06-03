@@ -16,6 +16,7 @@ import {
   type StudentLessonRow,
 } from "@/components/student/lesson-list";
 import { StudentCoachMessages, type CoachMessageRow } from "@/components/student/coach-messages";
+import { PushPrompt } from "@/components/push-prompt";
 import { signOutAction } from "@/app/actions/sign-out";
 import { testSwitchRole } from "@/app/actions/test-switch-role";
 import { fetchTennisWeather, type WeatherSnapshot } from "@/lib/weather";
@@ -346,6 +347,9 @@ function StudentHome({
             </button>
           </form>
         </div>
+
+        {/* 푸시 알림 권한 요청 — 권한 미설정 + 7일 dismiss 아니면 노출 */}
+        <PushPrompt />
 
         {/* 1. 코치 등록 / 진행 중 / 내 코치 — 별도 박스 */}
         <section className="mt-4 rounded-2xl border border-line bg-surface p-5 shadow-sm">

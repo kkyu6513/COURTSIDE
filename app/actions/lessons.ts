@@ -328,6 +328,16 @@ export async function rejectMakeup(lessonId: number): Promise<Result> {
   revalidatePath("/");
   return { ok: true };
 }
+
+/**
+ * 레슨 취소 (사유 입력). 코치/학생 둘 다 호출 가능.
+ * - COACH: 본인 코치의 레슨
+ * - STUDENT: 본인 학생의 레슨 (단, 24시간 전까지만)
+ */
+export async function cancelLessonWithReason(
+  lessonId: number,
+  reason: string,
+): Promise<Result> {
   const user = await getAuthedUser();
   if (!user) return { ok: false, error: "로그인이 필요합니다" };
   const meta = user.app_metadata as { role?: string } | undefined;
