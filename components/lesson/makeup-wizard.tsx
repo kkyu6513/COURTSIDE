@@ -1,5 +1,7 @@
 "use client";
 
+// rev: makeup-wizard-v1 (3-step: reason → method → date)
+// 옛 단일 자유텍스트 시트와 구분하기 위한 식별자 — 배포 확인용
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { proposeMakeup } from "@/app/actions/lessons";
