@@ -49,6 +49,23 @@ export type LessonDetailData = {
     ntrpMin: number | null;
     ntrpMax: number | null;
   } | null;
+  /** 코치 뷰 전용 — 학생의 정규 패턴 + 해당 월 결강/보강 통계 */
+  studentInsights?: {
+    /** 정기 패턴 (요일·시간·길이) — 최근 active 회차 mode 기반. 데이터 부족하면 null */
+    recurringPattern: {
+      dayOfWeek: number; // 0=일 ~ 6=토 (KST)
+      hour: number;      // KST 시간 0-23
+      minute: number;    // KST 분 0-59
+      durationMinutes: number;
+      sampleCount: number;
+    } | null;
+    /** 해당 월(현재 레슨이 속한 달, KST) 결강 횟수 */
+    monthlyAbsentCount: number;
+    /** 해당 월 보강 회차 횟수 (MAKEUP_* 상태 또는 originalLessonId 있음) */
+    monthlyMakeupCount: number;
+    /** 통계 기준 월 라벨 (예: "5월") */
+    monthLabel: string;
+  } | null;
 };
 
 const DOW_KOR = ["일", "월", "화", "수", "목", "금", "토"];
@@ -187,7 +204,7 @@ type ConfirmAction =
 
 export function LessonDetailScreen({ data, backHref }: { data: LessonDetailData; backHref: string }) {
   const router = useRouter();
-  const { viewerRole, counterpart, studentProfile, coachProfile } = data;
+  const { viewerRole, counterpart, studentProfile, coachProfile, studentInsights } = data;
   const isCoach = viewerRole === "COACH";
 
   // 낙관적 업데이트용 로컬 상태 — SSR refresh 도착 전에도 즉시 화면 반영
@@ -587,6 +604,63 @@ export function LessonDetailScreen({ data, backHref }: { data: LessonDetailData;
               대화하기
             </button>
           </div>
+
+          {/* 코치 전용 — 학생 정규 패턴 + 해당 월 결강/보강 통계 */}
+          {isCoach && studentInsights && (
+            <div className="mt-3 rounded-2xl border border-line bg-surface px-4 py-3">
+              <div className="text-[11px] font-bold text-ink-3 mb-2 tracking-wide">
+                {counterpart?.name ?? "학생"} 정보
+              </div>
+              <div className="space-y-2.5">
+                {/* 정규 패턴 */}
+                <div className="flex items-start gap-2">
+                  <div className="w-16 flex-none text-[11px] text-ink-3">정기 패턴</div>
+                  <div className="flex-1 min-w-0 text-xs text-ink">
+                    {studentInsights.recurringPattern ? (
+                      <span>
+                        매주{" "}
+                        <span className="font-semibold">
+                          {DOW_KOR[studentInsights.recurringPattern.dayOfWeek]}요일{" "}
+                          {String(studentInsights.recurringPattern.hour).padStart(2, "0")}:
+                          {String(studentInsights.recurringPattern.minute).padStart(2, "0")}
+                        </span>
+                        {" · "}
+                        <span className="font-semibold">{studentInsights.recurringPattern.durationMinutes}분</span>
+                        <span className="ml-1.5 text-[10px] text-ink-3">
+                          (최근 {studentInsights.recurringPattern.sampleCount}회 일치)
+                        </span>
+                      </span>
+                    ) : (
+                      <span className="text-ink-3">반복 패턴 미파악 (최근 회차 부족)</span>
+                    )}
+                  </div>
+                </div>
+
+                {/* 해당 월 결강 / 보강 */}
+                <div className="flex items-stretch gap-2">
+                  <div className="w-16 flex-none text-[11px] text-ink-3 pt-1">
+                    {studentInsights.monthLabel} 통계
+                  </div>
+                  <div className="flex-1 grid grid-cols-2 gap-2">
+                    <div className="rounded-lg bg-gray-50 px-3 py-2">
+                      <div className="text-[10px] text-ink-3">결강</div>
+                      <div className="mt-0.5 text-base font-extrabold text-gray-700 tabular-nums leading-none">
+                        {studentInsights.monthlyAbsentCount}
+                        <span className="ml-0.5 text-[10px] font-semibold text-ink-3">회</span>
+                      </div>
+                    </div>
+                    <div className="rounded-lg bg-emerald-50 px-3 py-2">
+                      <div className="text-[10px] text-emerald-700/70">보강</div>
+                      <div className="mt-0.5 text-base font-extrabold text-emerald-700 tabular-nums leading-none">
+                        {studentInsights.monthlyMakeupCount}
+                        <span className="ml-0.5 text-[10px] font-semibold text-emerald-700/70">회</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* 레슨 정보 표 */}
           <div className="mt-4 rounded-2xl border border-line bg-surface px-4">
