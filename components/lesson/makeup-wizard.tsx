@@ -1,14 +1,27 @@
 "use client";
 
-// rev: makeup-wizard-v1 (3-step: reason → method → date)
-// 옛 단일 자유텍스트 시트와 구분하기 위한 식별자 — 배포 확인용
-import { useEffect, useState } from "react";
+// rev: makeup-wizard-v2 (3-step: reason → method → date) + 가능 슬롯 선택 UI
+import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { proposeMakeup } from "@/app/actions/lessons";
 
 type Step = "reason" | "method" | "date";
 type Reason = "COACH" | "STUDENT" | "WEATHER" | "COURT" | "OTHER";
 type Method = "ADD" | "MERGE" | "SPLIT";
+
+type AvailLesson = {
+  id: number;
+  scheduledAt: string;
+  durationMinutes: number;
+  status: string;
+};
+
+const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
+const DOW_KOR = ["일", "월", "화", "수", "목", "금", "토"];
+const VISIBLE_DAYS = 14; // 오늘부터 N일치 표시
+const SLOT_STEP_MIN = 10; // 10분 단위 슬롯 후보
+const DAY_START_MIN = 6 * 60;
+const DAY_END_MIN = 24 * 60;
 
 const REASON_OPTIONS: Array<{ value: Reason; label: string; sub: string }> = [
   { value: "COACH", label: "코치 사정", sub: "코치의 일정 변경" },
@@ -53,20 +66,46 @@ export function MakeupWizard({
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // open 시 상태 리셋 + 날짜 기본값(원 회차 + 7일, 같은 시각)
+  // 코치 lessons — 가능 슬롯 계산용 (date 단계 진입 시 fetch)
+  const [coachLessons, setCoachLessons] = useState<AvailLesson[]>([]);
+  const [loadingLessons, setLoadingLessons] = useState(false);
+
+  // open 시 상태 리셋
   useEffect(() => {
     if (!open) return;
     setStep("reason");
     setReason(null);
     setOtherText("");
     setMethod("ADD");
+    setDate("");
+    setTime("");
     setError(null);
-    const orig = new Date(originalScheduledAt);
-    const next = new Date(orig.getTime() + 7 * 24 * 60 * 60 * 1000);
-    const kst = new Date(next.getTime() + 9 * 60 * 60 * 1000);
-    setDate(kst.toISOString().slice(0, 10));
-    setTime(kst.toISOString().slice(11, 16));
   }, [open, originalScheduledAt]);
+
+  // date 단계 진입 시 lessons fetch (가능 슬롯 계산용)
+  useEffect(() => {
+    if (!open || step !== "date") return;
+    let cancelled = false;
+    setLoadingLessons(true);
+    fetch("/api/coach/lessons", { cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error(`HTTP ${res.status}`))))
+      .then((data) => {
+        if (cancelled) return;
+        setCoachLessons((data?.lessons ?? []) as AvailLesson[]);
+      })
+      .catch(() => {
+        // 가능 슬롯 계산 실패 시 빈 배열로 (모든 슬롯이 가능으로 표시될 수 있음)
+        if (cancelled) return;
+        setCoachLessons([]);
+      })
+      .finally(() => {
+        if (cancelled) return;
+        setLoadingLessons(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, step]);
 
   useEffect(() => {
     if (!open) return;
@@ -91,10 +130,68 @@ export function MakeupWizard({
     !!reason && (reason !== "OTHER" || otherText.trim().length >= 2);
   const canSubmit = method === "ADD" && !!date && !!time && !pending;
 
-  const todayIso = (() => {
-    const k = new Date(Date.now() + 9 * 60 * 60 * 1000);
-    return k.toISOString().slice(0, 10);
-  })();
+  // 오늘부터 N일치 날짜 칩 (KST trick Date)
+  const dayChips = useMemo(() => {
+    const k = new Date(Date.now() + KST_OFFSET_MS);
+    const today = new Date(Date.UTC(k.getUTCFullYear(), k.getUTCMonth(), k.getUTCDate()));
+    return Array.from({ length: VISIBLE_DAYS }, (_, i) => {
+      const d = new Date(today);
+      d.setUTCDate(d.getUTCDate() + i);
+      const iso = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
+      return {
+        iso,
+        date: d,
+        m: d.getUTCMonth() + 1,
+        day: d.getUTCDate(),
+        dowKor: DOW_KOR[d.getUTCDay()],
+        isWeekend: d.getUTCDay() === 0 || d.getUTCDay() === 6,
+      };
+    });
+  }, [open]);
+
+  // 자동 기본 날짜 — 원 회차 + 7일이 chips 안에 있으면 그것, 아니면 today
+  useEffect(() => {
+    if (!open || step !== "date" || date) return;
+    const orig = new Date(originalScheduledAt);
+    const target = new Date(orig.getTime() + 7 * 24 * 60 * 60 * 1000 + KST_OFFSET_MS);
+    const targetIso = target.toISOString().slice(0, 10);
+    const exists = dayChips.find((c) => c.iso === targetIso);
+    setDate(exists ? exists.iso : dayChips[0]?.iso ?? "");
+  }, [open, step, originalScheduledAt, dayChips, date]);
+
+  // 선택된 날짜의 가능 슬롯 — coach lessons 와 충돌 안 함 + 과거 시각 제외
+  const availableSlots = useMemo<{ startMin: number; endMin: number; label: string }[]>(() => {
+    if (!date) return [];
+    const chip = dayChips.find((c) => c.iso === date);
+    if (!chip) return [];
+    const dayUtcMidnight = chip.date.getTime() - KST_OFFSET_MS;
+    const nowMs = Date.now();
+    const result: { startMin: number; endMin: number; label: string }[] = [];
+    for (let startMin = DAY_START_MIN; startMin < DAY_END_MIN; startMin += SLOT_STEP_MIN) {
+      const endMin = startMin + originalDurationMinutes;
+      if (endMin > DAY_END_MIN) break;
+      const slotStartMs = dayUtcMidnight + startMin * 60 * 1000;
+      const slotEndMs = slotStartMs + originalDurationMinutes * 60 * 1000;
+      if (slotStartMs < nowMs) continue;
+      const conflict = coachLessons.some((l) => {
+        if (l.status === "CANCELLED" || l.status === "COMPLETED" || l.status === "ABSENT") return false;
+        const lStart = new Date(l.scheduledAt).getTime();
+        const lEnd = lStart + l.durationMinutes * 60 * 1000;
+        return slotStartMs < lEnd && slotEndMs > lStart;
+      });
+      if (conflict) continue;
+      const hh = String(Math.floor(startMin / 60)).padStart(2, "0");
+      const mm = String(startMin % 60).padStart(2, "0");
+      result.push({ startMin, endMin, label: `${hh}:${mm}` });
+    }
+    return result;
+  }, [date, dayChips, coachLessons, originalDurationMinutes]);
+
+  // 슬롯 선택 시 time state 동기화
+  const handlePickSlot = (label: string) => {
+    setTime(label);
+    setError(null);
+  };
 
   const onSubmit = async () => {
     if (!canSubmit) return;
@@ -297,29 +394,87 @@ export function MakeupWizard({
             <div>
               <h2 className="text-lg font-extrabold text-ink">보강 날짜·시간 선택</h2>
               <p className="mt-1 text-xs text-ink-3">
-                수강생에게 제안할 보강 날짜와 시작 시각을 골라주세요
+                코치 일정 비어있는 시간만 표시돼요. 가능한 시간을 골라주세요.
               </p>
 
               <div className="mt-4 space-y-3">
                 <div>
                   <label className="block text-xs font-semibold text-ink-2 mb-1.5">날짜</label>
-                  <input
-                    type="date"
-                    value={date}
-                    min={todayIso}
-                    onChange={(e) => setDate(e.target.value)}
-                    className="w-full h-12 rounded-xl border border-line bg-surface px-3 text-sm text-ink outline-none focus:ring-2 focus:ring-primary/40"
-                  />
+                  <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1" style={{ scrollbarWidth: "thin" }}>
+                    {dayChips.map((c) => {
+                      const active = c.iso === date;
+                      return (
+                        <button
+                          key={c.iso}
+                          type="button"
+                          onClick={() => {
+                            setDate(c.iso);
+                            setTime("");
+                            setError(null);
+                          }}
+                          className={`flex-none w-14 py-2 rounded-xl text-center transition active:scale-[0.97] ${
+                            active
+                              ? "bg-primary text-white shadow-sm"
+                              : "bg-soft hover:bg-line"
+                          }`}
+                        >
+                          <div className={`text-[10px] ${active ? "text-white/85" : c.isWeekend ? "text-red-500" : "text-ink-3"}`}>
+                            {c.dowKor}
+                          </div>
+                          <div className={`text-sm font-bold mt-0.5 ${active ? "text-white" : "text-ink"}`}>
+                            {c.day}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
+
                 <div>
-                  <label className="block text-xs font-semibold text-ink-2 mb-1.5">시작 시각</label>
-                  <input
-                    type="time"
-                    value={time}
-                    step={600}
-                    onChange={(e) => setTime(e.target.value)}
-                    className="w-full h-12 rounded-xl border border-line bg-surface px-3 text-sm text-ink outline-none focus:ring-2 focus:ring-primary/40"
-                  />
+                  <div className="flex items-baseline justify-between mb-1.5">
+                    <label className="block text-xs font-semibold text-ink-2">시작 시각</label>
+                    {!loadingLessons && date && (
+                      <span className="text-[10px] text-ink-3 font-medium">
+                        가능한 슬롯 {availableSlots.length}개 · {originalDurationMinutes}분
+                      </span>
+                    )}
+                  </div>
+                  {loadingLessons ? (
+                    <div className="rounded-xl border border-dashed border-line py-8 text-center text-xs text-ink-3">
+                      가능한 시간을 불러오는 중…
+                    </div>
+                  ) : !date ? (
+                    <div className="rounded-xl border border-dashed border-line py-6 text-center text-xs text-ink-3">
+                      먼저 날짜를 선택하세요
+                    </div>
+                  ) : availableSlots.length === 0 ? (
+                    <div className="rounded-xl border border-dashed border-line py-6 text-center">
+                      <p className="text-xs font-semibold text-ink">가능한 시간이 없어요</p>
+                      <p className="mt-1 text-[10px] text-ink-3">
+                        다른 날짜를 선택해 주세요
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-4 gap-1.5 max-h-60 overflow-y-auto pr-1">
+                      {availableSlots.map((s) => {
+                        const active = s.label === time;
+                        return (
+                          <button
+                            key={s.startMin}
+                            type="button"
+                            onClick={() => handlePickSlot(s.label)}
+                            className={`h-10 rounded-lg text-xs font-bold transition active:scale-[0.97] tabular-nums ${
+                              active
+                                ? "bg-primary text-white shadow-sm"
+                                : "bg-soft text-ink-2 hover:bg-line"
+                            }`}
+                          >
+                            {s.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
 
                 <div className="rounded-xl bg-soft px-3 py-2.5 text-[11px] text-ink-2">
