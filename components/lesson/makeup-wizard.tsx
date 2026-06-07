@@ -137,10 +137,13 @@ export function MakeupWizard({
     });
   }, [open]);
 
-  // 자동 기본 날짜 — 오늘로 고정 (date 단계 첫 진입 시)
+  // 자동 기본 날짜 — 오늘(KST) 명시적으로 찾아서 선택
   useEffect(() => {
     if (!open || step !== "date" || date) return;
-    setDate(dayChips[0]?.iso ?? "");
+    const k = new Date(Date.now() + KST_OFFSET_MS);
+    const todayIso = `${k.getUTCFullYear()}-${String(k.getUTCMonth() + 1).padStart(2, "0")}-${String(k.getUTCDate()).padStart(2, "0")}`;
+    const todayChip = dayChips.find((c) => c.iso === todayIso);
+    setDate(todayChip ? todayChip.iso : dayChips[0]?.iso ?? "");
   }, [open, step, dayChips, date]);
 
   // 선택된 날짜의 가능 슬롯
