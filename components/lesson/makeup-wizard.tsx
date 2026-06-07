@@ -137,23 +137,11 @@ export function MakeupWizard({
     });
   }, [open]);
 
-  // 자동 기본 날짜 — 원 회차 + 7일이 chips 안에 있으면 그것, 아니면 today
+  // 자동 기본 날짜 — 오늘로 고정 (date 단계 첫 진입 시)
   useEffect(() => {
     if (!open || step !== "date" || date) return;
-    try {
-      const orig = new Date(originalScheduledAt);
-      if (Number.isNaN(orig.getTime())) {
-        setDate(dayChips[0]?.iso ?? "");
-        return;
-      }
-      const target = new Date(orig.getTime() + 7 * 24 * 60 * 60 * 1000 + KST_OFFSET_MS);
-      const targetIso = target.toISOString().slice(0, 10);
-      const exists = dayChips.find((c) => c.iso === targetIso);
-      setDate(exists ? exists.iso : dayChips[0]?.iso ?? "");
-    } catch {
-      setDate(dayChips[0]?.iso ?? "");
-    }
-  }, [open, step, originalScheduledAt, dayChips, date]);
+    setDate(dayChips[0]?.iso ?? "");
+  }, [open, step, dayChips, date]);
 
   // 선택된 날짜의 가능 슬롯
   const availableSlots = useMemo<{ startMin: number; endMin: number; label: string }[]>(() => {
