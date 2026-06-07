@@ -236,6 +236,7 @@ export function LessonDetailScreen({ data, backHref }: { data: LessonDetailData;
   const [statusSheetOpen, setStatusSheetOpen] = useState(false);
   // ABSENT/CANCEL은 사유 텍스트 단일 입력 시트, MAKEUP은 별도 위저드(MakeupWizard)
   const [reasonSheet, setReasonSheet] = useState<null | "ABSENT" | "CANCEL">(null);
+  const [reasonChoice, setReasonChoice] = useState<string | null>(null);
   const [reasonText, setReasonText] = useState("");
   const [makeupOpen, setMakeupOpen] = useState(false);
   const [notesDraft, setNotesDraft] = useState(lesson.notes ?? "");
@@ -351,9 +352,38 @@ export function LessonDetailScreen({ data, backHref }: { data: LessonDetailData;
 
   const openReasonSheet = (kind: "ABSENT" | "CANCEL") => {
     setStatusSheetOpen(false);
+    setReasonChoice(null);
     setReasonText("");
     setReasonSheet(kind);
   };
+
+  // 사유 옵션 — 라디오로 선택 (마지막 "기타"는 자유 입력 필수)
+  const ABSENT_REASONS = [
+    "학생 무단 불참",
+    "학생 사정 (당일 통보)",
+    "코치 사정",
+    "날씨 / 외부 요인",
+    "기타",
+  ];
+  const CANCEL_REASONS = [
+    "학생 요청",
+    "코치 사정",
+    "날씨 / 외부 요인",
+    "코트 사정",
+    "잘못 등록",
+    "기타",
+  ];
+
+  // 최종 사유 텍스트 합성 — "기타"면 자유 입력만, 그 외는 선택 + 추가 메모
+  const composedReason = (() => {
+    if (!reasonChoice) return "";
+    const memo = reasonText.trim();
+    if (reasonChoice === "기타") return memo;
+    return memo ? `${reasonChoice} — ${memo}` : reasonChoice;
+  })();
+
+  const canSubmitReason =
+    !!reasonChoice && (reasonChoice !== "기타" || reasonText.trim().length >= 2);
 
   const openMakeupWizard = () => {
     setStatusSheetOpen(false);
@@ -366,7 +396,7 @@ export function LessonDetailScreen({ data, backHref }: { data: LessonDetailData;
     setPending(true);
     startTransition(async () => {
       const fn = kind === "ABSENT" ? markLessonAbsent : cancelLessonWithReason;
-      const res = await fn(lesson.id, reasonText);
+      const res = await fn(lesson.id, composedReason);
       setPending(false);
       if (!res.ok) {
         showError(kind === "ABSENT" ? "결강 처리 실패" : "취소 실패", res.error);
@@ -871,20 +901,66 @@ export function LessonDetailScreen({ data, backHref }: { data: LessonDetailData;
           onClose={() => setReasonSheet(null)}
           title={reasonSheet === "ABSENT" ? "결강 사유" : "취소 사유"}
         >
-          <textarea
-            value={reasonText}
-            onChange={(e) => setReasonText(e.target.value)}
-            placeholder={
-              reasonSheet === "ABSENT"
-                ? "예: 학생 무단 불참, 코치 사정 등 (필수)"
-                : "취소 사유를 입력해주세요 (필수)"
-            }
-            rows={4}
-            maxLength={500}
-            className="w-full rounded-xl border border-line bg-surface p-3 text-sm text-ink placeholder:text-ink-3 resize-none outline-none focus:ring-2 focus:ring-primary/40"
-            autoFocus
-          />
-          <div className="mt-1 text-right text-[11px] text-ink-3">{reasonText.length} / 500</div>
+          <p className="text-xs text-ink-3 mb-3">사유를 선택해 주세요</p>
+          <div className="space-y-1.5">
+            {(reasonSheet === "ABSENT" ? ABSENT_REASONS : CANCEL_REASONS).map((opt) => {
+              const active = opt === reasonChoice;
+              return (
+                <label
+                  key={opt}
+                  className={`flex items-center gap-2.5 px-3 py-3 rounded-xl border cursor-pointer transition ${
+                    active
+                      ? "border-primary bg-primary/5"
+                      : "border-line bg-surface hover:bg-soft"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="reason-choice"
+                    value={opt}
+                    checked={active}
+                    onChange={() => setReasonChoice(opt)}
+                    className="sr-only"
+                  />
+                  <span
+                    className={`inline-block w-4 h-4 rounded-full border-2 flex-none ${
+                      active ? "border-primary" : "border-line"
+                    }`}
+                  >
+                    {active && (
+                      <span className="block w-2 h-2 rounded-full bg-primary mx-auto mt-[3px]" />
+                    )}
+                  </span>
+                  <span className={`text-sm font-medium ${active ? "text-ink font-semibold" : "text-ink-2"}`}>
+                    {opt}
+                  </span>
+                </label>
+              );
+            })}
+          </div>
+
+          {/* 기타 선택 시 또는 추가 메모 — 사유 라디오 선택된 경우 */}
+          {reasonChoice && (
+            <div className="mt-3">
+              <label className="block text-[11px] font-semibold text-ink-2 mb-1.5">
+                {reasonChoice === "기타" ? "사유 입력 (필수)" : "추가 메모 (선택)"}
+              </label>
+              <textarea
+                value={reasonText}
+                onChange={(e) => setReasonText(e.target.value)}
+                placeholder={
+                  reasonChoice === "기타"
+                    ? "구체적인 사유를 입력해 주세요"
+                    : "필요하면 한 줄 더 적어주세요"
+                }
+                rows={3}
+                maxLength={500}
+                className="w-full rounded-xl border border-line bg-surface p-3 text-sm text-ink placeholder:text-ink-3 resize-none outline-none focus:ring-2 focus:ring-primary/40"
+              />
+              <div className="mt-1 text-right text-[11px] text-ink-3">{reasonText.length} / 500</div>
+            </div>
+          )}
+
           <div className="mt-3 flex gap-2">
             <button
               type="button"
@@ -896,7 +972,7 @@ export function LessonDetailScreen({ data, backHref }: { data: LessonDetailData;
             <button
               type="button"
               onClick={submitReason}
-              disabled={pending || !reasonText.trim()}
+              disabled={pending || !canSubmitReason}
               className="flex-1 h-12 rounded-xl bg-ink text-white text-sm font-semibold hover:opacity-90 transition disabled:opacity-50 inline-flex items-center justify-center gap-1.5"
             >
               {pending && (
