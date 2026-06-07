@@ -1,0 +1,50 @@
+name: Migrate Message Sender Columns
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/migrate-message-sender.yml'
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Wait for Vercel build (3.5 minutes)
+        run: sleep 210
+
+      - name: Call migrate-message-sender
+        id: m
+        run: |
+          URL="https://courtside-two-silk.vercel.app/api/admin/migrate-message-sender?token=courtside-migrate-message-sender-2026-06-07-Wq8nBpJzKx"
+          CODE=$(curl -sS -X POST -o /tmp/body.json -w "%{http_code}" "$URL" || echo "failed")
+          echo "HTTP $CODE"
+          cat /tmp/body.json
+          {
+            echo "result<<EOF"
+            echo "### migrate-message-sender (HTTP $CODE)"
+            echo '```json'
+            cat /tmp/body.json
+            echo '```'
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
+
+      - name: Post result as Issue
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = `## Migrate Message Sender\n\n${{ steps.m.outputs.result }}\n\n---\nRun: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`;
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `[Migration] coach_messages 양방향 컬럼`,
+              body,
+              labels: ['migration-result']
+            });
