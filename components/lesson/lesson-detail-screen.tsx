@@ -214,11 +214,20 @@ type AttendanceEntry = {
   isCurrent: boolean;
 };
 
+// 별도 트리거(액션) 없이 데이터상 그대로 남는 "예정" 류 상태.
+// 현재일 이후로 시간이 지나면 자동으로 "레슨 종료"로 표시한다.
+const PASSIVE_STATUSES = new Set(["CONFIRMED", "PENDING"]);
+
 function AttendanceRow({ entry }: { entry: AttendanceEntry }) {
   const p = kstParts(parseIsoUtc(entry.scheduledAt));
   const dateLabel = `${p.m}.${String(p.day).padStart(2, "0")} (${DOW_KOR[p.dow]})`;
   const timeLabel = `${p.hh}:${p.mm}`;
-  const displayStatus = deriveDisplayStatus(entry.status, entry.scheduledAt, entry.durationMinutes);
+  let displayStatus = deriveDisplayStatus(entry.status, entry.scheduledAt, entry.durationMinutes);
+  // 종료 시각이 이미 지났고 + 데이터 상 트리거가 없으면 → COMPLETED 자동 표시 (display only)
+  const endMs = parseIsoUtc(entry.scheduledAt).getTime() + entry.durationMinutes * 60_000;
+  if (endMs < Date.now() && PASSIVE_STATUSES.has(entry.status)) {
+    displayStatus = "COMPLETED";
+  }
   const status = getStatusLabel(displayStatus);
 
   return (
