@@ -16,7 +16,11 @@ import {
   type StudentLessonRow,
 } from "@/components/student/lesson-list";
 import { StudentCoachMessages, type CoachMessageRow } from "@/components/student/coach-messages";
-import { PushPrompt } from "@/components/push-prompt";
+import nextDynamic from "next/dynamic";
+const PushPrompt = nextDynamic(
+  () => import("@/components/push-prompt").then((m) => m.PushPrompt),
+  { ssr: false },
+);
 import { signOutAction } from "@/app/actions/sign-out";
 import { testSwitchRole } from "@/app/actions/test-switch-role";
 import { fetchTennisWeather, type WeatherSnapshot } from "@/lib/weather";

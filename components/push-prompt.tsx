@@ -29,59 +29,66 @@ export function PushPrompt() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (!("Notification" in window) || !("serviceWorker" in navigator) || !("PushManager" in window)) {
-      setPermission("unsupported");
-      return;
-    }
-    setPermission(Notification.permission as Permission);
-    // 사용자가 이전에 dismiss 했는지 확인 (7일)
     try {
-      const dismissedAt = window.localStorage.getItem(DISMISSED_KEY);
-      if (dismissedAt) {
-        const t = parseInt(dismissedAt, 10);
-        if (!Number.isNaN(t) && Date.now() - t < 7 * 24 * 60 * 60 * 1000) {
-          setDismissed(true);
-        }
+      if (!("Notification" in window) || !("serviceWorker" in navigator) || !("PushManager" in window)) {
+        setPermission("unsupported");
+        return;
       }
-    } catch {
-      /* localStorage 비활성 */
-    }
-    // Service Worker 등록 (조용히)
-    navigator.serviceWorker.register("/sw.js").catch((e) => {
-      console.warn("[push] SW register failed:", e);
-    });
-    // 이미 권한 있고 구독 안 됐으면 자동 재구독
-    if (Notification.permission === "granted") {
-      void ensureSubscribed();
+      setPermission(Notification.permission as Permission);
+      try {
+        const dismissedAt = window.localStorage.getItem(DISMISSED_KEY);
+        if (dismissedAt) {
+          const t = parseInt(dismissedAt, 10);
+          if (!Number.isNaN(t) && Date.now() - t < 7 * 24 * 60 * 60 * 1000) {
+            setDismissed(true);
+          }
+        }
+      } catch {
+        /* localStorage 비활성 */
+      }
+      // Service Worker 등록 (조용히) — 실패해도 배너는 보임
+      navigator.serviceWorker.register("/sw.js").catch((e) => {
+        console.warn("[push] SW register failed:", e);
+      });
+      // 자동 ensureSubscribed 제거 — 사용자가 명시적으로 버튼 누를 때만 호출
+      // (VAPID 미설정 / SW 미준비 환경에서 자동 구독 시도 시 에러 발생 방지)
+    } catch (e) {
+      console.warn("[push] init error:", e);
+      setPermission("unsupported");
     }
   }, []);
 
   const ensureSubscribed = async (): Promise<boolean> => {
-    const vapidPublic = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-    if (!vapidPublic) {
-      console.warn("[push] NEXT_PUBLIC_VAPID_PUBLIC_KEY 미설정 — 구독 skip");
+    try {
+      const vapidPublic = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+      if (!vapidPublic) {
+        console.warn("[push] NEXT_PUBLIC_VAPID_PUBLIC_KEY 미설정 — 구독 skip");
+        return false;
+      }
+      const reg = await navigator.serviceWorker.ready;
+      let sub = await reg.pushManager.getSubscription();
+      if (!sub) {
+        sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(vapidPublic).buffer as ArrayBuffer,
+        });
+      }
+      const json = sub.toJSON() as {
+        endpoint?: string;
+        keys?: { p256dh?: string; auth?: string };
+      };
+      if (!json.endpoint || !json.keys?.p256dh || !json.keys?.auth) return false;
+      const res = await registerPushSubscription({
+        endpoint: json.endpoint,
+        p256dh: json.keys.p256dh,
+        auth: json.keys.auth,
+        userAgent: navigator.userAgent,
+      });
+      return res.ok;
+    } catch (e) {
+      console.warn("[push] ensureSubscribed failed:", e);
       return false;
     }
-    const reg = await navigator.serviceWorker.ready;
-    let sub = await reg.pushManager.getSubscription();
-    if (!sub) {
-      sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(vapidPublic).buffer as ArrayBuffer,
-      });
-    }
-    const json = sub.toJSON() as {
-      endpoint?: string;
-      keys?: { p256dh?: string; auth?: string };
-    };
-    if (!json.endpoint || !json.keys?.p256dh || !json.keys?.auth) return false;
-    const res = await registerPushSubscription({
-      endpoint: json.endpoint,
-      p256dh: json.keys.p256dh,
-      auth: json.keys.auth,
-      userAgent: navigator.userAgent,
-    });
-    return res.ok;
   };
 
   const handleEnable = async () => {
