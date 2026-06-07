@@ -62,7 +62,11 @@ export async function sendMessage(partnerId: string, content: string): Promise<R
   const coachId = viewer.role === "COACH" ? viewer.user.id : partnerId;
   const studentId = viewer.role === "COACH" ? partnerId : viewer.user.id;
 
-  const { data: inserted, error } = await admin
+  // 1차 시도 — senderRole/senderId 포함 (양방향 컬럼 마이그레이션 완료된 경우)
+  let inserted: { id: number } | null = null;
+  let lastError: { message?: string; code?: string } | null = null;
+
+  const r1 = await admin
     .from("coach_messages")
     .insert({
       coachId,
@@ -75,15 +79,50 @@ export async function sendMessage(partnerId: string, content: string): Promise<R
     .select("id")
     .single();
 
-  if (error) {
-    console.error("[sendMessage] insert error:", error);
-    return { ok: false, error: "메시지 전송 중 문제가 발생했어요" };
+  if (!r1.error) {
+    inserted = r1.data;
+  } else {
+    lastError = r1.error;
+    const msg = String(r1.error.message || "").toLowerCase();
+    // senderRole/senderId 컬럼 미존재 또는 PostgREST 스키마 캐시 미갱신 → 단방향 fallback
+    const isMissingCol =
+      msg.includes("senderrole") ||
+      msg.includes("senderid") ||
+      msg.includes("could not find the") ||
+      msg.includes("schema cache");
+    // 학생 발신인데 마이그레이션 안 됐으면 단방향 불가 — 명확히 안내
+    if (isMissingCol && viewer.role === "COACH") {
+      const r2 = await admin
+        .from("coach_messages")
+        .insert({ coachId, studentId, content: trimmed, kind: "DIRECT" })
+        .select("id")
+        .single();
+      if (!r2.error) {
+        inserted = r2.data;
+      } else {
+        lastError = r2.error;
+      }
+    } else if (isMissingCol && viewer.role === "STUDENT") {
+      return {
+        ok: false,
+        error:
+          "양방향 메시지 컬럼 마이그레이션이 아직 적용되지 않았어요. (학생 발신은 마이그레이션 완료 후 가능)",
+      };
+    }
+  }
+
+  if (!inserted) {
+    console.error("[sendMessage] insert error:", lastError);
+    return {
+      ok: false,
+      error: `메시지 전송 실패: ${lastError?.message ?? "알 수 없는 오류"}`,
+    };
   }
 
   revalidatePath("/chat");
   revalidatePath(`/chat/${partnerId}`);
   revalidatePath("/");
-  return { ok: true, messageId: inserted!.id };
+  return { ok: true, messageId: inserted.id };
 }
 
 /**

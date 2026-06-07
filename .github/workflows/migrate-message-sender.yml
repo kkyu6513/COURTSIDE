@@ -1,4 +1,5 @@
 name: Migrate Message Sender Columns
+# rev2: 메시지 전송 실패 — senderRole/senderId 컬럼 + PostgREST 캐시 갱신 재실행
 
 on:
   workflow_dispatch:
