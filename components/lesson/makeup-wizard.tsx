@@ -3,7 +3,7 @@
 // rev: makeup-wizard-v2 (3-step: reason → method → date) + 가능 슬롯 선택 UI
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import { proposeMakeup } from "@/app/actions/lessons";
+import { proposeMakeup, proposeMakeupSplit, proposeMakeupMerge } from "@/app/actions/lessons";
 
 type Step = "reason" | "method" | "date";
 type Reason = "COACH" | "STUDENT" | "WEATHER" | "COURT" | "OTHER";
@@ -11,10 +11,13 @@ type Method = "ADD" | "MERGE" | "SPLIT";
 
 type AvailLesson = {
   id: number;
+  studentId: string;
   scheduledAt: string;
   durationMinutes: number;
   status: string;
 };
+
+const SPLIT_OPTIONS = [2, 3, 4];
 
 const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
 const DOW_KOR = ["일", "월", "화", "수", "목", "금", "토"];
@@ -69,6 +72,17 @@ export function MakeupWizard({
   // 코치 lessons — 가능 슬롯 계산용 (date 단계 진입 시 fetch)
   const [coachLessons, setCoachLessons] = useState<AvailLesson[]>([]);
   const [loadingLessons, setLoadingLessons] = useState(false);
+
+  // SPLIT 분할 수 / MERGE 통합 원본 회차 다중 선택
+  const [splitTotal, setSplitTotal] = useState<number>(2);
+  const [mergeSourceIds, setMergeSourceIds] = useState<number[]>([originalLessonId]);
+
+  // method 바뀔 때 SPLIT/MERGE 상태 리셋
+  useEffect(() => {
+    setSplitTotal(2);
+    setMergeSourceIds([originalLessonId]);
+    setTime("");
+  }, [method, originalLessonId]);
 
   // open 시 상태 리셋
   useEffect(() => {
@@ -146,22 +160,51 @@ export function MakeupWizard({
     setDate(todayChip ? todayChip.iso : dayChips[0]?.iso ?? "");
   }, [open, step, dayChips, date]);
 
+  // 원 학생 — fetched coachLessons에서 originalLessonId의 학생 추출
+  const originalStudentId = useMemo(
+    () => coachLessons.find((l) => l.id === originalLessonId)?.studentId ?? null,
+    [coachLessons, originalLessonId],
+  );
+
+  // MERGE 대상 후보 — 같은 학생의 active/완료/결강 회차 (자기 자신은 항상 포함)
+  const mergeCandidates = useMemo(() => {
+    if (!originalStudentId) return [];
+    return coachLessons
+      .filter((l) => l.studentId === originalStudentId && l.status !== "CANCELLED")
+      .sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime());
+  }, [coachLessons, originalStudentId]);
+
+  // method 별 effective duration (가능 슬롯 + 충돌 검증용)
+  // ADD: 원본 그대로 / SPLIT: 원본 (연속 N개 = 전체 동일 시간) / MERGE: 선택된 source 합산
+  const effectiveDuration = useMemo(() => {
+    if (method === "ADD") return originalDurationMinutes;
+    if (method === "SPLIT") {
+      const per = Math.floor(originalDurationMinutes / splitTotal);
+      return per * splitTotal; // 정수 나누기 잔재 무시 — 총합으로 확보
+    }
+    // MERGE
+    const sources = coachLessons.filter((l) => mergeSourceIds.includes(l.id));
+    return sources.reduce((sum, s) => sum + (s.durationMinutes ?? 0), 0);
+  }, [method, originalDurationMinutes, splitTotal, coachLessons, mergeSourceIds]);
+
   // 선택된 날짜의 가능 슬롯
   const availableSlots = useMemo<{ startMin: number; endMin: number; label: string }[]>(() => {
-    if (!date) return [];
+    if (!date || effectiveDuration < 10) return [];
     const chip = dayChips.find((c) => c.iso === date);
     if (!chip) return [];
     const dayUtcMidnight = chip.date.getTime() - KST_OFFSET_MS;
     const nowMs = Date.now();
     const result: { startMin: number; endMin: number; label: string }[] = [];
     for (let startMin = DAY_START_MIN; startMin < DAY_END_MIN; startMin += SLOT_STEP_MIN) {
-      const endMin = startMin + originalDurationMinutes;
+      const endMin = startMin + effectiveDuration;
       if (endMin > DAY_END_MIN) break;
       const slotStartMs = dayUtcMidnight + startMin * 60 * 1000;
-      const slotEndMs = slotStartMs + originalDurationMinutes * 60 * 1000;
+      const slotEndMs = slotStartMs + effectiveDuration * 60 * 1000;
       if (slotStartMs < nowMs) continue;
       const conflict = coachLessons.some((l) => {
         if (l.status === "CANCELLED" || l.status === "COMPLETED" || l.status === "ABSENT") return false;
+        // MERGE 시 원본들은 충돌 대상에서 제외 (parent로 묶일 예정)
+        if (method === "MERGE" && mergeSourceIds.includes(l.id)) return false;
         const lStart = new Date(l.scheduledAt).getTime();
         const lEnd = lStart + l.durationMinutes * 60 * 1000;
         return slotStartMs < lEnd && slotEndMs > lStart;
@@ -172,7 +215,7 @@ export function MakeupWizard({
       result.push({ startMin, endMin, label: `${hh}:${mm}` });
     }
     return result;
-  }, [date, dayChips, coachLessons, originalDurationMinutes]);
+  }, [date, dayChips, coachLessons, effectiveDuration, method, mergeSourceIds]);
 
   if (!open) return null;
   if (typeof document === "undefined") return null;
@@ -186,7 +229,12 @@ export function MakeupWizard({
 
   const canNextFromReason =
     !!reason && (reason !== "OTHER" || otherText.trim().length >= 2);
-  const canSubmit = method === "ADD" && !!date && !!time && !pending;
+  const canSubmit =
+    !!date &&
+    !!time &&
+    !pending &&
+    effectiveDuration >= 10 &&
+    (method !== "MERGE" || mergeSourceIds.length >= 2);
 
   // 슬롯 선택 시 time state 동기화
   const handlePickSlot = (label: string) => {
@@ -213,12 +261,14 @@ export function MakeupWizard({
 
     setPending(true);
     setError(null);
-    const res = await proposeMakeup(
-      originalLessonId,
-      reasonText(),
-      iso,
-      originalDurationMinutes,
-    );
+    let res: { ok: true } | { ok: false; error: string };
+    if (method === "SPLIT") {
+      res = await proposeMakeupSplit(originalLessonId, reasonText(), iso, splitTotal);
+    } else if (method === "MERGE") {
+      res = await proposeMakeupMerge(mergeSourceIds, reasonText(), iso);
+    } else {
+      res = await proposeMakeup(originalLessonId, reasonText(), iso, originalDurationMinutes);
+    }
     setPending(false);
     if (!res.ok) {
       setError(res.error);
@@ -362,27 +412,49 @@ export function MakeupWizard({
                   </div>
                 </label>
 
-                {/* 통합 — 준비 중 */}
-                <label className="flex items-start gap-3 p-3 rounded-xl border border-line bg-soft opacity-60 cursor-not-allowed">
-                  <input type="radio" disabled className="mt-1" />
+                {/* 통합 */}
+                <label
+                  className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition ${
+                    method === "MERGE"
+                      ? "border-primary-400 bg-primary/5"
+                      : "border-line bg-surface hover:bg-soft"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="makeup-method"
+                    value="MERGE"
+                    checked={method === "MERGE"}
+                    onChange={() => setMethod("MERGE")}
+                    className="accent-primary mt-1"
+                  />
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-bold text-ink-2">
-                      ② 통합 <span className="text-[10px] font-semibold text-ink-3 ml-1">준비 중</span>
-                    </div>
-                    <div className="mt-1 text-[11px] text-ink-3 leading-relaxed">
+                    <div className="text-sm font-bold text-ink">② 통합</div>
+                    <div className="mt-1 text-[11px] text-ink-2 leading-relaxed">
                       짧은 회차 N개를 한 번에 길게 (예: 20분 × 2회 → 40분 × 1회).
                     </div>
                   </div>
                 </label>
 
-                {/* 분할 — 준비 중 */}
-                <label className="flex items-start gap-3 p-3 rounded-xl border border-line bg-soft opacity-60 cursor-not-allowed">
-                  <input type="radio" disabled className="mt-1" />
+                {/* 분할 */}
+                <label
+                  className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition ${
+                    method === "SPLIT"
+                      ? "border-primary-400 bg-primary/5"
+                      : "border-line bg-surface hover:bg-soft"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="makeup-method"
+                    value="SPLIT"
+                    checked={method === "SPLIT"}
+                    onChange={() => setMethod("SPLIT")}
+                    className="accent-primary mt-1"
+                  />
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-bold text-ink-2">
-                      ③ 분할 <span className="text-[10px] font-semibold text-ink-3 ml-1">준비 중</span>
-                    </div>
-                    <div className="mt-1 text-[11px] text-ink-3 leading-relaxed">
+                    <div className="text-sm font-bold text-ink">③ 분할</div>
+                    <div className="mt-1 text-[11px] text-ink-2 leading-relaxed">
                       긴 회차 1개를 짧게 N번 (예: 40분 × 1회 → 20분 × 2회).
                     </div>
                   </div>
@@ -399,6 +471,109 @@ export function MakeupWizard({
               </p>
 
               <div className="mt-4 space-y-3">
+                {/* SPLIT — 분할 수 선택 */}
+                {method === "SPLIT" && (
+                  <div>
+                    <label className="block text-xs font-semibold text-ink-2 mb-1.5">분할 수</label>
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {SPLIT_OPTIONS.map((n) => {
+                        const per = Math.floor(originalDurationMinutes / n);
+                        const tooShort = per < 10;
+                        const active = n === splitTotal;
+                        return (
+                          <button
+                            key={n}
+                            type="button"
+                            onClick={() => !tooShort && setSplitTotal(n)}
+                            disabled={tooShort}
+                            className={`h-12 rounded-lg text-xs font-bold transition active:scale-[0.97] ${
+                              active
+                                ? "bg-primary text-white shadow-sm"
+                                : tooShort
+                                  ? "bg-soft text-ink-3 opacity-50 cursor-not-allowed"
+                                  : "bg-soft text-ink-2 hover:bg-line"
+                            }`}
+                          >
+                            <div>{n}분할</div>
+                            <div className={`text-[10px] mt-0.5 ${active ? "text-white/85" : "text-ink-3"}`}>
+                              {per}분 × {n}회
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* MERGE — 통합할 원본 회차 선택 */}
+                {method === "MERGE" && (
+                  <div>
+                    <div className="flex items-baseline justify-between mb-1.5">
+                      <label className="block text-xs font-semibold text-ink-2">통합할 회차 (이 학생의 활성 회차)</label>
+                      <span className="text-[10px] text-ink-3 font-medium">
+                        {mergeSourceIds.length}건 · 합계 {effectiveDuration}분
+                      </span>
+                    </div>
+                    {loadingLessons ? (
+                      <div className="rounded-xl border border-dashed border-line py-6 text-center text-xs text-ink-3">
+                        회차를 불러오는 중…
+                      </div>
+                    ) : mergeCandidates.length < 2 ? (
+                      <div className="rounded-xl border border-dashed border-line py-6 text-center">
+                        <p className="text-xs font-semibold text-ink">통합 대상이 부족해요</p>
+                        <p className="mt-1 text-[10px] text-ink-3">
+                          이 학생의 활성 회차가 2개 이상 필요해요
+                        </p>
+                      </div>
+                    ) : (
+                      <ul className="max-h-44 overflow-y-auto rounded-xl border border-line bg-surface divide-y divide-line/60">
+                        {mergeCandidates.map((l) => {
+                          const checked = mergeSourceIds.includes(l.id);
+                          const isOriginal = l.id === originalLessonId;
+                          const dt = new Date(l.scheduledAt);
+                          const kst = new Date(dt.getTime() + KST_OFFSET_MS);
+                          const m = kst.getUTCMonth() + 1;
+                          const d = kst.getUTCDate();
+                          const hh = String(kst.getUTCHours()).padStart(2, "0");
+                          const mm = String(kst.getUTCMinutes()).padStart(2, "0");
+                          return (
+                            <li key={l.id}>
+                              <label className="flex items-center gap-2.5 px-3 py-2.5 cursor-pointer hover:bg-soft transition">
+                                <input
+                                  type="checkbox"
+                                  checked={checked}
+                                  disabled={isOriginal}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      setMergeSourceIds((prev) =>
+                                        prev.includes(l.id) ? prev : [...prev, l.id],
+                                      );
+                                    } else {
+                                      setMergeSourceIds((prev) => prev.filter((x) => x !== l.id));
+                                    }
+                                    setTime("");
+                                  }}
+                                  className="accent-primary"
+                                />
+                                <div className="flex-1 min-w-0 flex items-baseline gap-2 text-xs">
+                                  <span className="font-bold text-ink tabular-nums">
+                                    {m}/{d} {hh}:{mm}
+                                  </span>
+                                  <span className="text-ink-3">{l.durationMinutes}분</span>
+                                  <span className="text-[10px] text-ink-3">{l.status}</span>
+                                  {isOriginal && (
+                                    <span className="ml-auto text-[10px] font-semibold text-primary">현 회차</span>
+                                  )}
+                                </div>
+                              </label>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+                  </div>
+                )}
+
                 <div>
                   <label className="block text-xs font-semibold text-ink-2 mb-1.5">날짜</label>
                   <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1" style={{ scrollbarWidth: "thin" }}>
@@ -479,8 +654,21 @@ export function MakeupWizard({
                 </div>
 
                 <div className="rounded-xl bg-soft px-3 py-2.5 text-[11px] text-ink-2">
-                  레슨 시간 <b className="text-ink">{originalDurationMinutes}분</b> (원 회차와 동일).
-                  수강생이 수락해야 확정됩니다.
+                  {method === "ADD" && (
+                    <>레슨 시간 <b className="text-ink">{originalDurationMinutes}분</b> (원 회차와 동일).</>
+                  )}
+                  {method === "SPLIT" && (
+                    <>
+                      원 {originalDurationMinutes}분을 <b className="text-ink">{splitTotal}회 × {Math.floor(originalDurationMinutes / splitTotal)}분</b>
+                      {" "}으로 분할 (선택 시각부터 연속).
+                    </>
+                  )}
+                  {method === "MERGE" && (
+                    <>
+                      통합 {mergeSourceIds.length}건 → 한 회차 <b className="text-ink">{effectiveDuration}분</b>.
+                    </>
+                  )}
+                  {" "}수강생이 수락해야 확정됩니다.
                 </div>
 
                 {error && (

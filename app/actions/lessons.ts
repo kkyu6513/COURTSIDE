@@ -235,6 +235,206 @@ export async function proposeMakeup(
 }
 
 /**
+ * 보강 — SPLIT (분할).
+ * 원 회차 1개를 splitTotal 개의 짧은 회차로 분할.
+ * 시작 시각부터 연속해서 N개 슬롯을 자동 생성.
+ * 예: 60분 원본 × 3분할 → 20분 × 3회 (시작 시각부터 연속)
+ */
+export async function proposeMakeupSplit(
+  originalLessonId: number,
+  reason: string,
+  scheduledAt: string, // 첫 회차 시작 시각
+  splitTotal: number,
+): Promise<Result> {
+  const user = await getAuthedUser();
+  if (!user) return { ok: false, error: "로그인이 필요합니다" };
+  const meta = user.app_metadata as { role?: string } | undefined;
+  if (meta?.role !== "COACH") return { ok: false, error: "코치만 가능해요" };
+
+  const trimmed = reason.trim();
+  if (!trimmed) return { ok: false, error: "보강 사유를 선택해주세요" };
+  if (!Number.isInteger(splitTotal) || splitTotal < 2 || splitTotal > 6) {
+    return { ok: false, error: "분할 수가 올바르지 않아요 (2~6)" };
+  }
+
+  const date = new Date(scheduledAt);
+  if (Number.isNaN(date.getTime())) return { ok: false, error: "보강 시각이 올바르지 않습니다" };
+  if (date.getTime() < Date.now() - 5 * 60 * 1000) {
+    return { ok: false, error: "이미 지난 시각에는 보강을 잡을 수 없어요" };
+  }
+
+  const admin = createAdminClient();
+  const { data: orig } = await admin
+    .from("lessons")
+    .select("id, coachId, studentId, durationMinutes, status")
+    .eq("id", originalLessonId)
+    .maybeSingle();
+  if (!orig) return { ok: false, error: "원 레슨을 찾을 수 없어요" };
+  if (orig.coachId !== user.id) return { ok: false, error: "권한이 없어요" };
+  if (orig.status === "CANCELLED") {
+    return { ok: false, error: "취소된 레슨에는 보강을 제안할 수 없어요" };
+  }
+
+  const perDur = Math.floor((orig.durationMinutes ?? 60) / splitTotal);
+  if (perDur < 10) {
+    return { ok: false, error: `${splitTotal}분할 시 회차당 ${perDur}분으로 너무 짧아요` };
+  }
+
+  // 연속 N개 슬롯 — 시작 시각 + (i * perDur)
+  const startMs = date.getTime();
+  const lastEndMs = startMs + perDur * splitTotal * 60 * 1000;
+
+  // 충돌 검증 — [start, lastEnd] 전체 범위에 active 레슨 없어야 함
+  const SEARCH_MS = 28 * 60 * 60 * 1000;
+  const { data: nearby } = await admin
+    .from("lessons")
+    .select("id, scheduledAt, durationMinutes, status")
+    .eq("coachId", user.id)
+    .not("status", "in", "(CANCELLED,COMPLETED,ABSENT)")
+    .gte("scheduledAt", new Date(startMs - SEARCH_MS).toISOString())
+    .lte("scheduledAt", new Date(lastEndMs + SEARCH_MS).toISOString());
+  for (const ex of nearby ?? []) {
+    const exStart = new Date(ex.scheduledAt).getTime();
+    const exEnd = exStart + (ex.durationMinutes ?? 60) * 60 * 1000;
+    if (startMs < exEnd && lastEndMs > exStart) {
+      return { ok: false, error: "선택한 시간대에 이미 잡힌 레슨이 있어요" };
+    }
+  }
+
+  // N개 회차 일괄 insert
+  const rows = Array.from({ length: splitTotal }, (_, i) => ({
+    coachId: user.id,
+    studentId: orig.studentId,
+    scheduledAt: new Date(startMs + i * perDur * 60 * 1000).toISOString(),
+    durationMinutes: perDur,
+    status: "MAKEUP_PENDING",
+    paymentStatus: "NONE",
+    originalLessonId: orig.id,
+    splitIndex: i + 1,
+    splitTotal,
+    notes: `[보강 분할 ${i + 1}/${splitTotal}] ${trimmed}`,
+    updatedAt: new Date().toISOString(),
+  }));
+  const { error: insertError } = await admin.from("lessons").insert(rows);
+  if (insertError) {
+    console.error("[proposeMakeupSplit] insert error:", insertError);
+    return { ok: false, error: "분할 보강 등록 중 문제가 발생했어요." };
+  }
+
+  revalidateLessonPaths(originalLessonId);
+  revalidatePath("/coach/schedule");
+  revalidatePath("/");
+  return { ok: true };
+}
+
+/**
+ * 보강 — MERGE (통합).
+ * 같은 학생의 짧은 회차 N개(sourceLessonIds)를 1개의 긴 회차로 통합.
+ * 합산 길이로 새 1개 회차 생성, 각 원본은 parentLessonId로 연결.
+ */
+export async function proposeMakeupMerge(
+  sourceLessonIds: number[],
+  reason: string,
+  scheduledAt: string,
+): Promise<Result> {
+  const user = await getAuthedUser();
+  if (!user) return { ok: false, error: "로그인이 필요합니다" };
+  const meta = user.app_metadata as { role?: string } | undefined;
+  if (meta?.role !== "COACH") return { ok: false, error: "코치만 가능해요" };
+
+  const trimmed = reason.trim();
+  if (!trimmed) return { ok: false, error: "보강 사유를 선택해주세요" };
+
+  if (!Array.isArray(sourceLessonIds) || sourceLessonIds.length < 2) {
+    return { ok: false, error: "통합할 원본 회차 2개 이상을 선택해주세요" };
+  }
+  if (sourceLessonIds.length > 6) {
+    return { ok: false, error: "한 번에 통합 가능한 회차는 최대 6개입니다" };
+  }
+
+  const date = new Date(scheduledAt);
+  if (Number.isNaN(date.getTime())) return { ok: false, error: "보강 시각이 올바르지 않습니다" };
+  if (date.getTime() < Date.now() - 5 * 60 * 1000) {
+    return { ok: false, error: "이미 지난 시각에는 보강을 잡을 수 없어요" };
+  }
+
+  const admin = createAdminClient();
+  const { data: sources } = await admin
+    .from("lessons")
+    .select("id, coachId, studentId, durationMinutes, status")
+    .in("id", sourceLessonIds);
+  if (!sources || sources.length !== sourceLessonIds.length) {
+    return { ok: false, error: "원본 회차를 찾을 수 없어요" };
+  }
+  // 모두 같은 학생 + 본인 코치 검증
+  const studentIds = new Set(sources.map((s) => s.studentId));
+  if (studentIds.size !== 1) {
+    return { ok: false, error: "같은 학생의 회차만 통합할 수 있어요" };
+  }
+  for (const s of sources) {
+    if (s.coachId !== user.id) return { ok: false, error: "권한이 없어요" };
+    if (s.status === "CANCELLED") {
+      return { ok: false, error: "취소된 레슨은 통합할 수 없어요" };
+    }
+  }
+  const studentId = sources[0].studentId;
+  const totalDur = sources.reduce((sum, s) => sum + (s.durationMinutes ?? 0), 0);
+  if (totalDur < 10 || totalDur > 240) {
+    return { ok: false, error: "통합 회차 길이가 올바르지 않아요 (10~240분)" };
+  }
+
+  // 충돌 검증
+  const startMs = date.getTime();
+  const endMs = startMs + totalDur * 60 * 1000;
+  const SEARCH_MS = 28 * 60 * 60 * 1000;
+  const { data: nearby } = await admin
+    .from("lessons")
+    .select("id, scheduledAt, durationMinutes, status")
+    .eq("coachId", user.id)
+    .not("id", "in", `(${sourceLessonIds.join(",")})`)
+    .not("status", "in", "(CANCELLED,COMPLETED,ABSENT)")
+    .gte("scheduledAt", new Date(startMs - SEARCH_MS).toISOString())
+    .lte("scheduledAt", new Date(endMs + SEARCH_MS).toISOString());
+  for (const ex of nearby ?? []) {
+    const exStart = new Date(ex.scheduledAt).getTime();
+    const exEnd = exStart + (ex.durationMinutes ?? 60) * 60 * 1000;
+    if (startMs < exEnd && endMs > exStart) {
+      return { ok: false, error: "선택한 시간대에 이미 잡힌 레슨이 있어요" };
+    }
+  }
+
+  // 1. 통합 회차 생성
+  const { data: inserted, error: insertError } = await admin
+    .from("lessons")
+    .insert({
+      coachId: user.id,
+      studentId,
+      scheduledAt: date.toISOString(),
+      durationMinutes: totalDur,
+      status: "MAKEUP_PENDING",
+      paymentStatus: "NONE",
+      notes: `[보강 통합 ${sources.length}건] ${trimmed}`,
+      updatedAt: new Date().toISOString(),
+    })
+    .select("id")
+    .single();
+  if (insertError || !inserted) {
+    console.error("[proposeMakeupMerge] insert error:", insertError);
+    return { ok: false, error: "통합 보강 등록 중 문제가 발생했어요." };
+  }
+  // 2. 원본 회차들을 parentLessonId로 연결 (best-effort)
+  await admin
+    .from("lessons")
+    .update({ parentLessonId: inserted.id, updatedAt: new Date().toISOString() })
+    .in("id", sourceLessonIds);
+
+  for (const id of sourceLessonIds) revalidateLessonPaths(id);
+  revalidatePath("/coach/schedule");
+  revalidatePath("/");
+  return { ok: true };
+}
+
+/**
  * 학생 — 보강 제안 수락. MAKEUP_PENDING → MAKEUP_CONFIRMED.
  * 본인 레슨만 처리. 시간 충돌 시 거부.
  */
