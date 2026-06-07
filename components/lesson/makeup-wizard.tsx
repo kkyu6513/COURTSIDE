@@ -116,19 +116,7 @@ export function MakeupWizard({
     };
   }, [open]);
 
-  if (!open) return null;
-  if (typeof document === "undefined") return null;
-
-  const reasonText = (): string => {
-    if (!reason) return "";
-    if (reason === "OTHER") return otherText.trim();
-    const base = REASON_TEXT[reason];
-    return otherText.trim() ? `${base} — ${otherText.trim()}` : base;
-  };
-
-  const canNextFromReason =
-    !!reason && (reason !== "OTHER" || otherText.trim().length >= 2);
-  const canSubmit = method === "ADD" && !!date && !!time && !pending;
+  // ⚠ Rules of Hooks — 모든 hook은 early return 위에 있어야 함.
 
   // 오늘부터 N일치 날짜 칩 (KST trick Date)
   const dayChips = useMemo(() => {
@@ -152,14 +140,22 @@ export function MakeupWizard({
   // 자동 기본 날짜 — 원 회차 + 7일이 chips 안에 있으면 그것, 아니면 today
   useEffect(() => {
     if (!open || step !== "date" || date) return;
-    const orig = new Date(originalScheduledAt);
-    const target = new Date(orig.getTime() + 7 * 24 * 60 * 60 * 1000 + KST_OFFSET_MS);
-    const targetIso = target.toISOString().slice(0, 10);
-    const exists = dayChips.find((c) => c.iso === targetIso);
-    setDate(exists ? exists.iso : dayChips[0]?.iso ?? "");
+    try {
+      const orig = new Date(originalScheduledAt);
+      if (Number.isNaN(orig.getTime())) {
+        setDate(dayChips[0]?.iso ?? "");
+        return;
+      }
+      const target = new Date(orig.getTime() + 7 * 24 * 60 * 60 * 1000 + KST_OFFSET_MS);
+      const targetIso = target.toISOString().slice(0, 10);
+      const exists = dayChips.find((c) => c.iso === targetIso);
+      setDate(exists ? exists.iso : dayChips[0]?.iso ?? "");
+    } catch {
+      setDate(dayChips[0]?.iso ?? "");
+    }
   }, [open, step, originalScheduledAt, dayChips, date]);
 
-  // 선택된 날짜의 가능 슬롯 — coach lessons 와 충돌 안 함 + 과거 시각 제외
+  // 선택된 날짜의 가능 슬롯
   const availableSlots = useMemo<{ startMin: number; endMin: number; label: string }[]>(() => {
     if (!date) return [];
     const chip = dayChips.find((c) => c.iso === date);
@@ -186,6 +182,20 @@ export function MakeupWizard({
     }
     return result;
   }, [date, dayChips, coachLessons, originalDurationMinutes]);
+
+  if (!open) return null;
+  if (typeof document === "undefined") return null;
+
+  const reasonText = (): string => {
+    if (!reason) return "";
+    if (reason === "OTHER") return otherText.trim();
+    const base = REASON_TEXT[reason];
+    return otherText.trim() ? `${base} — ${otherText.trim()}` : base;
+  };
+
+  const canNextFromReason =
+    !!reason && (reason !== "OTHER" || otherText.trim().length >= 2);
+  const canSubmit = method === "ADD" && !!date && !!time && !pending;
 
   // 슬롯 선택 시 time state 동기화
   const handlePickSlot = (label: string) => {
