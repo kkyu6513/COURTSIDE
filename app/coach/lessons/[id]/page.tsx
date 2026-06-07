@@ -51,11 +51,12 @@ export default async function CoachLessonDetailPage({
       .maybeSingle(),
     admin
       .from("lessons")
-      .select("status, originalLessonId")
+      .select("id, scheduledAt, durationMinutes, status, paymentStatus, originalLessonId")
       .eq("coachId", user.id)
       .eq("studentId", lesson.studentId)
       .gte("scheduledAt", monthStartUtc)
-      .lt("scheduledAt", monthEndUtc),
+      .lt("scheduledAt", monthEndUtc)
+      .order("scheduledAt", { ascending: true }),
     admin
       .from("lessons")
       .select("scheduledAt, durationMinutes, status")
@@ -68,8 +69,15 @@ export default async function CoachLessonDetailPage({
   const student = studentRes.data;
   const studentProfile = studentProfileRes.data;
 
-  // 해당 월 결강/보강 카운트
-  const monthLessons = (monthLessonsRes.data ?? []) as Array<{ status: string; originalLessonId: number | null }>;
+  // 해당 월 모든 회차 — 출석 현황 리스트 + 카운트 동시 산출
+  const monthLessons = (monthLessonsRes.data ?? []) as Array<{
+    id: number;
+    scheduledAt: string;
+    durationMinutes: number;
+    status: string;
+    paymentStatus: string | null;
+    originalLessonId: number | null;
+  }>;
   const monthlyAbsentCount = monthLessons.filter((l) => l.status === "ABSENT").length;
   const monthlyMakeupCount = monthLessons.filter(
     (l) =>
@@ -78,6 +86,14 @@ export default async function CoachLessonDetailPage({
       l.status === "MAKEUP_REQUESTED" ||
       l.originalLessonId != null,
   ).length;
+  const monthlyAttendance = monthLessons.map((l) => ({
+    id: l.id,
+    scheduledAt: l.scheduledAt,
+    durationMinutes: l.durationMinutes,
+    status: l.status,
+    isMakeup: l.originalLessonId != null,
+    isCurrent: l.id === lesson.id,
+  }));
 
   // 정기 패턴 추출 — (dayOfWeek, hour, minute, dur) 키별 빈도 mode
   type PatternKey = { dow: number; hour: number; minute: number; dur: number };
@@ -124,6 +140,7 @@ export default async function CoachLessonDetailPage({
       monthlyAbsentCount,
       monthlyMakeupCount,
       monthLabel: `${lessonKst.getUTCMonth() + 1}월`,
+      monthlyAttendance,
     },
   };
 

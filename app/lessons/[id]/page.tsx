@@ -58,11 +58,12 @@ export default async function StudentLessonDetailPage({
     // 학생 본인의 같은 코치 + 해당 월 회차 (월간 통계)
     admin
       .from("lessons")
-      .select("status, originalLessonId")
+      .select("id, scheduledAt, durationMinutes, status, paymentStatus, originalLessonId")
       .eq("studentId", user.id)
       .eq("coachId", lesson.coachId)
       .gte("scheduledAt", monthStartUtc)
-      .lt("scheduledAt", monthEndUtc),
+      .lt("scheduledAt", monthEndUtc)
+      .order("scheduledAt", { ascending: true }),
     // 정규 패턴 — 최근 30건(CANCELLED/PENDING 제외)
     admin
       .from("lessons")
@@ -76,8 +77,15 @@ export default async function StudentLessonDetailPage({
   const coach = coachRes.data;
   const coachProfile = coachProfileRes.data;
 
-  // 해당 월 결강/보강 카운트
-  const monthLessons = (monthLessonsRes.data ?? []) as Array<{ status: string; originalLessonId: number | null }>;
+  // 해당 월 모든 회차 — 출석 현황 리스트 + 카운트 동시 산출
+  const monthLessons = (monthLessonsRes.data ?? []) as Array<{
+    id: number;
+    scheduledAt: string;
+    durationMinutes: number;
+    status: string;
+    paymentStatus: string | null;
+    originalLessonId: number | null;
+  }>;
   const monthlyAbsentCount = monthLessons.filter((l) => l.status === "ABSENT").length;
   const monthlyMakeupCount = monthLessons.filter(
     (l) =>
@@ -86,6 +94,14 @@ export default async function StudentLessonDetailPage({
       l.status === "MAKEUP_REQUESTED" ||
       l.originalLessonId != null,
   ).length;
+  const monthlyAttendance = monthLessons.map((l) => ({
+    id: l.id,
+    scheduledAt: l.scheduledAt,
+    durationMinutes: l.durationMinutes,
+    status: l.status,
+    isMakeup: l.originalLessonId != null,
+    isCurrent: l.id === lesson.id,
+  }));
 
   // 정기 패턴 — (요일·시·분·길이) mode, 최소 2회
   const patternFreq = new Map<string, { dow: number; hour: number; minute: number; dur: number; count: number }>();
@@ -130,6 +146,7 @@ export default async function StudentLessonDetailPage({
       monthlyAbsentCount,
       monthlyMakeupCount,
       monthLabel: `${lessonKst.getUTCMonth() + 1}월`,
+      monthlyAttendance,
     },
   };
 

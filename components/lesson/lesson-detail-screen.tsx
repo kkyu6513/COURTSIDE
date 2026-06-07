@@ -65,6 +65,15 @@ export type LessonDetailData = {
     monthlyMakeupCount: number;
     /** 통계 기준 월 라벨 (예: "5월") */
     monthLabel: string;
+    /** 해당 월 모든 회차의 출석 현황 리스트 (시각 오름차순) */
+    monthlyAttendance: Array<{
+      id: number;
+      scheduledAt: string;
+      durationMinutes: number;
+      status: string;
+      isMakeup: boolean;
+      isCurrent: boolean;
+    }>;
   } | null;
 };
 
@@ -192,6 +201,50 @@ function UndoIcon() {
       <polyline points="9 14 4 9 9 4" />
       <path d="M20 20v-7a4 4 0 0 0-4-4H4" />
     </svg>
+  );
+}
+
+// 출석 행 — 일자/시간 + 상태 칩 + 현재 레슨 강조
+type AttendanceEntry = {
+  id: number;
+  scheduledAt: string;
+  durationMinutes: number;
+  status: string;
+  isMakeup: boolean;
+  isCurrent: boolean;
+};
+
+function AttendanceRow({ entry }: { entry: AttendanceEntry }) {
+  const p = kstParts(parseIsoUtc(entry.scheduledAt));
+  const dateLabel = `${p.m}.${String(p.day).padStart(2, "0")} (${DOW_KOR[p.dow]})`;
+  const timeLabel = `${p.hh}:${p.mm}`;
+  const displayStatus = deriveDisplayStatus(entry.status, entry.scheduledAt, entry.durationMinutes);
+  const status = getStatusLabel(displayStatus);
+
+  return (
+    <li
+      className={`flex items-center gap-2.5 px-3 py-2 text-xs ${
+        entry.isCurrent ? "bg-primary/5" : "bg-surface"
+      }`}
+    >
+      <div className="w-14 flex-none text-ink-2 font-semibold tabular-nums">{dateLabel}</div>
+      <div className="w-12 flex-none text-ink tabular-nums">{timeLabel}</div>
+      <div className="flex-1 min-w-0 flex items-center gap-1.5 flex-wrap">
+        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${status.bg} ${status.fg}`}>
+          {status.text}
+        </span>
+        {entry.isMakeup && (
+          <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold bg-emerald-50 text-emerald-700">
+            보강
+          </span>
+        )}
+        {entry.isCurrent && (
+          <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold bg-primary text-white">
+            현재
+          </span>
+        )}
+      </div>
+    </li>
   );
 }
 
@@ -666,27 +719,30 @@ export function LessonDetailScreen({ data, backHref }: { data: LessonDetailData;
                   </div>
                 </div>
 
-                {/* 해당 월 결강 / 보강 */}
-                <div className="flex items-stretch gap-2">
-                  <div className="w-16 flex-none text-[11px] text-ink-3 pt-1">
-                    {studentInsights.monthLabel} 통계
-                  </div>
-                  <div className="flex-1 grid grid-cols-2 gap-2">
-                    <div className="rounded-lg bg-gray-50 px-3 py-2">
-                      <div className="text-[10px] text-ink-3">결강</div>
-                      <div className="mt-0.5 text-base font-extrabold text-gray-700 tabular-nums leading-none">
-                        {studentInsights.monthlyAbsentCount}
-                        <span className="ml-0.5 text-[10px] font-semibold text-ink-3">회</span>
-                      </div>
+                {/* 해당 월 출석 현황 — 회차별 리스트 */}
+                <div className="pt-1">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <div className="text-[11px] font-semibold text-ink-3">
+                      {studentInsights.monthLabel} 출석 현황
+                      <span className="ml-1.5 text-[10px] font-normal text-ink-3/70">
+                        총 {studentInsights.monthlyAttendance.length}회
+                      </span>
                     </div>
-                    <div className="rounded-lg bg-emerald-50 px-3 py-2">
-                      <div className="text-[10px] text-emerald-700/70">보강</div>
-                      <div className="mt-0.5 text-base font-extrabold text-emerald-700 tabular-nums leading-none">
-                        {studentInsights.monthlyMakeupCount}
-                        <span className="ml-0.5 text-[10px] font-semibold text-emerald-700/70">회</span>
-                      </div>
+                    <div className="text-[10px] text-ink-3">
+                      결강 {studentInsights.monthlyAbsentCount} · 보강 {studentInsights.monthlyMakeupCount}
                     </div>
                   </div>
+                  {studentInsights.monthlyAttendance.length === 0 ? (
+                    <div className="rounded-lg bg-soft px-3 py-3 text-center text-[11px] text-ink-3">
+                      이번 달 회차가 아직 없어요
+                    </div>
+                  ) : (
+                    <ul className="rounded-lg overflow-hidden divide-y divide-line/60 border border-line">
+                      {studentInsights.monthlyAttendance.map((a) => (
+                        <AttendanceRow key={a.id} entry={a} />
+                      ))}
+                    </ul>
+                  )}
                 </div>
               </div>
             </div>
