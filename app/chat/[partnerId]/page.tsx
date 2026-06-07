@@ -3,7 +3,6 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ChatThread } from "@/components/chat/chat-thread";
-import { markMessagesRead } from "@/app/actions/messages";
 
 export const dynamic = "force-dynamic";
 
@@ -73,8 +72,7 @@ export default async function ChatThreadPage({
     }),
   );
 
-  // 진입 시 본인에게 온 메시지 읽음 처리 (RSC 내에서 직접 호출)
-  await markMessagesRead(partnerId);
+  // 읽음 처리는 클라이언트 ChatThread 에서 throttle 호출 — RSC 매 새로고침마다 DB write 방지
 
   return (
     <main className="min-h-screen bg-bg flex flex-col">
