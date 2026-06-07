@@ -844,8 +844,13 @@ export function LessonDetailScreen({ data, backHref }: { data: LessonDetailData;
             label="보강 처리"
             onClick={openMakeupWizard}
             icon={<RefreshIcon />}
-            disabled={lesson.status === "COMPLETED" || lesson.status === "ABSENT"}
+            disabled={lesson.status === "COMPLETED" || lesson.status === "ABSENT" || isPast}
           />
+          {isPast && lesson.status !== "COMPLETED" && lesson.status !== "ABSENT" && (
+            <p className="px-2 -mt-1 mb-1 text-[11px] text-ink-3">
+              지난 레슨에는 보강을 잡을 수 없어요
+            </p>
+          )}
           <SheetItem
             label="결강 처리"
             onClick={() => openReasonSheet("ABSENT")}
