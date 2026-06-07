@@ -76,6 +76,8 @@ export function MakeupWizard({
   // SPLIT 분할 수 / MERGE 통합 원본 회차 다중 선택
   const [splitTotal, setSplitTotal] = useState<number>(2);
   const [mergeSourceIds, setMergeSourceIds] = useState<number[]>([originalLessonId]);
+  // 보강 날짜 다중 선택 (선택한 모든 날짜의 가능 시간을 한 번에 보여줌)
+  const [selectedDates, setSelectedDates] = useState<string[]>([]);
 
   // method 바뀔 때 SPLIT/MERGE 상태 리셋
   useEffect(() => {
@@ -151,14 +153,18 @@ export function MakeupWizard({
     });
   }, [open]);
 
-  // 자동 기본 날짜 — 오늘(KST) 명시적으로 찾아서 선택
+  // 자동 기본 날짜 — 오늘(KST) 다중 선택 배열에 추가
   useEffect(() => {
-    if (!open || step !== "date" || date) return;
+    if (!open || step !== "date" || selectedDates.length > 0) return;
     const k = new Date(Date.now() + KST_OFFSET_MS);
     const todayIso = `${k.getUTCFullYear()}-${String(k.getUTCMonth() + 1).padStart(2, "0")}-${String(k.getUTCDate()).padStart(2, "0")}`;
     const todayChip = dayChips.find((c) => c.iso === todayIso);
-    setDate(todayChip ? todayChip.iso : dayChips[0]?.iso ?? "");
-  }, [open, step, dayChips, date]);
+    const initialIso = todayChip ? todayChip.iso : dayChips[0]?.iso ?? "";
+    if (initialIso) {
+      setSelectedDates([initialIso]);
+      setDate(initialIso); // 기존 date state도 유지 (단일 선택 슬롯의 날짜)
+    }
+  }, [open, step, dayChips, selectedDates.length]);
 
   // 원 학생 — fetched coachLessons에서 originalLessonId의 학생 추출
   const originalStudentId = useMemo(
@@ -187,35 +193,46 @@ export function MakeupWizard({
     return sources.reduce((sum, s) => sum + (s.durationMinutes ?? 0), 0);
   }, [method, originalDurationMinutes, splitTotal, coachLessons, mergeSourceIds]);
 
-  // 선택된 날짜의 가능 슬롯
-  const availableSlots = useMemo<{ startMin: number; endMin: number; label: string }[]>(() => {
-    if (!date || effectiveDuration < 10) return [];
-    const chip = dayChips.find((c) => c.iso === date);
-    if (!chip) return [];
-    const dayUtcMidnight = chip.date.getTime() - KST_OFFSET_MS;
+  // 다중 선택 날짜별 가능 슬롯 (각 날짜 → 가능 슬롯 리스트)
+  const slotsByDate = useMemo<Array<{ dateIso: string; m: number; day: number; dowKor: string; slots: { startMin: number; endMin: number; label: string }[] }>>(() => {
+    if (effectiveDuration < 10 || selectedDates.length === 0) return [];
     const nowMs = Date.now();
-    const result: { startMin: number; endMin: number; label: string }[] = [];
-    for (let startMin = DAY_START_MIN; startMin < DAY_END_MIN; startMin += SLOT_STEP_MIN) {
-      const endMin = startMin + effectiveDuration;
-      if (endMin > DAY_END_MIN) break;
-      const slotStartMs = dayUtcMidnight + startMin * 60 * 1000;
-      const slotEndMs = slotStartMs + effectiveDuration * 60 * 1000;
-      if (slotStartMs < nowMs) continue;
-      const conflict = coachLessons.some((l) => {
-        if (l.status === "CANCELLED" || l.status === "COMPLETED" || l.status === "ABSENT") return false;
-        // MERGE 시 원본들은 충돌 대상에서 제외 (parent로 묶일 예정)
-        if (method === "MERGE" && mergeSourceIds.includes(l.id)) return false;
-        const lStart = new Date(l.scheduledAt).getTime();
-        const lEnd = lStart + l.durationMinutes * 60 * 1000;
-        return slotStartMs < lEnd && slotEndMs > lStart;
-      });
-      if (conflict) continue;
-      const hh = String(Math.floor(startMin / 60)).padStart(2, "0");
-      const mm = String(startMin % 60).padStart(2, "0");
-      result.push({ startMin, endMin, label: `${hh}:${mm}` });
-    }
-    return result;
-  }, [date, dayChips, coachLessons, effectiveDuration, method, mergeSourceIds]);
+    const ordered = dayChips.filter((c) => selectedDates.includes(c.iso));
+    return ordered.map((chip) => {
+      const dayUtcMidnight = chip.date.getTime() - KST_OFFSET_MS;
+      const slots: { startMin: number; endMin: number; label: string }[] = [];
+      for (let startMin = DAY_START_MIN; startMin < DAY_END_MIN; startMin += SLOT_STEP_MIN) {
+        const endMin = startMin + effectiveDuration;
+        if (endMin > DAY_END_MIN) break;
+        const slotStartMs = dayUtcMidnight + startMin * 60 * 1000;
+        const slotEndMs = slotStartMs + effectiveDuration * 60 * 1000;
+        if (slotStartMs < nowMs) continue;
+        const conflict = coachLessons.some((l) => {
+          if (l.status === "CANCELLED" || l.status === "COMPLETED" || l.status === "ABSENT") return false;
+          if (method === "MERGE" && mergeSourceIds.includes(l.id)) return false;
+          const lStart = new Date(l.scheduledAt).getTime();
+          const lEnd = lStart + l.durationMinutes * 60 * 1000;
+          return slotStartMs < lEnd && slotEndMs > lStart;
+        });
+        if (conflict) continue;
+        const hh = String(Math.floor(startMin / 60)).padStart(2, "0");
+        const mm = String(startMin % 60).padStart(2, "0");
+        slots.push({ startMin, endMin, label: `${hh}:${mm}` });
+      }
+      return {
+        dateIso: chip.iso,
+        m: chip.m,
+        day: chip.day,
+        dowKor: chip.dowKor,
+        slots,
+      };
+    });
+  }, [selectedDates, dayChips, coachLessons, effectiveDuration, method, mergeSourceIds]);
+
+  const totalAvailableSlots = useMemo(
+    () => slotsByDate.reduce((sum, g) => sum + g.slots.length, 0),
+    [slotsByDate],
+  );
 
   if (!open) return null;
   if (typeof document === "undefined") return null;
@@ -575,17 +592,31 @@ export function MakeupWizard({
                 )}
 
                 <div>
-                  <label className="block text-xs font-semibold text-ink-2 mb-1.5">날짜</label>
+                  <label className="block text-xs font-semibold text-ink-2 mb-1.5">
+                    날짜 <span className="font-medium text-ink-3 text-[10px]">(여러 날짜 선택 시 각 날짜의 가능 시간을 모두 보여줘요)</span>
+                  </label>
                   <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1" style={{ scrollbarWidth: "thin" }}>
                     {dayChips.map((c) => {
-                      const active = c.iso === date;
+                      const active = selectedDates.includes(c.iso);
                       return (
                         <button
                           key={c.iso}
                           type="button"
                           onClick={() => {
-                            setDate(c.iso);
-                            setTime("");
+                            setSelectedDates((prev) => {
+                              if (prev.includes(c.iso)) {
+                                // 마지막 1개 칩을 끄지 못하도록 — 최소 1개 유지
+                                if (prev.length <= 1) return prev;
+                                const next = prev.filter((x) => x !== c.iso);
+                                // 현재 슬롯이 빠진 날짜였으면 time 리셋
+                                if (date === c.iso) {
+                                  setDate(next[0] ?? "");
+                                  setTime("");
+                                }
+                                return next;
+                              }
+                              return [...prev, c.iso];
+                            });
                             setError(null);
                           }}
                           className={`flex-none w-14 py-2 rounded-xl text-center transition active:scale-[0.97] ${
@@ -609,9 +640,9 @@ export function MakeupWizard({
                 <div>
                   <div className="flex items-baseline justify-between mb-1.5">
                     <label className="block text-xs font-semibold text-ink-2">시작 시각</label>
-                    {!loadingLessons && date && (
+                    {!loadingLessons && selectedDates.length > 0 && (
                       <span className="text-[10px] text-ink-3 font-medium">
-                        가능한 슬롯 {availableSlots.length}개 · {originalDurationMinutes}분
+                        가능한 슬롯 {totalAvailableSlots}개 · {effectiveDuration}분
                       </span>
                     )}
                   </div>
@@ -619,36 +650,53 @@ export function MakeupWizard({
                     <div className="rounded-xl border border-dashed border-line py-8 text-center text-xs text-ink-3">
                       가능한 시간을 불러오는 중…
                     </div>
-                  ) : !date ? (
+                  ) : selectedDates.length === 0 ? (
                     <div className="rounded-xl border border-dashed border-line py-6 text-center text-xs text-ink-3">
                       먼저 날짜를 선택하세요
                     </div>
-                  ) : availableSlots.length === 0 ? (
+                  ) : totalAvailableSlots === 0 ? (
                     <div className="rounded-xl border border-dashed border-line py-6 text-center">
                       <p className="text-xs font-semibold text-ink">가능한 시간이 없어요</p>
                       <p className="mt-1 text-[10px] text-ink-3">
-                        다른 날짜를 선택해 주세요
+                        다른 날짜를 선택하거나 분할 / 통합을 다시 조정해 보세요
                       </p>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-4 gap-1.5 max-h-60 overflow-y-auto pr-1">
-                      {availableSlots.map((s) => {
-                        const active = s.label === time;
-                        return (
-                          <button
-                            key={s.startMin}
-                            type="button"
-                            onClick={() => handlePickSlot(s.label)}
-                            className={`h-10 rounded-lg text-xs font-bold transition active:scale-[0.97] tabular-nums ${
-                              active
-                                ? "bg-primary text-white shadow-sm"
-                                : "bg-soft text-ink-2 hover:bg-line"
-                            }`}
-                          >
-                            {s.label}
-                          </button>
-                        );
-                      })}
+                    <div className="max-h-72 overflow-y-auto pr-1 space-y-3">
+                      {slotsByDate.map((g) => (
+                        <div key={g.dateIso}>
+                          <div className="text-[10px] font-bold text-ink-2 mb-1.5 sticky top-0 bg-surface py-0.5">
+                            {g.m}월 {g.day}일 ({g.dowKor})
+                            <span className="ml-1.5 text-ink-3 font-medium">{g.slots.length}개</span>
+                          </div>
+                          {g.slots.length === 0 ? (
+                            <div className="text-[10px] text-ink-3 px-1 py-2">가능한 시간 없음</div>
+                          ) : (
+                            <div className="grid grid-cols-4 gap-1.5">
+                              {g.slots.map((s) => {
+                                const active = s.label === time && g.dateIso === date;
+                                return (
+                                  <button
+                                    key={`${g.dateIso}-${s.startMin}`}
+                                    type="button"
+                                    onClick={() => {
+                                      setDate(g.dateIso);
+                                      handlePickSlot(s.label);
+                                    }}
+                                    className={`h-10 rounded-lg text-xs font-bold transition active:scale-[0.97] tabular-nums ${
+                                      active
+                                        ? "bg-primary text-white shadow-sm"
+                                        : "bg-soft text-ink-2 hover:bg-line"
+                                    }`}
+                                  >
+                                    {s.label}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>
