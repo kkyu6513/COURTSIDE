@@ -88,7 +88,7 @@ export function StudentPickerSheet({
 }: Props) {
   const [step, setStep] = useState<"time" | "student">("time");
   const [search, setSearch] = useState("");
-  const [duration, setDuration] = useState(60);
+  const [duration, setDuration] = useState(20);
   const [selectedStartMin, setSelectedStartMin] = useState<number | null>(null);
   const [weekCount, setWeekCount] = useState(1); // 정기 등록 주 수 (1 = 단발)
   // 길이 변경으로 선택 시간이 리셋됐을 때 사용자 안내 (#14)
@@ -98,11 +98,11 @@ export function StudentPickerSheet({
     if (open) {
       setStep("time");
       setSearch("");
-      setDuration(60);
-      // 시트 열림 — 클릭한 시각으로 사전 선택 (60분 그리드의 정확한 슬롯이면)
+      setDuration(20);
+      // 시트 열림 — 클릭한 시각으로 사전 선택 (20분 그리드의 정확한 슬롯이면)
       const initStartMin = initialHour * 60 + initialMinute;
       const fitsGrid =
-        (initStartMin - DAY_START_MIN) % 60 === 0 && initStartMin + 60 <= DAY_END_MIN;
+        (initStartMin - DAY_START_MIN) % 20 === 0 && initStartMin + 20 <= DAY_END_MIN;
       setSelectedStartMin(fitsGrid ? initStartMin : null);
       setWeekCount(1);
       setDurationResetHint(false);
