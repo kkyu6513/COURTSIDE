@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
 import { maskPhone } from "@/lib/masking";
+import { createCoachInvite } from "@/app/actions/coach-invites";
 
 export type StudentOption = {
   id: string;
@@ -94,6 +95,17 @@ export function StudentPickerSheet({
   // 길이 변경으로 선택 시간이 리셋됐을 때 사용자 안내 (#14)
   const [durationResetHint, setDurationResetHint] = useState(false);
 
+  // 수강생 직접 등록 — 초대 코드 발급
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [inviteName, setInviteName] = useState("");
+  const [invitePhone, setInvitePhone] = useState("");
+  const [inviteError, setInviteError] = useState<string | null>(null);
+  const [inviteResult, setInviteResult] = useState<
+    { code: string; inviteUrl: string; shareMessage: string; studentName: string } | null
+  >(null);
+  const [copied, setCopied] = useState<"code" | "msg" | null>(null);
+  const [invitePending, startInviteTransition] = useTransition();
+
   useEffect(() => {
     if (open) {
       setStep("time");
@@ -106,6 +118,13 @@ export function StudentPickerSheet({
       setSelectedStartMin(fitsGrid ? initStartMin : null);
       setWeekCount(1);
       setDurationResetHint(false);
+      // 초대 모달 리셋
+      setInviteOpen(false);
+      setInviteName("");
+      setInvitePhone("");
+      setInviteError(null);
+      setInviteResult(null);
+      setCopied(null);
     }
   }, [open, initialHour, initialMinute]);
 
@@ -492,20 +511,46 @@ export function StudentPickerSheet({
             </div>
 
             <div className="flex-1 overflow-y-auto px-3 pb-4">
+              {/* 수강생 직접 등록 — 초대 코드 발급 */}
+              <button
+                type="button"
+                onClick={() => {
+                  setInviteOpen(true);
+                  setInviteError(null);
+                  setInviteResult(null);
+                  setInviteName(search.trim());
+                  setInvitePhone("");
+                }}
+                className="mt-1 w-full flex items-center gap-3 px-3.5 py-3 rounded-xl border border-dashed border-primary/40 bg-primary/5 hover:bg-primary/10 transition active:scale-[0.99] text-left"
+              >
+                <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center flex-none">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-bold text-primary">수강생 직접 등록</div>
+                  <div className="mt-0.5 text-[11px] text-ink-3">
+                    초대 코드를 만들어 학생에게 보내요
+                  </div>
+                </div>
+                <svg className="flex-none text-primary" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </button>
+
               {filtered.length === 0 ? (
                 students.length === 0 ? (
-                  <div className="py-10 text-center px-4">
+                  <div className="py-8 text-center px-4">
                     <p className="text-sm font-semibold text-ink">아직 등록된 수강생이 없어요</p>
                     <p className="mt-2 text-xs text-ink-2 leading-relaxed">
-                      학생이 홈에서 회원님 이름·전화번호로 등록 요청을 보내면,
-                      알림 페이지에서 수락한 뒤 여기에 표시돼요.
-                    </p>
-                    <p className="mt-2 text-[11px] text-ink-3">
-                      수락 전이면 알림 페이지에서 확인해 주세요.
+                      위 <span className="font-semibold text-primary">수강생 직접 등록</span>으로 초대 코드를 만들거나,
+                      학생이 홈에서 회원님께 등록 요청을 보내면 여기에 표시돼요.
                     </p>
                   </div>
                 ) : (
-                  <div className="py-10 text-center">
+                  <div className="py-8 text-center">
                     <p className="text-sm text-ink-2">검색 결과가 없어요</p>
                     <p className="mt-1 text-[11px] text-ink-3">
                       이름 일부 또는 전화번호 숫자로 다시 검색해 보세요
@@ -513,7 +558,7 @@ export function StudentPickerSheet({
                   </div>
                 )
               ) : (
-                <ul className="space-y-1.5 mt-1">
+                <ul className="space-y-1.5 mt-1.5">
                   {filtered.map((s) => {
                     const isPending = pendingStudentId === s.id;
                     return (
@@ -566,6 +611,221 @@ export function StudentPickerSheet({
               </button>
             </div>
           </>
+        )}
+
+        {/* 수강생 직접 등록 — 초대 코드 발급 서브 시트 */}
+        {inviteOpen && (
+          <div
+            className="absolute inset-0 z-[10] flex items-end justify-center"
+            style={{ backgroundColor: "rgba(15, 23, 42, 0.5)" }}
+            onClick={() => !invitePending && setInviteOpen(false)}
+          >
+            <div
+              className="w-full bg-surface rounded-t-3xl shadow-2xl flex flex-col max-h-[88%]"
+              style={{ animation: "courtside-sheet-up 0.22s ease-out" }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="px-5 pt-3 pb-2 flex-none">
+                <div className="w-10 h-1 rounded-full bg-line mx-auto mb-3" />
+                <div className="flex items-center justify-between">
+                  <div className="text-base font-extrabold text-ink">
+                    {inviteResult ? "초대 코드 발급 완료" : "수강생 직접 등록"}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setInviteOpen(false)}
+                    disabled={invitePending}
+                    className="text-ink-3 hover:text-ink-2 p-1 disabled:opacity-50"
+                    aria-label="닫기"
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                      <line x1="18" y1="6" x2="6" y2="18" />
+                      <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                  </button>
+                </div>
+                {!inviteResult && (
+                  <div className="mt-1 text-xs text-ink-3">
+                    초대 코드를 만들어 학생에게 공유하세요. 학생이 가입 시 자동 매칭돼요.
+                  </div>
+                )}
+              </div>
+
+              <div className="flex-1 overflow-y-auto px-5 pb-3">
+                {!inviteResult ? (
+                  <div className="space-y-3 mt-2">
+                    <div>
+                      <label htmlFor="invite-name" className="block text-[11px] font-semibold text-ink-2 mb-1.5">
+                        수강생 이름 <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        id="invite-name"
+                        type="text"
+                        value={inviteName}
+                        onChange={(e) => setInviteName(e.target.value)}
+                        placeholder="예: 김민서"
+                        maxLength={30}
+                        disabled={invitePending}
+                        className="w-full h-11 rounded-xl bg-soft px-3.5 text-sm text-ink placeholder:text-ink-3 outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-50"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="invite-phone" className="block text-[11px] font-semibold text-ink-2 mb-1.5">
+                        전화번호 <span className="text-ink-3 font-normal">(선택)</span>
+                      </label>
+                      <input
+                        id="invite-phone"
+                        type="tel"
+                        inputMode="numeric"
+                        value={invitePhone}
+                        onChange={(e) => setInvitePhone(e.target.value)}
+                        placeholder="01012345678"
+                        maxLength={13}
+                        disabled={invitePending}
+                        className="w-full h-11 rounded-xl bg-soft px-3.5 text-sm text-ink placeholder:text-ink-3 outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-50"
+                      />
+                      <p className="mt-1 text-[10px] text-ink-3">
+                        나중에 학생 식별·연락용으로 쓰여요
+                      </p>
+                    </div>
+                    {inviteError && (
+                      <div className="rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-xs text-red-600">
+                        {inviteError}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-3 mt-2">
+                    <div className="rounded-xl bg-primary/5 border border-primary/20 p-4 text-center">
+                      <div className="text-[11px] font-semibold text-ink-3">초대 코드</div>
+                      <div className="mt-1.5 text-2xl font-extrabold text-primary tracking-[0.3em]">
+                        {inviteResult.code}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          await navigator.clipboard.writeText(inviteResult.code);
+                          setCopied("code");
+                          setTimeout(() => setCopied(null), 1800);
+                        }}
+                        className="mt-2 inline-flex items-center gap-1 text-[11px] font-semibold text-primary hover:underline"
+                      >
+                        {copied === "code" ? "복사됨 ✓" : "코드 복사"}
+                      </button>
+                    </div>
+                    <div>
+                      <div className="text-[11px] font-semibold text-ink-2 mb-1.5">공유 메시지</div>
+                      <div className="rounded-xl bg-soft px-3 py-2.5 text-[12px] text-ink-2 whitespace-pre-wrap leading-relaxed">
+                        {inviteResult.shareMessage}
+                      </div>
+                    </div>
+                    <p className="text-[11px] text-ink-3 leading-relaxed">
+                      학생이 위 링크로 가입하거나 코드 입력 시 자동 매칭돼요.
+                      매칭 후 수강생 목록에 자동 표시됩니다.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <div className="px-5 pb-6 pt-3 border-t border-line flex-none">
+                {!inviteResult ? (
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setInviteOpen(false)}
+                      disabled={invitePending}
+                      className="flex-1 h-12 rounded-xl border border-line bg-surface text-sm font-semibold text-ink-2 hover:bg-soft transition disabled:opacity-50"
+                    >
+                      취소
+                    </button>
+                    <button
+                      type="button"
+                      disabled={invitePending || !inviteName.trim()}
+                      onClick={() => {
+                        setInviteError(null);
+                        startInviteTransition(async () => {
+                          const r = await createCoachInvite(inviteName, invitePhone);
+                          if (r.ok) {
+                            setInviteResult({
+                              code: r.code,
+                              inviteUrl: r.inviteUrl,
+                              shareMessage: r.shareMessage,
+                              studentName: r.studentName,
+                            });
+                          } else {
+                            setInviteError(r.error);
+                          }
+                        });
+                      }}
+                      className="flex-1 h-12 rounded-xl bg-primary text-white text-sm font-semibold hover:opacity-90 transition active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
+                    >
+                      {invitePending && (
+                        <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z" />
+                        </svg>
+                      )}
+                      초대 코드 만들기
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          await navigator.clipboard.writeText(inviteResult.shareMessage);
+                          setCopied("msg");
+                          setTimeout(() => setCopied(null), 1800);
+                        }}
+                        className="flex-1 h-11 rounded-xl border border-line bg-surface text-sm font-semibold text-ink-2 hover:bg-soft transition"
+                      >
+                        {copied === "msg" ? "복사됨 ✓" : "메시지 복사"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const navAny = navigator as Navigator & { share?: (d: ShareData) => Promise<void> };
+                          if (navAny.share) {
+                            try {
+                              await navAny.share({
+                                title: "COURTSIDE 초대",
+                                text: inviteResult.shareMessage,
+                                url: inviteResult.inviteUrl,
+                              });
+                            } catch {
+                              // 공유 취소는 무시
+                            }
+                          } else {
+                            await navigator.clipboard.writeText(inviteResult.shareMessage);
+                            setCopied("msg");
+                            setTimeout(() => setCopied(null), 1800);
+                          }
+                        }}
+                        className="flex-1 h-11 rounded-xl bg-primary text-white text-sm font-semibold hover:opacity-90 transition active:scale-[0.99] inline-flex items-center justify-center gap-1.5"
+                      >
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                          <circle cx="18" cy="5" r="3" />
+                          <circle cx="6" cy="12" r="3" />
+                          <circle cx="18" cy="19" r="3" />
+                          <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                          <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                        </svg>
+                        공유하기
+                      </button>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setInviteOpen(false)}
+                      className="w-full h-11 rounded-xl border border-line bg-surface text-sm font-semibold text-ink-2 hover:bg-soft transition"
+                    >
+                      닫기
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>,

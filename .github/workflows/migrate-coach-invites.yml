@@ -1,0 +1,45 @@
+name: Migrate Coach Invites Table
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/migrate-coach-invites.yml'
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wait for Vercel build (3.5 minutes)
+        run: sleep 210
+      - name: Call migrate-coach-invites
+        id: m
+        run: |
+          URL="https://courtside-two-silk.vercel.app/api/admin/migrate-coach-invites?token=courtside-migrate-coach-invites-2026-06-14-Vp9xTjBnQz"
+          CODE=$(curl -sS -X POST -o /tmp/body.json -w "%{http_code}" "$URL" || echo "failed")
+          BODY=$(cat /tmp/body.json)
+          {
+            echo "result<<EOF"
+            echo "### migrate-coach-invites (HTTP $CODE)"
+            echo '```json'
+            echo "$BODY"
+            echo '```'
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
+      - name: Post Issue
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `[Migration] coach_invites 테이블`,
+              body: `## Migrate Coach Invites\n\n${{ steps.m.outputs.result }}\n\n---\nRun: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`,
+              labels: ['migration-result']
+            });
