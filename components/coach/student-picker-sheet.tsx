@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
 import { maskPhone } from "@/lib/masking";
+import { registerStudentDirectly } from "@/app/coach/actions/students";
 
 export type StudentOption = {
   id: string;
@@ -72,6 +73,8 @@ type Props = {
   students: StudentOption[];
   pendingStudentId: string | null;
   onPick: (studentId: string, hour: number, minute: number, durationMinutes: number, weekCount: number) => void;
+  /** 코치가 학생 직접 등록 성공 시 호출 — parent에서 students 리스트 reload */
+  onStudentRegistered?: () => void;
 };
 
 export function StudentPickerSheet({
@@ -85,6 +88,7 @@ export function StudentPickerSheet({
   students,
   pendingStudentId,
   onPick,
+  onStudentRegistered,
 }: Props) {
   const [step, setStep] = useState<"time" | "student">("time");
   const [search, setSearch] = useState("");
@@ -93,6 +97,44 @@ export function StudentPickerSheet({
   const [weekCount, setWeekCount] = useState(1); // 정기 등록 주 수 (1 = 단발)
   // 길이 변경으로 선택 시간이 리셋됐을 때 사용자 안내 (#14)
   const [durationResetHint, setDurationResetHint] = useState(false);
+
+  // 수강생 직접 등록 — 같은 시트 안에서 sub-form으로 전환
+  const [registerMode, setRegisterMode] = useState(false);
+  const [regName, setRegName] = useState("");
+  const [regPhone, setRegPhone] = useState("");
+  const [regError, setRegError] = useState<string | null>(null);
+  const [regPending, startRegTransition] = useTransition();
+
+  const resetRegister = () => {
+    setRegisterMode(false);
+    setRegName("");
+    setRegPhone("");
+    setRegError(null);
+  };
+
+  const handleRegister = () => {
+    setRegError(null);
+    const name = regName.trim();
+    const phone = regPhone.replace(/[^\d]/g, "");
+    if (!name) {
+      setRegError("이름을 입력해주세요");
+      return;
+    }
+    if (!/^\d{10,11}$/.test(phone)) {
+      setRegError("전화번호는 숫자 10~11자리로 입력해주세요");
+      return;
+    }
+    startRegTransition(async () => {
+      const res = await registerStudentDirectly({ name, phone });
+      if (!res.ok) {
+        setRegError(res.error);
+        return;
+      }
+      // 등록 성공 — parent에 students reload 요청 + 폼 닫음
+      resetRegister();
+      onStudentRegistered?.();
+    });
+  };
 
   useEffect(() => {
     if (open) {
@@ -479,20 +521,91 @@ export function StudentPickerSheet({
                 </div>
               </div>
 
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="이름, 초성, 전화번호 검색"
-                aria-label="수강생 검색"
-                // autoFocus는 모바일 키보드 즉시 팝업이라 학생 8명 이상일 때만 (#13)
-                autoFocus={students.length > 8}
-                className="mt-2 w-full h-11 rounded-xl bg-soft px-3.5 text-sm text-ink placeholder:text-ink-3 outline-none focus:ring-2 focus:ring-primary/40"
-              />
+              <div className="mt-2 flex gap-1.5">
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="이름, 초성, 전화번호 검색"
+                  aria-label="수강생 검색"
+                  autoFocus={students.length > 8}
+                  disabled={registerMode}
+                  className="flex-1 h-11 rounded-xl bg-soft px-3.5 text-sm text-ink placeholder:text-ink-3 outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-50"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (registerMode) resetRegister();
+                    else setRegisterMode(true);
+                  }}
+                  className={`flex-none h-11 px-3 rounded-xl text-xs font-bold transition active:scale-[0.97] ${
+                    registerMode
+                      ? "bg-soft text-ink-2 hover:bg-line"
+                      : "bg-primary/10 text-primary-700 hover:bg-primary/15"
+                  }`}
+                >
+                  {registerMode ? "‹ 목록" : "+ 직접 등록"}
+                </button>
+              </div>
             </div>
 
             <div className="flex-1 overflow-y-auto px-3 pb-4">
-              {filtered.length === 0 ? (
+              {registerMode ? (
+                <div className="px-2 pt-3 space-y-3">
+                  <div>
+                    <h3 className="text-sm font-extrabold text-ink">수강생 직접 등록</h3>
+                    <p className="mt-0.5 text-[11px] text-ink-3">
+                      이미 가입한 학생은 자동 매칭, 미가입이면 임시 등록 후 가입 시 연결돼요
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-ink-2 mb-1">이름</label>
+                    <input
+                      type="text"
+                      value={regName}
+                      onChange={(e) => setRegName(e.target.value)}
+                      placeholder="예: 김연우"
+                      maxLength={30}
+                      disabled={regPending}
+                      className="w-full h-11 rounded-xl border border-line bg-surface px-3.5 text-sm text-ink placeholder:text-ink-3 outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-60"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-ink-2 mb-1">전화번호</label>
+                    <input
+                      type="tel"
+                      inputMode="numeric"
+                      value={regPhone}
+                      onChange={(e) =>
+                        setRegPhone(e.target.value.replace(/[^\d]/g, "").slice(0, 11))
+                      }
+                      placeholder="01012345678 (- 없이)"
+                      maxLength={11}
+                      disabled={regPending}
+                      className="w-full h-11 rounded-xl border border-line bg-surface px-3.5 text-sm text-ink placeholder:text-ink-3 outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-60 tabular-nums"
+                    />
+                  </div>
+                  {regError && (
+                    <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600">
+                      {regError}
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleRegister}
+                    disabled={regPending || !regName.trim() || regPhone.length < 10}
+                    className="w-full h-12 rounded-xl bg-primary text-white text-sm font-bold hover:opacity-90 transition active:scale-[0.99] disabled:opacity-50 inline-flex items-center justify-center gap-1.5"
+                  >
+                    {regPending && (
+                      <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden>
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z" />
+                      </svg>
+                    )}
+                    {regPending ? "등록 중…" : "등록하고 목록으로"}
+                  </button>
+                </div>
+              ) : filtered.length === 0 ? (
                 students.length === 0 ? (
                   <div className="py-10 text-center px-4">
                     <p className="text-sm font-semibold text-ink">아직 등록된 수강생이 없어요</p>
