@@ -325,11 +325,9 @@ export function AvailabilitySheet({ open, onClose }: Props) {
           {step === "dow" && (
             <div className="space-y-3">
               <div>
-                <h3 className="text-base font-extrabold text-ink">언제 가능한 시간을 찾으시나요?</h3>
-                <p className="mt-1 text-xs text-ink-3 leading-relaxed">
-                  요일을 골라주세요. 선택한 요일의 가장 가까운 날짜
-                  <b className="text-ink-2"> {targetDate.getUTCMonth() + 1}월 {targetDate.getUTCDate()}일</b>
-                  의 일정에서 빈 시간을 찾아요.
+                <h3 className="text-base font-extrabold text-ink">요일 선택</h3>
+                <p className="mt-0.5 text-[11px] text-ink-3">
+                  가장 가까운 <b className="text-ink-2">{targetDate.getUTCMonth() + 1}/{targetDate.getUTCDate()}</b>로 자동 매칭돼요
                 </p>
               </div>
               <div className="grid grid-cols-7 gap-1">
@@ -359,17 +357,23 @@ export function AvailabilitySheet({ open, onClose }: Props) {
 
           {step === "hour" && (
             <div className="space-y-3">
-              <div>
-                <h3 className="text-base font-extrabold text-ink">어떤 시간대를 확인할까요?</h3>
-                <p className="mt-1 text-xs text-ink-3 leading-relaxed">
-                  여러 시간대를 동시에 선택할 수 있어요.
-                  예: 학생이 "3시대나 5시대 가능해요?"라고 물으면 <b className="text-ink-2">15시 + 17시</b>를 같이 골라 한 번에 확인.
-                </p>
-                <div className="mt-2 text-[10px] text-ink-3 font-medium">
-                  선택됨: <b className="text-primary-700">{hours.length}개 시간대</b>
-                  {" — "}
-                  {[...hours].sort((a, b) => a - b).map((h) => `${String(h).padStart(2, "0")}시`).join(", ")}
+              <div className="flex items-baseline justify-between gap-2">
+                <div className="min-w-0">
+                  <h3 className="text-base font-extrabold text-ink inline-flex items-center gap-1">
+                    시간대 선택
+                    <span
+                      title="여러 시간대를 동시에 선택할 수 있어요. 예: 학생이 '3시대나 5시대 가능?'이라고 물으면 15시 + 17시를 같이 골라 한 번에 확인."
+                      className="inline-flex w-4 h-4 rounded-full bg-soft text-ink-3 text-[10px] items-center justify-center cursor-help"
+                      aria-label="도움말"
+                    >
+                      ?
+                    </span>
+                  </h3>
+                  <p className="mt-0.5 text-[11px] text-ink-3">여러 개 동시 선택 가능</p>
                 </div>
+                <span className="flex-none text-[10px] text-primary-700 font-bold tabular-nums">
+                  {hours.length}개
+                </span>
               </div>
               <div className="grid grid-cols-4 gap-1.5">
                 {Array.from({ length: HOUR_MAX - HOUR_MIN + 1 }, (_, i) => {
@@ -400,10 +404,8 @@ export function AvailabilitySheet({ open, onClose }: Props) {
           {step === "duration" && (
             <div className="space-y-3">
               <div>
-                <h3 className="text-base font-extrabold text-ink">레슨 시간은 얼마나 되나요?</h3>
-                <p className="mt-1 text-xs text-ink-3 leading-relaxed">
-                  레슨 길이에 맞춰 빈 시간을 계산해요. 학생 정규 회차와 동일한 시간을 골라주세요.
-                </p>
+                <h3 className="text-base font-extrabold text-ink">레슨 길이</h3>
+                <p className="mt-0.5 text-[11px] text-ink-3">정규 회차와 동일한 시간을 권장해요</p>
               </div>
               <ChipGrid
                 options={DURATION_OPTIONS.map((d) => ({ key: String(d), label: `${d}분` }))}
@@ -417,12 +419,17 @@ export function AvailabilitySheet({ open, onClose }: Props) {
           {step === "result" && (
             <div className="space-y-3">
               <div>
-                <h3 className="text-base font-extrabold text-ink">가능한 시간을 찾았어요</h3>
-                <p className="mt-1 text-xs text-ink-3 leading-relaxed">
-                  아래 시간 중에서 학생에게 제안할 시간을 골라
-                  <b className="text-ink-2"> 복사하기</b> 또는
-                  <b className="text-ink-2"> 메시지 보내기</b>를 누르세요.
-                </p>
+                <h3 className="text-base font-extrabold text-ink inline-flex items-center gap-1">
+                  가능한 시간
+                  <span
+                    title="아래 시간 중에서 학생에게 제안할 시간을 골라 복사하기 또는 메시지 보내기를 누르세요."
+                    className="inline-flex w-4 h-4 rounded-full bg-soft text-ink-3 text-[10px] items-center justify-center cursor-help"
+                    aria-label="도움말"
+                  >
+                    ?
+                  </span>
+                </h3>
+                <p className="mt-0.5 text-[11px] text-ink-3">학생에게 복사 / 메시지로 공유</p>
               </div>
               <div className="rounded-xl bg-soft px-3 py-2 text-[11px] text-ink-2 flex items-center justify-between">
                 <span>
