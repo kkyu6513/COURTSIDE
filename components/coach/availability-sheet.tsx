@@ -61,12 +61,22 @@ export function AvailabilitySheet({ open, onClose }: Props) {
     return k.getUTCDay() as DowKey;
   })();
   const [dow, setDow] = useState<DowKey>(todayDow);
-  const [hour, setHour] = useState<number>(DEFAULT_HOUR);
+  // 멀티 시간대 선택 (예: 14시 + 15시 + 16시 동시 — 학생이 "3시대나 5시대" 같은 질문 응대)
+  const [hours, setHours] = useState<number[]>([DEFAULT_HOUR]);
   const [duration, setDuration] = useState<number>(60);
 
   // 단계별 위저드 — dow → hour → duration → result
   type Step = "dow" | "hour" | "duration" | "result";
   const [step, setStep] = useState<Step>("dow");
+
+  const toggleHour = (h: number) =>
+    setHours((prev) => {
+      if (prev.includes(h)) {
+        if (prev.length <= 1) return prev; // 최소 1개 유지
+        return prev.filter((x) => x !== h);
+      }
+      return [...prev, h].sort((a, b) => a - b);
+    });
 
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
@@ -93,7 +103,7 @@ export function AvailabilitySheet({ open, onClose }: Props) {
     if (!open) return;
     const k = new Date(Date.now() + KST_OFFSET_MS);
     setDow(k.getUTCDay() as DowKey);
-    setHour(DEFAULT_HOUR);
+    setHours([DEFAULT_HOUR]);
     setDuration(60);
     setStep("dow");
     setPickingStudent(false);
@@ -140,16 +150,15 @@ export function AvailabilitySheet({ open, onClose }: Props) {
   const targetDate = useMemo(() => nextDateForDow(dow), [dow]);
 
   const availableSlots = useMemo<AvailableSlot[]>(() => {
-    if (loading || error) return [];
-    const dates = [targetDate];
+    if (loading || error || hours.length === 0) return [];
     const out: AvailableSlot[] = [];
     const nowMs = Date.now();
-    const bandStartMin = hour * 60;
-    const bandEndMin = (hour + 1) * 60;
-    for (const date of dates) {
-      const dayUtcMidnight = date.getTime() - KST_OFFSET_MS;
-      // 시작 시각이 선택된 1시간 범위 [bandStart, bandEnd) 안에 있어야 함.
-      // 종료는 자정(24:00)까지 허용 — 그래야 22~23시 슬롯에서 60분 레슨도 표시됨.
+    const dayUtcMidnight = targetDate.getTime() - KST_OFFSET_MS;
+    // 멀티 시간대 — 선택된 각 hour의 [hour:00, hour+1:00) 범위 슬롯을 모두 합산
+    const sortedHours = [...hours].sort((a, b) => a - b);
+    for (const h of sortedHours) {
+      const bandStartMin = h * 60;
+      const bandEndMin = (h + 1) * 60;
       for (let startMin = bandStartMin; startMin < bandEndMin; startMin += SLOT_STEP_MIN) {
         const endMin = startMin + duration;
         if (endMin > DAY_END_MIN) break;
@@ -165,11 +174,11 @@ export function AvailabilitySheet({ open, onClose }: Props) {
           return slotStartMs < lEnd && slotEndMs > lStart;
         });
         if (conflict) continue;
-        out.push({ date, startMin, endMin });
+        out.push({ date: targetDate, startMin, endMin });
       }
     }
     return out;
-  }, [loading, error, targetDate, hour, duration, lessons]);
+  }, [loading, error, targetDate, hours, duration, lessons]);
 
   // 날짜별 그룹
   const groupedByDay = useMemo(() => {
@@ -183,8 +192,11 @@ export function AvailabilitySheet({ open, onClose }: Props) {
     return Array.from(m.values());
   }, [availableSlots]);
 
-  const goPrevHour = () => setHour((h) => Math.max(HOUR_MIN, h - 1));
-  const goNextHour = () => setHour((h) => Math.min(HOUR_MAX, h + 1));
+  // 시간대 다중 선택 요약 라벨 — "09시·14시·16시" 형태
+  const hoursLabel = useMemo(
+    () => [...hours].sort((a, b) => a - b).map((h) => `${String(h).padStart(2, "0")}시`).join("·"),
+    [hours],
+  );
 
   // 메시지 빌드 — 복사 / 발송 공용
   const messageText = useMemo(() => {
@@ -350,32 +362,37 @@ export function AvailabilitySheet({ open, onClose }: Props) {
               <div>
                 <h3 className="text-base font-extrabold text-ink">어떤 시간대를 확인할까요?</h3>
                 <p className="mt-1 text-xs text-ink-3 leading-relaxed">
-                  화살표로 1시간 단위로 빠르게 돌려가며 확인할 수 있어요.
-                  보통 학생이 묻는 시간대(예: 오전 09시, 오후 14시)부터 시작해 보세요.
+                  여러 시간대를 동시에 선택할 수 있어요.
+                  예: 학생이 "3시대나 5시대 가능해요?"라고 물으면 <b className="text-ink-2">15시 + 17시</b>를 같이 골라 한 번에 확인.
                 </p>
-              </div>
-              <div className="flex items-center justify-between gap-2">
-                <button
-                  type="button"
-                  onClick={goPrevHour}
-                  disabled={hour <= HOUR_MIN}
-                  aria-label="이전 시간"
-                  className="flex-none w-14 h-14 rounded-xl border border-line bg-surface text-ink-2 text-xl font-bold hover:bg-soft transition active:scale-[0.96] disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-                >
-                  ‹
-                </button>
-                <div className="flex-1 h-14 rounded-xl bg-primary/10 text-primary-700 flex items-center justify-center font-extrabold text-xl tabular-nums">
-                  {String(hour).padStart(2, "0")}시 ~ {String(hour + 1).padStart(2, "0")}시
+                <div className="mt-2 text-[10px] text-ink-3 font-medium">
+                  선택됨: <b className="text-primary-700">{hours.length}개 시간대</b>
+                  {" — "}
+                  {[...hours].sort((a, b) => a - b).map((h) => `${String(h).padStart(2, "0")}시`).join(", ")}
                 </div>
-                <button
-                  type="button"
-                  onClick={goNextHour}
-                  disabled={hour >= HOUR_MAX}
-                  aria-label="다음 시간"
-                  className="flex-none w-14 h-14 rounded-xl border border-line bg-surface text-ink-2 text-xl font-bold hover:bg-soft transition active:scale-[0.96] disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-                >
-                  ›
-                </button>
+              </div>
+              <div className="grid grid-cols-4 gap-1.5">
+                {Array.from({ length: HOUR_MAX - HOUR_MIN + 1 }, (_, i) => {
+                  const h = HOUR_MIN + i;
+                  const active = hours.includes(h);
+                  return (
+                    <button
+                      key={h}
+                      type="button"
+                      onClick={() => toggleHour(h)}
+                      className={`h-12 rounded-lg text-xs font-bold transition active:scale-[0.97] tabular-nums ${
+                        active
+                          ? "bg-primary text-white shadow-sm"
+                          : "bg-soft text-ink-2 hover:bg-line"
+                      }`}
+                    >
+                      {String(h).padStart(2, "0")}시
+                      <div className={`text-[9px] mt-0.5 ${active ? "text-white/75" : "text-ink-3"}`}>
+                        ~{String(h + 1).padStart(2, "0")}시
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -411,7 +428,7 @@ export function AvailabilitySheet({ open, onClose }: Props) {
                 <span>
                   <b className="text-ink">{targetDate.getUTCMonth() + 1}월 {targetDate.getUTCDate()}일 ({DOW_KOR[targetDate.getUTCDay()]})</b>
                   {" · "}
-                  {String(hour).padStart(2, "0")}시~{String(hour + 1).padStart(2, "0")}시 · {duration}분
+                  {hoursLabel} · {duration}분
                 </span>
                 {!loading && !error && (
                   <span className="font-bold text-primary-700">{availableSlots.length}개</span>
