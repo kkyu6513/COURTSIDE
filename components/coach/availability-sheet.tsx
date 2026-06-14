@@ -64,6 +64,10 @@ export function AvailabilitySheet({ open, onClose }: Props) {
   const [hour, setHour] = useState<number>(DEFAULT_HOUR);
   const [duration, setDuration] = useState<number>(60);
 
+  // 단계별 위저드 — dow → hour → duration → result
+  type Step = "dow" | "hour" | "duration" | "result";
+  const [step, setStep] = useState<Step>("dow");
+
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(false);
@@ -91,6 +95,8 @@ export function AvailabilitySheet({ open, onClose }: Props) {
     setDow(k.getUTCDay() as DowKey);
     setHour(DEFAULT_HOUR);
     setDuration(60);
+    setStep("dow");
+    setPickingStudent(false);
     setError(null);
     let cancelled = false;
     setLoading(true);
@@ -292,160 +298,246 @@ export function AvailabilitySheet({ open, onClose }: Props) {
             onBack={() => setPickingStudent(false)}
           />
         ) : (
-        <div className="flex-1 overflow-y-auto px-5 pb-2 space-y-4">
-          <Section
-            title="요일"
-            sub={`선택한 요일의 가장 가까운 날짜 — ${targetDate.getUTCMonth() + 1}월 ${targetDate.getUTCDate()}일`}
-          >
-            <div className="grid grid-cols-7 gap-1">
-              {DOW_OPTIONS.map((o) => {
-                const active = o.key === dow;
-                const isWeekend = o.key === 0 || o.key === 6;
-                return (
-                  <button
-                    key={o.key}
-                    type="button"
-                    onClick={() => setDow(o.key)}
-                    className={`h-10 rounded-lg text-xs font-bold transition active:scale-[0.97] ${
-                      active
-                        ? "bg-primary text-white shadow-sm"
-                        : isWeekend
-                          ? "bg-soft text-red-500 hover:bg-line"
-                          : "bg-soft text-ink-2 hover:bg-line"
-                    }`}
-                  >
-                    {o.label}
-                  </button>
-                );
-              })}
-            </div>
-          </Section>
+        <div className="flex-1 overflow-y-auto px-5 pb-2">
+          {/* 단계 인디케이터 */}
+          <div className="flex items-center gap-1.5 text-[10px] font-semibold mb-3">
+            <span className={step === "dow" ? "text-primary-600" : "text-ink-3"}>① 요일</span>
+            <span className="text-ink-3">›</span>
+            <span className={step === "hour" ? "text-primary-600" : "text-ink-3"}>② 시간대</span>
+            <span className="text-ink-3">›</span>
+            <span className={step === "duration" ? "text-primary-600" : "text-ink-3"}>③ 레슨 길이</span>
+            <span className="text-ink-3">›</span>
+            <span className={step === "result" ? "text-primary-600" : "text-ink-3"}>④ 결과</span>
+          </div>
 
-          <Section title="시간">
-            <div className="flex items-center justify-between gap-2">
-              <button
-                type="button"
-                onClick={goPrevHour}
-                disabled={hour <= HOUR_MIN}
-                aria-label="이전 시간"
-                className="flex-none w-12 h-12 rounded-xl border border-line bg-surface text-ink-2 text-lg font-bold hover:bg-soft transition active:scale-[0.96] disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-              >
-                ‹
-              </button>
-              <div className="flex-1 h-12 rounded-xl bg-primary/10 text-primary-700 flex items-center justify-center font-extrabold text-lg tabular-nums">
-                {String(hour).padStart(2, "0")}시 ~ {String(hour + 1).padStart(2, "0")}시
-              </div>
-              <button
-                type="button"
-                onClick={goNextHour}
-                disabled={hour >= HOUR_MAX}
-                aria-label="다음 시간"
-                className="flex-none w-12 h-12 rounded-xl border border-line bg-surface text-ink-2 text-lg font-bold hover:bg-soft transition active:scale-[0.96] disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-              >
-                ›
-              </button>
-            </div>
-          </Section>
-
-          <Section title="레슨 길이">
-            <ChipGrid
-              options={DURATION_OPTIONS.map((d) => ({ key: String(d), label: `${d}분` }))}
-              value={String(duration)}
-              onChange={(v) => setDuration(Number(v))}
-              cols={4}
-            />
-          </Section>
-
-          {/* 결과 */}
-          <div>
-            <div className="text-[11px] font-semibold text-ink-2 mb-2 flex items-center justify-between">
-              <span>가능한 시간</span>
-              {!loading && !error && (
-                <span className="text-[11px] text-ink-3 font-medium">
-                  총 {availableSlots.length}개 슬롯
-                </span>
-              )}
-            </div>
-            {loading ? (
-              <div className="py-8 text-center text-xs text-ink-3">불러오는 중…</div>
-            ) : error ? (
-              <div className="py-8 text-center">
-                <p className="text-sm text-red-500">{error}</p>
-              </div>
-            ) : groupedByDay.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-line py-8 text-center">
-                <p className="text-sm font-semibold text-ink">가능한 시간이 없어요</p>
-                <p className="mt-1 text-xs text-ink-3">
-                  다른 요일이나 시간을 선택하거나 길이를 줄여보세요
+          {step === "dow" && (
+            <div className="space-y-3">
+              <div>
+                <h3 className="text-base font-extrabold text-ink">언제 가능한 시간을 찾으시나요?</h3>
+                <p className="mt-1 text-xs text-ink-3 leading-relaxed">
+                  요일을 골라주세요. 선택한 요일의 가장 가까운 날짜
+                  <b className="text-ink-2"> {targetDate.getUTCMonth() + 1}월 {targetDate.getUTCDate()}일</b>
+                  의 일정에서 빈 시간을 찾아요.
                 </p>
               </div>
-            ) : (
-              <div className="space-y-3 pb-2">
-                {groupedByDay.map(({ date, slots }) => {
-                  const m = date.getUTCMonth() + 1;
-                  const d = date.getUTCDate();
-                  const dow = DOW_KOR[date.getUTCDay()];
+              <div className="grid grid-cols-7 gap-1">
+                {DOW_OPTIONS.map((o) => {
+                  const active = o.key === dow;
+                  const isWeekend = o.key === 0 || o.key === 6;
                   return (
-                    <div key={`${m}-${d}`}>
-                      <div className="text-[11px] font-bold text-ink-2 mb-1.5">
-                        {m}월 {d}일 ({dow})
-                        <span className="ml-1.5 text-[10px] text-ink-3 font-medium">
-                          {slots.length}개
-                        </span>
-                      </div>
-                      <div className="grid grid-cols-3 gap-1.5">
-                        {slots.map((s) => (
-                          <div
-                            key={`${s.startMin}`}
-                            className="rounded-lg border border-line bg-soft px-2 py-1.5 text-center text-[11px] font-semibold text-ink tabular-nums"
-                          >
-                            {hm(s.startMin)}~{hm(s.endMin)}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+                    <button
+                      key={o.key}
+                      type="button"
+                      onClick={() => setDow(o.key)}
+                      className={`h-12 rounded-lg text-sm font-bold transition active:scale-[0.97] ${
+                        active
+                          ? "bg-primary text-white shadow-sm"
+                          : isWeekend
+                            ? "bg-soft text-red-500 hover:bg-line"
+                            : "bg-soft text-ink-2 hover:bg-line"
+                      }`}
+                    >
+                      {o.label}
+                    </button>
                   );
                 })}
               </div>
-            )}
-          </div>
+            </div>
+          )}
+
+          {step === "hour" && (
+            <div className="space-y-3">
+              <div>
+                <h3 className="text-base font-extrabold text-ink">어떤 시간대를 확인할까요?</h3>
+                <p className="mt-1 text-xs text-ink-3 leading-relaxed">
+                  화살표로 1시간 단위로 빠르게 돌려가며 확인할 수 있어요.
+                  보통 학생이 묻는 시간대(예: 오전 09시, 오후 14시)부터 시작해 보세요.
+                </p>
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <button
+                  type="button"
+                  onClick={goPrevHour}
+                  disabled={hour <= HOUR_MIN}
+                  aria-label="이전 시간"
+                  className="flex-none w-14 h-14 rounded-xl border border-line bg-surface text-ink-2 text-xl font-bold hover:bg-soft transition active:scale-[0.96] disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                >
+                  ‹
+                </button>
+                <div className="flex-1 h-14 rounded-xl bg-primary/10 text-primary-700 flex items-center justify-center font-extrabold text-xl tabular-nums">
+                  {String(hour).padStart(2, "0")}시 ~ {String(hour + 1).padStart(2, "0")}시
+                </div>
+                <button
+                  type="button"
+                  onClick={goNextHour}
+                  disabled={hour >= HOUR_MAX}
+                  aria-label="다음 시간"
+                  className="flex-none w-14 h-14 rounded-xl border border-line bg-surface text-ink-2 text-xl font-bold hover:bg-soft transition active:scale-[0.96] disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                >
+                  ›
+                </button>
+              </div>
+            </div>
+          )}
+
+          {step === "duration" && (
+            <div className="space-y-3">
+              <div>
+                <h3 className="text-base font-extrabold text-ink">레슨 시간은 얼마나 되나요?</h3>
+                <p className="mt-1 text-xs text-ink-3 leading-relaxed">
+                  레슨 길이에 맞춰 빈 시간을 계산해요. 학생 정규 회차와 동일한 시간을 골라주세요.
+                </p>
+              </div>
+              <ChipGrid
+                options={DURATION_OPTIONS.map((d) => ({ key: String(d), label: `${d}분` }))}
+                value={String(duration)}
+                onChange={(v) => setDuration(Number(v))}
+                cols={4}
+              />
+            </div>
+          )}
+
+          {step === "result" && (
+            <div className="space-y-3">
+              <div>
+                <h3 className="text-base font-extrabold text-ink">가능한 시간을 찾았어요</h3>
+                <p className="mt-1 text-xs text-ink-3 leading-relaxed">
+                  아래 시간 중에서 학생에게 제안할 시간을 골라
+                  <b className="text-ink-2"> 복사하기</b> 또는
+                  <b className="text-ink-2"> 메시지 보내기</b>를 누르세요.
+                </p>
+              </div>
+              <div className="rounded-xl bg-soft px-3 py-2 text-[11px] text-ink-2 flex items-center justify-between">
+                <span>
+                  <b className="text-ink">{targetDate.getUTCMonth() + 1}월 {targetDate.getUTCDate()}일 ({DOW_KOR[targetDate.getUTCDay()]})</b>
+                  {" · "}
+                  {String(hour).padStart(2, "0")}시~{String(hour + 1).padStart(2, "0")}시 · {duration}분
+                </span>
+                {!loading && !error && (
+                  <span className="font-bold text-primary-700">{availableSlots.length}개</span>
+                )}
+              </div>
+              {loading ? (
+                <div className="py-8 text-center text-xs text-ink-3">불러오는 중…</div>
+              ) : error ? (
+                <div className="py-8 text-center">
+                  <p className="text-sm text-red-500">{error}</p>
+                </div>
+              ) : groupedByDay.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-line py-8 text-center">
+                  <p className="text-sm font-semibold text-ink">가능한 시간이 없어요</p>
+                  <p className="mt-1 text-xs text-ink-3">
+                    이전 단계에서 다른 요일/시간/길이를 시도해 보세요
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3 pb-2">
+                  {groupedByDay.map(({ date, slots }) => {
+                    const m = date.getUTCMonth() + 1;
+                    const d = date.getUTCDate();
+                    const dowKor = DOW_KOR[date.getUTCDay()];
+                    return (
+                      <div key={`${m}-${d}`}>
+                        <div className="text-[11px] font-bold text-ink-2 mb-1.5">
+                          {m}월 {d}일 ({dowKor})
+                          <span className="ml-1.5 text-[10px] text-ink-3 font-medium">
+                            {slots.length}개
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-1.5">
+                          {slots.map((s) => (
+                            <div
+                              key={`${s.startMin}`}
+                              className="rounded-lg border border-line bg-soft px-2 py-1.5 text-center text-[11px] font-semibold text-ink tabular-nums"
+                            >
+                              {hm(s.startMin)}~{hm(s.endMin)}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
         </div>
         )}
 
         {!pickingStudent && (
           <div className="px-5 pb-6 pt-3 border-t border-line flex-none space-y-2">
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={handleCopy}
-                disabled={!canShare}
-                className="h-12 rounded-xl border border-line bg-surface text-sm font-semibold text-ink-2 hover:bg-soft transition active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center justify-center gap-1.5"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                </svg>
-                복사하기
-              </button>
-              <button
-                type="button"
-                onClick={handleStartMessaging}
-                disabled={!canShare}
-                className="h-12 rounded-xl bg-primary text-white text-sm font-semibold hover:opacity-90 transition active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center justify-center gap-1.5"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                  <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
-                </svg>
-                메시지 보내기
-              </button>
-            </div>
-            <button
-              type="button"
-              onClick={onClose}
-              className="w-full h-11 rounded-xl text-xs font-semibold text-ink-3 hover:bg-soft transition"
-            >
-              닫기
-            </button>
+            {step === "result" ? (
+              <>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={handleCopy}
+                    disabled={!canShare}
+                    className="h-12 rounded-xl border border-line bg-surface text-sm font-semibold text-ink-2 hover:bg-soft transition active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center justify-center gap-1.5"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                    </svg>
+                    복사하기
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleStartMessaging}
+                    disabled={!canShare}
+                    className="h-12 rounded-xl bg-primary text-white text-sm font-semibold hover:opacity-90 transition active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center justify-center gap-1.5"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+                    </svg>
+                    메시지 보내기
+                  </button>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setStep("duration")}
+                    className="flex-1 h-11 rounded-xl border border-line bg-surface text-xs font-semibold text-ink-2 hover:bg-soft transition"
+                  >
+                    ‹ 이전 단계
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="flex-1 h-11 rounded-xl text-xs font-semibold text-ink-3 hover:bg-soft transition"
+                  >
+                    닫기
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (step === "dow") {
+                      onClose();
+                      return;
+                    }
+                    setStep(step === "hour" ? "dow" : "hour");
+                  }}
+                  className="flex-1 h-12 rounded-xl border border-line bg-surface text-sm font-semibold text-ink-2 hover:bg-soft transition"
+                >
+                  {step === "dow" ? "닫기" : "‹ 이전"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (step === "dow") setStep("hour");
+                    else if (step === "hour") setStep("duration");
+                    else if (step === "duration") setStep("result");
+                  }}
+                  className="flex-1 h-12 rounded-xl bg-primary text-white text-sm font-semibold hover:opacity-90 transition active:scale-[0.99]"
+                >
+                  다음 ›
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
